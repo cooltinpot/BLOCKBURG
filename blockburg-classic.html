@@ -152,6 +152,25 @@
   #bodyPalette{display:grid;grid-template-columns:repeat(10,22px);gap:3px;justify-content:center;margin-top:6px}
   #bodyPalette div{width:22px;height:22px;border:1px solid #333;cursor:pointer}
   .s-foot{border-top:1px solid #b9cbe4;color:#666;font-size:10px;text-align:center;padding:10px}
+  /* trailer camera: movie bars, the title / credits card and captions; everything else on screen hides */
+  body.trailer #menubar, body.trailer #chatlog, body.trailer #chatbar, body.trailer #right, body.trailer #tip,
+  body.trailer #toolbar, body.trailer #insertWin { display:none !important }
+  #trailerUI{position:fixed;inset:0;pointer-events:none;z-index:20}
+  #trailerUI.hidden{display:none}
+  #trailerUI .tr-bar{position:absolute;left:0;right:0;height:9vh;background:#000;transition:height .6s}
+  #trailerUI .tr-bar.top{top:0} #trailerUI .tr-bar.bot{bottom:0}
+  #trailerUI.nobars .tr-bar{height:0}
+  #trailerUI.nocaps #trCard, #trailerUI.nocaps #trCap{display:none}
+  #trCard{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    color:#fff;font:bold 22px Verdana,Arial,sans-serif;text-shadow:2px 2px 0 #000;opacity:0;transition:opacity .8s}
+  #trCard.show{opacity:1}
+  #trCard .logo{font:900 min(13vw,110px) Arial;color:#e2231a;-webkit-text-stroke:3px #000;text-shadow:5px 5px 0 #000;transform:rotate(-2deg);line-height:1;margin-bottom:16px}
+  #trCard .box{background:rgba(0,0,0,.55);border-radius:10px;padding:10px 26px 14px}
+  #trCard .sub{font-size:min(3.4vw,22px);margin-top:4px}
+  #trCard .line{font-size:min(3.8vw,26px);margin-top:6px}
+  #trCap{position:absolute;left:0;right:0;bottom:13vh;text-align:center;font:900 min(6vw,46px) Arial;color:#fff;
+    -webkit-text-stroke:2px #000;text-shadow:3px 3px 0 #000;opacity:0;transition:opacity .6s}
+  #trCap.show{opacity:1}
   .s-credits{font-size:11px;color:#333;margin-bottom:8px;line-height:1.6}
   .s-credits a{color:#0b4a99;font-weight:bold}
 </style>
@@ -161,6 +180,7 @@
   <button data-act="menu">Menu (Esc)</button>
   <button data-act="insert">Insert</button>
   <button data-act="full">Fullscreen</button>
+  <button data-act="trailer" id="trailerBtn" style="display:none" title="Movie camera for recording a trailer (admin only). P or Esc stops it.">🎬 Trailer (P)</button>
   <span id="netBadge" class="hidden"></span>
 </div>
 <div id="chatlog" class="txt"></div>
@@ -171,6 +191,11 @@
 </div>
 <div id="tip" class="txt"></div>
 <div id="toolbar"></div>
+<div id="trailerUI" class="hidden">
+  <div class="tr-bar top"></div><div class="tr-bar bot"></div>
+  <div id="trCard"></div>
+  <div id="trCap"></div>
+</div>
 
 <div id="insertWin" class="win hidden">
   <div class="tb">Insert / Build<button data-close="insertWin">x</button></div>
@@ -1524,6 +1549,7 @@ class Humanoid {
     } else this.spawn(this.isPlayer ? null : randomNpcSpot());
   }
   drawTag() {
+    if (!this.tag) return;   // your own character has no name tag over its head
     const { c, t } = this.tag.userData, g = c.getContext('2d'), W = c.width, M = W / 2;
     g.clearRect(0, 0, W, c.height);
     g.font = 'bold 26px Arial'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.fillStyle = this.admin ? '#ffd23f' : '#fff';
@@ -2817,6 +2843,7 @@ document.querySelector('#menubar').addEventListener('click', (e) => {
   if (a === 'menu') openEsc();
   if (a === 'insert') $('insertWin').classList.toggle('hidden');
   if (a === 'full') toggleFullscreen();
+  if (a === 'trailer') startTrailer();
 });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).classList.add('hidden'));
 function toggleFullscreen() {
@@ -2926,6 +2953,7 @@ addEventListener('keydown', (e) => {
     } else if (e.key === 'Escape') chatInput.blur();
     return;
   }
+  if (trailer.on) { if (!e.repeat) trailerKey(e); return; }
   if (e.key === 'Escape') {
     if (!started) return;
     if (menuOpen) closeEsc(); else openEsc();
@@ -2933,6 +2961,7 @@ addEventListener('keydown', (e) => {
   }
   if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
   if (menuOpen || !started) return;
+  if (e.code === 'KeyP' && !e.repeat && !dragging) { startTrailer(); return; }
   if (e.key === '/') { e.preventDefault(); chatInput.focus(); return; }
   if ((e.code === 'Equal' || e.key === '=') && !e.repeat) {
     if (net.mode === 'client') netSend({ t: 'drophat' });   // the host owns dropped hats
@@ -2970,6 +2999,7 @@ document.addEventListener('pointerlockchange', () => { if (!camLocked()) rDrag =
 cv.addEventListener('contextmenu', (e) => e.preventDefault());
 cv.addEventListener('mousedown', (e) => {
   chatInput.blur();
+  if (trailer.on) return;   // no tools or camera turning while the trailer films
   if (e.button === 2) {
     rDrag = true; lastX = e.clientX; lastY = e.clientY;
     hideCursorForTurn();
@@ -2989,12 +3019,119 @@ addEventListener('mousemove', (e) => {
 });
 cv.addEventListener('wheel', (e) => { e.preventDefault(); camDist = Math.min(120, Math.max(0.5, camDist * (1 + Math.sign(e.deltaY) * 0.12))); }, { passive: false });
 
+/* ================= trailer camera =================
+   Admin only (logged in with the admin key: the button shows up then, and P works).
+   Press P in a game (or the Trailer button): the buttons and chat disappear and the camera flies a set of
+   movie shots around Blockburg Classic, with a title card, captions, the end credits and the theme song.
+   Made for recording a trailer (Win + Alt + R records the window). While it runs:
+   P or Esc stop  ·  N next shot  ·  M music on/off  ·  C captions + cards on/off  ·  B black bars on/off */
+const THEME_SONG = 'blockburg-theme.mp3';   // by wayferr (youtube.com/@wayferr)
+// Each shot glides the camera from -> to while it looks from look -> look2, over `dur` seconds (easing in and out).
+// card: the title or credits card · cap: a caption · track: follow a Guest around · act: something happens part-way
+const SHOTS = [
+  { dur: 7, from: [0, 95, 150], to: [0, 38, 72], look: [0, 0, 0], look2: [0, 4, 0], card: 'title' },
+  { dur: 5, from: [34, 4, -16], to: [6, 13, -17], look: [20, 9, -30], cap: 'Build anything' },   // rainbow tower
+  { dur: 5, from: [-40, 4, -21], to: [-2, 5, -21], look: [-36, 3, -32], look2: [-4, 3, -32], cap: 'Brick by brick' },   // brick wall
+  { dur: 4, from: [-18, 5, 32], to: [-27, 11, 24], look: [-40, 7, 12], look2: [-40, 9, 12] },   // pyramid
+  { dur: 5, from: [24, 6, 12], to: [56, 11, 8], look: [40, 4, -10], cap: 'Make it your home' },   // house
+  { dur: 6, from: [13, 5, 28], to: [11, 19, 78], look: [0, 3, 40], look2: [0, 13, 86], cap: 'Beat the obby' },
+  { dur: 4, from: [-18, 4, 52], to: [-38, 6, 53], look: [-28, 2, 42] },   // seesaw
+  { dur: 6, from: [-52, 3, -42], to: [-52, 40, -42], look: [-75, 8, -60], look2: [-75, 30, -60], cap: 'Climb to the top' },   // scaffold tower
+  { dur: 6, from: [48, 22, -38], to: [102, 32, -48], look: [75, 8, -70], look2: [82, 16, -76], cap: 'Explore the town' },   // castle
+  { dur: 5, from: [-52, 9, 82], to: [-98, 22, 80], look: [-75, 10, 55], look2: [-75, 13, 55] },   // sandy hill
+  { dur: 4, from: [-1, 7, -78], to: [-1, 9, -102], look: [14, 8, -90] },   // billboard
+  { dur: 6, track: 'guest', cap: 'Meet the Guests' },
+  { dur: 6, from: [36, 9, -14], to: [31, 7, -19], look: [20, 8, -30], cap: 'Blow it all up!', act: 'rocket' },   // goodbye, tower
+  { dur: 9, from: [0, 14, 34], to: [0, 120, 170], look: [0, 4, 0], look2: [0, 0, 0], card: 'credits' },
+];
+// scale: every shot's length is multiplied by this, so the whole trailer lasts exactly as long as the song
+// clock: seconds into the trailer (the song's own position while it plays, so the shots stay in time with it)
+const trailer = { on: false, i: 0, clock: 0, music: null, fired: false, guest: null, look: new V3(), scale: 1 };
+const SHOTS_LENGTH = SHOTS.reduce((n, s) => n + s.dur, 0);
+const smoother = (x) => x * x * x * (x * (x * 6 - 15) + 10);
+const lerp3 = (a, b, k) => new V3(a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k);
+const TRAILER_CARDS = {
+  title: '<div class="logo">BLOCKBURG</div><div class="box"><div class="sub">A Free Online Building Game</div></div>',
+  credits: '<div class="logo">BLOCKBURG</div><div class="box"><div class="line">Made by <b>Max Alexander Forbush</b></div>' +
+    '<div class="line">Music by <b>wayferr</b></div><div class="sub">youtube.com/@wayferr</div></div>',
+};
+
+function startTrailer() {
+  if (!started || trailer.on || !adminPriv) return;   // only the admin (logged in with the admin key) can film trailers
+  stopDrag(); if (equipped) equip(TOOLS.indexOf(equipped));
+  $('insertWin').classList.add('hidden');
+  Object.assign(trailer, { on: true, i: 0, clock: 0, fired: false, guest: null, scale: 1 });
+  document.body.classList.add('trailer'); $('trailerUI').classList.remove('hidden');
+  camera.fov = 60; camera.updateProjectionMatrix();   // a little narrower: more like a movie camera
+  try {
+    const m = trailer.music = new Audio(THEME_SONG); m.volume = 0.8;
+    m.addEventListener('loadedmetadata', () => { if (trailer.music === m && m.duration > 10) trailer.scale = m.duration / SHOTS_LENGTH; });
+    m.play().catch(() => { });
+  } catch { trailer.music = null; }
+}
+function stopTrailer() {
+  if (!trailer.on) return;
+  trailer.on = false;
+  document.body.classList.remove('trailer'); $('trailerUI').classList.add('hidden');
+  $('trCard').classList.remove('show'); $('trCap').classList.remove('show');
+  camera.fov = 70; camera.updateProjectionMatrix();
+  if (trailer.music) { trailer.music.pause(); trailer.music = null; }
+}
+function trailerKey(e) {
+  if (e.code === 'KeyP' || e.key === 'Escape') stopTrailer();
+  else if (e.code === 'KeyN') {   // jump to the start of the next shot (the song jumps along)
+    trailer.clock = SHOTS.slice(0, trailer.i + 1).reduce((n, s) => n + s.dur * trailer.scale, 0) + 0.01;
+    if (trailer.music && trailer.music.duration) trailer.music.currentTime = Math.min(trailer.clock, trailer.music.duration);
+  }
+  else if (e.code === 'KeyM' && trailer.music) trailer.music.muted = !trailer.music.muted;
+  else if (e.code === 'KeyC') $('trailerUI').classList.toggle('nocaps');
+  else if (e.code === 'KeyB') $('trailerUI').classList.toggle('nobars');
+}
+// moves the camera for this frame; gives back the point it's looking at (the sun's shadows follow it)
+function trailerCamera(dt) {
+  const m = trailer.music;
+  if (m && !m.paused && m.currentTime > 0) trailer.clock = m.currentTime; else trailer.clock += dt;   // no song: count frames
+  let start = 0, i = 0;   // which shot is it, and when did it start?
+  while (i < SHOTS.length && trailer.clock >= start + SHOTS[i].dur * trailer.scale) { start += SHOTS[i].dur * trailer.scale; i++; }
+  if (i >= SHOTS.length) { stopTrailer(); return trailer.look.clone(); }
+  if (i !== trailer.i) { trailer.i = i; trailer.fired = false; trailer.guest = null; }
+  const s = SHOTS[i], dur = s.dur * trailer.scale, t = trailer.clock - start, k = smoother(Math.min(1, t / dur));
+  let pos, look;
+  if (s.track) {   // circle around a Guest who's out and about
+    if (!trailer.guest || trailer.guest.dead || !trailer.guest.enabled)
+      trailer.guest = humanoids.find(h => h !== player && h.ai && h.enabled && !h.dead) || humanoids.find(h => h !== player && h.enabled && !h.dead);
+    const g = trailer.guest ? trailer.guest.pos : { x: 0, y: 3, z: 0 }, a = t * 0.55;
+    look = new V3(g.x, g.y + 1.2, g.z);
+    pos = new V3(g.x + Math.sin(a) * 10, g.y + 3.5, g.z + Math.cos(a) * 10);
+  } else {
+    pos = lerp3(s.from, s.to, k);
+    look = lerp3(s.look, s.look2 || s.look, k);
+  }
+  camera.position.copy(pos); camera.lookAt(look); trailer.look.copy(look);
+  if (s.act === 'rocket' && !trailer.fired && t > dur * 0.25) {   // a rocket from just beside the camera into the rainbow tower
+    trailer.fired = true;
+    const o = pos.clone().add(new V3(0, -1.5, 0)), dir = new V3(20, 8, -30).sub(o).normalize();
+    if (net.mode === 'client') netSend({ t: 'shoot', k: 'rk', o: arr3(o), v: arr3(dir) });
+    else { spawnRocket(o, dir); netSfx('rocket', o); }
+    SFX.rocket();
+  }
+  // the cards and captions fade in a moment after the shot starts, and out just before it ends
+  const card = s.card && t > 0.8 && (s.card === 'credits' || t < dur - 0.9);
+  if (card && $('trCard').dataset.card !== s.card) { $('trCard').innerHTML = TRAILER_CARDS[s.card]; $('trCard').dataset.card = s.card; }
+  $('trCard').classList.toggle('show', !!card);
+  if (s.cap && $('trCap').textContent !== s.cap) $('trCap').textContent = s.cap;
+  $('trCap').classList.toggle('show', !!s.cap && t > 0.5 && t < dur - 0.5);
+  // the song fades out over the last few seconds of the credits
+  if (trailer.music && s.card === 'credits') trailer.music.volume = 0.8 * Math.max(0, Math.min(1, (dur - t) / 3));
+  return look;
+}
+
 /* ================= main loop ================= */
 let time = 0, last = performance.now(), lbT = 0;
 function playerInput(dt) {
   const P = player;
   P.move.set(0, 0, 0); P.jump = false;
-  if (!started || menuOpen || P.dead || document.activeElement === chatInput) return;
+  if (!started || menuOpen || trailer.on || P.dead || document.activeElement === chatInput) return;
   let ix = 0, iz = 0;
   if (keys.KeyW || keys.ArrowUp) iz += 1;
   if (keys.KeyS || keys.ArrowDown) iz -= 1;
@@ -3138,7 +3275,9 @@ function frame(now) {
   else target = new V3(P.pos.x, P.pos.y + 1.5, P.pos.z);
   const firstPerson = camDist < 1.5 && !P.dead;
   P.char.root.visible = !P.dead && !firstPerson;
-  if (firstPerson) {
+  if (trailer.on) {   // the trailer camera flies its own shots; you're off-screen
+    target = trailerCamera(dt); P.char.root.visible = false; selBox.visible = false;
+  } else if (firstPerson) {
     camera.position.set(P.pos.x, P.pos.y + 2.1, P.pos.z);
     camera.lookAt(camera.position.clone().add(new V3(-Math.sin(camYaw) * Math.cos(camPitch), -Math.sin(camPitch), -Math.cos(camYaw) * Math.cos(camPitch))));
   } else {
@@ -3342,7 +3481,10 @@ async function adminLogin(d) {
 }
 function setAdmin(h, on = true) {
   h.admin = on; h.drawTag(); renderLB();
-  if (h === player) { $('adminBadge').classList.toggle('hidden', !on); $('fmAdminBtn').textContent = on ? 'Admin logout' : 'Admin login'; }
+  if (h === player) {
+    $('adminBadge').classList.toggle('hidden', !on); $('fmAdminBtn').textContent = on ? 'Admin logout' : 'Admin login';
+    $('trailerBtn').style.display = on ? '' : 'none';   // the trailer camera is the admin's
+  }
 }
 function helloMsg() { const m = { t: 'hello', v: NET_VERSION, name: myName(), look }; if (net.admSig) m.adm = net.admSig; return m; }
 try { const saved = localStorage.getItem(ADMIN_KEY); if (saved) adminLogin(saved); } catch { }
@@ -4213,7 +4355,7 @@ showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
-  keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, get dragging() { return dragging; },
+  keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, trailer, startTrailer, stopTrailer, adminLogin, get dragging() { return dragging; },
   pickAt(x, y) { mouseNDC.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); const h = pick(); return h && (h.object.userData.part ? 'part ' + h.object.userData.part.nid : h.object.userData.hum ? 'hum ' + h.object.userData.hum.name : 'other'); },
   tick(frames) { for (let i = 0; i < frames; i++) frame(last + 1000 / 60); } };
 requestAnimationFrame(loop);

@@ -43,7 +43,7 @@ function fake2d(canvas) {
   });
 }
 
-// boot one copy of the game; resolves to { g: the game's window.__g, stop() } once it's running
+// boot one copy of the game; resolves to { g: the game's window.__g, window: its pretend page, stop() } once it's running
 export async function loadGame() {
   const window = startGame();
   let stopped = false;
@@ -55,6 +55,7 @@ export async function loadGame() {
   }
   return {
     g: window.__g,
+    window,
     stop() { stopped = true; window.happyDOM.abort().catch(() => { }); window.close(); },
   };
 }
