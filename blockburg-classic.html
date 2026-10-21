@@ -94,7 +94,7 @@
   .s-user{font-size:11px;text-align:right}
   .s-user b{color:#0b4a99}
   .s-nav{background:linear-gradient(#3d7fd0,#0b4a99);border-top:1px solid #6ea6ea;border-bottom:3px solid #062f66;display:flex;flex-wrap:wrap}
-  .s-nav a{color:#fff;font:bold 13px Verdana;padding:8px 14px;cursor:pointer;border-right:1px solid #2a65b3;text-decoration:none}
+  .s-nav a{color:#fff;font:bold 13px Verdana;padding:8px 11px;cursor:pointer;border-right:1px solid #2a65b3;text-decoration:none}
   .s-nav a:hover,.s-nav a.on{background:#fff;color:#0b4a99}
   .s-sub{background:#e8eef7;border-bottom:1px solid #b9cbe4;padding:4px 10px;font-size:11px;color:#333}
   .s-body{padding:10px;min-height:420px}
@@ -131,6 +131,7 @@
   .gamegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
   .gcard{border:1px solid #b9cbe4;padding:6px;text-align:center;background:#f6f9fd}
   .gcard img,.gcard .ph{width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid #888;display:block;background:#4b974b}
+  .thumbClassic,#thumbBase{image-rendering:pixelated}
   .gcard .gt{font:bold 12px Verdana;color:#0b4a99;margin:5px 0 2px}
   .gcard .gs{font-size:10px;color:#555;margin-bottom:5px}
   .hatgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
@@ -234,7 +235,7 @@
     <div class="s-user">Logged in as <b>Player</b> <span class="fm-adm hidden" id="adminBadge" style="margin:0">Admin</span> &nbsp;|&nbsp; 🎫 <b>25</b> Tix &nbsp;|&nbsp; 💵 <b>10</b> Bux<br><span id="onlineCount">5</span> people online</div>
   </div>
   <div class="s-nav">
-    <a data-page="home" class="on">My Blockburg</a><a data-page="games">Games</a><a data-page="catalog">Catalog</a><a data-page="character">Character</a><a data-page="build">Build</a><a data-page="online">Multiplayer</a><a data-page="forum">Forums</a><a data-page="help">Help</a>
+    <a data-page="home" class="on">My Blockburg</a><a data-page="games">Games</a><a data-page="catalog">Catalog</a><a data-page="character">Character</a><a data-page="build">Build</a><a data-page="online">Multiplayer</a><a data-page="friends">Friends<span id="frBadge"></span></a><a data-page="forum">Forums</a><a data-page="help">Help</a>
   </div>
   <div class="s-sub" id="loading">Loading the game engine...</div>
   <div class="s-body">
@@ -244,7 +245,7 @@
           <div class="avatarSlot"></div>
           <div style="margin-top:6px"><button class="s-btn" data-goto="character">Change Character</button></div>
         </div></div>
-        <div class="box"><h3>My Friends (4)</h3><div class="in" id="friends"></div></div>
+        <div class="box"><h3 id="friendsHd">My Friends (0)</h3><div class="in" id="friends"></div></div>
       </div>
       <div>
         <div class="box"><h3>Featured Game</h3><div class="in" style="display:flex;gap:10px;flex-wrap:wrap">
@@ -265,7 +266,6 @@
     <div class="page hidden" id="p-games"><div class="box"><h3>Games</h3><div class="in"><div class="gamegrid">
       <div class="gcard"><img class="thumbClassic" alt=""><div class="gt">Blockburg Classic</div><div class="gs">by Player &middot; 4 playing</div><button class="s-btn go" data-play="classic">Play Solo</button></div>
       <div class="gcard"><img id="thumbBase" alt=""><div class="gt">Happy Home Baseplate</div><div class="gs">by Player &middot; empty, build anything</div><button class="s-btn go" data-play="baseplate">Play Solo</button></div>
-      <div class="gcard"><img id="thumbObby" alt=""><div class="gt">Mega Fun Obby</div><div class="gs">by Player &middot; opens the other game file</div><button class="s-btn go" data-link="blockburg-obby.html">Visit</button></div>
     </div></div></div></div>
 
     <div class="page hidden" id="p-catalog"><div class="box"><h3>Catalog</h3><div class="in">
@@ -322,6 +322,26 @@
           <p><b>Up to 8 players.</b> Works best on home internet; some school or work networks block it.</p>
           <p>Your look (hat, shirt, pants, face, colors) comes with you.</p>
         </div></div>
+      </div>
+    </div></div>
+
+    <div class="page hidden" id="p-friends"><div class="cols">
+      <div>
+        <div class="box"><h3>Your Friend Code</h3><div class="in" style="text-align:center">
+          <div id="frMyCode" style="font:bold 26px Verdana;letter-spacing:3px;color:#0b4a99;margin:4px 0">--------</div>
+          <button class="s-btn" id="frCopy">Copy</button>
+          <p class="fm-sm" style="margin-bottom:0">Send this code to a friend. They type it in <b>Add a Friend</b>, then you accept.</p>
+        </div></div>
+        <div class="box"><h3>Add a Friend</h3><div class="in">
+          <input id="frCode" maxlength="8" placeholder="ABCD2345" style="width:100%;box-sizing:border-box;font:bold 14px Verdana;text-transform:uppercase;padding:4px">
+          <div style="margin-top:6px"><button class="s-btn go" id="frAddBtn">Send Request</button></div>
+          <div class="fm-sm" id="frMsg" style="margin-top:6px"></div>
+        </div></div>
+      </div>
+      <div>
+        <div class="box"><h3>Friend Requests</h3><div class="in" id="frReqs"></div></div>
+        <div class="box"><h3 id="frListHd">My Friends (0)</h3><div class="in" id="frList"></div></div>
+        <div class="fm-sm" id="frStatus"></div>
       </div>
     </div></div>
 
@@ -425,7 +445,7 @@ const SKY_URL = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQIAJQAlAAD/4gIcSUNDX1BS
 // wait for an image without img.decode(), which never finishes in a background tab
 const imgReady = (img) => (img.complete && img.naturalWidth ? Promise.resolve() : new Promise((res) => { img.addEventListener('load', res, { once: true }); img.addEventListener('error', res, { once: true }); }));
 let pageReady = false;   // set once the whole page has started up
-const sky = new THREE.TextureLoader().load(SKY_URL, () => { if (pageReady && siteOpen) snapClassicThumb(); });
+const sky = new THREE.TextureLoader().load(SKY_URL, () => { if (pageReady && siteOpen) snapGameThumbs(); });
 sky.mapping = THREE.EquirectangularReflectionMapping;
 sky.colorSpace = THREE.SRGBColorSpace;
 scene.background = sky;
@@ -3130,28 +3150,27 @@ pvCam.position.set(0, 4.2, 16); pvCam.lookAt(0, 3.3, 0);
 const pvHolder = document.createElement('div'); pvHolder.id = 'avatarHolder'; pvHolder.append(pv.domElement);
 
 // game thumbnails
-function snapClassicThumb() {
+// every game gets a real snapshot of its world, shrunk down to a chunky low-res picture like the old site
+function snapThumb(pos, look) {
   const c = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 2000);
-  c.position.set(38, 32, 46); c.lookAt(0, 4, -12);
+  c.position.copy(pos); c.lookAt(look);
   renderer.render(scene, c);
-  const url = renderer.domElement.toDataURL('image/jpeg', 0.8);
-  document.querySelectorAll('.thumbClassic').forEach(i => i.src = url);
+  const src = renderer.domElement, W = 128, H = 96;   // tiny on purpose: the browser blows it back up pixelated
+  const sw = Math.min(src.width, src.height * W / H), sh = sw * H / W;
+  return canvas(W, H, (g) => { g.imageSmoothingEnabled = true; g.drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, 0, 0, W, H); }).toDataURL();
 }
-$('thumbBase').src = canvas(320, 240, (g) => {
-  const gr = g.createLinearGradient(0, 0, 0, 110); gr.addColorStop(0, '#2b78d4'); gr.addColorStop(1, '#a9d6f7');
-  g.fillStyle = gr; g.fillRect(0, 0, 320, 110);
-  g.fillStyle = '#287F47'; g.beginPath(); g.moveTo(0, 240); g.lineTo(320, 240); g.lineTo(250, 110); g.lineTo(70, 110); g.fill();
-  g.fillStyle = 'rgba(255,255,255,.12)';
-  for (let y = 0; y < 8; y++) for (let x = 0; x < 16; x++) { const t = y / 8, py = 116 + y * y * 2.1 + y * 6, w = 180 + t * 140;
-    g.beginPath(); g.arc(160 - w / 2 + (x + 0.5) * w / 16, py, 2 + t * 3, 0, 7); g.fill(); }
-  g.fillStyle = '#fff'; g.font = 'bold 22px Verdana'; g.textAlign = 'center'; g.fillText('BUILD!', 160, 60);
-}).toDataURL();
-$('thumbObby').src = canvas(320, 240, (g) => {
-  g.fillStyle = '#8fd0ff'; g.fillRect(0, 0, 320, 240);
-  [['#C4281C', 30, 190], ['#F5CD30', 90, 160], ['#0D69AC', 150, 130], ['#4B974B', 210, 100], ['#DA8541', 260, 70]]
-    .forEach(([c, x, y]) => { g.fillStyle = c; g.fillRect(x, y, 46, 16); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x, y + 12, 46, 4); });
-  g.fillStyle = '#ff3b1f'; g.fillRect(0, 222, 320, 18);
-}).toDataURL();
+function snapGameThumbs() {
+  document.querySelectorAll('.thumbClassic').forEach(i => i.src = snapThumb(new V3(38, 32, 46), new V3(0, 4, -12)));
+  // Happy Home Baseplate: the same baseplate with everything else hidden, plus a few starter bricks
+  const hidden = [...parts.filter(p => !p.locked).map(p => p.mesh), ...humanoids.map(h => h.char.root)].filter(o => o.visible);
+  hidden.forEach(o => o.visible = false);
+  const bricks = new THREE.Group();
+  [['#C4281C', 4, 1.2, 2, -3, 0.6, 0], ['#0D69AC', 4, 1.2, 2, -3, 1.8, 0], ['#F5CD30', 2, 2.4, 2, 1, 1.2, 1], ['#4B974B', 4, 1.2, 4, 4, 0.6, -2], ['#F2F3F3', 2, 1.2, 2, 4, 1.8, -2]]
+    .forEach(([col, w, h, d, x, y, z]) => { const m = new THREE.Mesh(boxGeo(w, h, d), partMats(col)); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; bricks.add(m); });
+  scene.add(bricks);
+  $('thumbBase').src = snapThumb(new V3(7, 5, 8.5), new V3(0.5, 1, -1));
+  scene.remove(bricks); hidden.forEach(o => o.visible = true);
+}
 
 // pages
 function showPage(p) {
@@ -3160,9 +3179,9 @@ function showPage(p) {
   const slot = document.querySelector('#p-' + p + ' .avatarSlot');
   if (slot) slot.append(pvHolder);
   if (p === 'forum') forumOpen();
+  if (p === 'friends') friendsInit(true);
   $('site').scrollTop = 0;
 }
-$('friends').innerHTML = npcDefs.map(([n]) => `<div>🟢 <b style="color:#0b4a99">${n}</b> <span style="color:#777">(online)</span></div>`).join('');
 let catTab = 'hats';
 const LOOK_SLOT = { hats: 'hat', shirts: 'shirt', pants: 'pants', tshirts: 'tshirt', faces: 'face' };
 // face pictures: each face on a yellow square, like a close-up of a noob head
@@ -3396,6 +3415,171 @@ $('fmBody').addEventListener('click', async (e) => {
   }
   forum.view = fm === 'boards' ? { v: 'boards' } : { v: fm, id };
   forumRender(); $('site').scrollTop = 0;
+});
+
+/* ================= FRIENDS =================
+   Each browser gets a friend code. Requests, accepts and "who's online" go through the same free
+   message servers as the relay and forums. Requests are kept on the server, so they still arrive
+   if your friend was offline when you sent them. Nothing connects until you open the Friends page once. */
+const FRIEND_PREFIX = 'blockburg-friends-v1/u/';
+const FRIEND_KEY = 'blockburg-friends';
+const FR = { data: null, clients: [], status: {}, lastSent: '', lastTs: 0, started: false };
+const validId = (s) => typeof s === 'string' && /^[A-Z0-9]{8}$/.test(s);
+const cleanName = (n) => String(n || '').replace(/[^\w \-]/g, '').slice(0, 16) || 'Player';
+const frTopic = (id, kind, from) => FRIEND_PREFIX + id + '/' + kind + (from ? '/' + from : '');
+function frLoad() {
+  try { FR.data = JSON.parse(localStorage.getItem(FRIEND_KEY)); } catch { FR.data = null; }
+  if (FR.data && !validId(FR.data.id)) FR.data = null;
+  if (FR.data) for (const k of ['friends', 'incoming', 'outgoing']) FR.data[k] = FR.data[k] || {};
+}
+function frSave() { try { localStorage.setItem(FRIEND_KEY, JSON.stringify(FR.data)); } catch { } }
+function frEnsure() {
+  if (FR.data) return;
+  FR.data = { id: Array.from({ length: 8 }, () => ROOM_CHARS[(Math.random() * ROOM_CHARS.length) | 0]).join(''), friends: {}, incoming: {}, outgoing: {} };
+  frSave();
+}
+// retained = the server keeps it for whoever connects later; null clears it
+function frPub(topic, obj) { const s = obj ? JSON.stringify(obj) : ''; FR.clients.forEach(c => c.publish(topic, s, { retain: true, qos: 1 })); }
+function frMyStatus() {
+  const host = net.mode === 'host';
+  return { n: myName(), on: true, st: host ? 'host' : started ? 'play' : 'site', code: host ? net.code : '', pl: host ? net.place : '', ts: Date.now() };
+}
+async function friendsInit(create) {
+  if (!FR.data) frLoad();
+  if (create) frEnsure();
+  frRender();
+  if (!FR.data || FR.started) return;
+  FR.started = true; frRender();
+  try { await loadMqtt(); } catch { FR.started = false; frRender(); return; }
+  const me = FR.data.id;
+  await Promise.all(RELAY_BROKERS.map(async (url) => {
+    try {
+      // if the tab closes or the internet drops, the server tells our friends we went offline
+      const c = await relayConnect(url, { will: { topic: frTopic(me, 'status'), payload: JSON.stringify({ n: myName(), on: false, ts: Date.now() }), retain: true, qos: 1 } });
+      c.on('message', (t, p) => frMessage(t, p));
+      c.on('connect', () => { FR.lastSent = ''; });   // after a reconnect, say we're back
+      c.subscribe([frTopic(me, 'req/+'), frTopic(me, 'acc/+'), frTopic(me, 'rem/+'), ...Object.keys(FR.data.friends).map(f => frTopic(f, 'status'))], { qos: 1 });
+      FR.clients.push(c);
+    } catch { }
+  }));
+  if (!FR.clients.length) { FR.started = false; frRender(); return; }
+  frTick(); setInterval(frTick, 5000);
+  addEventListener('pagehide', () => frPub(frTopic(me, 'status'), { n: myName(), on: false, ts: Date.now() }));
+}
+function frTick() {
+  const s = frMyStatus(), key = s.n + s.st + s.code;
+  if (key !== FR.lastSent || Date.now() - FR.lastTs > 60000) { frPub(frTopic(FR.data.id, 'status'), s); FR.lastSent = key; FR.lastTs = Date.now(); }
+  frRender();   // so a friend who stopped checking in fades to offline
+}
+function frAdd(id, n) {
+  FR.data.friends[id] = { n }; delete FR.data.incoming[id]; delete FR.data.outgoing[id]; frSave();
+  FR.clients.forEach(c => c.subscribe(frTopic(id, 'status'), { qos: 1 }));
+}
+function frDrop(id) {
+  delete FR.data.friends[id]; delete FR.status[id]; frSave();
+  FR.clients.forEach(c => c.unsubscribe(frTopic(id, 'status')));
+}
+function frMessage(topic, payload) {
+  const [id, kind, from] = topic.slice(FRIEND_PREFIX.length).split('/'), s = new TextDecoder().decode(payload);
+  let o = null;
+  if (s) { try { o = JSON.parse(s); } catch { return; } }
+  const d = FR.data, me = d.id;
+  if (!o) return;   // a cleared message
+  if (kind === 'status') {
+    if (!d.friends[id]) return;
+    FR.status[id] = { ...o, got: Date.now() };
+    if (o.n) { d.friends[id].n = cleanName(o.n); frSave(); }
+    frRender(); return;
+  }
+  if (id !== me || !validId(from) || from === me) return;
+  const name = cleanName(o.n), confirm = () => { frPub(frTopic(from, 'acc', me), { n: myName() }); frPub(frTopic(me, 'req', from), null); };
+  if (kind === 'req') {
+    if (d.friends[from]) confirm();   // already friends (maybe they lost our answer): just say yes again
+    else if (d.outgoing[from]) { frAdd(from, name); confirm(); }   // we both asked each other
+    else if (!d.incoming[from]) { d.incoming[from] = { n: name, ts: Date.now() }; frSave(); if (!siteOpen) sysChat(`${name} sent you a friend request!`); }
+  } else if (kind === 'acc') {
+    if (d.outgoing[from]) { frAdd(from, name); if (!siteOpen) sysChat(`${name} accepted your friend request!`); }
+    frPub(frTopic(me, 'acc', from), null);
+  } else if (kind === 'rem') {
+    if (d.friends[from]) frDrop(from);
+    frPub(frTopic(me, 'rem', from), null);
+  }
+  frRender();
+}
+const PLACE_NAMES = { classic: 'Blockburg Classic', baseplate: 'Happy Home Baseplate' };
+function frState(id) {
+  const s = FR.status[id], now = Date.now();
+  if (!s || !s.on || now - s.got > 150000 || now - s.ts > 600000) return { on: false, text: 'Offline' };
+  if (s.st === 'host' && /^[A-Z0-9]{4}$/.test(s.code || '')) return { on: true, text: `Hosting ${PLACE_NAMES[s.pl] || 'a game'}`, code: s.code };
+  return { on: true, text: s.st === 'play' ? 'Playing Blockburg' : 'Online' };
+}
+function frRender() {
+  if (!$('frList')) return;
+  const d = FR.data, ids = d ? Object.keys(d.friends) : [];
+  $('frMyCode').textContent = d ? d.id : '--------';
+  const rows = ids.map(id => ({ id, n: d.friends[id].n || 'Player', s: frState(id) })).sort((a, b) => b.s.on - a.s.on || a.n.localeCompare(b.n));
+  const dot = (on) => (on ? '🟢' : '⚪');
+  const joinBtn = (r) => (r.s.code ? ` <button class="s-btn go" style="font-size:11px;padding:2px 8px" data-frjoin="${r.id}">Join</button>` : '');
+  $('friendsHd').textContent = $('frListHd').textContent = `My Friends (${ids.length})`;
+  $('friends').innerHTML = rows.length
+    ? rows.slice(0, 8).map(r => `<div style="margin:2px 0">${dot(r.s.on)} <b style="color:#0b4a99">${escHtml(r.n)}</b> <span style="color:#777">(${r.s.text})</span>${joinBtn(r)}</div>`).join('')
+    : `<div class="fm-sm">No friends yet. <span class="fm-link" data-goto="friends">Add some!</span></div>`;
+  $('frList').innerHTML = rows.length
+    ? rows.map(r => `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #dfe7f2">${dot(r.s.on)}
+        <div style="flex:1"><b style="color:#0b4a99">${escHtml(r.n)}</b><div class="fm-sm">${r.s.text} · code ${r.id}</div></div>${joinBtn(r)}
+        <span class="fm-del" style="float:none" data-frrem="${r.id}">remove</span></div>`).join('')
+    : '<div class="fm-sm">No friends yet. Send someone your code, or type theirs in <b>Add a Friend</b>.</div>';
+  const inc = d ? Object.entries(d.incoming) : [], out = d ? Object.keys(d.outgoing) : [];
+  $('frReqs').innerHTML = (inc.length
+    ? inc.map(([id, r]) => `<div style="padding:4px 0;border-bottom:1px solid #dfe7f2"><b style="color:#0b4a99">${escHtml(r.n)}</b> wants to be your friend!
+        <div style="margin-top:4px"><button class="s-btn go" style="font-size:11px;padding:2px 8px" data-fracc="${id}">Accept</button> <button class="s-btn" data-frdec="${id}">Decline</button></div></div>`).join('')
+    : '<div class="fm-sm">No new requests.</div>') +
+    (out.length ? `<div class="fm-sm" style="margin-top:6px">Waiting for an answer from: ${out.map(id => `<b>${id}</b> <span class="fm-del" style="float:none" data-frcan="${id}">cancel</span>`).join(', ')}</div>` : '');
+  $('frBadge').textContent = inc.length ? ` (${inc.length})` : '';
+  $('frStatus').textContent = !d ? '' : FR.clients.length ? 'Connected to the friends server.' : FR.started ? 'Connecting to the friends server...' : "Couldn't reach the friends server. Some school or work networks block it.";
+}
+function frSendRequest() {
+  const msg = (t) => { $('frMsg').textContent = t; };
+  frEnsure();
+  const code = ($('frCode').value || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), d = FR.data;
+  if (!validId(code)) return msg('Friend codes are 8 letters and numbers, like ABCD2345.');
+  if (code === d.id) return msg("That's your own code, silly!");
+  if (d.friends[code]) return msg("You're already friends!");
+  if (!FR.clients.length) { friendsInit(); return msg('Not connected yet. Try again in a few seconds.'); }
+  if (d.incoming[code]) return frAccept(code);
+  d.outgoing[code] = { ts: Date.now() }; frSave();
+  frPub(frTopic(code, 'req', d.id), { n: myName(), ts: Date.now() });
+  $('frCode').value = ''; msg('Friend request sent! It shows up for them next time they open Blockburg.');
+  frRender();
+}
+function frAccept(id) {
+  const r = FR.data.incoming[id]; if (!r) return;
+  frAdd(id, r.n);
+  frPub(frTopic(id, 'acc', FR.data.id), { n: myName() }); frPub(frTopic(FR.data.id, 'req', id), null);
+  frRender();
+}
+$('frAddBtn').onclick = frSendRequest;
+$('frCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') frSendRequest(); });
+$('frCopy').onclick = () => {
+  if (!FR.data) return;
+  const done = () => { $('frCopy').textContent = 'Copied!'; setTimeout(() => ($('frCopy').textContent = 'Copy'), 1500); };
+  try { navigator.clipboard.writeText(FR.data.id).then(done, () => prompt('Copy your friend code:', FR.data.id)); } catch { prompt('Copy your friend code:', FR.data.id); }
+};
+$('site').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-frjoin],[data-fracc],[data-frdec],[data-frrem],[data-frcan]');
+  if (!t || !FR.data) return;
+  const d = t.dataset, me = FR.data.id;
+  if (!FR.clients.length && !d.frjoin) { $('frMsg').textContent = 'Not connected to the friends server.'; return; }
+  if (d.frjoin) { const s = frState(d.frjoin); if (s.code) { $('mpCode').value = s.code; showPage('online'); joinGame(); } }
+  if (d.fracc) frAccept(d.fracc);
+  if (d.frdec) { delete FR.data.incoming[d.frdec]; frSave(); frPub(frTopic(me, 'req', d.frdec), null); }
+  if (d.frcan) { delete FR.data.outgoing[d.frcan]; frSave(); frPub(frTopic(d.frcan, 'req', me), null); }
+  if (d.frrem) {
+    const n = FR.data.friends[d.frrem] && FR.data.friends[d.frrem].n;
+    if (!confirm(`Remove ${n || 'this friend'} from your friends?`)) return;
+    frDrop(d.frrem); frPub(frTopic(d.frrem, 'rem', me), { n: myName(), ts: Date.now() });
+  }
+  frRender();
 });
 
 function playPlace(id) {
@@ -4011,7 +4195,8 @@ $('mpCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinGame
 humanoids.forEach(h => h.postStep(0, 0));
 pageReady = true;
 { let s = 'panorama'; try { s = localStorage.getItem(SKY_KEY) || s; } catch { } applySky(s); }
-snapClassicThumb();
+snapGameThumbs();
+friendsInit();
 refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
