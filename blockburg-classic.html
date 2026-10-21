@@ -44,18 +44,20 @@
   .win h4{margin:8px 0 4px;font-size:12px}
   .win h4:first-child{margin-top:0}
   .win .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+  .win .grid button.b{white-space:nowrap;padding:4px 2px;min-width:0}
   .win button.b{font:12px Arial;background:#d4d0c8;border:2px outset #fff;padding:4px 6px;cursor:pointer}
   .win button.b:active{border-style:inset}
   .sw{width:24px;height:24px;border:2px solid #555;cursor:pointer;box-sizing:border-box}
   .sw.sel{border:3px solid #000;outline:2px solid #fff}
   #palette{display:grid;grid-template-columns:repeat(9,24px);gap:3px}
-  #insertWin{left:8px;top:240px;width:250px}
+  #insertWin{left:8px;top:240px;width:276px}
   #setWin{left:270px;top:40px;width:250px}
   #helpWin{left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 20px))}
   #helpWin td{padding:2px 6px;vertical-align:top}
   #helpWin td:first-child{font-weight:bold;white-space:nowrap}
   .row{display:flex;gap:6px;align-items:center;margin:4px 0}
-  .row input[type=number]{width:46px}
+  .row input[type=number]{width:0;flex:1;min-width:0}
+  #insertWin .row .b{flex:0 0 auto}
   #colorName{font-weight:bold}
   .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.55);z-index:20}
   .overlay.hidden{display:none}
@@ -105,6 +107,25 @@
   .s-btn{font:bold 12px Verdana;background:linear-gradient(#fff,#d7e3f2);border:1px solid #6e99c9;padding:4px 10px;cursor:pointer;color:#0b4a99}
   .s-btn:hover{background:linear-gradient(#fff,#b6cff0)}
   .s-btn.go{background:linear-gradient(#8bea6f,#2f9e19);color:#fff;border-color:#1f6e10;text-shadow:1px 1px 0 #1f6e10;font-size:14px;padding:6px 18px}
+  .fm-tbl{width:100%;border-collapse:collapse;font-size:12px}
+  .fm-tbl th{background:#e8eef7;color:#0b4a99;text-align:left;padding:4px 6px;border-bottom:1px solid #b9cbe4;font:bold 11px Verdana}
+  .fm-tbl td{padding:6px;border-bottom:1px solid #dfe7f2;vertical-align:top}
+  .fm-tbl tr:nth-child(odd) td{background:#f6f9fd}
+  .fm-tbl .num{text-align:center;width:60px}
+  .fm-link{color:#0b4a99;font-weight:bold;cursor:pointer;text-decoration:underline}
+  .fm-sm{font-size:10px;color:#666}
+  .fm-crumb{font-size:12px;margin-bottom:8px}
+  .fm-post{display:grid;grid-template-columns:130px 1fr;border:1px solid #b9cbe4;margin-bottom:6px}
+  .fm-post .who{background:#e8eef7;padding:6px;font-size:12px;word-break:break-word}
+  .fm-post .who b{color:#0b4a99}
+  .fm-post .msg{padding:6px 8px;font-size:12px;white-space:pre-wrap;word-break:break-word}
+  .fm-post.adm .who{background:#fff4d6}
+  @media (max-width:600px){.fm-post{grid-template-columns:1fr}}
+  .fm-adm{display:inline-block;background:#c4281c;color:#fff;font:bold 10px Verdana;padding:1px 5px;border:1px solid #7a120b;margin:2px 0}
+  .fm-adm.hidden{display:none}
+  .fm-form input,.fm-form textarea{width:100%;box-sizing:border-box;font:12px Verdana;padding:4px;margin-bottom:6px}
+  .fm-form textarea{height:90px;resize:vertical}
+  .fm-del{color:#c4281c;cursor:pointer;font-size:10px;float:right;text-decoration:underline}
   .news p{margin:0 0 8px}
   .news b{color:#0b4a99}
   .gamegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
@@ -182,6 +203,10 @@
     <div class="row">Volume <input type="range" id="volume" min="0" max="1" step="0.05" value="0.5"></div>
     <div class="row"><label><input type="checkbox" id="outlineChk"> Part outlines</label></div>
     <div class="row"><label><input type="checkbox" id="thoughtChk" checked> Show Guest thoughts</label></div>
+    <div class="row"><label><input type="checkbox" id="shadowChk" checked> Shadows</label></div>
+    <div class="row">Darkness <input type="range" id="darkSlider" min="0" max="0.7" step="0.05" value="0"> <span id="darkVal">0%</span></div>
+    <div class="row">Saturation <input type="range" id="satSlider" min="0" max="2.5" step="0.05" value="1"> <span id="satVal">100%</span></div>
+    <div class="row">Studs <select id="studSel"></select></div>
     <div class="row">Sky <select id="skySel"><option value="panorama">Cloud Panorama</option><option value="golden">Golden Classic</option></select></div>
     <div class="row"><label><input type="checkbox" id="fsChk"> Fullscreen</label></div>
     <button data-esc="back" class="dark">Back</button>
@@ -206,10 +231,10 @@
 <div id="site"><div class="s-wrap">
   <div class="s-top">
     <div class="s-logo">BLOCKBURG<small>A Free Online Building Game</small></div>
-    <div class="s-user">Logged in as <b>Player</b> &nbsp;|&nbsp; 🎫 <b>25</b> Tix &nbsp;|&nbsp; 💵 <b>10</b> Bux<br><span id="onlineCount">5</span> people online</div>
+    <div class="s-user">Logged in as <b>Player</b> <span class="fm-adm hidden" id="adminBadge" style="margin:0">Admin</span> &nbsp;|&nbsp; 🎫 <b>25</b> Tix &nbsp;|&nbsp; 💵 <b>10</b> Bux<br><span id="onlineCount">5</span> people online</div>
   </div>
   <div class="s-nav">
-    <a data-page="home" class="on">My Blockburg</a><a data-page="games">Games</a><a data-page="catalog">Catalog</a><a data-page="character">Character</a><a data-page="build">Build</a><a data-page="online">Multiplayer</a><a data-page="help">Help</a>
+    <a data-page="home" class="on">My Blockburg</a><a data-page="games">Games</a><a data-page="catalog">Catalog</a><a data-page="character">Character</a><a data-page="build">Build</a><a data-page="online">Multiplayer</a><a data-page="forum">Forums</a><a data-page="help">Help</a>
   </div>
   <div class="s-sub" id="loading">Loading the game engine...</div>
   <div class="s-body">
@@ -244,14 +269,14 @@
     </div></div></div></div>
 
     <div class="page hidden" id="p-catalog"><div class="box"><h3>Catalog</h3><div class="in">
-      <div class="cat-tabs"><button class="s-btn on" data-cat="hats">Hats</button><button class="s-btn" data-cat="shirts">Shirts</button><button class="s-btn" data-cat="pants">Pants</button><button class="s-btn" data-cat="faces">Faces</button></div>
+      <div class="cat-tabs"><button class="s-btn on" data-cat="hats">Hats</button><button class="s-btn" data-cat="shirts">Shirts</button><button class="s-btn" data-cat="pants">Pants</button><button class="s-btn" data-cat="tshirts">T-Shirts</button><button class="s-btn" data-cat="faces">Faces</button></div>
       <p>It's Play Solo, so everything is free. Click <b>Wear</b>!</p>
       <div class="hatgrid" id="hatGrid"></div>
     </div></div></div>
 
     <div class="page hidden" id="p-character"><div class="cols">
       <div class="box"><h3>My Character</h3><div class="in" style="text-align:center"><div class="avatarSlot"></div>
-        <div style="margin-top:6px;line-height:1.6">Hat: <b id="curHat"></b><br>Shirt: <b id="curShirt"></b><br>Pants: <b id="curPants"></b><br>Face: <b id="curFace"></b></div>
+        <div style="margin-top:6px;line-height:1.6">Hat: <b id="curHat"></b><br>Shirt: <b id="curShirt"></b><br>Pants: <b id="curPants"></b><br>T-Shirt: <b id="curTShirt"></b><br>Face: <b id="curFace"></b></div>
         <div style="margin-top:6px"><button class="s-btn" data-goto="catalog">Get Clothes</button> <button class="s-btn" id="noobBtn">Reset to Noob</button></div></div></div>
       <div class="box"><h3>Body Colors</h3><div class="in" style="text-align:center">
         <p style="margin-top:0">Click a body part, then pick a BrickColor.</p>
@@ -300,6 +325,15 @@
       </div>
     </div></div>
 
+    <div class="page hidden" id="p-forum">
+      <div class="box"><h3>Blockburg Forums</h3><div class="in">
+        <div class="fm-sm" id="fmStatus" style="margin-bottom:6px">Connecting to the forum servers...</div>
+        <div id="fmBody"></div>
+      </div></div>
+      <div class="fm-sm">Posts are public: anyone who plays Blockburg can read them. <b>Never post your real name, address, school or passwords.</b>
+        Be nice! &nbsp; <span class="fm-link" id="fmAdminBtn">Admin login</span></div>
+    </div>
+
     <div class="page hidden" id="p-help"><div class="box"><h3>Help</h3><div class="in"><table>
       <tr><td><b>W A S D</b></td><td>Walk</td></tr><tr><td><b>Space</b></td><td>Jump</td></tr>
       <tr><td><b>Right-drag</b></td><td>Turn the camera</td></tr><tr><td><b>Scroll</b></td><td>Zoom</td></tr>
@@ -345,6 +379,8 @@ const REFLECT_GAIN = 0.6;   // the env map is brighter than the old engine's, so
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 2000);
@@ -357,7 +393,20 @@ farGround.position.y = -0.6;
 scene.add(farGround);
 const sun = new THREE.DirectionalLight(0xffffff, 2.3);
 sun.position.set(0.5, 1, 0.35);
-scene.add(sun);
+// shadows: the sun's shadow box follows the camera's target so everything nearby casts one
+const sunDir = new V3(0.5, 1, 0.35).normalize();
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -90, right: 90, top: 90, bottom: -90, near: 1, far: 600 });
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 0.04;
+scene.add(sun, sun.target);
+const SHADOW_KEY = 'blockburg-classic-shadows';
+let shadowsOn = true;
+try { shadowsOn = localStorage.getItem(SHADOW_KEY) !== 'off'; } catch { }
+renderer.shadowMap.enabled = shadowsOn; sun.castShadow = shadowsOn;
+// everything with a mesh casts and catches shadows (used for hats, tools, and anything built from groups)
+const shadowAll = (o) => { o.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } }); return o; };
 
 function rng(seed) {
   return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
@@ -415,19 +464,65 @@ function makeGoldenSky(d) {
   return t;
 }
 
-/* ---- stud / inlet surfaces ---- */
-const studTex = tex(canvas(64, 64, (g) => {
-  g.fillStyle = '#ececec'; g.fillRect(0, 0, 64, 64);
-  g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.arc(35, 36, 17, 0, 7); g.fill();
-  const gr = g.createRadialGradient(25, 24, 2, 31, 31, 17);
-  gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#dadada');
-  g.fillStyle = gr; g.beginPath(); g.arc(31, 31, 16, 0, 7); g.fill();
-}), true);
-const inletTex = tex(canvas(64, 64, (g) => {
-  g.fillStyle = '#ececec'; g.fillRect(0, 0, 64, 64);
-  g.fillStyle = '#8f8f8f'; g.beginPath(); g.arc(32, 32, 16, 0, 7); g.fill();
-  g.fillStyle = '#c4c4c4'; g.beginPath(); g.arc(34, 34, 13, 0, 7); g.fill();
-}), true);
+/* ---- stud / inlet surfaces: one tile per stud, in the style of each era ----
+   Tops get studs, bottoms get inlets. Light top-left edges + dark bottom-right edges = raised;
+   the reverse = sunk in. Eras that had a logo get a "B" for Blockburg. */
+const STUD_STYLES = [
+  ['2006', '2006-2009 (round)'], ['2009', '2009 (smooth squares)'], ['2010', '2009-2013 (logo squares)'],
+  ['2013', '2013-2017 (framed logo)'], ['2017', '2017 (framed badge)'], ['now', '2017-Now (framed)'],
+];
+const SURF = 128, BASE = '#e6e6e6', HI = '#ffffff', LO = '#a2a2a2', DEEP = '#7c7c7c';
+const studCanvas = canvas(SURF, SURF, () => { }), inletCanvas = canvas(SURF, SURF, () => { });
+const studTex = tex(studCanvas, true), inletTex = tex(inletCanvas, true);
+function rr(g, x, y, s, r, color) { g.fillStyle = color; g.beginPath(); g.roundRect(x, y, s, s, r); g.fill(); }
+// a block letter B, embossed: light copy up-left, dark copy down-right, then the face
+function logoB(g, cx, cy, size, sunk = false) {
+  g.font = `900 ${size}px Arial`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const [a, b] = sunk ? [LO, HI] : [HI, LO];
+  g.fillStyle = a; g.fillText('B', cx - 2, cy - 2);
+  g.fillStyle = b; g.fillText('B', cx + 2, cy + 2);
+  g.fillStyle = '#d8d8d8'; g.fillText('B', cx, cy);
+}
+// a little tilted square badge (2017)
+function badge(g, cx, cy, s) {
+  g.save(); g.translate(cx, cy); g.rotate(0.3);
+  rr(g, -s / 2 + 2, -s / 2 + 2, s, 4, LO); rr(g, -s / 2 - 2, -s / 2 - 2, s, 4, HI); rr(g, -s / 2, -s / 2, s, 4, '#d6d6d6');
+  rr(g, -s / 6, -s / 6, s / 3, 2, LO);
+  g.restore();
+}
+const raised = (g, x, s, r, face = BASE) => { rr(g, x + 4, x + 5, s, r, LO); rr(g, x - 2, x - 2, s, r, HI); rr(g, x, x, s - 2, r, face); };
+const sunk = (g, x, s, r, inside = DEEP) => { rr(g, x, x, s, r, HI); rr(g, x - 3, x - 3, s - 1, r, '#5f5f5f'); rr(g, x, x, s - 3, r, inside); };
+function paintSurfaces(style) {
+  const st = studCanvas.getContext('2d'), il = inletCanvas.getContext('2d');
+  st.clearRect(0, 0, SURF, SURF); il.clearRect(0, 0, SURF, SURF);
+  st.fillStyle = BASE; st.fillRect(0, 0, SURF, SURF);
+  il.fillStyle = BASE; il.fillRect(0, 0, SURF, SURF);
+  if (style === '2006') {
+    st.fillStyle = 'rgba(0,0,0,.28)'; st.beginPath(); st.arc(70, 72, 34, 0, 7); st.fill();
+    const gr = st.createRadialGradient(50, 48, 4, 62, 62, 34); gr.addColorStop(0, HI); gr.addColorStop(1, '#d2d2d2');
+    st.fillStyle = gr; st.beginPath(); st.arc(62, 62, 32, 0, 7); st.fill();
+    logoB(st, 62, 64, 30);
+    sunk(il, 30, 70, 6);
+    const g2 = il.createRadialGradient(60, 58, 3, 64, 64, 18); g2.addColorStop(0, '#9a9a9a'); g2.addColorStop(1, '#4a4a4a');
+    il.fillStyle = g2; il.beginPath(); il.arc(64, 64, 16, 0, 7); il.fill();
+  } else if (style === '2009' || style === '2010') {
+    raised(st, 30, 68, 14);
+    if (style === '2010') logoB(st, 63, 65, 42);
+    sunk(il, 30, 70, 12);
+  } else {   // 2013, 2017, now: a framed square with a sunken middle
+    raised(st, 26, 76, 12);
+    rr(st, 38, 38, 52, 6, LO); rr(st, 41, 41, 49, 6, '#d4d4d4');
+    if (style === '2013') logoB(st, 66, 67, 34);
+    if (style === '2017') badge(st, 65, 65, 26);
+    raised(il, 26, 76, 12, '#cfcfcf');
+    rr(il, 37, 37, 52, 6, '#4f4f4f'); rr(il, 40, 40, 50, 6, style === 'now' ? '#6e6e6e' : '#727272');
+  }
+  studTex.needsUpdate = true; inletTex.needsUpdate = true;
+}
+const STUD_KEY = 'blockburg-classic-studs';
+let studStyle = '2009';
+try { studStyle = localStorage.getItem(STUD_KEY) || '2009'; } catch { }
+paintSurfaces(studStyle);
 
 const reflectMats = [];
 function phong(opts, reflective = true) {
@@ -435,6 +530,63 @@ function phong(opts, reflective = true) {
   if (reflective) { m.envMap = envTex; m.combine = THREE.MixOperation; m.reflectivity = REFLECT * REFLECT_GAIN; reflectMats.push(m); }
   return m;
 }
+/* ---- old-school gear textures: worn metal, wood grain, a leather-wrapped grip, a sword blade with a groove ---- */
+const gearTexCache = {};
+function gearTex(key, w, h, draw) {
+  if (!gearTexCache[key]) { const t = tex(canvas(w, h, draw)); t.wrapS = t.wrapT = THREE.RepeatWrapping; gearTexCache[key] = t; }
+  return gearTexCache[key];
+}
+const scratches = (g, W, H, seed, n, light = 0.16, dark = 0.14) => {
+  const r = rng(seed);
+  for (let i = 0; i < n; i++) {
+    const x = r() * W, y = r() * H, a = r() * Math.PI, l = 3 + r() * 12;
+    g.strokeStyle = r() < 0.5 ? `rgba(255,255,255,${light})` : `rgba(0,0,0,${dark})`; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+  }
+};
+const metalTex = (base, seed = 1) => gearTex('metal' + base, 64, 64, (g, W, H) => {
+  g.fillStyle = base; g.fillRect(0, 0, W, H);
+  const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, 'rgba(255,255,255,.18)'); gr.addColorStop(0.5, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(0,0,0,.15)');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  scratches(g, W, H, seed, 90);
+});
+const woodTex = () => gearTex('wood', 64, 128, (g, W, H) => {
+  g.fillStyle = '#7a4a24'; g.fillRect(0, 0, W, H);
+  const r = rng(9);
+  for (let i = 0; i < 18; i++) {
+    g.strokeStyle = `rgba(${r() < 0.5 ? '45,22,6' : '150,95,50'},${0.25 + r() * 0.35})`; g.lineWidth = 1 + r() * 2.5;
+    const x0 = r() * W; g.beginPath(); g.moveTo(x0, 0);
+    for (let y = 0; y <= H; y += 16) g.lineTo(x0 + Math.sin(y * 0.05 + i) * (2 + r() * 3), y);
+    g.stroke();
+  }
+  g.fillStyle = 'rgba(40,20,5,.5)'; g.beginPath(); g.ellipse(W * 0.6, H * 0.4, 4, 9, 0, 0, 7); g.fill();   // a knot
+});
+const gripTex = () => gearTex('grip', 32, 64, (g, W, H) => {
+  g.fillStyle = '#3a2213'; g.fillRect(0, 0, W, H);
+  for (let y = -W; y < H + W; y += 9) {   // leather wrapped round and round
+    g.strokeStyle = '#6b4325'; g.lineWidth = 5; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y + W * 0.6); g.stroke();
+    g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(0, y + 3); g.lineTo(W, y + 3 + W * 0.6); g.stroke();
+  }
+});
+// the blade face: bright edges, a dark groove (fuller) down the middle, polished steel in between
+const bladeTex = () => gearTex('blade', 256, 32, (g, W, H) => {
+  const gr = g.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0, '#f4f6f8'); gr.addColorStop(0.12, '#aeb4bb'); gr.addColorStop(0.38, '#d9dde2');
+  gr.addColorStop(0.46, '#6c737b'); gr.addColorStop(0.54, '#6c737b'); gr.addColorStop(0.62, '#d9dde2');
+  gr.addColorStop(0.88, '#aeb4bb'); gr.addColorStop(1, '#f4f6f8');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  scratches(g, W, H, 4, 70, 0.22, 0.1);
+});
+const paintedTex = (base, stripe, seed) => gearTex('paint' + base + stripe, 64, 64, (g, W, H) => {
+  g.fillStyle = base; g.fillRect(0, 0, W, H);
+  if (stripe) { g.fillStyle = stripe; g.fillRect(0, H * 0.42, W, H * 0.16); }
+  const r = rng(seed);   // chipped paint showing grey metal underneath
+  for (let i = 0; i < 14; i++) { g.fillStyle = 'rgba(160,160,165,.55)'; g.beginPath(); g.ellipse(r() * W, r() * H, 1 + r() * 3, 1 + r() * 2, r() * 3, 0, 7); g.fill(); }
+  scratches(g, W, H, seed + 1, 50);
+});
+const gearMatCache = {};
+const gearMat = (key, map, opts = {}) => gearMatCache[key] || (gearMatCache[key] = phong({ map, color: '#ffffff', shininess: 70, specular: 0x666666, ...opts }));
+const gearPhong = (key, opts) => gearMatCache[key] || (gearMatCache[key] = phong(opts));
 const matCache = {};
 function partMats(hex, reflective = true, trans = 0) {
   const key = hex + (reflective ? '' : '|matte') + (trans ? '|t' + trans : '');
@@ -592,6 +744,7 @@ function makePart(o) {
   const p = { shape, size: [...size], color, trans, anchored, mass, kill: !!o.kill, win: !!o.win, locked: !!o.locked, bouncy: !!o.bouncy, mesh, body };
   body.userData = { part: p }; mesh.userData.part = p;
   mesh.position.copy(body.position); mesh.quaternion.copy(body.quaternion);
+  mesh.castShadow = size[0] < 500; mesh.receiveShadow = true;   // (the giant baseplate only catches shadows)
   world.addBody(body); scene.add(mesh); parts.push(p); pickables.push(mesh);
   if (o.sleep && !anchored) body.sleep();
   // every part has a network id so host and clients agree on which brick is which
@@ -1065,16 +1218,82 @@ PANTS.push({ id: 'testsheet', name: 'Test Sheet Pants', price: 'Free', desc: 'We
 const procLayer = (d, kind) => (g, W, H) => { d.fill(g, W, H); if (d[kind]) d[kind](g, W, H); };
 const tplLayer = (src, r) => (g, W, H) => g.drawImage(src, r[0], r[1], r[2], r[3], 0, 0, W, H);
 const layerMatCache = {};
-function layeredMat(key, w, h, base, layers) {
+// sharp = drawn at 4x detail (used for the torso front when a T-shirt decal is on it)
+function layeredMat(key, w, h, base, layers, sharp = false) {
   key += '|' + base;
   if (!layerMatCache[key]) {
-    const W = w * PX, H = h * PX;
-    layerMatCache[key] = phong({ map: tex(canvas(W, H, (g) => {
+    const W = w * PX, H = h * PX, k = sharp ? 4 : 1;
+    layerMatCache[key] = phong({ map: tex(canvas(W * k, H * k, (g) => {
+      g.scale(k, k);   // every layer draws in the normal size; the extra detail comes for free
       g.fillStyle = base; g.fillRect(0, 0, W, H);
       layers.forEach(l => l && l(g, W, H));
     })) });
   }
   return layerMatCache[key];
+}
+
+/* ---- T-shirts: a picture stuck on the front of the torso, over whatever shirt you wear (like classic Roblox) ---- */
+const decal = (draw) => canvas(256, 256, draw);
+const TSHIRTS = [
+  { id: 'none', name: 'No T-Shirt', price: '' },
+  { id: 'heart', name: 'I ♥ Blockburg', price: 'Free (was 5 Tix)', desc: 'Show the world your love. For Blockburg. Not for anything else.',
+    art: decal((g) => {
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+      g.font = '900 92px Arial'; g.lineWidth = 12; g.strokeStyle = '#fff'; g.fillStyle = '#111';
+      g.strokeText('I', 64, 88); g.fillText('I', 64, 88);
+      g.fillStyle = '#e2231a'; g.strokeStyle = '#fff'; g.lineWidth = 10;
+      g.beginPath(); g.moveTo(170, 140); g.bezierCurveTo(90, 85, 120, 25, 170, 62); g.bezierCurveTo(220, 25, 250, 85, 170, 140); g.closePath();
+      g.stroke(); g.fill();
+      g.font = '900 40px Arial'; g.lineWidth = 9; g.strokeStyle = '#fff'; g.fillStyle = '#111';
+      g.strokeText('BLOCKBURG', 128, 200); g.fillText('BLOCKBURG', 128, 200);
+    }) },
+  { id: 'tinpotclub', name: 'Tinpot Fan Club', price: 'Free (was 25 Tix)', desc: 'Official member. Membership card not included. Pot sold separately.',
+    art: decal((g) => {
+      g.fillStyle = '#1B2A35'; g.beginPath(); g.roundRect(8, 8, 240, 240, 26); g.fill();
+      const gr = g.createLinearGradient(70, 0, 186, 0); gr.addColorStop(0, '#8e949c'); gr.addColorStop(0.45, '#eef1f4'); gr.addColorStop(1, '#8e949c');
+      g.fillStyle = gr; g.beginPath(); g.roundRect(74, 66, 108, 84, 10); g.fill();
+      g.fillRect(64, 142, 128, 14);
+      g.fillStyle = '#2b2b2b'; g.save(); g.translate(182, 92); g.rotate(-0.12); g.fillRect(0, -7, 58, 14); g.restore();
+      g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '900 34px Arial';
+      g.fillText('TINPOT', 128, 36); g.font = '900 30px Arial'; g.fillText('FAN CLUB', 128, 200);
+    }) },
+  { id: 'boom', name: 'BOOM!', price: 'Free (was 15 Tix)', desc: 'For people who solve every problem with a rocket launcher.',
+    art: decal((g) => {
+      const star = (r1, r2, n, color) => {
+        g.fillStyle = color; g.beginPath();
+        for (let i = 0; i < n * 2; i++) { const a = i / (n * 2) * Math.PI * 2 - Math.PI / 2, r = i % 2 ? r2 : r1; g.lineTo(128 + Math.cos(a) * r, 128 + Math.sin(a) * r); }
+        g.closePath(); g.fill();
+      };
+      star(124, 80, 12, '#c4281c'); star(104, 66, 12, '#ff8a1a'); star(80, 52, 12, '#ffe14d');
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '900 54px Arial'; g.lineJoin = 'round';
+      g.lineWidth = 10; g.strokeStyle = '#7a1a00'; g.strokeText('BOOM!', 128, 132); g.fillStyle = '#fff'; g.fillText('BOOM!', 128, 132);
+    }) },
+  { id: 'smiletee', name: 'Smile Tee', price: 'Free', desc: 'A shirt with a face on it, so your shirt can smile when you can\'t.',
+    art: decal((g) => {
+      g.fillStyle = '#F5CD30'; g.strokeStyle = '#111'; g.lineWidth = 8;
+      g.beginPath(); g.arc(128, 128, 112, 0, 7); g.fill(); g.stroke();
+      const s = Math.min(150 / FACE_IMG.width, 150 / FACE_IMG.height);
+      g.drawImage(FACE_IMG, 128 - FACE_IMG.width * s / 2, 128 - FACE_IMG.height * s / 2, FACE_IMG.width * s, FACE_IMG.height * s);
+    }) },
+];
+// drawn T-shirts (pictures)
+const EPICAL_TEE_IMG = new Image();
+EPICAL_TEE_IMG.src = 'data:image/png;base64,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';
+await imgReady(EPICAL_TEE_IMG);
+TSHIRTS.push({ id: 'epical', name: 'Epical', price: 'Free (was 50 Tix)', desc: 'For the epic kind of people, and the ones that side with the trolls!', img: EPICAL_TEE_IMG });
+const JACKET_IMG = new Image();
+JACKET_IMG.src = 'data:image/png;base64,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';
+await imgReady(JACKET_IMG);
+// full = drawn edge to edge over the whole torso front (the collar touches the top, the zipper reaches the bottom)
+TSHIRTS.push({ id: 'jacket', name: 'Jacket', price: 'Free (was 35 Tix)', desc: 'For those who just keep getting cold', img: JACKET_IMG, full: true });
+// the decal sits centered on the torso front with a small border, keeping its shape
+function tshirtLayer(T) {
+  const src = T.art || T.img;
+  if (T.full) return (g, W, H) => g.drawImage(src, 0, 0, W, H);
+  return (g, W, H) => {
+    const m = W * 0.07, box = Math.min(W, H) - m * 2, s = Math.min(box / src.width, box / src.height);
+    g.drawImage(src, (W - src.width * s) / 2, (H - src.height * s) / 2, src.width * s, src.height * s);
+  };
 }
 // built-in clothes name their faces by "kind"; null = leave bare (hands)
 const PROC_KIND = {
@@ -1089,9 +1308,10 @@ function clothLayer(d, region, procKinds, f) {
   return k ? procLayer(d, k) : null;
 }
 // mesh order: lleg, rleg, larm, rarm, torso, head  (the "l" meshes sit at -x, the character's right)
-function dressCharacter(ch, colors, shirt = 'none', pants = 'none', face = 'smile') {
+function dressCharacter(ch, colors, shirt = 'none', pants = 'none', face = 'smile', tshirt = 'none') {
   const c = normColors(colors), m = ch.meshes;
   const S = SHIRTS.find(s => s.id === shirt), P = PANTS.find(p => p.id === pants);
+  const T = TSHIRTS.find(t => t.id === tshirt && (t.art || t.img));
   ch.face = face;
   m[5].material = faceMat(c.head, face);
   // w = width (x), d = depth (z), h = height (y) of the body part, in studs
@@ -1100,10 +1320,13 @@ function dressCharacter(ch, colors, shirt = 'none', pants = 'none', face = 'smil
     if (lay.every(l => l.every(x => !x))) { mesh.material = partMats(base)[0]; return; }
     mesh.material = FACE_ORDER.map((f, i) => {
       const [fw, fh] = f === 'U' || f === 'D' ? [w, d] : f === 'L' || f === 'R' ? [d, h] : [w, h];
-      return layeredMat([name, shirt, pants, f].join('|'), fw, fh, base, lay[i]);
+      const front = name === 'torso' && f === 'F' && T;
+      return layeredMat([name, shirt, pants, f, front ? T.id : ''].join('|'), fw, fh, base, lay[i], !!front);
     });
   };
-  part(m[4], 'torso', c.torso, 2, 1, 2, (f) => [P && P.tpl ? clothLayer(P, 'torso', null, f) : null, clothLayer(S, 'torso', PROC_KIND.shirtTorso, f)]);
+  // torso: body color, then pants (waist), then shirt, then the T-shirt decal on the front
+  part(m[4], 'torso', c.torso, 2, 1, 2, (f) => [P && P.tpl ? clothLayer(P, 'torso', null, f) : null, clothLayer(S, 'torso', PROC_KIND.shirtTorso, f),
+    f === 'F' && T ? tshirtLayer(T) : null]);
   part(m[2], 'rArm', c.larm, 1, 1, 2, (f) => [clothLayer(S, 'right', PROC_KIND.shirtArm, f)]);
   part(m[3], 'lArm', c.rarm, 1, 1, 2, (f) => [clothLayer(S, 'left', PROC_KIND.shirtArm, f)]);
   part(m[0], 'rLeg', c.lleg, 1, 1, 2, (f) => [clothLayer(P, 'right', PROC_KIND.pantsLeg, f)]);
@@ -1126,6 +1349,7 @@ function makeCharacter(colors) {
   const root = new THREE.Group(), meshes = [], ff = [];
   const mk = (geo, mat, half, parent, y) => {
     const m = new THREE.Mesh(geo, mat); m.position.y = y; m.userData.half = half;
+    m.castShadow = true; m.receiveShadow = true;
     if (geo.type === 'BoxGeometry') m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), outlineMat));
     const f = new THREE.Mesh(geo, ffMat); f.scale.setScalar(1.12); f.visible = false; m.add(f); ff.push(f);
     parent.add(m); meshes.push(m); return m;
@@ -1152,7 +1376,7 @@ function colorCharacter(ch, colors) {
 }
 function wearHat(ch, id) {
   ch.hatHolder.clear();
-  if (id && id !== 'none') ch.hatHolder.add(makeHat(id));
+  if (id && id !== 'none') ch.hatHolder.add(shadowAll(makeHat(id)));
 }
 
 function makeSprite(w, h, scale) {
@@ -1195,9 +1419,9 @@ class Humanoid {
     if (this.hid) netEv(['look', this.hid, lookOf(this)]);
   }
   setColors(c) { colorCharacter(this.char, c); }
-  setOutfit(colors, shirt, pants, face = this.face || 'smile') {
-    Object.assign(this, { colors: normColors(colors), shirt, pants, face });
-    dressCharacter(this.char, colors, shirt, pants, face);
+  setOutfit(colors, shirt, pants, face = this.face || 'smile', tshirt = this.tshirt || 'none') {
+    Object.assign(this, { colors: normColors(colors), shirt, pants, face, tshirt });
+    dressCharacter(this.char, colors, shirt, pants, face, tshirt);
     if (this.hid) netEv(['look', this.hid, lookOf(this)]);
   }
   setEnabled(on) {
@@ -1211,8 +1435,9 @@ class Humanoid {
   drawTag() {
     const { c, t } = this.tag.userData, g = c.getContext('2d'), W = c.width, M = W / 2;
     g.clearRect(0, 0, W, c.height);
-    g.font = 'bold 26px Arial'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.fillStyle = '#fff';
-    g.strokeText(this.name, M, 22); g.fillText(this.name, M, 22);
+    g.font = 'bold 26px Arial'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.fillStyle = this.admin ? '#ffd23f' : '#fff';
+    const label = this.admin ? '★ ' + this.name + ' [Admin]' : this.name;
+    g.strokeText(label, M, 22, W - 10); g.fillText(label, M, 22, W - 10);
     if (this.health < 100) {
       g.fillStyle = '#000'; g.fillRect(M - 80, 40, 160, 14);
       g.fillStyle = '#c4281c'; g.fillRect(M - 78, 42, 156, 10);
@@ -1227,7 +1452,7 @@ class Humanoid {
     t.needsUpdate = true;
   }
   say(text) {
-    chatLine(this.name, text, this.chatColor);
+    chatLine(this.admin ? '[Admin] ' + this.name : this.name, text, this.admin ? '#ffd23f' : this.chatColor);
     if (this.hid) netEv(['chat', this.hid, text]);
     const { c, t } = this.bubble.userData, g = c.getContext('2d');
     g.clearRect(0, 0, 512, 128);
@@ -1316,7 +1541,7 @@ class Humanoid {
     [ch.legL, ch.legR, ch.armL, ch.armR].forEach((p, i) => p.rotation.x += (tgt[i] - p.rotation.x) * (i === 3 && holding ? Math.min(1, dt * 30) : k));
     ch.ff.forEach(f => { f.visible = this.ff > 0; });
     if (this.ff > 0) ffMat.opacity = 0.25 + Math.sin(t * 14) * 0.15;
-    this.shadow.visible = this.groundY > -900;
+    this.shadow.visible = this.groundY > -900 && !shadowsOn;   // the old round blob, only when real shadows are off
     this.shadow.position.set(b.x, this.groundY + 0.06, b.z);
     const head = new V3(b.x, b.y + HY, b.z);
     if (this.tag) this.tag.position.set(head.x, head.y + 1.5, head.z);
@@ -1334,6 +1559,7 @@ function breakApart(h) {
   h.char.root.updateMatrixWorld(true);
   for (const m of h.char.meshes) {
     const piece = new THREE.Mesh(m.geometry, m.material);
+    piece.castShadow = true; piece.receiveShadow = true;
     m.getWorldPosition(piece.position); m.getWorldQuaternion(piece.quaternion);
     if (m.children[0] && m.children[0].isLineSegments) piece.add(new THREE.LineSegments(m.children[0].geometry, outlineMat));
     scene.add(piece);
@@ -1377,7 +1603,7 @@ function spawnHatPickup(id, hatObj, vel) {
   const center = box.getCenter(new V3()), size = box.getSize(new V3());
   const q = hatObj.getWorldQuaternion(new THREE.Quaternion()), wp = hatObj.getWorldPosition(new V3());
   const wrap = new THREE.Group(); wrap.position.copy(center); wrap.quaternion.copy(q);
-  const inner = makeHat(id); inner.position.copy(wp.sub(center).applyQuaternion(q.clone().invert()));
+  const inner = shadowAll(makeHat(id)); inner.position.copy(wp.sub(center).applyQuaternion(q.clone().invert()));
   wrap.add(inner); scene.add(wrap);
   const body = new CANNON.Body({ mass: 2, material: physPart,
     shape: new CANNON.Box(new CANNON.Vec3(Math.max(0.25, size.x / 2), Math.max(0.25, size.y / 2), Math.max(0.25, size.z / 2))),
@@ -1440,13 +1666,13 @@ function knock(h, vx, vy, vz) {
 const NOOB = { skin: '#F5CD30', shirt: '#0D69AC', pants: '#A4BD47' };
 const LOOK_KEY = 'blockburg-classic-look';
 let look = (() => {
-  try { const l = JSON.parse(localStorage.getItem(LOOK_KEY)); if (l && l.colors && l.colors.head) return { shirt: 'none', pants: 'none', face: 'smile', ...l }; } catch { }
-  return { colors: normColors(NOOB), hat: 'none', shirt: 'none', pants: 'none', face: 'smile' };
+  try { const l = JSON.parse(localStorage.getItem(LOOK_KEY)); if (l && l.colors && l.colors.head) return { shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none', ...l }; } catch { }
+  return { colors: normColors(NOOB), hat: 'none', shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none' };
 })();
 function saveLook() { try { localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } catch { } }
 const player = new Humanoid({ name: 'Player', colors: look.colors, isPlayer: true, chatColor: '#ffe680', hid: 'H' });
 player.setHat(look.hat);
-player.setOutfit(look.colors, look.shirt, look.pants, look.face);
+player.setOutfit(look.colors, look.shirt, look.pants, look.face, look.tshirt);
 const npcDefs = [
   ['Guest 1337', { skin: '#F5CD30', shirt: '#C4281C', pants: '#1B2A35' }, '#ff9a9a'],
   ['Guest 2006', { skin: '#CC8E69', shirt: '#4B974B', pants: '#694028' }, '#a8ffa8'],
@@ -1459,7 +1685,7 @@ const npcs = npcDefs.map(([name, colors, cc], i) => {
   const any = (list) => Math.random() < 0.6 ? list[1 + ((Math.random() * (list.length - 1)) | 0)].id : 'none';
   // Guest 1337 is way too epical for a normal smile; the others sometimes are too
   const r = Math.random();
-  n.setOutfit(colors, any(SHIRTS), any(PANTS), name === 'Guest 1337' ? 'epical' : r < 0.65 ? rpickFace() : 'smile');
+  n.setOutfit(colors, any(SHIRTS), any(PANTS), name === 'Guest 1337' ? 'epical' : r < 0.65 ? rpickFace() : 'smile', any(TSHIRTS));
   return n;
 });
 /* ================= AI: Guests that think =================
@@ -2076,18 +2302,47 @@ const cooldown = {};
 const HELD_TOOLS = ['sword', 'rocket', 'superball', 'paintball', 'trowel', 'bomb'];
 function buildHeldModels(hand) {
   const set = {};
-  const grey = partMats('#A3A2A5')[0], dark = partMats('#635F62')[0], black = partMats('#1B2A35')[0], brown = partMats('#694028')[0];
+  const steel = gearMat('steel', metalTex('#b4b9c0', 2)), dark = gearMat('dark', metalTex('#55595f', 3)), gold = gearMat('gold', metalTex('#d4a32b', 5), { specular: 0x886622, shininess: 90 });
+  const wood = gearMat('wood', woodTex(), { shininess: 20, specular: 0x222222 }), grip = gearMat('grip', gripTex(), { shininess: 10, specular: 0x111111 });
+  const black = gearMat('black', metalTex('#1f2328', 6), { shininess: 110, specular: 0x777777 });
   const g = (...meshes) => { const gr = new THREE.Group(); meshes.forEach(m => gr.add(m)); gr.visible = false; hand.add(gr); return gr; };
-  const box = (w, h, d, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); return m; };
-  set.sword = g(box(0.28, 0.28, 1.1, brown, 0, -0.2, 0.1), box(1.1, 0.18, 0.22, dark, 0, -0.2, 0.7), box(0.16, 0.42, 3.4, grey, 0, -0.2, 2.5));
-  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 3.8, 14), dark); tube.position.set(0, 0.6, 0.75);
-  set.rocket = g(tube, box(0.3, 0.5, 0.6, black, 0, -0.2, 0.3));
-  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 12), partMats('#C4281C')[0]); ball.position.set(0, -0.4, 0.2);
-  set.superball = g(ball);
-  set.paintball = g(box(0.4, 1.8, 0.55, partMats('#0D69AC')[0], 0, 0.3, 0.5), box(0.3, 0.4, 0.7, black, 0, -0.2, 0.2));
-  set.trowel = g(box(0.25, 0.8, 0.25, brown, 0, -0.3, 0), box(0.9, 0.05, 1.3, grey, 0, -0.75, 0.6));
-  const bomb = new THREE.Mesh(new THREE.SphereGeometry(0.75, 16, 12), black); bomb.position.set(0, -0.5, 0.3);
-  set.bomb = g(bomb, box(0.08, 0.5, 0.08, brown, 0, -0.5, 1.15));
+  const mesh = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); return m; };
+  const box = (w, h, d, mat, x, y, z) => mesh(new THREE.BoxGeometry(w, h, d), mat, x, y, z);
+  const rod = (r1, r2, len, mat, x, y, z, seg = 12) => mesh(new THREE.CylinderGeometry(r1, r2, len, seg).rotateX(Math.PI / 2), mat, x, y, z);   // along z (up, when the arm points forward)
+  const ring = (r, len, mat, x, y, z) => mesh(new THREE.CylinderGeometry(r, r, len, 16), mat, x, y, z);   // along y (forward)
+  // the Classic Sword: wrapped grip, gold crossguard and pommel, grooved blade with a point
+  const bladeFace = gearMat('blade', bladeTex(), { shininess: 140, specular: 0xbbbbbb });
+  const bladeMats = [bladeFace, bladeFace, steel, steel, steel, steel];
+  const tip = mesh(new THREE.ConeGeometry(0.21, 0.6, 4).rotateY(Math.PI / 4).rotateX(Math.PI / 2), steel, 0, -0.2, 4.05); tip.scale.x = 0.35;
+  set.sword = g(rod(0.13, 0.13, 1.0, grip, 0, -0.2, 0.05), mesh(new THREE.SphereGeometry(0.18, 12, 8), gold, 0, -0.2, -0.5),
+    box(1.25, 0.2, 0.22, gold, 0, -0.2, 0.62), mesh(new THREE.SphereGeometry(0.13, 10, 8), gold, -0.66, -0.2, 0.62), mesh(new THREE.SphereGeometry(0.13, 10, 8), gold, 0.66, -0.2, 0.62),
+    mesh(new THREE.BoxGeometry(0.12, 0.42, 3.0), bladeMats, 0, -0.2, 2.25), tip);
+  // the Rocket Launcher: olive tube with dark bands, a red warning stripe, a sight and a grip
+  const olive = gearMat('olive', paintedTex('#5f6b4c', null, 11));
+  set.rocket = g(ring(0.42, 3.8, olive, 0, 0.6, 0.75), ring(0.47, 0.22, dark, 0, -1.25, 0.75), ring(0.47, 0.22, dark, 0, 2.4, 0.75),
+    ring(0.44, 0.16, gearMat('redband', metalTex('#b8241b', 12)), 0, -0.8, 0.75), ring(0.46, 0.14, dark, 0, 0.9, 0.75),
+    ring(0.3, 0.1, black, 0, -1.37, 0.75), box(0.12, 0.5, 0.28, dark, 0, 0.3, 1.3), box(0.3, 0.55, 0.6, black, 0, -0.2, 0.3));
+  // the Superball: glossy rubber
+  set.superball = g(mesh(new THREE.SphereGeometry(0.6, 20, 14), gearPhong('rubber', { color: '#d0251a', shininess: 140, specular: 0xffffff }), 0, -0.4, 0.2));
+  // the Paintball Gun: chipped blue body with a white stripe, steel barrel, see-through hopper full of paint
+  const hopperBalls = new THREE.Group();
+  ['#C4281C', '#F5CD30', '#4B974B', '#0D69AC', '#E8BAC8'].forEach((c, i) => hopperBalls.add(mesh(new THREE.SphereGeometry(0.1, 8, 6), gearPhong('paint' + c, { color: c }), Math.cos(i * 1.3) * 0.12, 0.3 + Math.sin(i * 1.3) * 0.12, 0.88 + (i % 2) * 0.12)));
+  set.paintball = g(box(0.42, 1.5, 0.55, gearMat('pbody', paintedTex('#1f5fa8', '#f2f3f3', 21)), 0, 0.2, 0.5), ring(0.11, 1.0, steel, 0, -0.9, 0.55),
+    ring(0.15, 0.12, dark, 0, -1.38, 0.55), mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.55, 14).rotateX(Math.PI / 2),
+      gearMatCache.hopper || (gearMatCache.hopper = new THREE.MeshPhongMaterial({ color: '#ffe680', transparent: true, opacity: 0.45, shininess: 100 })), 0, 0.3, 0.95), hopperBalls,
+    box(0.3, 0.4, 0.7, black, 0, -0.2, 0.2));
+  // the Trowel: wooden handle, steel ferrule, worn diamond-tipped blade with rivets
+  const bladeShape = new THREE.Shape(); bladeShape.moveTo(-0.45, 0); bladeShape.lineTo(0.45, 0); bladeShape.lineTo(0.42, 1.0); bladeShape.lineTo(0, 1.45); bladeShape.lineTo(-0.42, 1.0); bladeShape.closePath();
+  const trowelBlade = mesh(new THREE.ExtrudeGeometry(bladeShape, { depth: 0.05, bevelEnabled: false }).rotateX(Math.PI / 2), gearMat('trowel', metalTex('#9fa4aa', 31), { shininess: 50 }), 0, -0.72, 0);
+  set.trowel = g(mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.8, 12), wood, 0, -0.25, 0), ring(0.15, 0.14, steel, 0, -0.68, 0),
+    box(0.1, 0.35, 0.1, steel, 0, -0.8, 0.12), trowelBlade,
+    mesh(new THREE.SphereGeometry(0.05, 6, 4), steel, -0.15, -0.69, 0.3), mesh(new THREE.SphereGeometry(0.05, 6, 4), steel, 0.15, -0.69, 0.3));
+  // the Timebomb: glossy black ball, steel cap, rope fuse, a glowing spark
+  const fuse = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(0, -0.5, 1.12), new V3(0.06, -0.48, 1.35), new V3(0.18, -0.4, 1.5)]), 8, 0.045, 6),
+    gearPhong('fuse', { color: '#c8a46a', shininess: 5 }));
+  set.bomb = g(mesh(new THREE.SphereGeometry(0.75, 20, 14), black, 0, -0.5, 0.3), rod(0.22, 0.25, 0.18, steel, 0, -0.5, 1.03), fuse,
+    mesh(new THREE.SphereGeometry(0.08, 8, 6), gearMatCache.spark || (gearMatCache.spark = new THREE.MeshBasicMaterial({ color: '#ffb02e' })), 0.18, -0.4, 1.52));
+  Object.values(set).forEach(shadowAll);
   return set;
 }
 const held = buildHeldModels(player.char.hand);
@@ -2101,7 +2356,7 @@ function equip(i) {
   if (equipped && equipped.id === 'sword') SFX.unsheath(); else SFX.click();
   document.querySelectorAll('.slot').forEach((s, j) => s.classList.toggle('sel', equipped === TOOLS[j]));
   $('tip').textContent = equipped ? equipped.tip : '';
-  renderer.domElement.style.cursor = equipped ? (equipped.hopper ? 'pointer' : 'crosshair') : 'default';
+  if (cursorBeforeTurn === null) renderer.domElement.style.cursor = toolCursor();   // (mid-turn it stays hidden)
 }
 
 const raycaster = new THREE.Raycaster(), mouseNDC = new THREE.Vector2();
@@ -2219,10 +2474,19 @@ function netSfx(name, pos) { if (net.mode === 'host') netEv(['sfx', name, arr3(p
 /* ---- projectiles ---- */
 const rockets = [], paintballs = [], superballs = [], bombs = [], fx = [], wallQueue = [];
 const rocketGeo = new THREE.CylinderGeometry(0.35, 0.35, 2.4, 10).rotateX(Math.PI / 2);
+const rocketTipGeo = new THREE.ConeGeometry(0.35, 0.7, 10).rotateX(Math.PI / 2);
+const rocketFinGeo = mergeFins();
+function mergeFins() {   // two crossed fin plates at the back of the rocket
+  const a = new THREE.BoxGeometry(1.2, 0.06, 0.5), b = new THREE.BoxGeometry(0.06, 1.2, 0.5), pos = [], idx = [];
+  [a, b].forEach(gm => { const off = pos.length / 3; pos.push(...gm.attributes.position.array); gm.index.array.forEach(i => idx.push(i + off)); });
+  const gm = new THREE.BufferGeometry(); gm.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gm.setIndex(idx); gm.computeVertexNormals();
+  return gm;
+}
 // visual = a look-alike on a client; the real one (that explodes and hurts) lives on the host
 function spawnRocket(o, dir, owner = player, visual = false) {
-  const m = new THREE.Mesh(rocketGeo, partMats('#A3A2A5')[0]);
-  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 10).rotateX(Math.PI / 2), partMats('#C4281C')[0]); tip.position.z = 1.5; m.add(tip);
+  const m = new THREE.Mesh(rocketGeo, gearMatCache.steel || partMats('#A3A2A5')[0]);
+  const tip = new THREE.Mesh(rocketTipGeo, gearMatCache.redband || partMats('#C4281C')[0]); tip.position.z = 1.5; m.add(tip);
+  const fins = new THREE.Mesh(rocketFinGeo, gearMatCache.olive || partMats('#635F62')[0]); fins.position.z = -1.0; m.add(fins);
   m.position.copy(o); m.lookAt(o.clone().add(dir)); scene.add(m);
   rockets.push({ mesh: m, pos: o.clone(), dir, life: 6, smoke: 0, owner, visual });
   netEv(['fx', 'rk', arr3(o), [r3(dir.x), r3(dir.y), r3(dir.z)]]);
@@ -2248,8 +2512,10 @@ function spawnSuperball(o, vel, owner = player) {
   });
   world.addBody(body); superballs.push(sb);
 }
+const bombGeo = new THREE.SphereGeometry(0.8, 20, 14), bombCapGeo = new THREE.CylinderGeometry(0.24, 0.27, 0.2, 12);
 function spawnBomb(o, vel, owner = player) {
-  const m = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 12), phong({ color: '#1B2A35' }));
+  const m = new THREE.Mesh(bombGeo, gearMatCache.black || partMats('#1B2A35')[0]);
+  const cap = new THREE.Mesh(bombCapGeo, gearMatCache.steel || partMats('#A3A2A5')[0]); cap.position.y = 0.8; m.add(cap);
   scene.add(m);
   const body = new CANNON.Body({ mass: 6, shape: new CANNON.Sphere(0.8), material: physPart, collisionFilterGroup: G_PROJ, collisionFilterMask: G_PART | G_NPC | G_PROJ | G_DEBRIS });
   body.position.set(o.x, o.y, o.z); body.velocity.set(vel.x, vel.y, vel.z); body.linearDamping = 0.1; body.angularDamping = 0.5;
@@ -2378,10 +2644,36 @@ const sysChat = (t) => chatLine(null, t);
 function renderLB() {
   const rows = humanoids.filter(h => h.enabled).sort((a, b) => b.kos - a.kos || a.wos - b.wos);
   $('lb').innerHTML = '<div class="r hd"><span>Player</span><span>KOs</span><span>WOs</span></div>' +
-    rows.map(h => `<div class="r ${h.isPlayer ? 'me' : ''}"><span>${h.name}</span><span>${h.kos}</span><span>${h.wos}</span></div>`).join('');
+    rows.map(h => `<div class="r ${h.isPlayer ? 'me' : ''}"><span>${h.admin ? '★ ' : ''}${h.name}</span><span>${h.kos}</span><span>${h.wos}</span></div>`).join('');
 }
 $('toolbar').innerHTML = TOOLS.map((t, i) => `<div class="slot" data-i="${i}"><span class="num">${(i + 1) % 10}</span><span class="ic">${t.icon}</span><span class="nm">${t.name}</span></div>`).join('');
 $('toolbar').addEventListener('click', (e) => { const s = e.target.closest('.slot'); if (s) equip(+s.dataset.i); });
+// gear slots show a little picture of the real model, like the old gear icons
+(function gearIcons() {
+  try {
+    const S = 96, r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    r.setSize(S, S); r.outputColorSpace = THREE.SRGBColorSpace;
+    const sc = new THREE.Scene();
+    sc.add(new THREE.AmbientLight(0xffffff, 1.1));
+    const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(2, 3, 4); sc.add(key);
+    const holder = new THREE.Group(); sc.add(holder);
+    const models = buildHeldModels(holder);
+    const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 50); cam.position.set(0, 0, 10);
+    HELD_TOOLS.forEach(id => {
+      const m = models[id]; Object.values(models).forEach(o => o.visible = o === m);
+      holder.rotation.set(0, 0, 0);
+      holder.rotation.set(-Math.PI / 2 + 0.35, 0.5, id === 'sword' || id === 'rocket' ? -Math.PI / 4 : 0);   // handle at the bottom, long tools on a slant
+      holder.updateMatrixWorld(true);
+      const bb = new THREE.Box3().setFromObject(m), c = bb.getCenter(new V3()), sz = bb.getSize(new V3());
+      const half = Math.max(sz.x, sz.y) / 2 * 1.12;
+      cam.left = c.x - half; cam.right = c.x + half; cam.top = c.y + half; cam.bottom = c.y - half; cam.updateProjectionMatrix();
+      r.render(sc, cam);
+      const slot = document.querySelector(`#toolbar .slot[data-i="${TOOLS.findIndex(t => t.id === id)}"] .ic`);
+      if (slot) slot.innerHTML = `<img src="${r.domElement.toDataURL()}" alt="" style="width:34px;height:34px;display:block;image-rendering:auto">`;
+    });
+    r.dispose(); r.forceContextLoss();
+  } catch (e) { /* keep the emoji icons */ }
+})();
 
 // insert panel
 const SHAPES = [
@@ -2479,6 +2771,34 @@ $('reflect').oninput = (e) => { REFLECT = +e.target.value; $('reflectVal').textC
 $('volume').oninput = (e) => { volume = +e.target.value; if (MASTER) MASTER.gain.value = volume; };
 $('outlineChk').onchange = (e) => { outlineMat.visible = e.target.checked; };
 $('thoughtChk').onchange = (e) => { showThoughts = e.target.checked; npcs.forEach(n => n.drawTag()); };
+// shadows on/off (off helps on slow computers)
+$('shadowChk').checked = shadowsOn;
+$('shadowChk').onchange = (e) => {
+  shadowsOn = e.target.checked;
+  renderer.shadowMap.enabled = shadowsOn; sun.castShadow = shadowsOn;
+  scene.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.needsUpdate = true; }); });
+  try { localStorage.setItem(SHADOW_KEY, shadowsOn ? 'on' : 'off'); } catch { }
+};
+// darkness + saturation: a color filter over the 3D view only (menus, chat and the toolbar stay normal)
+const LOOKFX_KEY = 'blockburg-classic-lookfx';
+let lookFx = { dark: 0, sat: 1 };
+try { lookFx = { ...lookFx, ...JSON.parse(localStorage.getItem(LOOKFX_KEY) || '{}') }; } catch { }
+function applyLookFx() {
+  renderer.domElement.style.filter = (lookFx.dark || lookFx.sat !== 1) ? `brightness(${1 - lookFx.dark}) saturate(${lookFx.sat})` : '';
+  $('darkSlider').value = lookFx.dark; $('darkVal').textContent = Math.round(lookFx.dark * 100) + '%';
+  $('satSlider').value = lookFx.sat; $('satVal').textContent = Math.round(lookFx.sat * 100) + '%';
+  try { localStorage.setItem(LOOKFX_KEY, JSON.stringify(lookFx)); } catch { }
+}
+$('darkSlider').oninput = (e) => { lookFx.dark = +e.target.value; applyLookFx(); };
+$('satSlider').oninput = (e) => { lookFx.sat = +e.target.value; applyLookFx(); };
+applyLookFx();
+// stud style by era
+$('studSel').innerHTML = STUD_STYLES.map(([id, label]) => `<option value="${id}">${label}</option>`).join('');
+$('studSel').value = studStyle;
+$('studSel').onchange = (e) => {
+  studStyle = e.target.value; paintSurfaces(studStyle);
+  try { localStorage.setItem(STUD_KEY, studStyle); } catch { }
+};
 
 /* ---- skies: each one brings its own sunlight, haze and land color ---- */
 const SKY_KEY = 'blockburg-classic-sky';
@@ -2492,7 +2812,7 @@ function applySky(name) {
   envTex = s.tex; scene.background = s.tex;
   scene.fog.color.set(s.fog);
   hemi.color.set(s.hemi[0]); hemi.groundColor.set(s.hemi[1]); hemi.intensity = s.hemi[2];
-  sun.color.set(s.sun[0]); sun.intensity = s.sun[1]; sun.position.set(...s.dir);
+  sun.color.set(s.sun[0]); sun.intensity = s.sun[1]; sunDir.set(...s.dir).normalize();
   farGround.material.color.set(s.land);
   for (const m of [...reflectMats, ...envMats]) { m.envMap = s.tex; m.needsUpdate = true; }
   $('skySel').value = SKIES[name] ? name : 'panorama';
@@ -2539,20 +2859,40 @@ addEventListener('keydown', (e) => {
   }
 });
 addEventListener('keyup', (e) => keys[e.code] = false);
-addEventListener('blur', () => { for (const k in keys) keys[k] = false; stopDrag(); rDrag = false; });
 const cv = renderer.domElement;
+// right-drag turns the camera like old Roblox: the mouse is locked in place (and hidden) while you turn,
+// then shows up again right where it was when you let go
+const camLocked = () => document.pointerLockElement === cv;
+// some places (like app preview panels) don't allow locking the mouse; there the cursor is just hidden while turning
+let cursorBeforeTurn = null;
+function hideCursorForTurn() { if (cursorBeforeTurn === null) { cursorBeforeTurn = cv.style.cursor; cv.style.cursor = 'none'; } }
+function showCursorAfterTurn() { if (cursorBeforeTurn !== null) { cursorBeforeTurn = null; cv.style.cursor = toolCursor(); } }
+function toolCursor() { return equipped ? (equipped.hopper ? 'pointer' : 'crosshair') : 'default'; }
+function endCamDrag() {
+  rDrag = false;
+  showCursorAfterTurn();
+  if (camLocked()) document.exitPointerLock();
+}
+document.addEventListener('pointerlockerror', () => { });   // refused: hiding the cursor covers it
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; stopDrag(); endCamDrag(); });
+document.addEventListener('pointerlockchange', () => { if (!camLocked()) rDrag = false; });   // e.g. Esc pressed mid-turn
 cv.addEventListener('contextmenu', (e) => e.preventDefault());
 cv.addEventListener('mousedown', (e) => {
   chatInput.blur();
-  if (e.button === 2) { rDrag = true; lastX = e.clientX; lastY = e.clientY; }
+  if (e.button === 2) {
+    rDrag = true; lastX = e.clientX; lastY = e.clientY;
+    hideCursorForTurn();
+    try { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } catch { }   // falls back to a hidden cursor if refused
+  }
   if (e.button === 0 && started) useTool(e);
 });
-addEventListener('mouseup', (e) => { if (e.button === 2) rDrag = false; if (e.button === 0) stopDrag(); });
+addEventListener('mouseup', (e) => { if (e.button === 2) endCamDrag(); if (e.button === 0) stopDrag(); });
 addEventListener('mousemove', (e) => {
-  mouseNDC.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  if (!camLocked()) mouseNDC.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);   // aim stays put while turning
   if (rDrag) {
-    camYaw -= (e.clientX - lastX) * 0.007;
-    camPitch = Math.min(1.4, Math.max(-1.3, camPitch + (e.clientY - lastY) * 0.007));
+    const dx = camLocked() ? e.movementX : e.clientX - lastX, dy = camLocked() ? e.movementY : e.clientY - lastY;
+    camYaw -= dx * 0.007;
+    camPitch = Math.min(1.4, Math.max(-1.3, camPitch + dy * 0.007));
     lastX = e.clientX; lastY = e.clientY;
   }
 });
@@ -2715,6 +3055,10 @@ function frame(now) {
       target.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist);
     camera.lookAt(target);
   }
+  // keep the sun's shadow box centered on the action (snapped to a grid so shadow edges don't shimmer as you walk)
+  const sc = new V3(Math.round(target.x / 2) * 2, Math.round(target.y / 2) * 2, Math.round(target.z / 2) * 2);
+  sun.target.position.copy(sc);
+  sun.position.copy(sc).addScaledVector(sunDir, 250);
 
   // HUD
   const hp = Math.max(0, P.health);
@@ -2769,12 +3113,12 @@ for (const h of HATS) {
 }
 pvChar.root.visible = true;
 // shirt and pants thumbnails: a noob wearing each item, framed on the torso or legs
-const clothThumbs = { shirts: {}, pants: {} };
+const clothThumbs = { shirts: {}, pants: {}, tshirts: {} };
 wearHat(pvChar, 'none');
 pvChar.root.rotation.y = -0.35;
-for (const [kind, list, look2, ly] of [['shirts', SHIRTS, 3.1, 3.1], ['pants', PANTS, 1.3, 1.2]]) {
+for (const [kind, list, look2, ly] of [['shirts', SHIRTS, 3.1, 3.1], ['pants', PANTS, 1.3, 1.2], ['tshirts', TSHIRTS, 3.1, 3.1]]) {
   for (const it of list) {
-    dressCharacter(pvChar, NOOB, kind === 'shirts' ? it.id : 'none', kind === 'pants' ? it.id : 'none');
+    dressCharacter(pvChar, NOOB, kind === 'shirts' ? it.id : 'none', kind === 'pants' ? it.id : 'none', 'smile', kind === 'tshirts' ? it.id : 'none');
     pvCam.position.set(0, look2 + 0.4, 9.5); pvCam.lookAt(0, ly, 0);
     pv.render(pvScene, pvCam); clothThumbs[kind][it.id] = pv.domElement.toDataURL();
   }
@@ -2815,11 +3159,12 @@ function showPage(p) {
   document.querySelectorAll('.s-nav a').forEach(a => a.classList.toggle('on', a.dataset.page === p));
   const slot = document.querySelector('#p-' + p + ' .avatarSlot');
   if (slot) slot.append(pvHolder);
+  if (p === 'forum') forumOpen();
   $('site').scrollTop = 0;
 }
 $('friends').innerHTML = npcDefs.map(([n]) => `<div>🟢 <b style="color:#0b4a99">${n}</b> <span style="color:#777">(online)</span></div>`).join('');
 let catTab = 'hats';
-const LOOK_SLOT = { hats: 'hat', shirts: 'shirt', pants: 'pants', faces: 'face' };
+const LOOK_SLOT = { hats: 'hat', shirts: 'shirt', pants: 'pants', tshirts: 'tshirt', faces: 'face' };
 // face pictures: each face on a yellow square, like a close-up of a noob head
 const faceThumbs = Object.fromEntries(FACES.map(f => [f.id, canvas(128, 128, (g) => {
   g.fillStyle = '#F5CD30'; g.fillRect(0, 0, 128, 128);
@@ -2827,7 +3172,7 @@ const faceThumbs = Object.fromEntries(FACES.map(f => [f.id, canvas(128, 128, (g)
   g.drawImage(f.img, 64 - w / 2, 64 - h / 2, w, h);
 }).toDataURL()]));
 function renderCatalog() {
-  const list = { hats: HATS, shirts: SHIRTS, pants: PANTS, faces: FACES }[catTab], slot = LOOK_SLOT[catTab];
+  const list = { hats: HATS, shirts: SHIRTS, pants: PANTS, tshirts: TSHIRTS, faces: FACES }[catTab], slot = LOOK_SLOT[catTab];
   const thumbs = catTab === 'hats' ? hatThumbs : catTab === 'faces' ? faceThumbs : clothThumbs[catTab];
   document.querySelectorAll('[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === catTab));
   $('hatGrid').innerHTML = list.map(h => `<div class="hcard ${look[slot] === h.id ? 'on' : ''}"><img src="${h.id === 'none' ? hatThumbs.none : thumbs[h.id]}" alt="">
@@ -2837,9 +3182,10 @@ function renderCatalog() {
 let selBP = 'torso';
 $('bodyPalette').innerHTML = PALETTE.map(([n, h]) => `<div title="${n}" data-bc="${h}" style="background:${h}"></div>`).join('');
 function refreshLook() {
-  dressCharacter(pvChar, look.colors, look.shirt, look.pants, look.face); wearHat(pvChar, look.hat);
-  player.setOutfit(look.colors, look.shirt, look.pants, look.face);
+  dressCharacter(pvChar, look.colors, look.shirt, look.pants, look.face, look.tshirt); wearHat(pvChar, look.hat);
+  player.setOutfit(look.colors, look.shirt, look.pants, look.face, look.tshirt);
   $('curFace').textContent = faceDef(look.face).name;
+  $('curTShirt').textContent = clothName(TSHIRTS, look.tshirt);
   if (!player.dead) player.setHat(look.hat); else player.hat = look.hat;
   $('curHat').textContent = hatName(look.hat);
   $('curShirt').textContent = clothName(SHIRTS, look.shirt);
@@ -2859,7 +3205,197 @@ $('site').addEventListener('click', (e) => {
   if (d.bp) { selBP = d.bp; refreshLook(); }
   if (d.bc) { look.colors[selBP] = d.bc; saveLook(); refreshLook(); }
 });
-$('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'none'; look.pants = 'none'; look.face = 'smile'; saveLook(); refreshLook(); };
+$('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'none'; look.pants = 'none'; look.face = 'smile'; look.tshirt = 'none'; saveLook(); refreshLook(); };
+
+/* ================= ADMIN =================
+   There are no real accounts, so the admin title comes from a secret admin key.
+   Only the public half lives in this file: it can check the admin's signature but can't make one,
+   so nobody can copy the title just by reading the game's code. */
+const ADMIN_PUB = { kty: 'EC', crv: 'P-256', x: 'zcvKya_RDkqdxJ8vj8q_vOWBN5Bnl1wb0v76V5GLQcg', y: 'hbNJCYuYrZtUIKQJM6B4JnskgxEyW2V9mtI-1cwUsSY' };
+const ADMIN_KEY = 'blockburg-admin-key';
+const ECDSA = { name: 'ECDSA', namedCurve: 'P-256', hash: 'SHA-256' };
+const subtle = window.crypto && crypto.subtle;   // missing on plain http pages; then nobody shows as admin
+let adminPriv = null, adminPubKey = null;
+const b64u = (u8) => btoa(String.fromCharCode(...u8)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+async function adminVerify(text, sig) {
+  if (!subtle || typeof sig !== 'string') return false;
+  try {
+    adminPubKey = adminPubKey || await subtle.importKey('jwk', ADMIN_PUB, ECDSA, false, ['verify']);
+    return await subtle.verify(ECDSA, adminPubKey, unb64u(sig), new TextEncoder().encode(text));
+  } catch { return false; }
+}
+async function adminSign(text) {
+  if (!adminPriv) return null;
+  return b64u(new Uint8Array(await subtle.sign(ECDSA, adminPriv, new TextEncoder().encode(text))));
+}
+async function adminLogin(d) {
+  if (!subtle || !d) return false;
+  try {
+    const k = await subtle.importKey('jwk', { ...ADMIN_PUB, d: d.trim() }, ECDSA, false, ['sign']);
+    const test = b64u(new Uint8Array(await subtle.sign(ECDSA, k, new TextEncoder().encode('check'))));
+    if (!(await adminVerify('check', test))) return false;
+    adminPriv = k;
+    try { localStorage.setItem(ADMIN_KEY, d.trim()); } catch { }
+    setAdmin(player);
+    return true;
+  } catch { return false; }
+}
+function setAdmin(h, on = true) {
+  h.admin = on; h.drawTag(); renderLB();
+  if (h === player) { $('adminBadge').classList.toggle('hidden', !on); $('fmAdminBtn').textContent = on ? 'Admin logout' : 'Admin login'; }
+}
+function helloMsg() { const m = { t: 'hello', v: NET_VERSION, name: myName(), look }; if (net.admSig) m.adm = net.admSig; return m; }
+try { const saved = localStorage.getItem(ADMIN_KEY); if (saved) adminLogin(saved); } catch { }
+$('fmAdminBtn').onclick = async () => {
+  if (adminPriv) { adminPriv = null; try { localStorage.removeItem(ADMIN_KEY); } catch { } setAdmin(player, false); forumRender(); return; }
+  if (!subtle) { alert('Admin login only works on the real website (https), not on this copy.'); return; }
+  const d = prompt('Paste your secret admin key:');
+  if (!d) return;
+  if (await adminLogin(d)) { alert('Welcome back, admin!'); forumRender(); } else alert("That key didn't work.");
+};
+
+/* ================= FORUMS =================
+   No server of our own, so posts are kept as "retained" messages on the same free public
+   message servers the multiplayer relay uses. Each post goes to both, so if one forgets it the other still has it.
+   Admin posts and deletions carry the admin's signature so they can't be faked. */
+const FORUM_PREFIX = 'blockburg-forum-v1/';
+const BOARDS = [
+  { id: 'news', name: 'Announcements', desc: 'News from the admin. Only the admin can start threads here.', adminOnly: true },
+  { id: 'general', name: 'General Discussion', desc: 'Talk about anything Blockburg.' },
+  { id: 'build', name: 'Building Help', desc: 'Stuck on a build? Ask the builders.' },
+  { id: 'show', name: 'Show Off Your Place', desc: 'Made something cool? Brag about it here.' },
+  { id: 'ideas', name: 'Suggestions & Ideas', desc: 'New hats, faces, gear... tell the admin!' },
+  { id: 'offtopic', name: 'Off Topic', desc: 'Anything else. Keep it nice!' },
+];
+const forum = { clients: [], posts: new Map(), deleted: new Set(), view: { v: 'boards' }, started: false, renderT: 0 };
+const BAD_WORDS = ['fuck', 'shit', 'bitch', 'cunt', 'nigger', 'nigga', 'faggot', 'asshole', 'bastard', 'retard', 'whore', 'slut', 'porn', 'dick', 'pussy'];
+const cleanText = (s) => BAD_WORDS.reduce((t, w) => t.replace(new RegExp(w.split('').join('+\\W*') + '+', 'gi'), m => '#'.repeat(m.length)), s);
+const escHtml = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const postSigText = (p) => JSON.stringify([p.id, p.b, p.th, p.ti, p.tx, p.n, p.ts]);
+const fmDate = (ts) => new Date(ts).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+async function forumMessage(topic, payload) {
+  const s = new TextDecoder().decode(payload);
+  if (!s) return;   // someone cleared it; keep what we already have
+  let o; try { o = JSON.parse(s); } catch { return; }
+  if (topic.startsWith(FORUM_PREFIX + 'x/')) {   // a deletion: only counts if the admin signed it
+    if (typeof o.id === 'string' && !forum.deleted.has(o.id) && await adminVerify('del|' + o.id, o.s)) { forum.deleted.add(o.id); forumRender(); }
+    return;
+  }
+  // check it's a sensible post before believing any of it
+  if (!o || typeof o.id !== 'string' || o.id.length > 24 || forum.posts.has(o.id)) return;
+  if (!BOARDS.some(b => b.id === o.b) || typeof o.tx !== 'string' || typeof o.n !== 'string' || typeof o.ts !== 'number') return;
+  if (o.ts > Date.now() + 864e5) return;
+  const p = { id: o.id, b: o.b, th: typeof o.th === 'string' ? o.th : '', ti: String(o.ti || '').slice(0, 60), tx: o.tx.slice(0, 800), n: o.n.replace(/[^\w \-]/g, '').slice(0, 16) || 'Player', ts: o.ts };
+  p.adm = !!o.s && await adminVerify(postSigText(p), o.s);
+  if (forum.posts.has(p.id)) return;
+  forum.posts.set(p.id, p);
+  clearTimeout(forum.renderT); forum.renderT = setTimeout(forumRender, 120);
+}
+async function forumStart() {
+  if (forum.started) return;
+  forum.started = true;
+  try { await loadMqtt(); } catch { $('fmStatus').textContent = "Couldn't load the forums. Check your internet and try again."; forum.started = false; return; }
+  await Promise.all(RELAY_BROKERS.map(async (url) => {
+    try {
+      const c = await relayConnect(url);
+      c.on('message', (t, p) => forumMessage(t, p));
+      c.subscribe(FORUM_PREFIX + '#', { qos: 1 });
+      forum.clients.push(c);
+    } catch { }
+  }));
+  $('fmStatus').textContent = forum.clients.length ? `Connected to ${forum.clients.length} forum server${forum.clients.length > 1 ? 's' : ''}.` : "Couldn't reach the forum servers. Some school or work networks block them.";
+  if (!forum.clients.length) forum.started = false;
+  forumRender();
+}
+function forumPublish(topic, obj) { forum.clients.forEach(c => c.publish(topic, JSON.stringify(obj), { retain: true, qos: 1 })); }
+function forumOpen() { forumStart(); forumRender(); }
+const livePosts = () => [...forum.posts.values()].filter(p => !forum.deleted.has(p.id) && !(p.th && forum.deleted.has(p.th)));
+function threadsOf(board) {
+  const all = livePosts();
+  return all.filter(p => p.b === board && !p.th && (!BOARDS.find(b => b.id === board).adminOnly || p.adm)).map(t => {
+    const replies = all.filter(r => r.th === t.id).sort((a, b) => a.ts - b.ts);
+    return { t, replies, last: replies.length ? replies[replies.length - 1] : t };
+  }).sort((a, b) => b.last.ts - a.last.ts);
+}
+const whoHtml = (p) => `<b>${escHtml(p.n)}</b>${p.adm ? ' <span class="fm-adm">Admin</span>' : ''}`;
+function forumRender() {
+  if (!$('p-forum') || $('p-forum').classList.contains('hidden')) return;
+  const v = forum.view, crumb = [`<span class="fm-link" data-fm="boards">Blockburg Forums</span>`];
+  let h = '';
+  if (v.v === 'boards') {
+    h = `<table class="fm-tbl"><tr><th>Forum</th><th class="num">Threads</th><th class="num">Posts</th><th>Last Post</th></tr>` + BOARDS.map(b => {
+      const th = threadsOf(b.id), posts = th.reduce((n, x) => n + 1 + x.replies.length, 0), last = th[0] && th[0].last;
+      return `<tr><td><span class="fm-link" data-fm="board" data-id="${b.id}">${b.name}</span><div class="fm-sm">${b.desc}</div></td>
+        <td class="num">${th.length}</td><td class="num">${posts}</td>
+        <td class="fm-sm">${last ? `${fmDate(last.ts)}<br>by ${whoHtml(last)}` : '—'}</td></tr>`;
+    }).join('') + `</table>`;
+  } else if (v.v === 'board' || v.v === 'new') {
+    const b = BOARDS.find(x => x.id === v.id);
+    crumb.push(`<span class="fm-link" data-fm="board" data-id="${b.id}">${b.name}</span>`);
+    const canPost = !b.adminOnly || adminPriv;
+    if (v.v === 'new') {
+      crumb.push('New Thread');
+      h = `<div class="fm-form"><div class="fm-sm">Posting as <b>${escHtml(myName())}</b> (change your name on the <span class="fm-link" data-goto="online">Multiplayer</span> page)</div>
+        <input id="fmTitle" maxlength="60" placeholder="Subject"><textarea id="fmText" maxlength="800" placeholder="Write your post..."></textarea>
+        <button class="s-btn go" data-fm="send">Post Thread</button> <button class="s-btn" data-fm="board" data-id="${b.id}">Cancel</button> <span class="fm-sm" id="fmMsg"></span></div>`;
+    } else {
+      const th = threadsOf(b.id);
+      h = (canPost ? `<div style="margin-bottom:6px"><button class="s-btn go" data-fm="new" data-id="${b.id}">New Thread</button></div>` : '') +
+        `<table class="fm-tbl"><tr><th>Subject</th><th>Author</th><th class="num">Replies</th><th>Last Post</th></tr>` +
+        (th.length ? th.map(x => `<tr><td><span class="fm-link" data-fm="thread" data-id="${x.t.id}">${escHtml(cleanText(x.t.ti || '(no subject)'))}</span></td>
+          <td>${whoHtml(x.t)}</td><td class="num">${x.replies.length}</td><td class="fm-sm">${fmDate(x.last.ts)}<br>by ${whoHtml(x.last)}</td></tr>`).join('')
+          : `<tr><td colspan="4" class="fm-sm">No threads yet. ${canPost ? 'Be the first!' : ''}</td></tr>`) + `</table>`;
+    }
+  } else if (v.v === 'thread') {
+    const t = forum.posts.get(v.id);
+    if (!t || forum.deleted.has(t.id)) { forum.view = { v: 'boards' }; forumRender(); return; }
+    const b = BOARDS.find(x => x.id === t.b), x = threadsOf(b.id).find(y => y.t.id === t.id) || { replies: [] };
+    crumb.push(`<span class="fm-link" data-fm="board" data-id="${b.id}">${b.name}</span>`, escHtml(cleanText(t.ti || '(no subject)')));
+    h = [t, ...x.replies].map(p => `<div class="fm-post ${p.adm ? 'adm' : ''}"><div class="who">${whoHtml(p)}<div class="fm-sm">${fmDate(p.ts)}</div></div>
+      <div class="msg">${adminPriv ? `<span class="fm-del" data-fm="del" data-id="${p.id}">delete</span>` : ''}${escHtml(cleanText(p.tx))}</div></div>`).join('') +
+      `<div class="fm-form" style="margin-top:8px"><div class="fm-sm">Reply as <b>${escHtml(myName())}</b></div><textarea id="fmText" maxlength="800" placeholder="Write a reply..."></textarea>
+      <button class="s-btn go" data-fm="send">Post Reply</button> <span class="fm-sm" id="fmMsg"></span></div>`;
+  }
+  // don't wipe out what someone is typing when a new post arrives
+  const typing = $('fmText') && $('fmText').value, typingTitle = $('fmTitle') && $('fmTitle').value;
+  $('fmBody').innerHTML = `<div class="fm-crumb">${crumb.join(' » ')}</div>` + h;
+  if (typing && $('fmText')) $('fmText').value = typing;
+  if (typingTitle && $('fmTitle')) $('fmTitle').value = typingTitle;
+}
+const POST_WAIT = 20000;
+async function forumSend() {
+  const msg = (t) => { if ($('fmMsg')) $('fmMsg').textContent = t; };
+  if (!forum.clients.length) return msg("Not connected to the forum servers.");
+  let last = 0; try { last = +localStorage.getItem('blockburg-forum-last') || 0; } catch { }
+  if (Date.now() - last < POST_WAIT) return msg(`Slow down! Wait ${Math.ceil((POST_WAIT - (Date.now() - last)) / 1000)} more seconds.`);
+  const v = forum.view, tx = ($('fmText').value || '').trim().slice(0, 800);
+  const ti = v.v === 'new' ? ($('fmTitle').value || '').trim().slice(0, 60) : '';
+  if (v.v === 'new' && !ti) return msg('Give your thread a subject.');
+  if (!tx) return msg('Write something first.');
+  const thread = v.v === 'thread' ? forum.posts.get(v.id) : null;
+  const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), b: thread ? thread.b : v.id, th: thread ? thread.id : '', ti, tx, n: myName(), ts: Date.now() };
+  const s = await adminSign(postSigText(p));
+  forumPublish(FORUM_PREFIX + 'p/' + p.id, s ? { ...p, s } : p);
+  try { localStorage.setItem('blockburg-forum-last', String(Date.now())); } catch { }
+  $('fmText').value = ''; if ($('fmTitle')) $('fmTitle').value = '';
+  forum.posts.set(p.id, { ...p, adm: !!s });   // show it right away
+  if (v.v === 'new') forum.view = { v: 'thread', id: p.id };
+  forumRender();
+}
+$('fmBody').addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-fm]');
+  if (!t) return;
+  const { fm, id } = t.dataset;
+  if (fm === 'send') return forumSend();
+  if (fm === 'del') {
+    if (!adminPriv || !confirm('Delete this post for everyone?')) return;
+    forumPublish(FORUM_PREFIX + 'x/' + id, { id, s: await adminSign('del|' + id) });
+    forum.deleted.add(id); forumRender(); return;
+  }
+  forum.view = fm === 'boards' ? { v: 'boards' } : { v: fm, id };
+  forumRender(); $('site').scrollTop = 0;
+});
 
 function playPlace(id) {
   audioInit();
@@ -2911,9 +3447,9 @@ async function loadPeer() {
   return PeerLib;
 }
 const humByHid = (hid) => humanoids.find(h => h.hid === hid);
-function lookOf(h) { return { colors: h.colors, hat: h.hat, shirt: h.shirt || 'none', pants: h.pants || 'none', face: h.face || 'smile' }; }
-function applyLook(h, L) { if (!L) return; h.setOutfit(L.colors, L.shirt, L.pants, L.face); h.setHat(L.hat); }
-function humanRec(h) { return { hid: h.hid, name: h.name, look: lookOf(h), npc: !!h.ai, cc: h.chatColor }; }
+function lookOf(h) { return { colors: h.colors, hat: h.hat, shirt: h.shirt || 'none', pants: h.pants || 'none', face: h.face || 'smile', tshirt: h.tshirt || 'none' }; }
+function applyLook(h, L) { if (!L) return; h.setOutfit(L.colors, L.shirt, L.pants, L.face, L.tshirt || 'none'); h.setHat(L.hat); }
+function humanRec(h) { return { hid: h.hid, name: h.name, look: lookOf(h), npc: !!h.ai, cc: h.chatColor, adm: !!h.admin }; }
 function setHumBody(h, kinematic) {
   const b = h.body;
   b.type = kinematic ? CANNON.Body.KINEMATIC : CANNON.Body.DYNAMIC; b.mass = kinematic ? 0 : 30;
@@ -3083,7 +3619,7 @@ function hostHello(conn, msg) {
   if (net.mode !== 'host') return no('That game is not running anymore.');
   if (msg.v !== NET_VERSION) return no('That room is running a different version of Blockburg. Make sure everyone has the same game file.');
   if (net.conns.size >= 7) return no('That room is full (8 players).');
-  const L = msg.look && msg.look.colors ? msg.look : { colors: normColors(NOOB), hat: 'none', shirt: 'none', pants: 'none', face: 'smile' };
+  const L = msg.look && msg.look.colors ? msg.look : { colors: normColors(NOOB), hat: 'none', shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none' };
   const name = String(msg.name || 'Player').replace(/[^\w \-]/g, '').slice(0, 16) || 'Player';
   const h = new Humanoid({ name, colors: L.colors, chatColor: '#ffd27f', hid: conn.peer });
   h.remote = true; h.netCtl = true; h.conn = conn; setHumBody(h, true);
@@ -3091,6 +3627,10 @@ function hostHello(conn, msg) {
   h.spawn(); h.netPos = new V3().copy(h.pos);
   net.conns.set(conn.peer, { conn, h });
   applyLook(h, L);
+  // the admin proves it's really them by signing the room code + their name with the secret admin key
+  if (msg.adm) adminVerify(`bb-admin|${net.code}|${name}`, msg.adm).then(ok => {
+    if (ok && net.conns.get(conn.peer)?.h === h) { setAdmin(h); netEv(['adm', h.hid]); }
+  });
   netSendTo(conn, { t: 'welcome', you: h.hid, code: net.code, host: player.name, place: net.place,
     parts: parts.map(p => [p.nid, serialize(p), p.locked]),
     humans: humanoids.filter(x => x.enabled && x !== h).map(humanRec) });
@@ -3194,6 +3734,8 @@ async function joinGame() {
   if (net.peer || net.conn || net.joining) netStop(null, true);
   net.joining = code; net.code = code;
   netStatus(`Looking for room ${code}...`);
+  net.admSig = adminPriv ? await adminSign(`bb-admin|${code}|${myName()}`) : null;
+  if (net.joining !== code) return;
   // plan B: if the direct connection doesn't work out, go through the relay
   let fellBack = false;
   const fallback = () => {
@@ -3216,7 +3758,7 @@ async function joinGame() {
     // binary mode splits big messages (the welcome carries the whole world) into chunks; plain JSON mode would break
     const conn = peer.connect(ROOM_PREFIX + code, { reliable: true });
     net.conn = conn;
-    conn.on('open', () => conn.send({ t: 'hello', v: NET_VERSION, name: myName(), look }));
+    conn.on('open', () => conn.send(helloMsg()));
     conn.on('data', (m) => {
       if (m && m.t === 'welcome') clearTimeout(direct);
       try { clientHandle(m); } catch (e) { console.warn('Blockburg: bad message', e); }
@@ -3257,7 +3799,7 @@ async function joinViaRelay(code) {
         if (m.t === 'welcome' || m.t === 'reject') { clearTimeout(t); res(m.t === 'welcome'); }
         try { clientHandle(m); } catch (e) { console.warn('Blockburg: bad message', e); }
       });
-      c.subscribe([base + '/all', base + '/c/' + id], () => conn.send({ t: 'hello', v: NET_VERSION, name: myName(), look }));
+      c.subscribe([base + '/all', base + '/c/' + id], () => conn.send(helloMsg()));
     });
     if (welcomed || net.joining !== code) return;
     net.conn = null; conn.open = false; c.end(true);
@@ -3314,6 +3856,7 @@ function addPuppet(rec) {
   h.tools = buildHeldModels(h.char.hand); h.heldTool = null;
   applyLook(h, rec.look);
   h.spawn(); h.netPos = new V3().copy(h.pos);
+  if (rec.adm) setAdmin(h);
   renderLB(); updateBadge();
 }
 function clientEvent(e) {
@@ -3347,6 +3890,7 @@ function clientEvent(e) {
       break;
     case 'sfx': if (e[3] !== net.myHid) sfxAt(e[1], new V3(...e[2]), ...(e[1] === 'tick' ? e[4] || [] : [])); break;
     case 'join': addPuppet(e[1]); break;
+    case 'adm': { const h = who(e[1]); if (h) setAdmin(h); break; }
     case 'leave': { const h = humByHid(e[1]); if (h && !h.ai) removeHumanoid(h); updateBadge(); break; }
   }
 }
