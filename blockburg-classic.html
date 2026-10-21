@@ -3341,7 +3341,8 @@ function forumRender() {
         <button class="s-btn go" data-fm="send">Post Thread</button> <button class="s-btn" data-fm="board" data-id="${b.id}">Cancel</button> <span class="fm-sm" id="fmMsg"></span></div>`;
     } else {
       const th = threadsOf(b.id);
-      h = (canPost ? `<div style="margin-bottom:6px"><button class="s-btn go" data-fm="new" data-id="${b.id}">New Thread</button></div>` : '') +
+      h = (canPost ? `<div style="margin-bottom:6px"><button class="s-btn go" data-fm="new" data-id="${b.id}">New Thread</button></div>`
+        : `<div class="fm-sm" style="margin-bottom:6px">🔒 Only the admin can start threads here. You can still reply to them!</div>`) +
         `<table class="fm-tbl"><tr><th>Subject</th><th>Author</th><th class="num">Replies</th><th>Last Post</th></tr>` +
         (th.length ? th.map(x => `<tr><td><span class="fm-link" data-fm="thread" data-id="${x.t.id}">${escHtml(cleanText(x.t.ti || '(no subject)'))}</span></td>
           <td>${whoHtml(x.t)}</td><td class="num">${x.replies.length}</td><td class="fm-sm">${fmDate(x.last.ts)}<br>by ${whoHtml(x.last)}</td></tr>`).join('')
