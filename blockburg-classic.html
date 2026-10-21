@@ -3275,8 +3275,8 @@ function frame(now) {
   else target = new V3(P.pos.x, P.pos.y + 1.5, P.pos.z);
   const firstPerson = camDist < 1.5 && !P.dead;
   P.char.root.visible = !P.dead && !firstPerson;
-  if (trailer.on) {   // the trailer camera flies its own shots; you're off-screen
-    target = trailerCamera(dt); P.char.root.visible = false; selBox.visible = false;
+  if (trailer.on) {   // the trailer camera flies its own shots, and you get a cameo wherever you're standing
+    target = trailerCamera(dt); P.char.root.visible = !P.dead; selBox.visible = false;
   } else if (firstPerson) {
     camera.position.set(P.pos.x, P.pos.y + 2.1, P.pos.z);
     camera.lookAt(camera.position.clone().add(new V3(-Math.sin(camYaw) * Math.cos(camPitch), -Math.sin(camPitch), -Math.cos(camYaw) * Math.cos(camPitch))));
