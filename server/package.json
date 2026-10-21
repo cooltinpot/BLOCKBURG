@@ -1,0 +1,25 @@
+{
+  "name": "blockburg-server",
+  "version": "1.0.0",
+  "description": "Colyseus server for BLOCKBURG",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@colyseus/core": "^0.18.18",
+    "@colyseus/schema": "^5.0.42",
+    "@colyseus/sdk": "^0.18.5",
+    "@colyseus/ws-transport": "^0.18.4",
+    "cannon-es": "^0.20.0",
+    "express": "^5.3.0",
+    "happy-dom": "^20.14.5",
+    "three": "^0.160.0"
+  }
+}

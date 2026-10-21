@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLOCKBURG</title>
+<style>
+  html,body{margin:0;height:100%;background:#fff;font-family:Verdana,Arial,sans-serif}
+  body{display:grid;place-items:center}
+  .box{width:min(420px,calc(100vw - 32px));text-align:center}
+  .logo{font:900 56px Arial;color:#e2231a;letter-spacing:1px;-webkit-text-stroke:2px #000;text-shadow:3px 3px 0 #000;transform:rotate(-2deg);line-height:1}
+  .tag{font:bold 12px Verdana;color:#555;margin:6px 0 26px}
+  .bar{height:22px;border:2px solid #0b4a99;background:#e8eef7;padding:2px;box-sizing:border-box}
+  .fill{height:100%;width:0;background:repeating-linear-gradient(-45deg,#3d7fd0 0 12px,#2f6fc0 12px 24px);background-size:34px 34px;animation:slide 1s linear infinite;transition:width .25s}
+  @keyframes slide{to{background-position:34px 0}}
+  .msg{font-size:12px;color:#333;margin-top:8px;min-height:16px}
+  .tip{font-size:11px;color:#777;margin-top:22px}
+  a{color:#0b4a99;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">BLOCKBURG</div>
+  <div class="tag">A Free Online Building Game</div>
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <div class="msg" id="msg">Loading BLOCKBURG... 0%</div>
+  <div class="tip" id="tip"></div>
+  <noscript><p><a href="blockburg-classic.html">Click here to play</a></p></noscript>
+</div>
+<script>
+// Download the game and its 3D + physics engines while showing a loading bar.
+// The browser keeps them, so the game opens right away afterwards.
+const GAME = 'blockburg-classic.html';
+const FILES = [
+  { url: GAME, size: 380000 },
+  { url: 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js', size: 1280000 },
+  { url: 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js', size: 390000 },
+];
+const TIPS = [
+  'Tip: Press 1-0 to pick your gear.', 'Tip: Hold right-click and drag to turn the camera.',
+  'Tip: Press Esc for the menu.', 'Tip: The Tinpot Hat is the best hat. Obviously.',
+  'Tip: Rockets hurt you too. Aim away from your face!', 'Tip: Host a game in Multiplayer and send your friends the code.',
+];
+const fill = document.getElementById('fill'), msg = document.getElementById('msg');
+document.getElementById('tip').textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+const got = FILES.map(() => 0), total = FILES.reduce((n, f) => n + f.size, 0);
+let done = false;
+function show(pct, text) { fill.style.width = pct + '%'; msg.textContent = text || `Loading BLOCKBURG... ${Math.floor(pct)}%`; }
+function go() {
+  if (done) return; done = true;
+  show(100, 'Starting the game...');
+  setTimeout(() => location.replace(GAME), 250);
+}
+async function load(f, i) {
+  const r = await fetch(f.url, { mode: f.url.startsWith('http') ? 'cors' : 'same-origin' });
+  if (!r.ok || !r.body) return;
+  const reader = r.body.getReader();
+  for (;;) {
+    const { done: end, value } = await reader.read();
+    if (end) break;
+    got[i] = Math.min(got[i] + value.length, f.size);
+    show(Math.min(99, got.reduce((a, b) => a + b, 0) / total * 100));
+  }
+  got[i] = f.size;
+  show(Math.min(99, got.reduce((a, b) => a + b, 0) / total * 100));
+}
+Promise.all(FILES.map((f, i) => load(f, i).catch(() => {}))).then(go);
+setTimeout(go, 25000);   // never get stuck here: after 25 seconds just start the game
+</script>
+</body>
+</html>

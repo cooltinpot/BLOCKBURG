@@ -1,0 +1,13 @@
+{
+  "name": "blockburg",
+  "private": true,
+  "description": "BLOCKBURG: the game page plus its Colyseus server (server/). This file is how a host (Colyseus Cloud, with ecosystem.config.js) installs and starts it.",
+  "engines": {
+    "node": "24"
+  },
+  "scripts": {
+    "postinstall": "npm --prefix server install",
+    "build": "echo BLOCKBURG is plain JavaScript, nothing to build",
+    "start": "node server/src/index.js"
+  }
+}

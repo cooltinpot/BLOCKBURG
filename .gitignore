@@ -1,0 +1,15 @@
+﻿# Not part of the BLOCKBURG git repository (what Colyseus Cloud deploys)
+node_modules/
+.claude/
+
+# Colyseus Cloud's deploy password (made by `npx @colyseus/cloud deploy`): never put it on GitHub
+.colyseus-cloud.json
+
+# the other games in this folder aren't part of the BLOCKBURG site
+bitterwater-payload.html
+Bitterwater-Payload-Game.html
+lowpoly-tribes.html
+blockburg-obby.html
+
+# backups
+*.backup-*.html
