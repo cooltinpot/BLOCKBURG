@@ -16,6 +16,7 @@
     "@colyseus/core": "^0.18.18",
     "@colyseus/schema": "^5.0.42",
     "@colyseus/sdk": "^0.18.5",
+    "@colyseus/tools": "^0.18.7",
     "@colyseus/ws-transport": "^0.18.4",
     "cannon-es": "^0.20.0",
     "express": "^5.3.0",
