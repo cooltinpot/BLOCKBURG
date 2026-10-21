@@ -3705,10 +3705,13 @@ function leaveGame() {
 const NET_VERSION = 'bb-classic-4';
 const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // no 0/O or 1/I, so codes are easy to read out
 const NAME_KEY = 'blockburg-name';
-// ?server=wss://... picks another server; opened from a file it's the one on this computer,
-// otherwise it's the server the game page came from
+// The BLOCKBURG server on Colyseus Cloud (deployed from the GitHub repo's `colyseus` branch)
+const CLOUD_SERVER = 'https://us-ewr-fb65e743.colyseus.cloud';
+// ?server=https://... picks another server. Opened from a file it's the one on this computer; on the
+// GitHub Pages website (which can't run a server) it's the Cloud one; otherwise the page came from a
+// BLOCKBURG server (the Cloud, this computer, or a tunnel to it), so it's that one.
 const SERVER_URL = new URLSearchParams(location.search).get('server') ||
-  (location.protocol === 'file:' ? 'http://localhost:2567' : location.origin);
+  (location.protocol === 'file:' ? 'http://localhost:2567' : /(^|\.)github\.io$/.test(location.hostname) ? CLOUD_SERVER : location.origin);
 let ColyLib = null;
 async function loadColyseus() {
   if (!ColyLib) ColyLib = await import('https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.18.5/+esm');
