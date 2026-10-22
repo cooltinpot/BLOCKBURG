@@ -16,10 +16,22 @@
   .msg{font-size:12px;color:#333;margin-top:8px;min-height:16px}
   .tip{font-size:11px;color:#777;margin-top:22px}
   a{color:#0b4a99;font-weight:bold}
+  /* phones and tablets get the picture cover instead of the text logo */
+  .cover{display:none}
+  @media (pointer:coarse), (max-width:600px){
+    .cover{display:block;width:min(100%,380px);height:auto;margin:0 auto 14px;
+      /* soft edges so the picture's pale-blue background melts into the white page */
+      -webkit-mask-image:linear-gradient(to right,transparent,#000 3%,#000 97%,transparent),linear-gradient(#000 80%,transparent);
+      -webkit-mask-composite:source-in;
+      mask-image:linear-gradient(to right,transparent,#000 3%,#000 97%,transparent),linear-gradient(#000 80%,transparent);
+      mask-composite:intersect}
+    .logo,.tag{display:none}
+  }
 </style>
 </head>
 <body>
 <div class="box">
+  <img class="cover" src="cover.png" width="771" height="760" alt="BLOCKBURG: a classic blocky character">
   <div class="logo">BLOCKBURG</div>
   <div class="tag">A Free Online Building Game</div>
   <div class="bar"><div class="fill" id="fill"></div></div>
