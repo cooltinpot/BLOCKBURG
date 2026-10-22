@@ -311,6 +311,7 @@
             <button class="s-btn go" data-play="classic">Play Solo</button></div>
         </div></div>
         <div class="box news"><h3>Blockburg News</h3><div class="in">
+          <p><b>PUMPKIN INVASION!</b> A pumpkin got into the Catalog and it has not stopped screaming. Then it got into the game. It is now a Guest. Its name is Guest 31. Do NOT bring a knife.</p>
           <p><b>New hats in the Catalog!</b> The Viking Helm and the Golden Crown are here. Go check them out.</p>
           <p><b>Rocket Launcher fixed.</b> Rockets now go where you click instead of into your own face. Mostly.</p>
           <p><b>Building contest!</b> Build the coolest house on a baseplate. Prize: bragging rights.</p>
@@ -1141,6 +1142,7 @@ const HATS = [
   { id: 'crown', name: 'Golden Crown', price: 'Free (was 500 Tix)', desc: "Bow down, noobs. Ruler of the whole baseplate." },
   { id: 'cap', name: 'Red Baseball Cap', price: 'Free (was 10 Tix)', desc: "Wear it backwards to look 10x cooler. That's the rule." },
   { id: 'chef', name: 'Chef Hat', price: 'Free (was 20 Tix)', desc: "Can't cook? Doesn't matter. The hat does the cooking." },
+  { id: 'pumpkin', name: 'Screaming Pumpkin', price: 'Free (was 31 Tix)', desc: "It screams. It never stops screaming. We have tried everything. Please take it." },
 ];
 const hatName = (id) => (HATS.find(h => h.id === id) || HATS[0]).name;
 const partyTex = tex(canvas(128, 64, (g) => {
@@ -1194,6 +1196,22 @@ function makeHat(id) {
       add(new THREE.SphereGeometry(0.17, 12, 8), M('#F2F3F3'), 0, 0.25, 0.66);
       add(new THREE.BoxGeometry(0.5, 0.07, 0.04), M('#F2F3F3'), 0, 0.1, 0.7, 0, 0, 0.6);
       add(new THREE.BoxGeometry(0.5, 0.07, 0.04), M('#F2F3F3'), 0, 0.1, 0.7, 0, 0, -0.6);
+      break;
+    }
+    case 'pumpkin': {
+      // a carved jack-o'-lantern balanced on the head, mouth wide open, still screaming
+      for (let i = 0; i < 6; i++) {
+        const a = i / 6 * Math.PI * 2;
+        add(Sph(0.42), M('#DA8541'), Math.sin(a) * 0.3, 0.45, Math.cos(a) * 0.3).scale.set(1, 0.9, 1);
+      }
+      add(Sph(0.55), M('#E8761E'), 0, 0.45, 0).scale.set(1.15, 0.9, 1.15);
+      add(Cyl(0.08, 0.11, 0.35, 8), M('#4B6B2A'), 0.03, 0.98, 0, 0, 0, 0.25);
+      const hole = M('#2A1405');
+      add(new THREE.BoxGeometry(0.15, 0.15, 0.05), hole, -0.22, 0.6, 0.6, 0, 0, Math.PI / 4);
+      add(new THREE.BoxGeometry(0.15, 0.15, 0.05), hole, 0.22, 0.6, 0.6, 0, 0, Math.PI / 4);
+      add(Sph(0.2), hole, 0, 0.32, 0.56).scale.set(1.1, 1.25, 0.35);
+      add(new THREE.BoxGeometry(0.08, 0.09, 0.05), M('#F5CD30'), -0.05, 0.5, 0.64);
+      add(new THREE.BoxGeometry(0.08, 0.09, 0.05), M('#F5CD30'), 0.05, 0.5, 0.64);
       break;
     }
     case 'party':
@@ -1881,6 +1899,7 @@ const npcDefs = [
   ['Guest 2006', { skin: '#CC8E69', shirt: '#4B974B', pants: '#694028' }, '#a8ffa8'],
   ['Guest 4096', { skin: '#F5CD30', shirt: '#1B2A35', pants: '#0D69AC' }, '#c0c0ff'],
   ['Guest 777', { skin: '#694028', shirt: '#F2F3F3', pants: '#635F62' }, '#ffd27f'],
+  ['Guest 31', { skin: '#DA8541', shirt: '#DA8541', pants: '#1B2A35' }, '#ffb366'],   // he saw the knife
 ];
 const npcs = npcDefs.map(([name, colors, cc], i) => {
   const n = new Humanoid({ name, colors, chatColor: cc, hid: 'n' + i });
@@ -1889,6 +1908,8 @@ const npcs = npcDefs.map(([name, colors, cc], i) => {
   // Guest 1337 is way too epical for a normal smile; the others sometimes are too
   const r = Math.random();
   n.setOutfit(colors, any(SHIRTS), any(PANTS), name === 'Guest 1337' ? 'epical' : r < 0.65 ? rpickFace() : 'smile', any(TSHIRTS));
+  // Guest 31 is pumpkin all the way down
+  if (name === 'Guest 31') { n.setHat('pumpkin'); n.setOutfit(colors, 'none', any(PANTS), 'pumpkin', 'pumpkin'); }
   return n;
 });
 /* ================= AI: Guests that think =================
@@ -1901,6 +1922,7 @@ const PERSONAS = {
   'Guest 2006': { brave: 0.4, friendly: 0.9, builder: 0.95, chaos: 0.05, chatty: 0.6, fav: 'Bright green' },
   'Guest 4096': { brave: 0.65, friendly: 0.6, builder: 0.5, chaos: 0.3, chatty: 0.45, fav: 'Bright blue' },
   'Guest 777': { brave: 0.2, friendly: 0.75, builder: 0.4, chaos: 0.15, chatty: 0.9, fav: 'Bright yellow' },
+  'Guest 31': { brave: 0.5, friendly: 0.8, builder: 0.15, chaos: 0.5, chatty: 1, fav: 'Bright orange' },
 };
 const POIS = [
   { name: 'the castle', pos: new V3(52, 0, -70) }, { name: 'the scaffold tower', pos: new V3(-62, 0, -50) },
@@ -1929,10 +1951,13 @@ const LINES = {
   paintedBad: ['hey dont paint my stuff!!', 'that color is ugly lol', 'change it back!!'],
   destroy: ['BOOM lol', 'watch this', 'kaboom time', 'hehe'],
   explore: ['i love {place}', '{place} is so cool', 'lets go to {place}', 'race u to {place}'],
-  bored: ['im bored', 'anyone wanna do something', 'this is boring', 'lol'],
+  bored: ['im bored', 'anyone wanna do something', 'this is boring', 'lol', 'why does guest 31 keep screaming', 'is guest 31 ok'],
   happy: ['this is fun', 'best day ever', ':D', 'yay'],
   hat: ['free hat!!', 'ooh a hat', 'mine now lol'],
   follow: ['ok ill follow u', 'lead the way', 'right behind u!'],
+  pumpkin: ['AAAAAAAAAAAAAAAAAAAA', 'HE SAW THE KNIFE', 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'why is everyone staring at me',
+    'i am NOT a pumpkin. i am a guest.', 'who carved me. WHO CARVED ME', 'trick or treat (its trick)', 'my face is stuck like this',
+    'AAAAAAAAA (sorry)', 'is that a knife {name}?? AAAAAAAAAAA', 'i used to be a normal guest', 'AAAAAAAAAAAAA (still)'],
   noFollow: ['no lol', 'why would i', 'not after what u did'],
   ok: ['ok', 'ok!', 'sure', 'k'],
   duel: ['ok 1v1 me!', 'ur on!', 'prepare to lose', 'lets go!!'],
@@ -1993,6 +2018,8 @@ function makeBrain(n) {
 function aiSay(n, key, ctx = {}, force = false) {
   if (net.mode === 'client') return;   // Guests only think on the host; their lines arrive as chat
   if (!n.ai || n.dead || !n.enabled || (!force && time < n.ai.sayCd)) return;
+  // Guest 31 mostly just screams, whatever the situation
+  if (n.name === 'Guest 31' && Math.random() < 0.6) key = 'pumpkin';
   const s = rpick(LINES[key]).replace(/\{name\}/g, ctx.name || '').replace(/\{thing\}/g, ctx.thing || 'build').replace(/\{place\}/g, ctx.place || 'here');
   n.ai.sayCd = time + 2.5; n.say(s.replace(/\s+/g, ' ').trim());
 }
@@ -4044,6 +4071,8 @@ function playPlace(id) {
   if (id === 'classic') {
     sysChat('Welcome to Blockburg Classic! Press 1-0 for tools, Esc for the menu.');
     if (!HEADLESS) setTimeout(() => npcs[0].enabled && npcs[0].say('hi Player!'), 1800);
+    const g31 = npcs.find(n => n.name === 'Guest 31');
+    if (!HEADLESS && g31) setTimeout(() => g31.enabled && g31.say('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'), 3600);
   } else sysChat('Happy building! Open Insert for bricks. Use Save to keep your place.');
   SFX.spawn();
 }
