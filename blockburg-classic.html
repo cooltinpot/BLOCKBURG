@@ -152,9 +152,32 @@
   #bodyPalette{display:grid;grid-template-columns:repeat(10,22px);gap:3px;justify-content:center;margin-top:6px}
   #bodyPalette div{width:22px;height:22px;border:1px solid #333;cursor:pointer}
   .s-foot{border-top:1px solid #b9cbe4;color:#666;font-size:10px;text-align:center;padding:10px}
-  /* trailer camera: movie bars, the title / credits card and captions; everything else on screen hides */
+  /* trailer camera and the admin's free cam (H brings the buttons back): everything else on screen hides */
   body.trailer #menubar, body.trailer #chatlog, body.trailer #chatbar, body.trailer #right, body.trailer #tip,
-  body.trailer #toolbar, body.trailer #insertWin { display:none !important }
+  body.trailer #toolbar, body.trailer #insertWin, body.trailer #touchUI,
+  body.freecam #menubar, body.freecam #chatlog, body.freecam #chatbar, body.freecam #right, body.freecam #tip,
+  body.freecam #toolbar, body.freecam #insertWin, body.freecam #touchUI { display:none !important }
+  #fcHint{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);font:bold 15px Arial;white-space:nowrap;opacity:0;transition:opacity .5s;pointer-events:none;z-index:21}
+  #fcHint.show{opacity:1}
+  /* touch controls: only on touch screens (body.touch) */
+  #touchUI, .touch-only{display:none}
+  body.touch #touchUI{display:block}
+  body.touch .touch-only{display:inline-block}
+  body.touch #chatbar{display:none}
+  body.touch canvas{touch-action:none}
+  #joy{position:fixed;left:18px;bottom:max(84px,14vh);width:124px;height:124px;border-radius:50%;background:rgba(255,255,255,.14);
+    border:2px solid rgba(255,255,255,.45);touch-action:none;z-index:7}
+  #joyKnob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;
+    background:rgba(255,255,255,.6);border:2px solid rgba(0,0,0,.25);pointer-events:none}
+  #jumpBtn{position:fixed;right:22px;bottom:max(96px,16vh);width:86px;height:86px;border-radius:50%;background:rgba(255,255,255,.18);
+    border:2px solid rgba(255,255,255,.5);color:#fff;font:bold 16px Arial;text-shadow:1px 1px 0 #000;display:grid;place-items:center;
+    touch-action:none;user-select:none;-webkit-user-select:none;z-index:7}
+  #jumpBtn.down{background:rgba(255,255,255,.45)}
+  @media (max-height: 520px), (max-width: 600px) {   /* phones: smaller leaderboard and chat, so there's room to see */
+    body.touch #right{transform:scale(.72);transform-origin:top right}
+    body.touch #right{top:44px}   /* below the menu buttons, which take the whole top row on a phone */
+    body.touch #chatlog{font-size:11px;width:min(320px,45vw)}
+  }
   #trailerUI{position:fixed;inset:0;pointer-events:none;z-index:20}
   #trailerUI.hidden{display:none}
   #trailerUI .tr-bar{position:absolute;left:0;right:0;height:9vh;background:#000;transition:height .6s}
@@ -180,6 +203,7 @@
   <button data-act="menu">Menu (Esc)</button>
   <button data-act="insert">Insert</button>
   <button data-act="full">Fullscreen</button>
+  <button data-act="chat" class="touch-only">💬 Chat</button>
   <button data-act="trailer" id="trailerBtn" style="display:none" title="Movie camera for recording a trailer (admin only). P or Esc stops it.">🎬 Trailer (P)</button>
   <span id="netBadge" class="hidden"></span>
 </div>
@@ -191,6 +215,11 @@
 </div>
 <div id="tip" class="txt"></div>
 <div id="toolbar"></div>
+<div id="touchUI">
+  <div id="joy"><div id="joyKnob"></div></div>
+  <div id="jumpBtn">Jump</div>
+</div>
+<div id="fcHint" class="txt"></div>
 <div id="trailerUI" class="hidden">
   <div class="tr-bar top"></div><div class="tr-bar bot"></div>
   <div id="trCard"></div>
@@ -462,7 +491,8 @@ sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
 const SHADOW_KEY = 'blockburg-classic-shadows';
 let shadowsOn = true;
-try { shadowsOn = localStorage.getItem(SHADOW_KEY) !== 'off'; } catch { }
+// (until you pick in the settings: on for computers, off for phones and tablets, which run smoother without them)
+try { const s = localStorage.getItem(SHADOW_KEY); shadowsOn = s ? s !== 'off' : !(!HEADLESS && matchMedia('(pointer: coarse)').matches); } catch { }
 renderer.shadowMap.enabled = shadowsOn; sun.castShadow = shadowsOn;
 // everything with a mesh casts and catches shadows (used for hats, tools, and anything built from groups)
 const shadowAll = (o) => { o.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } }); return o; };
@@ -2891,6 +2921,7 @@ document.querySelector('#menubar').addEventListener('click', (e) => {
   if (a === 'insert') $('insertWin').classList.toggle('hidden');
   if (a === 'full') toggleFullscreen();
   if (a === 'trailer') startTrailer();
+  if (a === 'chat') { const t = prompt('Say something:'); sendChat(t); }   // (phones: the chat box would sit under the joystick)
 });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).classList.add('hidden'));
 function toggleFullscreen() {
@@ -2993,10 +3024,7 @@ addEventListener('keydown', (e) => {
   if (document.activeElement === chatInput) {
     if (e.key === 'Enter') {
       const t = chatInput.value.trim(); chatInput.value = ''; chatInput.blur();
-      if (t && started) {
-        player.say(t);
-        if (net.mode === 'client') netSend({ t: 'chat', text: t }); else aiOnChat(player, t);
-      }
+      sendChat(t);
     } else if (e.key === 'Escape') chatInput.blur();
     return;
   }
@@ -3004,6 +3032,10 @@ addEventListener('keydown', (e) => {
     if (!e.repeat) trailerKey(e);
     if (TRAILER_MOVE_KEYS.includes(e.code)) { keys[e.code] = true; e.preventDefault(); }
     return;
+  }
+  if (freecam.on && !menuOpen) {   // free cam: Esc or F lands, H shows or hides the buttons
+    if (e.key === 'Escape' || (e.code === 'KeyF' && !e.repeat)) { toggleFreecam(); return; }
+    if (e.code === 'KeyH' && !e.repeat) { document.body.classList.toggle('freecam'); return; }
   }
   if (e.key === 'Escape') {
     if (!started) return;
@@ -3013,6 +3045,7 @@ addEventListener('keydown', (e) => {
   if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
   if (menuOpen || !started) return;
   if (e.code === 'KeyP' && !e.repeat && !dragging) { startTrailer(); return; }
+  if (e.code === 'KeyF' && !e.repeat && !dragging && adminPriv) { toggleFreecam(); return; }   // (while dragging, F anchors the brick)
   if (e.key === '/') { e.preventDefault(); chatInput.focus(); return; }
   if ((e.code === 'Equal' || e.key === '=') && !e.repeat) {
     if (net.mode === 'client') netSend({ t: 'drophat' });   // the host owns dropped hats
@@ -3030,6 +3063,12 @@ addEventListener('keydown', (e) => {
   }
 });
 addEventListener('keyup', (e) => keys[e.code] = false);
+function sendChat(t) {
+  t = String(t || '').trim().slice(0, 100);
+  if (!t || !started) return;
+  player.say(t);
+  if (net.mode === 'client') netSend({ t: 'chat', text: t }); else aiOnChat(player, t);
+}
 const cv = renderer.domElement;
 // right-drag turns the camera like old Roblox: the mouse is locked in place (and hidden) while you turn,
 // then shows up again right where it was when you let go
@@ -3056,7 +3095,7 @@ cv.addEventListener('mousedown', (e) => {
     hideCursorForTurn();
     try { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } catch { }   // falls back to a hidden cursor if refused
   }
-  if (e.button === 0 && started) useTool(e);
+  if (e.button === 0 && started && !freecam.on) useTool(e);   // (no tools while the free cam is flying around)
 });
 addEventListener('mouseup', (e) => { if (e.button === 2) endCamDrag(); if (e.button === 0) stopDrag(); });
 addEventListener('mousemove', (e) => {
@@ -3068,7 +3107,14 @@ addEventListener('mousemove', (e) => {
     lastX = e.clientX; lastY = e.clientY;
   }
 });
-cv.addEventListener('wheel', (e) => { e.preventDefault(); camDist = Math.min(120, Math.max(0.5, camDist * (1 + Math.sign(e.deltaY) * 0.12))); }, { passive: false });
+cv.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  if (freecam.on) {   // in the free cam the wheel sets how fast you fly
+    freecam.speed = Math.min(200, Math.max(4, freecam.speed * (1 - Math.sign(e.deltaY) * 0.15)));
+    freecamHint(`🎥 Speed ${Math.round(freecam.speed)}`); return;
+  }
+  camDist = Math.min(120, Math.max(0.5, camDist * (1 + Math.sign(e.deltaY) * 0.12)));
+}, { passive: false });
 
 /* ================= trailer camera =================
    Admin only (logged in with the admin key: the button shows up then, and P works).
@@ -3111,6 +3157,7 @@ const TRAILER_CARDS = {
 
 function startTrailer() {
   if (!started || trailer.on || !adminPriv) return;   // only the admin (logged in with the admin key) can film trailers
+  if (freecam.on) toggleFreecam();
   stopDrag(); if (equipped) equip(TOOLS.indexOf(equipped));
   $('insertWin').classList.add('hidden');
   Object.assign(trailer, { on: true, i: 0, clock: 0, fired: false, guest: null, scale: 1 });
@@ -3179,13 +3226,110 @@ function trailerCamera(dt) {
   return look;
 }
 
+/* ================= free cam (admin only) =================
+   Press F in a game: the camera leaves your character and flies freely, for filming your own shots.
+   W A S D fly where you're looking · E / Space up · Q / C down · hold Shift: fast · mouse wheel: speed
+   right-drag: look around · H: show / hide the buttons · F or Esc: back to normal.
+   (Not Ctrl for down: Ctrl + W closes the browser tab.) */
+const freecam = { on: false, pos: new V3(), speed: 30, hintT: 0 };
+function toggleFreecam() {
+  if (!freecam.on && (!started || !adminPriv || trailer.on)) return;
+  freecam.on = !freecam.on;
+  document.body.classList.toggle('freecam', freecam.on);
+  if (freecam.on) { stopDrag(); freecam.pos.copy(camera.position); freecamHint('🎥 Free cam: W A S D fly · E / Q up and down · Shift fast · F to exit'); }
+  else $('fcHint').classList.remove('show');
+}
+function freecamHint(text) { $('fcHint').textContent = text; $('fcHint').classList.add('show'); freecam.hintT = 3; }
+// moves the free camera for this frame; gives back a point in front of it (the sun's shadows follow it)
+function freecamCamera(dt) {
+  const cp = Math.cos(camPitch), dir = new V3(-Math.sin(camYaw) * cp, -Math.sin(camPitch), -Math.cos(camYaw) * cp);
+  const right = new V3(Math.cos(camYaw), 0, -Math.sin(camYaw)), move = new V3();
+  if (keys.KeyW) move.add(dir); if (keys.KeyS) move.sub(dir);
+  if (keys.KeyD) move.add(right); if (keys.KeyA) move.sub(right);
+  if (keys.KeyE || keys.Space) move.y += 1; if (keys.KeyQ || keys.KeyC) move.y -= 1;
+  if (move.lengthSq() > 0) freecam.pos.addScaledVector(move.normalize(), freecam.speed * (keys.ShiftLeft || keys.ShiftRight ? 3 : 1) * dt);
+  camera.position.copy(freecam.pos); camera.lookAt(freecam.pos.clone().add(dir));
+  if (freecam.hintT > 0 && (freecam.hintT -= dt) <= 0) $('fcHint').classList.remove('show');
+  return freecam.pos.clone().addScaledVector(dir, 12);
+}
+
+/* ================= touch controls (phones and tablets) =================
+   They show up on touch screens: a joystick (bottom left) to walk and a Jump button (bottom right).
+   Drag anywhere else on the game to turn the camera, pinch to zoom, tap to use the tool you're holding
+   right where you tap. With Grab or Clone, touch a brick and drag it. Chat has its own button. */
+const joy = { id: null, x: 0, y: 0 };
+const tch = { id: null, sx: 0, sy: 0, x: 0, y: 0, t0: 0, moved: false, mode: null, pinch: 0 };
+function enableTouch() { if (!document.body.classList.contains('touch')) document.body.classList.add('touch'); }
+if (!HEADLESS && matchMedia('(pointer: coarse)').matches) enableTouch();
+addEventListener('touchstart', enableTouch, { passive: true });   // a touchscreen laptop gets them once it's touched
+const aimAt = (t) => mouseNDC.set(t.clientX / innerWidth * 2 - 1, -(t.clientY / innerHeight) * 2 + 1);
+const canTouchPlay = () => started && !menuOpen && !trailer.on && !freecam.on && !player.dead;
+
+// the joystick: how far the knob is pushed (up to 1) is how fast you walk
+function joyMove(t) {
+  const r = $('joy').getBoundingClientRect(), R = r.width / 2;
+  let dx = t.clientX - (r.left + R), dy = t.clientY - (r.top + R);
+  const L = Math.hypot(dx, dy); if (L > R) { dx *= R / L; dy *= R / L; }
+  joy.x = dx / R; joy.y = dy / R;
+  $('joyKnob').style.transform = `translate(${dx}px,${dy}px)`;
+}
+function joyEnd(e) {
+  for (const t of e.changedTouches) if (t.identifier === joy.id) { joy.id = null; joy.x = joy.y = 0; $('joyKnob').style.transform = ''; }
+}
+$('joy').addEventListener('touchstart', (e) => { e.preventDefault(); const t = e.changedTouches[0]; joy.id = t.identifier; joyMove(t); }, { passive: false });
+$('joy').addEventListener('touchmove', (e) => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === joy.id) joyMove(t); }, { passive: false });
+$('joy').addEventListener('touchend', joyEnd); $('joy').addEventListener('touchcancel', joyEnd);
+const jumpBtn = $('jumpBtn');
+jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys.Space = true; jumpBtn.classList.add('down'); }, { passive: false });
+const jumpUp = () => { keys.Space = false; jumpBtn.classList.remove('down'); };
+jumpBtn.addEventListener('touchend', jumpUp); jumpBtn.addEventListener('touchcancel', jumpUp);
+
+// on the game itself: one finger turns the camera (or drags a brick), a quick tap uses your tool, two fingers zoom
+const pinchDist = (e) => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+cv.addEventListener('touchstart', (e) => {
+  e.preventDefault(); chatInput.blur();
+  if (e.touches.length === 2) { if (tch.mode === 'drag') stopDrag(); Object.assign(tch, { mode: 'pinch', pinch: pinchDist(e), id: null }); return; }
+  if (tch.id !== null || e.touches.length > 2) return;
+  const t = e.changedTouches[0];
+  Object.assign(tch, { id: t.identifier, sx: t.clientX, sy: t.clientY, x: t.clientX, y: t.clientY, t0: performance.now(), moved: false, mode: 'look' });
+  aimAt(t);
+  if (canTouchPlay() && equipped && (equipped.id === 'grab' || equipped.id === 'clone')) { useTool(); if (dragging) tch.mode = 'drag'; }
+}, { passive: false });
+cv.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (tch.mode === 'pinch' && e.touches.length >= 2) {
+    const d = pinchDist(e); camDist = Math.min(120, Math.max(0.5, camDist * tch.pinch / Math.max(1, d))); tch.pinch = d; return;
+  }
+  for (const t of e.changedTouches) {
+    if (t.identifier !== tch.id) continue;
+    if (Math.hypot(t.clientX - tch.sx, t.clientY - tch.sy) > 10) tch.moved = true;
+    if (tch.mode === 'drag') aimAt(t);
+    else if (tch.moved) {
+      camYaw -= (t.clientX - tch.x) * 0.008;
+      camPitch = Math.min(1.4, Math.max(-1.3, camPitch + (t.clientY - tch.y) * 0.008));
+    }
+    tch.x = t.clientX; tch.y = t.clientY;
+  }
+}, { passive: false });
+function touchEnd(e) {
+  if (tch.mode === 'pinch') { if (e.touches.length < 2) tch.mode = null; return; }
+  for (const t of e.changedTouches) {
+    if (t.identifier !== tch.id) continue;
+    if (tch.mode === 'drag') stopDrag();
+    else if (!tch.moved && performance.now() - tch.t0 < 350 && canTouchPlay()) { aimAt(t); useTool(); }   // a tap
+    tch.id = null; tch.mode = null;
+  }
+}
+cv.addEventListener('touchend', touchEnd); cv.addEventListener('touchcancel', touchEnd);
+
 /* ================= main loop ================= */
 let time = 0, last = performance.now(), lbT = 0;
 function playerInput(dt) {
   const P = player;
   P.move.set(0, 0, 0); P.jump = false;
-  if (!started || menuOpen || P.dead || document.activeElement === chatInput) return;
+  if (!started || menuOpen || freecam.on || P.dead || document.activeElement === chatInput) return;
   let ix = 0, iz = 0;
+  if (Math.hypot(joy.x, joy.y) > 0.12) { ix += joy.x; iz -= joy.y; }   // the touch joystick (pushed up = forward)
   // during the trailer, "forward" is wherever the trailer camera is looking, so W walks into the shot
   let yaw = camYaw;
   if (trailer.on) { const d = camera.getWorldDirection(new V3()); yaw = Math.atan2(-d.x, -d.z); }
@@ -3333,6 +3477,8 @@ function frame(now) {
   P.char.root.visible = !P.dead && !firstPerson;
   if (trailer.on) {   // the trailer camera flies its own shots, and you get a cameo wherever you're standing
     target = trailerCamera(dt); P.char.root.visible = !P.dead; selBox.visible = false;
+  } else if (freecam.on) {   // the admin's free cam: you stay standing where you were
+    target = freecamCamera(dt); P.char.root.visible = !P.dead; selBox.visible = false;
   } else if (firstPerson) {
     camera.position.set(P.pos.x, P.pos.y + 2.1, P.pos.z);
     camera.lookAt(camera.position.clone().add(new V3(-Math.sin(camYaw) * Math.cos(camPitch), -Math.sin(camPitch), -Math.cos(camYaw) * Math.cos(camPitch))));
@@ -3542,6 +3688,7 @@ function setAdmin(h, on = true) {
     setCape(pvChar, on);   // (in the Character page preview too)
     $('adminBadge').classList.toggle('hidden', !on); $('fmAdminBtn').textContent = on ? 'Admin logout' : 'Admin login';
     $('trailerBtn').style.display = on ? '' : 'none';   // the trailer camera is the admin's
+    if (!on && freecam.on) toggleFreecam();             // and so is the free cam
   }
 }
 function helloMsg() { const m = { t: 'hello', v: NET_VERSION, name: myName(), look }; if (net.admSig) m.adm = net.admSig; return m; }
@@ -3893,6 +4040,7 @@ function playPlace(id) {
 }
 function leaveGame() {
   if (net.mode) netStop(net.mode === 'host' ? 'You stopped hosting.' : 'You left the game.');
+  stopTrailer(); if (freecam.on) toggleFreecam();
   started = false;
   if (equipped) equip(TOOLS.indexOf(equipped));
   $('insertWin').classList.add('hidden');
@@ -4413,7 +4561,7 @@ showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
-  keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, trailer, startTrailer, stopTrailer, adminLogin, setCape, get dragging() { return dragging; },
+  keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, get dragging() { return dragging; },
   pickAt(x, y) { mouseNDC.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); const h = pick(); return h && (h.object.userData.part ? 'part ' + h.object.userData.part.nid : h.object.userData.hum ? 'hum ' + h.object.userData.hum.name : 'other'); },
   tick(frames) { for (let i = 0; i < frames; i++) frame(last + 1000 / 60); } };
 requestAnimationFrame(loop);
