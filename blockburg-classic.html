@@ -151,6 +151,10 @@
   .ib-item .s{color:#666;font-size:11px;margin:2px 0 5px}
   .ib-item .new{background:#e2231a;color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;margin-left:5px}
   .ib-item button{margin-right:5px}
+  .pl-item{overflow:hidden}
+  .pl-thumb{float:left;width:112px;aspect-ratio:4/3;object-fit:cover;border:1px solid #888;margin:0 10px 0 0;image-rendering:pixelated;
+    display:grid;place-items:center;font-size:30px;background:linear-gradient(#7fb4e6,#4b974b 70%)}
+  .gcard img.proj-thumb{image-rendering:pixelated}
   .gcard .gs{font-size:10px;color:#555;margin-bottom:5px}
   .hatgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
   .hcard{border:1px solid #b9cbe4;padding:6px;text-align:center;background:#f6f9fd}
@@ -3687,14 +3691,44 @@ const pvHolder = document.createElement('div'); pvHolder.id = 'avatarHolder'; pv
 
 // game thumbnails
 // every game gets a real snapshot of its world, shrunk down to a chunky low-res picture like the old site
-function snapThumb(pos, look) {
+function snapThumb(pos, look, type = 'image/png') {
   const c = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 2000);
   c.position.copy(pos); c.lookAt(look);
   renderer.render(scene, c);
   const src = renderer.domElement, W = 128, H = 96;   // tiny on purpose: the browser blows it back up pixelated
   const sw = Math.min(src.width, src.height * W / H), sh = sw * H / W;
-  return canvas(W, H, (g) => { g.imageSmoothingEnabled = true; g.drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, 0, 0, W, H); }).toDataURL();
+  return canvas(W, H, (g) => { g.imageSmoothingEnabled = true; g.drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, 0, 0, W, H); }).toDataURL(type, 0.85);
 }
+// a picture of a build (saved bricks), like the Games page ones: just its bricks on the baseplate, framed from above
+// at an angle. Everything else (the town, Guests, players) is hidden for the shot. Gives back a small JPEG data URL.
+function snapBricksThumb(bricks) {
+  const hidden = [...parts.filter(p => !p.locked).map(p => p.mesh), ...humanoids.map(h => h.char.root), selBox].filter(o => o.visible);
+  hidden.forEach(o => o.visible = false);
+  const group = new THREE.Group();
+  for (const d of bricks || []) {
+    const sz = d.z, col = d.c || BC['Medium stone grey'], tr = d.t || 0;
+    let m;
+    if (d.s === 'ball') m = new THREE.Mesh(new THREE.SphereGeometry(sz[0] / 2, 20, 14), partMats(col, true, tr)[0]);
+    else if (d.s === 'cyl') m = new THREE.Mesh(new THREE.CylinderGeometry(sz[0] / 2, sz[0] / 2, sz[1], 16), partMats(col, true, tr)[0]);
+    else { m = new THREE.Mesh(boxGeo(...sz), partMats(col, true, tr)); m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), outlineMat)); }
+    m.position.set(...d.p); if (Array.isArray(d.q)) m.quaternion.set(...d.q);
+    m.castShadow = m.receiveShadow = true; group.add(m);
+  }
+  scene.add(group);
+  // frame the whole build (an empty baseplate gets a close-up of the middle)
+  const box = new THREE.Box3().setFromObject(group), center = box.isEmpty() ? new V3(0, 1, 0) : box.getCenter(new V3());
+  const size = box.isEmpty() ? 6 : Math.max(...box.getSize(new V3()).toArray());
+  const pos = center.clone().addScaledVector(new V3(0.75, 0.62, 1).normalize(), size * 0.9 + 4);
+  const sun0 = sun.position.clone(), tgt0 = sun.target.position.clone();
+  sun.target.position.copy(center); sun.position.copy(center).addScaledVector(sunDir, 250);   // shadows around the build
+  const src = snapThumb(pos, center, 'image/jpeg');
+  sun.position.copy(sun0); sun.target.position.copy(tgt0);
+  scene.remove(group); group.traverse(o => o.geometry?.dispose?.());   // (these shapes were made just for the picture)
+  hidden.forEach(o => o.visible = true);
+  return src;
+}
+// a sensible picture to believe from someone else's post: a small JPEG or PNG image, nothing else
+const okThumb = (s) => typeof s === 'string' && s.length < 60000 && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(s);
 function snapGameThumbs() {
   document.querySelectorAll('.thumbClassic').forEach(i => i.src = snapThumb(new V3(38, 32, 46), new V3(0, 4, -12)));
   // Happy Home Baseplate: the same baseplate with everything else hidden, plus a few starter bricks
@@ -4170,6 +4204,7 @@ function saveBaseplate({ name } = {}) {
     list.push(f); currentFile = f.id;
   }
   f.bricks = parts.filter(p => !p.locked).map(serialize); f.ts = Date.now();
+  try { f.thumb = snapBricksThumb(f.bricks); } catch { }   // its picture on the Build page
   const ok = storePlaces(list);
   renderPlaces();
   return ok ? f : null;
@@ -4177,8 +4212,12 @@ function saveBaseplate({ name } = {}) {
 // My Places, under "Build on a Baseplate": newest first
 function renderPlaces() {
   const el = $('myPlaces'); if (!el) return;
-  const list = loadPlaces().sort((a, b) => b.ts - a.ts);
-  el.innerHTML = `<div class="ib-sec">My Places (${list.length})</div>` + (list.length ? list.map(f => `<div class="ib-item">
+  let list = loadPlaces();
+  // every place gets a picture (older saves from before pictures get one now)
+  if (list.some(f => !f.thumb)) { for (const f of list) if (!f.thumb) try { f.thumb = snapBricksThumb(f.bricks); } catch { } storePlaces(list); }
+  list = list.sort((a, b) => b.ts - a.ts);
+  el.innerHTML = `<div class="ib-sec">My Places (${list.length})</div>` + (list.length ? list.map(f => `<div class="ib-item pl-item">
+    ${okThumb(f.thumb) ? `<img class="pl-thumb" src="${f.thumb}" alt="">` : '<div class="pl-thumb ph proj">🧱</div>'}
     <div class="t">📄 ${escHtml(f.name)}</div><div class="s">${f.bricks.length} bricks &middot; saved ${fmDate(f.ts)}</div>
     <button class="s-btn go" data-pl="open" data-id="${f.id}">▶ Open</button><button class="s-btn" data-pl="rename" data-id="${f.id}">✏️ Rename</button><button class="s-btn" data-pl="del" data-id="${f.id}">🗑 Delete</button></div>`).join('')
     : '<div class="gs">No saved places yet. Build on a Baseplate and save it when you leave: it shows up here.</div>');
@@ -4255,7 +4294,7 @@ const myProjects = () => loadList(MY_PROJ_KEY) || [];
 // a project's fingerprint: change any brick (or its title or name) and this changes too
 async function projDigest(p) {
   if (!subtle) return '';
-  const bytes = new TextEncoder().encode(JSON.stringify([p.id, p.ti, p.ds, p.n, p.ts, p.parts]));
+  const bytes = new TextEncoder().encode(JSON.stringify([p.id, p.ti, p.ds, p.n, p.ts, p.parts, p.th || '']));   // (its picture too)
   return b64u(new Uint8Array(await subtle.digest('SHA-256', bytes)));
 }
 const answerSigText = (a) => `proj|${a.id}|${a.ok ? 'yes' : 'no'}|${a.dg}|${a.note}`;
@@ -4280,7 +4319,7 @@ async function projMessage(topic, payload) {
   if (topic.startsWith(PROJ_PREFIX + 'sub/')) {
     if (typeof o.ti !== 'string' || typeof o.n !== 'string' || typeof o.ts !== 'number' || !Array.isArray(o.parts) || o.parts.length > PROJ_MAX_BRICKS) return;
     const p = { id: o.id, ti: cleanText(o.ti).slice(0, 40), ds: cleanText(String(o.ds || '')).slice(0, 200), n: o.n.replace(/[^\w \-]/g, '').slice(0, 16) || 'Player',
-      ts: o.ts, parts: o.parts };
+      ts: o.ts, parts: o.parts, th: okThumb(o.th) ? o.th : '' };
     p.digest = await projDigest(p);
     proj.subs.set(p.id, p);
   } else if (topic.startsWith(PROJ_PREFIX + 'ok/')) {   // the admin's answer: only counts with the admin's signature
@@ -4320,6 +4359,7 @@ async function postProject() {
   await projStart();
   if (!proj.clients.length) { sysChat("Couldn't reach the project servers. Some school or work networks block them."); return; }
   const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), ti, ds, n: myName(), ts: Date.now(), parts: bricks.map(serialize) };
+  try { p.th = snapBricksThumb(p.parts); } catch { p.th = ''; }   // its picture for the Games page
   projPublish('sub/' + p.id, p);
   try { localStorage.setItem(MY_PROJ_KEY, JSON.stringify([...myProjects(), p.id])); localStorage.setItem('blockburg-proj-last', String(Date.now())); } catch { }
   proj.subs.set(p.id, { ...p, digest: await projDigest(p) });
@@ -4353,7 +4393,8 @@ function playProject(id) {
 function projRender() {
   // Games: approved projects, newest first
   const ok = [...proj.subs.values()].filter(p => projStatus(p) === 'yes').sort((a, b) => b.ts - a.ts);
-  $('projGames').innerHTML = ok.length ? ok.map(p => `<div class="gcard"><div class="ph proj">🧱</div><div class="gt">${escHtml(p.ti)}</div>
+  const pic = (p) => (okThumb(p.th) ? `<img class="proj-thumb" src="${p.th}" alt="">` : '<div class="ph proj">🧱</div>');
+  $('projGames').innerHTML = ok.length ? ok.map(p => `<div class="gcard">${pic(p)}<div class="gt">${escHtml(p.ti)}</div>
     <div class="gs">by ${escHtml(p.n)} &middot; ${p.parts.length} bricks</div>${p.ds ? `<div class="gs">${escHtml(p.ds)}</div>` : ''}
     <button class="s-btn go" data-proj="${p.id}">Play Solo</button></div>`).join('')
     : `<div class="gs">${proj.started ? 'No projects yet. Build one on a Baseplate and post it!' : 'Loading projects...'}</div>`;
@@ -4365,7 +4406,8 @@ function projRender() {
   const isNew = (p) => projStatus(p) !== 'wait' && seenBefore[p.id] !== projStatus(p);
   const n = waiting.length + fresh.length;
   $('inboxBadge').textContent = n; $('inboxBadge').classList.toggle('hidden', !n);
-  const item = (p, extra) => `<div class="ib-item"><div class="t">${escHtml(p.ti)}${extra.isNew ? '<span class="new">NEW</span>' : ''}</div>
+  const item = (p, extra) => `<div class="ib-item pl-item">${okThumb(p.th) ? `<img class="pl-thumb" src="${p.th}" alt="">` : '<div class="pl-thumb">🧱</div>'}
+    <div class="t">${escHtml(p.ti)}${extra.isNew ? '<span class="new">NEW</span>' : ''}</div>
     <div class="s">by ${escHtml(p.n)} &middot; ${p.parts.length} bricks &middot; ${fmDate(p.ts)}${p.ds ? ' &middot; ' + escHtml(p.ds) : ''}</div>${extra.html}</div>`;
   let h = '';
   if (adminPriv) {
