@@ -140,6 +140,17 @@
   .gcard img,.gcard .ph{width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid #888;display:block;background:#4b974b}
   .thumbClassic,#thumbBase{image-rendering:pixelated}
   .gcard .gt{font:bold 12px Verdana;color:#0b4a99;margin:5px 0 2px}
+  /* players' projects (Games) and the Inbox */
+  .proj-h{margin:16px 0 8px;font:bold 13px Verdana;color:#0b4a99}
+  .gcard .ph.proj{display:grid;place-items:center;font-size:44px;background:linear-gradient(#7fb4e6,#4b974b 70%)}
+  .nbadge{background:#e2231a;color:#fff;border-radius:9px;padding:0 6px;margin-left:4px;font-size:10px;vertical-align:1px}
+  .nbadge.hidden{display:none}
+  .ib-sec{font:bold 12px Verdana;color:#0b4a99;margin:12px 0 6px;border-bottom:1px solid #b9cbe4;padding-bottom:3px}
+  .ib-item{border:1px solid #b9cbe4;background:#f6f9fd;padding:7px 9px;margin-bottom:6px;font-size:12px}
+  .ib-item .t{font-weight:bold;color:#0b4a99}
+  .ib-item .s{color:#666;font-size:11px;margin:2px 0 5px}
+  .ib-item .new{background:#e2231a;color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;margin-left:5px}
+  .ib-item button{margin-right:5px}
   .gcard .gs{font-size:10px;color:#555;margin-bottom:5px}
   .hatgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
   .hcard{border:1px solid #b9cbe4;padding:6px;text-align:center;background:#f6f9fd}
@@ -249,6 +260,7 @@
     <div id="palette"></div>
     <h4>Place</h4>
     <div class="row"><button class="b" id="saveBtn">Save</button><button class="b" id="loadBtn">Load</button><button class="b" id="clearBtn">Clear All</button><button class="b" id="defaultBtn">Default</button></div>
+    <div class="row"><button class="b" id="postBtn" title="Send your Baseplate build to the admin, to show up in Games">📤 Post to Games</button></div>
   </div>
 </div>
 
@@ -261,6 +273,12 @@
     <button data-esc="help">Help</button>
     <button data-esc="shot">Screenshot</button>
     <button data-esc="leave" class="dark">Leave Game</button>
+  </div>
+  <div class="esc-view hidden" id="escSaveLeave">
+    <div class="esc-msg">Save your baseplate before you leave? It'll be here next time.</div>
+    <button data-esc="saveleave">Save and Leave</button>
+    <button data-esc="justleave">Leave Without Saving</button>
+    <button data-esc="back" class="dark">Cancel</button>
   </div>
   <div class="esc-view hidden" id="escConfirm">
     <div class="esc-msg" id="escConfirmMsg"></div>
@@ -304,7 +322,7 @@
     <div class="s-user">Logged in as <b>Player</b> <span class="fm-adm hidden" id="adminBadge" style="margin:0">Admin</span> &nbsp;|&nbsp; 🎫 <b>25</b> Tix &nbsp;|&nbsp; 💵 <b>10</b> Bux<br><span id="onlineCount">5</span> people online</div>
   </div>
   <div class="s-nav">
-    <a data-page="home" class="on">My Blockburg</a><a data-page="games">Games</a><a data-page="catalog">Catalog</a><a data-page="character">Character</a><a data-page="build">Build</a><a data-page="online">Multiplayer</a><a data-page="friends">Friends<span id="frBadge"></span></a><a data-page="forum">Forums</a><a data-page="help">Help</a>
+    <a data-page="home" class="on">My Blockburg</a><a data-page="games">Games</a><a data-page="catalog">Catalog</a><a data-page="character">Character</a><a data-page="build">Build</a><a data-page="online">Multiplayer</a><a data-page="inbox">Inbox<span id="inboxBadge" class="nbadge hidden"></span></a><a data-page="friends">Friends<span id="frBadge"></span></a><a data-page="forum">Forums</a><a data-page="help">Help</a>
   </div>
   <div class="s-sub" id="loading">Loading the game engine...</div>
   <div class="s-body">
@@ -336,7 +354,12 @@
     <div class="page hidden" id="p-games"><div class="box"><h3>Games</h3><div class="in"><div class="gamegrid">
       <div class="gcard"><img class="thumbClassic" alt=""><div class="gt">Blockburg Classic</div><div class="gs">by Player &middot; 4 playing</div><button class="s-btn go" data-play="classic">Play Solo</button></div>
       <div class="gcard"><img id="thumbBase" alt=""><div class="gt">Happy Home Baseplate</div><div class="gs">by Player &middot; empty, build anything</div><button class="s-btn go" data-play="baseplate">Play Solo</button></div>
-    </div></div></div></div>
+    </div>
+    <h4 class="proj-h">Made by players</h4>
+    <div class="gamegrid" id="projGames"></div>
+    </div></div></div>
+
+    <div class="page hidden" id="p-inbox"><div class="box"><h3>Inbox</h3><div class="in" id="inboxBody"></div></div></div>
 
     <div class="page hidden" id="p-catalog"><div class="box"><h3>Catalog</h3><div class="in">
       <div class="cat-tabs"><button class="s-btn on" data-cat="hats">Hats</button><button class="s-btn" data-cat="shirts">Shirts</button><button class="s-btn" data-cat="pants">Pants</button><button class="s-btn" data-cat="tshirts">T-Shirts</button><button class="s-btn" data-cat="faces">Faces</button></div>
@@ -363,7 +386,9 @@
     </div></div>
 
     <div class="page hidden" id="p-build"><div class="box"><h3>Build</h3><div class="in">
-      <p style="margin-top:0">Want to make your own place? Start on an empty baseplate. Open <b>Insert</b> in-game for bricks and BrickColors, use the <b>Grab</b>, <b>Clone</b>, <b>Delete</b> and <b>Paint</b> tools, then <b>Save</b> your place.</p>
+      <p style="margin-top:0">Want to make your own place? Start on an empty baseplate. Open <b>Insert</b> in-game for bricks and BrickColors, use the <b>Grab</b>, <b>Clone</b>, <b>Delete</b> and <b>Paint</b> tools, then <b>Save</b> your place.
+        Your baseplate is saved when you leave and comes back next time.</p>
+      <p>Proud of it? Press <b>📤 Post to Games</b> in the Insert window. The admin checks every project first, and you'll get a message in your <b>Inbox</b>.</p>
       <button class="s-btn go" data-play="baseplate">Build on a Baseplate</button>
     </div></div></div>
 
@@ -2949,13 +2974,15 @@ selectColor(BC['Bright red'], 'Bright red');
 const SAVE_KEY = 'blockburg-classic-place';
 // in someone else's game, only the host can save, load or reset the place
 const hostOnly = (fn) => () => { if (net.mode === 'client') sysChat('Saving, loading and resetting the place only work in solo play.'); else fn(); };
+// (on your baseplate, Save and Load use the same save as leaving does)
+const saveSlot = () => (currentPlace === 'baseplate' ? BASE_KEY : SAVE_KEY);
 $('saveBtn').onclick = hostOnly(() => {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(parts.filter(p => !p.locked).map(serialize))); sysChat('Place saved.'); }
+  try { localStorage.setItem(saveSlot(), JSON.stringify(parts.filter(p => !p.locked).map(serialize))); sysChat('Place saved.'); }
   catch { sysChat('Could not save (storage blocked).'); }
 });
 $('loadBtn').onclick = hostOnly(() => {
   let data = null;
-  try { data = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { }
+  try { data = JSON.parse(localStorage.getItem(saveSlot())); } catch { }
   if (!data) { sysChat('No saved place yet.'); return; }
   stopDrag(); clearUnlocked(); data.forEach(d => deserialize(d, { sleep: true })); sysChat('Place loaded.');
 });
@@ -2980,7 +3007,7 @@ function toggleFullscreen() {
 /* ---- the in-game Escape menu ---- */
 let menuOpen = false, pendingConfirm = null;
 function escView(id, title) {
-  ['escMain', 'escConfirm', 'escSettings', 'escHelp'].forEach(v => $(v).classList.toggle('hidden', v !== id));
+  ['escMain', 'escConfirm', 'escSaveLeave', 'escSettings', 'escHelp'].forEach(v => $(v).classList.toggle('hidden', v !== id));
   $('escTitle').textContent = title;
 }
 function openEsc() {
@@ -2998,7 +3025,12 @@ $('escMenu').addEventListener('click', (e) => {
   if (a === 'settings') { $('fsChk').checked = !!document.fullscreenElement; escView('escSettings', 'Game Settings'); }
   if (a === 'help') escView('escHelp', 'Help');
   if (a === 'shot') takeScreenshot();
-  if (a === 'leave') confirmEsc('Are you sure you want to leave this game?', () => { closeEsc(); leaveGame(); });
+  if (a === 'leave') {
+    if (currentPlace === 'baseplate' && !net.mode) escView('escSaveLeave', 'Leave Game');   // your own baseplate: save it first?
+    else confirmEsc('Are you sure you want to leave this game?', () => { closeEsc(); leaveGame(); });
+  }
+  if (a === 'saveleave') { const ok = saveBaseplate(); closeEsc(); leaveGame(); if (!ok) alert("Couldn't save your baseplate (this browser blocks saving)."); }
+  if (a === 'justleave') { closeEsc(); leaveGame(); }
   if (a === 'yes' && pendingConfirm) { const f = pendingConfirm; pendingConfirm = null; f(); }
   if (a === 'back') escView('escMain', 'Game Menu');
 });
@@ -3667,6 +3699,8 @@ function showPage(p) {
   if (slot) slot.append(pvHolder);
   if (p === 'forum') forumOpen();
   if (p === 'friends') friendsInit(true);
+  if (p === 'inbox') inboxOpened();
+  if (p === 'games') { projStart(); projRender(); }
   $('site').scrollTop = 0;
 }
 let catTab = 'hats';
@@ -3764,6 +3798,7 @@ function setAdmin(h, on = true) {
     $('adminBadge').classList.toggle('hidden', !on); $('fmAdminBtn').textContent = on ? 'Admin logout' : 'Admin login';
     $('trailerBtn').style.display = on ? '' : 'none';   // the trailer camera is the admin's
     if (!on && freecam.on) toggleFreecam();             // and so is the free cam
+    projRender();                                       // (the admin's Inbox has the projects waiting to be checked)
   }
 }
 function helloMsg() { const m = { t: 'hello', v: NET_VERSION, name: myName(), look }; if (net.admSig) m.adm = net.admSig; return m; }
@@ -4087,8 +4122,15 @@ $('site').addEventListener('click', (e) => {
   frRender();
 });
 
-function playPlace(id) {
+// which place you're in: 'classic', 'baseplate' (your own build, saved when you leave) or 'project' (someone's posted project)
+let currentPlace = null;
+const BASE_KEY = 'blockburg-baseplate';
+function saveBaseplate() {
+  try { localStorage.setItem(BASE_KEY, JSON.stringify(parts.filter(p => !p.locked).map(serialize))); return true; } catch { return false; }
+}
+function playPlace(id, { fresh = false } = {}) {
   audioInit();
+  currentPlace = id;
   stopDrag(); clearUnlocked();
   [...hatPickups].forEach(removeHatPickup);
   if (id === 'classic') buildDefault();
@@ -4112,7 +4154,15 @@ function playPlace(id) {
     if (!HEADLESS) setTimeout(() => npcs[0].enabled && npcs[0].say('hi Player!'), 1800);
     const g31 = npcs.find(n => n.name === 'Guest 31');
     if (!HEADLESS && g31) setTimeout(() => g31.enabled && g31.say('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'), 3600);
-  } else sysChat('Happy building! Open Insert for bricks. Use Save to keep your place.');
+  } else {
+    // your baseplate comes back the way you left it (solo only; a project or a server's room starts as it is)
+    let saved = null;
+    if (id === 'baseplate' && !fresh && !net.mode && !HEADLESS) { try { saved = JSON.parse(localStorage.getItem(BASE_KEY)); } catch { } }
+    if (Array.isArray(saved) && saved.length) {
+      saved.forEach(d => deserialize(d, { sleep: true }));
+      sysChat(`Welcome back! Your baseplate is how you left it (${saved.length} bricks). Clear All in Insert starts over.`);
+    } else sysChat('Happy building! Open Insert for bricks. Your baseplate is saved when you leave.');
+  }
   SFX.spawn();
 }
 function leaveGame() {
@@ -4125,6 +4175,164 @@ function leaveGame() {
   siteOpen = true; $('site').classList.remove('hidden');
   showPage('home');
 }
+
+/* ================= PROJECTS + INBOX =================
+   Anyone can post what they built on their Baseplate (Insert → 📤 Post to Games). It goes to the admin's
+   Inbox first and only shows up in Games once the admin approves it; the poster gets the answer in their Inbox.
+   Like the forums, posts and answers live on the free message servers (RELAY_BROKERS). Anyone can write there,
+   so an approval is the admin's signature on that exact project (a fingerprint of its title, name and every
+   brick): if anything in it is changed afterwards, the approval stops counting and it drops out of Games. */
+const PROJ_PREFIX = 'blockburg-projects-v1/';
+const PROJ_MAX_BRICKS = 600, PROJ_WAIT = 120000;
+const MY_PROJ_KEY = 'blockburg-my-projects', INBOX_SEEN_KEY = 'blockburg-inbox-seen';
+const proj = { clients: [], subs: new Map(), answers: new Map(), started: false, renderT: 0 };
+const loadList = (k) => { try { const v = JSON.parse(localStorage.getItem(k)); return v && typeof v === 'object' ? v : null; } catch { return null; } };
+const myProjects = () => loadList(MY_PROJ_KEY) || [];
+// a project's fingerprint: change any brick (or its title or name) and this changes too
+async function projDigest(p) {
+  if (!subtle) return '';
+  const bytes = new TextEncoder().encode(JSON.stringify([p.id, p.ti, p.ds, p.n, p.ts, p.parts]));
+  return b64u(new Uint8Array(await subtle.digest('SHA-256', bytes)));
+}
+const answerSigText = (a) => `proj|${a.id}|${a.ok ? 'yes' : 'no'}|${a.dg}|${a.note}`;
+// what's happened to a project: 'yes' (approved), 'no' (not approved) or 'wait'
+function projStatus(p) {
+  const a = proj.answers.get(p.id);
+  return a && a.dg === p.digest ? (a.ok ? 'yes' : 'no') : 'wait';
+}
+// only believe bricks that look like bricks (sizes and places a Baseplate build could really have)
+function cleanBrick(d) {
+  if (!d || !Array.isArray(d.z) || d.z.length !== 3 || !Array.isArray(d.p) || d.p.length !== 3) return null;
+  const num = (n, lo, hi) => Math.min(hi, Math.max(lo, +n || 0));
+  return { s: ['box', 'ball', 'cyl'].includes(d.s) ? d.s : 'box', z: d.z.map(n => num(n, 0.2, 64)), p: d.p.map(n => num(n, -600, 600)),
+    q: Array.isArray(d.q) && d.q.length === 4 ? d.q.map(n => num(n, -1, 1)) : [0, 0, 0, 1],
+    c: /^#[0-9a-f]{6}$/i.test(d.c) ? d.c : '#A3A2A5', t: num(d.t, 0, 1), a: !!d.a, k: !!d.k, w: false, b: !!d.b };
+}
+async function projMessage(topic, payload) {
+  const s = new TextDecoder().decode(payload);
+  if (!s) return;
+  let o; try { o = JSON.parse(s); } catch { return; }
+  if (!o || typeof o.id !== 'string' || o.id.length > 24) return;
+  if (topic.startsWith(PROJ_PREFIX + 'sub/')) {
+    if (typeof o.ti !== 'string' || typeof o.n !== 'string' || typeof o.ts !== 'number' || !Array.isArray(o.parts) || o.parts.length > PROJ_MAX_BRICKS) return;
+    const p = { id: o.id, ti: cleanText(o.ti).slice(0, 40), ds: cleanText(String(o.ds || '')).slice(0, 200), n: o.n.replace(/[^\w \-]/g, '').slice(0, 16) || 'Player',
+      ts: o.ts, parts: o.parts };
+    p.digest = await projDigest(p);
+    proj.subs.set(p.id, p);
+  } else if (topic.startsWith(PROJ_PREFIX + 'ok/')) {   // the admin's answer: only counts with the admin's signature
+    const a = { id: o.id, ok: !!o.ok, note: String(o.note || '').slice(0, 120), dg: String(o.dg || '') };
+    if (await adminVerify(answerSigText(a), o.s)) proj.answers.set(a.id, a);
+  } else return;
+  clearTimeout(proj.renderT); proj.renderT = setTimeout(projRender, 150);
+}
+async function projStart() {
+  if (proj.started) return;
+  proj.started = true;
+  try { await loadMqtt(); } catch { proj.started = false; return; }
+  await Promise.all(RELAY_BROKERS.map(async (url) => {
+    try {
+      const c = await relayConnect(url);
+      c.on('message', (t, p) => projMessage(t, p));
+      c.subscribe(PROJ_PREFIX + '#', { qos: 1 });
+      proj.clients.push(c);
+    } catch { }
+  }));
+  if (!proj.clients.length) proj.started = false;
+  projRender();
+}
+function projPublish(topic, obj) { proj.clients.forEach(c => c.publish(PROJ_PREFIX + topic, JSON.stringify(obj), { retain: true, qos: 1 })); }
+
+// 📤 in the Insert window: send your baseplate to the admin
+async function postProject() {
+  if (!started || net.mode || currentPlace !== 'baseplate') { sysChat('You can post what you build on your own Baseplate in solo play (Build → Build on a Baseplate).'); return; }
+  const bricks = parts.filter(p => !p.locked);
+  if (!bricks.length) { sysChat('Build something first!'); return; }
+  if (bricks.length > PROJ_MAX_BRICKS) { sysChat(`That's ${bricks.length} bricks. Projects can have up to ${PROJ_MAX_BRICKS}.`); return; }
+  let last = 0; try { last = +localStorage.getItem('blockburg-proj-last') || 0; } catch { }
+  if (Date.now() - last < PROJ_WAIT) { sysChat(`You just posted one! Wait ${Math.ceil((PROJ_WAIT - (Date.now() - last)) / 1000)} more seconds.`); return; }
+  const ti = cleanText((prompt('Give your project a name:') || '').trim()).slice(0, 40);
+  if (!ti) return;
+  const ds = cleanText((prompt('Describe it in a few words (you can leave this empty):') || '').trim()).slice(0, 200);
+  await projStart();
+  if (!proj.clients.length) { sysChat("Couldn't reach the project servers. Some school or work networks block them."); return; }
+  const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), ti, ds, n: myName(), ts: Date.now(), parts: bricks.map(serialize) };
+  projPublish('sub/' + p.id, p);
+  try { localStorage.setItem(MY_PROJ_KEY, JSON.stringify([...myProjects(), p.id])); localStorage.setItem('blockburg-proj-last', String(Date.now())); } catch { }
+  proj.subs.set(p.id, { ...p, digest: await projDigest(p) });
+  saveBaseplate();
+  projRender();
+  sysChat(`📤 Sent "${ti}" to the admin! They'll check it first. You'll get the answer in your Inbox.`);
+}
+$('postBtn').onclick = () => postProject();
+
+// the admin's answer: approve (it shows up in Games) or not, with a note for the builder
+async function answerProject(id, ok) {
+  const p = proj.subs.get(id);
+  if (!p || !adminPriv) return;
+  const note = ok ? '' : (prompt('Not approved. Add a note for the builder? (optional)') ?? null);
+  if (note === null) return;   // pressed Cancel
+  const a = { id, ok, note: cleanText(note.trim()).slice(0, 120), dg: p.digest };
+  projPublish('ok/' + id, { ...a, s: await adminSign(answerSigText(a)) });
+  proj.answers.set(id, a);
+  projRender();
+}
+// play a project: a fresh baseplate with its bricks (your own baseplate save isn't touched)
+function playProject(id) {
+  const p = proj.subs.get(id);
+  if (!p) return;
+  playPlace('baseplate', { fresh: true });
+  currentPlace = 'project';
+  p.parts.map(cleanBrick).filter(Boolean).forEach(d => deserialize(d, { sleep: true }));
+  sysChat(`🧱 "${p.ti}" by ${p.n}. Have fun!`);
+}
+
+function projRender() {
+  // Games: approved projects, newest first
+  const ok = [...proj.subs.values()].filter(p => projStatus(p) === 'yes').sort((a, b) => b.ts - a.ts);
+  $('projGames').innerHTML = ok.length ? ok.map(p => `<div class="gcard"><div class="ph proj">🧱</div><div class="gt">${escHtml(p.ti)}</div>
+    <div class="gs">by ${escHtml(p.n)} &middot; ${p.parts.length} bricks</div>${p.ds ? `<div class="gs">${escHtml(p.ds)}</div>` : ''}
+    <button class="s-btn go" data-proj="${p.id}">Play Solo</button></div>`).join('')
+    : `<div class="gs">${proj.started ? 'No projects yet. Build one on a Baseplate and post it!' : 'Loading projects...'}</div>`;
+  // the Inbox
+  const mine = myProjects().map(id => proj.subs.get(id)).filter(Boolean).sort((a, b) => b.ts - a.ts);
+  const seen = loadList(INBOX_SEEN_KEY) || {}, seenBefore = proj.seenBefore || seen;   // (NEW tags: what was unread when you opened the Inbox)
+  const waiting = adminPriv ? [...proj.subs.values()].filter(p => projStatus(p) === 'wait').sort((a, b) => a.ts - b.ts) : [];
+  const fresh = mine.filter(p => projStatus(p) !== 'wait' && seen[p.id] !== projStatus(p));
+  const isNew = (p) => projStatus(p) !== 'wait' && seenBefore[p.id] !== projStatus(p);
+  const n = waiting.length + fresh.length;
+  $('inboxBadge').textContent = n; $('inboxBadge').classList.toggle('hidden', !n);
+  const item = (p, extra) => `<div class="ib-item"><div class="t">${escHtml(p.ti)}${extra.isNew ? '<span class="new">NEW</span>' : ''}</div>
+    <div class="s">by ${escHtml(p.n)} &middot; ${p.parts.length} bricks &middot; ${fmDate(p.ts)}${p.ds ? ' &middot; ' + escHtml(p.ds) : ''}</div>${extra.html}</div>`;
+  let h = '';
+  if (adminPriv) {
+    h += `<div class="ib-sec">Waiting for your OK (${waiting.length})</div>`;
+    h += waiting.length ? waiting.map(p => item(p, { html: `<button class="s-btn" data-proj="${p.id}">👀 Look</button>
+      <button class="s-btn go" data-ib="yes" data-id="${p.id}">✅ Approve</button><button class="s-btn" data-ib="no" data-id="${p.id}">❌ Reject</button>` })).join('')
+      : '<div class="gs">Nothing to check right now.</div>';
+  }
+  h += `<div class="ib-sec">Your projects</div>`;
+  h += mine.length ? mine.map(p => {
+    const st = projStatus(p), a = proj.answers.get(p.id);
+    const msg = st === 'yes' ? '✅ Approved! It\'s in Games now.' : st === 'no' ? `❌ Not approved.${a && a.note ? ' The admin says: "' + escHtml(a.note) + '"' : ''}` : '⏳ Waiting for the admin to check it.';
+    return item(p, { isNew: isNew(p), html: `<div>${msg}</div>` });
+  }).join('') : '<div class="gs">Nothing here yet. Build something on a Baseplate and press <b>📤 Post to Games</b> in the Insert window.</div>';
+  if (!proj.started && !proj.clients.length) h = '<div class="gs">Connecting...</div>' + h;
+  $('inboxBody').innerHTML = h;
+}
+// opening the Inbox counts as reading your answers
+function inboxOpened() {
+  const seen = loadList(INBOX_SEEN_KEY) || {};
+  proj.seenBefore = { ...seen };   // the NEW tags stay on screen while you look
+  for (const id of myProjects()) { const p = proj.subs.get(id); if (p && projStatus(p) !== 'wait') seen[id] = projStatus(p); }
+  try { localStorage.setItem(INBOX_SEEN_KEY, JSON.stringify(seen)); } catch { }
+  projStart(); projRender();
+}
+$('site').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-proj],[data-ib]');
+  if (!t) return;
+  if (t.dataset.proj) playProject(t.dataset.proj);
+  if (t.dataset.ib) answerProject(t.dataset.id, t.dataset.ib === 'yes');
+});
 
 /* ================= MULTIPLAYER =================
    Games run on the BLOCKBURG Colyseus server (the server/ folder). Each room has its own copy of
@@ -4633,13 +4841,14 @@ $('mpCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinGame
 humanoids.forEach(h => h.postStep(0, 0));
 pageReady = true;
 { let s = 'panorama'; try { s = localStorage.getItem(SKY_KEY) || s; } catch { } applySky(s); }
-if (!HEADLESS) { snapGameThumbs(); friendsInit(); }   // (the server's copy has no screen and no friends list)
+if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); }   // (the server's copy has no screen, friends list or inbox)
 refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
-  keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, get dragging() { return dragging; },
+  keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
+  get currentPlace() { return currentPlace; }, get dragging() { return dragging; },
   pickAt(x, y) { mouseNDC.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); const h = pick(); return h && (h.object.userData.part ? 'part ' + h.object.userData.part.nid : h.object.userData.hum ? 'hum ' + h.object.userData.hum.name : 'other'); },
   tick(frames) { for (let i = 0; i < frames; i++) frame(last + 1000 / 60); } };
 requestAnimationFrame(loop);
