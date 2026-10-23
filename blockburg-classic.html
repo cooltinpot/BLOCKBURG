@@ -275,7 +275,7 @@
     <button data-esc="leave" class="dark">Leave Game</button>
   </div>
   <div class="esc-view hidden" id="escSaveLeave">
-    <div class="esc-msg">Save your baseplate before you leave? It'll be here next time.</div>
+    <div class="esc-msg">Save your place before you leave? It'll be on the Build page under My Places.</div>
     <button data-esc="saveleave">Save and Leave</button>
     <button data-esc="justleave">Leave Without Saving</button>
     <button data-esc="back" class="dark">Cancel</button>
@@ -387,9 +387,10 @@
 
     <div class="page hidden" id="p-build"><div class="box"><h3>Build</h3><div class="in">
       <p style="margin-top:0">Want to make your own place? Start on an empty baseplate. Open <b>Insert</b> in-game for bricks and BrickColors, use the <b>Grab</b>, <b>Clone</b>, <b>Delete</b> and <b>Paint</b> tools, then <b>Save</b> your place.
-        Your baseplate is saved when you leave and comes back next time.</p>
+        Save it when you leave and it shows up below as a file you can open again.</p>
       <p>Proud of it? Press <b>📤 Post to Games</b> in the Insert window. The admin checks every project first, and you'll get a message in your <b>Inbox</b>.</p>
       <button class="s-btn go" data-play="baseplate">Build on a Baseplate</button>
+      <div id="myPlaces"></div>
     </div></div></div>
 
     <div class="page hidden" id="p-online"><div class="cols">
@@ -2986,15 +2987,16 @@ selectColor(BC['Bright red'], 'Bright red');
 const SAVE_KEY = 'blockburg-classic-place';
 // in someone else's game, only the host can save, load or reset the place
 const hostOnly = (fn) => () => { if (net.mode === 'client') sysChat('Saving, loading and resetting the place only work in solo play.'); else fn(); };
-// (on your baseplate, Save and Load use the same save as leaving does)
-const saveSlot = () => (currentPlace === 'baseplate' ? BASE_KEY : SAVE_KEY);
+// (on your baseplate, Save saves this place's file on the Build page, and Load goes back to its last save)
 $('saveBtn').onclick = hostOnly(() => {
-  try { localStorage.setItem(saveSlot(), JSON.stringify(parts.filter(p => !p.locked).map(serialize))); sysChat('Place saved.'); }
+  if (currentPlace === 'baseplate') { const f = saveBaseplate(); sysChat(f ? `Saved "${f.name}".` : 'Could not save (storage blocked).'); return; }
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(parts.filter(p => !p.locked).map(serialize))); sysChat('Place saved.'); }
   catch { sysChat('Could not save (storage blocked).'); }
 });
 $('loadBtn').onclick = hostOnly(() => {
   let data = null;
-  try { data = JSON.parse(localStorage.getItem(saveSlot())); } catch { }
+  if (currentPlace === 'baseplate') data = currentFile ? (loadPlaces().find(x => x.id === currentFile) || {}).bricks : null;
+  else try { data = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { }
   if (!data) { sysChat('No saved place yet.'); return; }
   stopDrag(); clearUnlocked(); data.forEach(d => deserialize(d, { sleep: true })); sysChat('Place loaded.');
 });
@@ -3041,7 +3043,10 @@ $('escMenu').addEventListener('click', (e) => {
     if (currentPlace === 'baseplate' && !net.mode) escView('escSaveLeave', 'Leave Game');   // your own baseplate: save it first?
     else confirmEsc('Are you sure you want to leave this game?', () => { closeEsc(); leaveGame(); });
   }
-  if (a === 'saveleave') { const ok = saveBaseplate(); closeEsc(); leaveGame(); if (!ok) alert("Couldn't save your baseplate (this browser blocks saving)."); }
+  if (a === 'saveleave') {   // save, then show it on the Build page
+    const f = saveBaseplate(); closeEsc(); leaveGame();
+    if (f) showPage('build'); else alert("Couldn't save your place (this browser blocks saving).");
+  }
   if (a === 'justleave') { closeEsc(); leaveGame(); }
   if (a === 'yes' && pendingConfirm) { const f = pendingConfirm; pendingConfirm = null; f(); }
   if (a === 'back') escView('escMain', 'Game Menu');
@@ -3712,6 +3717,7 @@ function showPage(p) {
   if (p === 'forum') forumOpen();
   if (p === 'friends') friendsInit(true);
   if (p === 'inbox') inboxOpened();
+  if (p === 'build') renderPlaces();
   if (p === 'games') { projStart(); projRender(); }
   $('site').scrollTop = 0;
 }
@@ -4134,15 +4140,63 @@ $('site').addEventListener('click', (e) => {
   frRender();
 });
 
-// which place you're in: 'classic', 'baseplate' (your own build, saved when you leave) or 'project' (someone's posted project)
+// which place you're in: 'classic', 'baseplate' (your own build) or 'project' (someone's posted project)
 let currentPlace = null;
-const BASE_KEY = 'blockburg-baseplate';
-function saveBaseplate() {
-  try { localStorage.setItem(BASE_KEY, JSON.stringify(parts.filter(p => !p.locked).map(serialize))); return true; } catch { return false; }
+/* ---- your saved places: every Baseplate you save is a "file" on the Build page (kept in this browser) ---- */
+const PLACES_KEY = 'blockburg-places', OLD_BASE_KEY = 'blockburg-baseplate';
+let currentFile = null;   // the saved place you're building in (null: a new place, not saved yet)
+function loadPlaces() {
+  let list = null; try { list = JSON.parse(localStorage.getItem(PLACES_KEY)); } catch { }
+  if (Array.isArray(list)) return list;
+  list = [];
+  try {   // the one baseplate save from before becomes your first file
+    const old = JSON.parse(localStorage.getItem(OLD_BASE_KEY));
+    if (Array.isArray(old) && old.length) {
+      list.push({ id: 'p' + Date.now().toString(36), name: 'My Baseplate', ts: Date.now(), bricks: old });
+      localStorage.setItem(PLACES_KEY, JSON.stringify(list)); localStorage.removeItem(OLD_BASE_KEY);
+    }
+  } catch { }
+  return list;
 }
-function playPlace(id, { fresh = false } = {}) {
+function storePlaces(list) { try { localStorage.setItem(PLACES_KEY, JSON.stringify(list)); return true; } catch { return false; } }
+// save the baseplate you're on into its file; a new place asks for a name (or takes `name`) and gets a new file.
+// Gives back the file, or null if this browser won't let us save.
+function saveBaseplate({ name } = {}) {
+  const list = loadPlaces();
+  let f = currentFile && list.find(x => x.id === currentFile);
+  if (!f) {
+    const def = name || 'Place ' + (list.length + 1), typed = name ? def : prompt('Name your place:', def);
+    f = { id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: cleanText(String(typed || def).trim()).slice(0, 30) || def, ts: 0, bricks: [] };
+    list.push(f); currentFile = f.id;
+  }
+  f.bricks = parts.filter(p => !p.locked).map(serialize); f.ts = Date.now();
+  const ok = storePlaces(list);
+  renderPlaces();
+  return ok ? f : null;
+}
+// My Places, under "Build on a Baseplate": newest first
+function renderPlaces() {
+  const el = $('myPlaces'); if (!el) return;
+  const list = loadPlaces().sort((a, b) => b.ts - a.ts);
+  el.innerHTML = `<div class="ib-sec">My Places (${list.length})</div>` + (list.length ? list.map(f => `<div class="ib-item">
+    <div class="t">📄 ${escHtml(f.name)}</div><div class="s">${f.bricks.length} bricks &middot; saved ${fmDate(f.ts)}</div>
+    <button class="s-btn go" data-pl="open" data-id="${f.id}">▶ Open</button><button class="s-btn" data-pl="rename" data-id="${f.id}">✏️ Rename</button><button class="s-btn" data-pl="del" data-id="${f.id}">🗑 Delete</button></div>`).join('')
+    : '<div class="gs">No saved places yet. Build on a Baseplate and save it when you leave: it shows up here.</div>');
+}
+$('myPlaces').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-pl]'); if (!t) return;
+  const list = loadPlaces(), f = list.find(x => x.id === t.dataset.id); if (!f) return;
+  SFX.click();
+  if (t.dataset.pl === 'open') playPlace('baseplate', { file: f });
+  if (t.dataset.pl === 'rename') {
+    const n = cleanText(String(prompt('New name:', f.name) || '').trim()).slice(0, 30);
+    if (n) { f.name = n; storePlaces(list); renderPlaces(); }
+  }
+  if (t.dataset.pl === 'del' && confirm(`Delete "${f.name}"? This can't be undone.`)) { storePlaces(list.filter(x => x !== f)); renderPlaces(); }
+});
+function playPlace(id, { file = null } = {}) {
   audioInit();
-  currentPlace = id;
+  currentPlace = id; currentFile = file ? file.id : null;
   stopDrag(); clearUnlocked();
   [...hatPickups].forEach(removeHatPickup);
   if (id === 'classic') buildDefault();
@@ -4167,13 +4221,11 @@ function playPlace(id, { fresh = false } = {}) {
     const g31 = npcs.find(n => n.name === 'Guest 31');
     if (!HEADLESS && g31) setTimeout(() => g31.enabled && g31.say('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'), 3600);
   } else {
-    // your baseplate comes back the way you left it (solo only; a project or a server's room starts as it is)
-    let saved = null;
-    if (id === 'baseplate' && !fresh && !net.mode && !HEADLESS) { try { saved = JSON.parse(localStorage.getItem(BASE_KEY)); } catch { } }
-    if (Array.isArray(saved) && saved.length) {
-      saved.forEach(d => deserialize(d, { sleep: true }));
-      sysChat(`Welcome back! Your baseplate is how you left it (${saved.length} bricks). Clear All in Insert starts over.`);
-    } else sysChat('Happy building! Open Insert for bricks. Your baseplate is saved when you leave.');
+    // one of your saved places (from the Build page), or a new empty baseplate
+    if (file && Array.isArray(file.bricks)) {
+      file.bricks.forEach(d => deserialize(d, { sleep: true }));
+      sysChat(`Welcome back to "${file.name}" (${file.bricks.length} bricks)! It saves when you leave.`);
+    } else sysChat('Happy building! Open Insert for bricks. Save it when you leave and it shows up on the Build page.');
   }
   SFX.spawn();
 }
@@ -4271,7 +4323,7 @@ async function postProject() {
   projPublish('sub/' + p.id, p);
   try { localStorage.setItem(MY_PROJ_KEY, JSON.stringify([...myProjects(), p.id])); localStorage.setItem('blockburg-proj-last', String(Date.now())); } catch { }
   proj.subs.set(p.id, { ...p, digest: await projDigest(p) });
-  saveBaseplate();
+  saveBaseplate({ name: ti });   // (a new place is saved under the project's name)
   projRender();
   sysChat(`📤 Sent "${ti}" to the admin! They'll check it first. You'll get the answer in your Inbox.`);
 }
@@ -4292,7 +4344,7 @@ async function answerProject(id, ok) {
 function playProject(id) {
   const p = proj.subs.get(id);
   if (!p) return;
-  playPlace('baseplate', { fresh: true });
+  playPlace('baseplate');
   currentPlace = 'project';
   p.parts.map(cleanBrick).filter(Boolean).forEach(d => deserialize(d, { sleep: true }));
   sysChat(`🧱 "${p.ti}" by ${p.n}. Have fun!`);
@@ -4860,7 +4912,7 @@ $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
   keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
-  get currentPlace() { return currentPlace; }, get dragging() { return dragging; },
+  get currentPlace() { return currentPlace; }, get currentFile() { return currentFile; }, loadPlaces, get dragging() { return dragging; },
   pickAt(x, y) { mouseNDC.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); const h = pick(); return h && (h.object.userData.part ? 'part ' + h.object.userData.part.nid : h.object.userData.hum ? 'hum ' + h.object.userData.hum.name : 'other'); },
   tick(frames) { for (let i = 0; i < frames; i++) frame(last + 1000 / 60); } };
 requestAnimationFrame(loop);
