@@ -2015,10 +2015,13 @@ function makeHat(id) {
     }
     case 'catears':
       // two pointy ears on top of the head: the outside is the color of your head (see skinParts), the inside is pink
+      // (each ear is a pyramid squashed front-to-back so its flat side faces forward, tilted a little outward;
+      // the pink inside is a smaller one sitting just in front of it)
       for (const s of [-1, 1]) {
-        const ear = add(new THREE.ConeGeometry(0.4, 0.8, 4), M('#F5CD30'), s * 0.44, 0.26, -0.05, 0, Math.PI / 4, -s * 0.3);
-        ear.scale.set(1, 1, 0.45); ear.userData.skin = true;
-        add(new THREE.ConeGeometry(0.24, 0.52, 4), M('#E8BAC8'), s * 0.43, 0.2, 0.07, 0, Math.PI / 4, -s * 0.3).scale.set(1, 1, 0.3);
+        const earGeo = (r, h) => new THREE.ConeGeometry(r, h, 4).rotateY(Math.PI / 4).scale(1, 1, 0.45);
+        const e = new THREE.Group(); e.position.set(s * 0.44, -0.14, -0.05); e.rotation.z = -s * 0.3; g.add(e);
+        const outer = new THREE.Mesh(earGeo(0.4, 0.8), M('#F5CD30')); outer.position.y = 0.4; outer.userData.skin = true; e.add(outer);
+        const inner = new THREE.Mesh(earGeo(0.24, 0.52), M('#E8BAC8')); inner.position.set(0, 0.26, 0.075); e.add(inner);
       }
       break;
     case 'tophat':
@@ -6571,6 +6574,7 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
 const UPDATES = [
   { date: '10/25/2026', top: 'ha! we are so back with more updates', text: [
     '3 new hats in the Catalog: the Classic Fedora, a wobbly Stack of Books, and Cat Ears that are the same color as your head, like real ears (change your head color and they change too).',
+    'Fixed: the Cat Ears face the front now, instead of being twisted sideways.',
     'NEW GAME: RED VS BLUE! Two teams, two bases, two flags. Grab the other team\'s flag and run it back to your own flag stand. First to 3 captures wins! Play it from the front page.',
     'In RED VS BLUE! you only get the Paintball Gun and the Trowel (no Insert), paintballs and trowel walls come in your team\'s color, and there\'s no hurting your own team.',
     'Everyone in RED VS BLUE! glows with a red or blue outline, so you always know who\'s on your team. The Guests play too, and they\'re good at guarding!',
