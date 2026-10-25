@@ -4,7 +4,7 @@ import { loadGame } from './headless.js';
 
 // Same letters as the game's room codes: no 0/O or 1/I, so codes are easy to read out loud.
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const PLACES = ['classic', 'baseplate'];
+const PLACES = ['classic', 'baseplate', 'redblue'];
 // each running room's game uses about a fifth of a CPU core; past this many, new games wait for one to close
 const MAX_ROOMS = Number(process.env.MAX_ROOMS) || 4;
 
