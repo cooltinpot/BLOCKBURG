@@ -1964,6 +1964,7 @@ const HATS = [
   { id: 'fedora', name: 'Classic Fedora', price: 'Free (was 60 Tix)', desc: 'Very mysterious. Tip it to say hello. M\'lady not included.' },
   { id: 'books', name: 'Stack of Books', price: 'Free (was 40 Tix)', desc: 'Balance them on your head. Smart people do this. Probably.' },
   { id: 'catears', name: 'Cat Ears', price: 'Free (was 50 Tix)', desc: 'They match your head color, like real ears. Meow.' },
+  { id: 'builder', name: 'Builder Hard Hat', price: 'Free (was 100 Tix)', desc: 'Safety first! Required on every baseplate. Does not protect against rockets.' },
 ];
 const hatName = (id) => (HATS.find(h => h.id === id) || HATS[0]).name;
 const partyTex = tex(canvas(128, 64, (g) => {
@@ -2000,6 +2001,19 @@ function makeHat(id) {
       add(new THREE.BoxGeometry(0.1, 0.07, 0.56), M('#3A3A3A'), 0, 0.88, 0);   // (the dent)
       add(Cyl(0.675, 0.675, 0.14, 24), M('#151515'), 0, 0.12, 0);
       add(new THREE.BoxGeometry(0.14, 0.1, 0.04), M('#151515'), 0.62, 0.14, 0.24, 0, 0.6);   // (the band's little bow)
+      break;
+    }
+    case 'builder': {
+      // a yellow construction hard hat: a round dome with a ridge down the middle, a rim all around and a peak at the front
+      const hard = M('#F5CD30'), edge = M('#E0B820');
+      add(Sph(0.74, true), hard, 0, -0.16, 0).scale.set(1, 0.95, 1.05);
+      // the ridge: a strip that follows the dome's curve from the back, over the top, stopping just above the badge (with a rounded end)
+      add(new THREE.TorusGeometry(0.74, 0.07, 8, 32, Math.PI * 0.75).rotateY(Math.PI / 2), edge, 0, -0.16, 0).scale.set(1, 0.95, 1.05);
+      add(new THREE.SphereGeometry(0.07, 10, 8), edge, 0, -0.16 + 0.523 * 0.95, 0.523 * 1.05);
+      // the brim: one piece, reaching out further at the front (the peak over your eyes)
+      add(Cyl(0.86, 0.86, 0.07, 28), edge, 0, -0.14, 0.1).scale.set(1, 1, 1.15);
+      // a little white badge, lying flat on the front of the dome (tilted back to match its curve)
+      add(new THREE.BoxGeometry(0.34, 0.2, 0.08), M('#F2F3F3'), 0, 0.16, 0.67, -0.47);
       break;
     }
     case 'books': {
@@ -6575,6 +6589,8 @@ const UPDATES = [
   { date: '10/25/2026', top: 'ha! we are so back with more updates', text: [
     '3 new hats in the Catalog: the Classic Fedora, a wobbly Stack of Books, and Cat Ears that are the same color as your head, like real ears (change your head color and they change too).',
     'Fixed: the Cat Ears face the front now, instead of being twisted sideways.',
+    'Another new hat: the Builder Hard Hat (with a ridge over the top, a badge on the front and a peak over your eyes). Safety first on every baseplate!',
+    'The admin can take the cape off now: /cape off (and /cape on to put it back). Everyone in the room sees it, and it stays that way next time.',
     'NEW GAME: RED VS BLUE! Two teams, two bases, two flags. Grab the other team\'s flag and run it back to your own flag stand. First to 3 captures wins! Play it from the front page.',
     'In RED VS BLUE! you only get the Paintball Gun and the Trowel (no Insert), paintballs and trowel walls come in your team\'s color, and there\'s no hurting your own team.',
     'Everyone in RED VS BLUE! glows with a red or blue outline, so you always know who\'s on your team. The Guests play too, and they\'re good at guarding!',
@@ -6705,19 +6721,28 @@ async function adminLogin(d) {
   }
   return false;
 }
+const CAPE_KEY = 'blockburg-cape';
 function setAdmin(h, on = true) {
   h.admin = on; h.drawTag(); renderLB();
-  setCape(h.char, on);   // the admin wears the sparkly cape
+  if (h === player) try { h.capeOff = localStorage.getItem(CAPE_KEY) === 'off'; } catch { }
+  setCape(h.char, on && !h.capeOff);   // the admin wears the sparkly cape (unless they took it off with /cape)
   if (h === player) {
-    setCape(pvChar, on);   // (in the Character page preview too)
+    setCape(pvChar, on && !h.capeOff);   // (in the Character page preview too)
     $('adminBadge').classList.toggle('hidden', !on); $('fmAdminBtn').textContent = on ? 'Admin logout' : 'Admin login';
     $('trailerBtn').style.display = on ? '' : 'none';   // the trailer camera is the admin's
     if (!on && freecam.on) toggleFreecam();             // and so is the free cam
     projRender();                                       // (the admin's Inbox has the projects waiting to be checked)
   }
 }
+// the admin takes the cape off or puts it back on: here, for everyone in the room, and remembered for next time
+function setCapeOn(h, on) {
+  h.capeOff = !on; setCape(h.char, on && h.admin);
+  netEv(['cape', h.hid, on ? 1 : 0]);
+  if (h === player) { setCape(pvChar, on && h.admin); try { localStorage.setItem(CAPE_KEY, on ? 'on' : 'off'); } catch { } }
+}
 function helloMsg() {
   const m = { t: 'hello', v: NET_VERSION, name: myName(), look };
+  if (player.capeOff) m.co = 1;   // (my cape is off)
   if (net.admSig) m.adm = net.admSig;
   if (net.idSig) m.id = [me.x, me.y, net.idSig];   // proof of the password key behind my badge
   return m;
@@ -7474,7 +7499,7 @@ async function loadColyseus() {
 const humByHid = (hid) => humanoids.find(h => h.hid === hid);
 function lookOf(h) { return { colors: h.colors, hat: h.hat, shirt: h.shirt || 'none', pants: h.pants || 'none', face: h.face || 'smile', tshirt: h.tshirt || 'none' }; }
 function applyLook(h, L) { if (!L) return; h.setOutfit(L.colors, L.shirt, L.pants, L.face, L.tshirt || 'none'); h.setHat(L.hat); }
-function humanRec(h) { return { hid: h.hid, name: h.name, look: lookOf(h), npc: !!h.ai, cc: h.chatColor, adm: !!h.admin, bd: h.badge || '', tm: h.team || null }; }
+function humanRec(h) { return { hid: h.hid, name: h.name, look: lookOf(h), npc: !!h.ai, cc: h.chatColor, adm: !!h.admin, co: h.capeOff ? 1 : 0, bd: h.badge || '', tm: h.team || null }; }
 function setHumBody(h, kinematic) {
   const b = h.body;
   b.type = kinematic ? CANNON.Body.KINEMATIC : CANNON.Body.DYNAMIC; b.mass = kinematic ? 0 : 30;
@@ -7604,7 +7629,7 @@ function hostHello(conn, msg) {
   applyLook(h, withoutAdminClothes(L));   // the admin's clothes wait until we know it's the admin
   // the admin proves it's really them by signing the room code + their name with the secret admin key
   if (msg.adm) adminVerify(`bb-admin|${net.code}|${name}`, msg.adm).then(ok => {
-    if (ok && net.conns.get(conn.peer)?.h === h) { setAdmin(h); netEv(['adm', h.hid]); applyLook(h, L); }
+    if (ok && net.conns.get(conn.peer)?.h === h) { h.capeOff = !!msg.co; setAdmin(h); netEv(['adm', h.hid, h.capeOff ? 1 : 0]); applyLook(h, L); }
   });
   // a badge counts only if they signed the room code + their name with the key it comes from
   if (Array.isArray(msg.id)) idVerify(`bb-id|${net.code}|${name}`, msg.id.slice(0, 2), msg.id[2]).then(bd => {
@@ -7891,7 +7916,7 @@ function addPuppet(rec) {
   applyLook(h, rec.look); if (rec.tm) setTeam(h, rec.tm);
   h.spawn(); h.netPos = new V3().copy(h.pos);
   if (rec.bd) { h.badge = cleanBadge(rec.bd); h.drawTag(); }
-  if (rec.adm) setAdmin(h);
+  if (rec.adm) { h.capeOff = !!rec.co; setAdmin(h); }
   renderLB(); updateBadge();
 }
 // the host made my copies: once they've all arrived, pick them up (and they're the picked bricks now)
@@ -7945,7 +7970,8 @@ function clientEvent(e) {
       break;
     case 'sfx': if (e[3] !== net.myHid) sfxAt(e[1], new V3(...e[2]), ...(e[1] === 'tick' ? e[4] || [] : [])); break;
     case 'join': addPuppet(e[1]); break;
-    case 'adm': { const h = who(e[1]); if (h) setAdmin(h); break; }
+    case 'adm': { const h = who(e[1]); if (h) { if (h !== player) h.capeOff = !!e[2]; setAdmin(h); } break; }
+    case 'cape': { const h = who(e[1]); if (h) setCapeOn(h, !!e[2]); break; }
     case 'bd': { const h = who(e[1]); if (h) { h.badge = cleanBadge(e[2]); h.drawTag(); renderLB(); } break; }
     case 'leave': { const h = humByHid(e[1]); if (h && !h.ai) removeHumanoid(h); updateBadge(); break; }
   }
@@ -8392,6 +8418,11 @@ const CMDS = [
   { name: 'freecam', use: '', desc: 'fly the camera around (F)', run: () => { toggleFreecam(); return ''; } },
   { name: 'trailer', use: '', desc: 'the trailer camera (P)', run: () => { closeCmd(); startTrailer(); return ''; } },
   { name: 'clearchat', use: '', desc: 'empty the chat', run: () => { $('chatlog').innerHTML = ''; return ''; } },
+  { name: 'cape', world: true, use: '<off|on>', desc: 'take your cape off or put it back on (everyone sees it)', hint: () => ['off', 'on'],
+    run: ([a], who) => {
+      const on = a === 'on' ? true : a === 'off' ? false : !!who.capeOff;   // (no word: switch it)
+      setCapeOn(who, on); return on ? 'Cape on!' : 'Cape off.';
+    } },
   // world commands
   { name: 'kill', world: true, use: '<player|all|others>', desc: 'knock someone out', hint: PLAYER_ARG,
     run: (a, who) => { const hs = findHum(a.join(' '), who).filter(h => !h.dead); hs.forEach(h => kill(h, who, false, true)); return hs.length ? `Knocked out ${names(hs)}.` : 'Nobody to knock out.'; } },
@@ -8679,7 +8710,7 @@ if (!HEADLESS) { pxSwap(); startUpdates(); signinStart(); }
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
   keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, pxUrl, BLUEPRINTS, makePart, BC, LOD, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
   get currentPlace() { return currentPlace; }, get currentFile() { return currentFile; }, loadPlaces, get dragging() { return dragging; },
-  award, playWavs, badgeTick, spawnRocket, get myBadges() { return myBadges; }, get audio() { return AC; },
+  award, playWavs, badgeTick, spawnRocket, setAdmin, runCmd, get myBadges() { return myBadges; }, get audio() { return AC; },
   saveBaseplate, saveRoomPlace, mpPlaceOptions, weldPicked, trySit, get night() { return night; },
   selection, hopperAct, undoRedo, openScriptEditor, closeScriptEditor, scEd, scThreads, fireScripts, setScripts, histOf, startDrag, stopDrag, insertPart, serialize, deserialize, get dragGroup() { return dragGroup; },
   pickAt(x, y) { mouseNDC.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); const h = pick(); return h && (h.object.userData.part ? 'part ' + h.object.userData.part.nid : h.object.userData.hum ? 'hum ' + h.object.userData.hum.name : 'other'); },
