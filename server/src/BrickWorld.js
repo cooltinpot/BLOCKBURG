@@ -29,6 +29,29 @@ function driveBodies(seat, bodies, th, st, dt) {
   }
 }
 
+// welds hold exactly: after each physics step every brick of a group goes right back to its spot on the group's
+// first brick. (The lock constraints carry the pushes and pulls, but they're springy and would slowly drift apart.)
+function weldSnap(groups) {
+  for (const g of groups) {
+    let root = null;
+    for (const q of g) {
+      if (!root) { root = q; continue; }
+      const b = q.body, rb = root.body, r = q.weldRel;
+      if (!r || q.weldRoot !== root || b.type === CANNON.Body.KINEMATIC || rb.type === CANNON.Body.KINEMATIC) continue;
+      const off = rb.quaternion.vmult(r.p), w = rb.angularVelocity;
+      b.position.set(rb.position.x + off.x, rb.position.y + off.y, rb.position.z + off.z);
+      rb.quaternion.mult(r.q, b.quaternion);
+      b.velocity.set(rb.velocity.x + w.y * off.z - w.z * off.y, rb.velocity.y + w.z * off.x - w.x * off.z, rb.velocity.z + w.x * off.y - w.y * off.x);
+      b.angularVelocity.copy(w); b.aabbNeedsUpdate = true;
+    }
+  }
+}
+// where a welded brick sits on its group's first brick (kept for weldSnap)
+function weldRelOf(root, q) {
+  const iq = root.body.quaternion.conjugate();
+  return { p: iq.vmult(q.body.position.vsub(root.body.position)), q: iq.mult(q.body.quaternion) };
+}
+
 // wedges: their corners (half sizes) and faces, counterclockwise seen from outside. (The game has the same polyOf.)
 function polyOf(shape, size) {
   const [x, y, z] = size.map(s => s / 2);
@@ -111,6 +134,11 @@ export class BrickWorld {
     world.defaultContactMaterial.friction = 0.5;
     world.defaultContactMaterial.restitution = 0.05;
     world.addContactMaterial(new CANNON.ContactMaterial(this.physPart, this.physPart, { friction: 0.6, restitution: 0.05 }));
+    // car wheels roll (well, slide, but nearly without friction) so cars can really go. (The game has the same.)
+    this.physWheel = new CANNON.Material('wheel');
+    world.addContactMaterial(new CANNON.ContactMaterial(this.physWheel, this.physPart, { friction: 0.02, restitution: 0 }));
+    world.addContactMaterial(new CANNON.ContactMaterial(this.physWheel, this.physWheel, { friction: 0.02, restitution: 0 }));
+    world.addContactMaterial(new CANNON.ContactMaterial(this.physWheel, this.physHum, { friction: 0, restitution: 0 }));
     world.addContactMaterial(new CANNON.ContactMaterial(this.physHum, this.physPart, { friction: 0, restitution: 0 }));
     world.addContactMaterial(new CANNON.ContactMaterial(this.physBall, this.physPart, { friction: 0.2, restitution: 0.92 }));
     this.parts = new Map();    // nid -> { nid, d (the brick's description), locked, mode, body, sent }
@@ -134,12 +162,13 @@ export class BrickWorld {
     }
     else shape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
     const mass = +d.m || Math.max(1, size[0] * size[1] * size[2] * 0.7);
-    const body = new CANNON.Body({ mass, shape, material: d.s === 'ball' && d.b ? this.physBall : this.physPart,
+    const body = new CANNON.Body({ mass, shape, material: d.wh ? this.physWheel : d.s === 'ball' && d.b ? this.physBall : this.physPart,
       collisionFilterGroup: G_PART, collisionFilterMask: -1 });
     body.position.set(...d.p);
     if (Array.isArray(d.q)) body.quaternion.set(...d.q);
     body.sleepSpeedLimit = 0.4; body.sleepTimeLimit = 0.6;
     if (d.op) body.collisionResponse = false;   // an open door
+    if (d.wh) body.linearDamping = 0.4;          // a car wheel: a parked car rolls to a stop
     const p = { nid, d: { ...d, z: size }, locked, mass, body, mode: d.a ? 'static' : 'dynamic', sent: null };
     body.userData = { part: p };
     this.setBody(p, p.mode);
@@ -187,6 +216,7 @@ export class BrickWorld {
     let root = null;
     for (const q of g) {
       if (!root) { root = q; continue; }
+      q.weldRoot = root; q.weldRel = weldRelOf(root, q);
       q.weldC = new CANNON.LockConstraint(root.body, q.body); q.weldC.collideConnected = false;   // (welded bricks don't push on each other)
       this.world.addConstraint(q.weldC); q.body.wakeUp();
     }
@@ -286,6 +316,7 @@ export class BrickWorld {
       driveBodies(p.body, g ? [...g].map(q => q.body) : [p.body], d.th, d.st, Math.min(dt, 1 / 20));
     }
     this.world.step(1 / 120, Math.min(dt, 1 / 20), 3);
+    weldSnap(this.welds.values());
     for (const p of [...this.parts.values()]) {
       if (!p.locked && p.body.position.y < -200) { this.remove(p.nid); this.fellOut.push(p.nid); }
     }

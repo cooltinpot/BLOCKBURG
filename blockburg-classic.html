@@ -1105,6 +1105,11 @@ const physPart = new CANNON.Material('part'), physHum = new CANNON.Material('hum
 world.defaultContactMaterial.friction = 0.5;
 world.defaultContactMaterial.restitution = 0.05;
 world.addContactMaterial(new CANNON.ContactMaterial(physPart, physPart, { friction: 0.6, restitution: 0.05 }));
+// car wheels roll (well, slide, but nearly without friction) so cars can really go. (BrickWorld has the same.)
+const physWheel = new CANNON.Material('wheel');
+world.addContactMaterial(new CANNON.ContactMaterial(physWheel, physPart, { friction: 0.02, restitution: 0 }));
+world.addContactMaterial(new CANNON.ContactMaterial(physWheel, physWheel, { friction: 0.02, restitution: 0 }));
+world.addContactMaterial(new CANNON.ContactMaterial(physWheel, physHum, { friction: 0, restitution: 0 }));
 world.addContactMaterial(new CANNON.ContactMaterial(physHum, physPart, { friction: 0, restitution: 0 }));
 world.addContactMaterial(new CANNON.ContactMaterial(physHum, physHum, { friction: 0, restitution: 0 }));
 world.addContactMaterial(new CANNON.ContactMaterial(physBall, physPart, { friction: 0.2, restitution: 0.92 }));
@@ -1227,18 +1232,19 @@ function makePart(o) {
   const mass = o.mass || Math.max(1, size[0] * size[1] * size[2] * 0.7);
   const body = new CANNON.Body({
     mass: anchored ? 0 : mass, type: anchored ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC, shape: cshape,
-    material: shape === 'ball' && o.bouncy ? physBall : physPart,
+    material: o.wheel ? physWheel : shape === 'ball' && o.bouncy ? physBall : physPart,
     collisionFilterGroup: G_PART, collisionFilterMask: -1,
   });
   body.position.set(...o.pos);
   if (o.quat) body.quaternion.set(...o.quat);
   else if (o.rot) body.quaternion.setFromEuler(...o.rot);
   body.sleepSpeedLimit = 0.4; body.sleepTimeLimit = 0.6;
+  if (o.wheel) body.linearDamping = 0.4;   // (a parked car rolls to a stop)
   body.aabbNeedsUpdate = true;   // the bounds were computed at the origin before we moved it; anchored parts never refresh them on their own
   // destroy: an anchored destroyable. It stays put until an explosion reaches it, then comes loose (see explode)
   const p = { shape, size: [...size], color, trans, anchored, mass, kill: !!o.kill, win: !!o.win, locked: !!o.locked, bouncy: !!o.bouncy, destroy: !!o.destroy, mesh, body,
     mode: anchored ? 'static' : 'dynamic', startAsleep: !!o.sleep, matte: !!o.matte,
-    spawn: !!o.spawn, btn: !!o.btn, door: !!o.door, neon: !!o.neon, open: !!o.open, seat: o.seat === 2 ? 2 : o.seat ? 1 : 0 };   // (the new parts: see partLook)
+    spawn: !!o.spawn, btn: !!o.btn, door: !!o.door, neon: !!o.neon, open: !!o.open, seat: o.seat === 2 ? 2 : o.seat ? 1 : 0, wheel: !!o.wheel };   // (the new parts: see partLook)
   if (p.open) body.collisionResponse = false;
   if (shape === 'truss') trusses.add(p);
   if (p.spawn) spawns.add(p);
@@ -1338,9 +1344,9 @@ function partSpeedSq(p) {
 const serialize = (p) => ({ s: p.shape, z: p.size, p: p.body.position.toArray().map(n => +n.toFixed(3)),
   q: p.body.quaternion.toArray().map(n => +n.toFixed(4)), c: p.color, t: p.trans, a: p.anchored, k: p.kill, w: p.win, b: p.bouncy, m: p.mass, x: p.destroy,
   sc: p.scripts || undefined, v: p.hidden ? 1 : undefined, sg: p.sign || undefined,
-  wd: p.weld || undefined, st: p.seat || undefined, sp: p.spawn ? 1 : undefined, bt: p.btn ? 1 : undefined, dr: p.door ? 1 : undefined, n: p.neon ? 1 : undefined, op: p.open ? 1 : undefined });
+  wd: p.weld || undefined, st: p.seat || undefined, wh: p.wheel ? 1 : undefined, sp: p.spawn ? 1 : undefined, bt: p.btn ? 1 : undefined, dr: p.door ? 1 : undefined, n: p.neon ? 1 : undefined, op: p.open ? 1 : undefined });
 const deserialize = (d, extra = {}) => makePart({ shape: d.s, size: d.z, pos: d.p, quat: d.q, color: d.c, trans: d.t, anchored: d.a, kill: d.k, win: d.w, bouncy: d.b, mass: d.m, destroy: d.x, scripts: d.sc, hidden: d.v, sign: d.sg,
-  weld: d.wd, seat: d.st, spawn: d.sp, btn: d.bt, door: d.dr, neon: d.n, open: d.op, ...extra });
+  weld: d.wd, seat: d.st, wheel: d.wh, spawn: d.sp, btn: d.bt, door: d.dr, neon: d.n, open: d.op, ...extra });
 
 /* ---- the place ---- */
 const SPAWN = new V3(0, 1 + HY + 0.1, 0);
@@ -4443,6 +4449,28 @@ function weldJoin(p, id) {
   p.weld = id;
   if (id) { if (!weldGroups.has(id)) weldGroups.set(id, new Set()); weldGroups.get(id).add(p); weldRelink(id); }
 }
+// welds hold exactly: after each physics step every brick of a group goes right back to its spot on the group's
+// first brick. (The lock constraints carry the pushes and pulls, but they're springy and would slowly drift apart.)
+function weldSnap(groups) {
+  for (const g of groups) {
+    let root = null;
+    for (const q of g) {
+      if (!root) { root = q; continue; }
+      const b = q.body, rb = root.body, r = q.weldRel;
+      if (!r || q.weldRoot !== root || b.type === CANNON.Body.KINEMATIC || rb.type === CANNON.Body.KINEMATIC) continue;
+      const off = rb.quaternion.vmult(r.p), w = rb.angularVelocity;
+      b.position.set(rb.position.x + off.x, rb.position.y + off.y, rb.position.z + off.z);
+      rb.quaternion.mult(r.q, b.quaternion);
+      b.velocity.set(rb.velocity.x + w.y * off.z - w.z * off.y, rb.velocity.y + w.z * off.x - w.x * off.z, rb.velocity.z + w.x * off.y - w.y * off.x);
+      b.angularVelocity.copy(w); b.aabbNeedsUpdate = true;
+    }
+  }
+}
+// where a welded brick sits on its group's first brick (kept for weldSnap)
+function weldRelOf(root, q) {
+  const iq = root.body.quaternion.conjugate();
+  return { p: iq.vmult(q.body.position.vsub(root.body.position)), q: iq.mult(q.body.quaternion) };
+}
 // every brick of the group hangs on its first brick
 function weldRelink(id) {
   const g = weldGroups.get(id); if (!g) return;
@@ -4451,6 +4479,7 @@ function weldRelink(id) {
   let root = null;
   for (const q of g) {
     if (!root) { root = q; continue; }
+    q.weldRoot = root; q.weldRel = weldRelOf(root, q);
     q.weldC = new CANNON.LockConstraint(root.body, q.body); q.weldC.collideConnected = false;   // (welded bricks don't push on each other)
     world.addConstraint(q.weldC); q.body.wakeUp();
   }
@@ -4545,7 +4574,7 @@ function buildCar(at, yaw, color) {
   const put = (x, y, z, size, c, o = {}) => {
     const pos = new V3(x, y, z).applyQuaternion(q).add(at), rq = q.clone();
     if (o.wheel) rq.multiply(new THREE.Quaternion().setFromAxisAngle(new V3(0, 0, 1), Math.PI / 2));
-    out.push(makePart({ size, pos: pos.toArray(), quat: [rq.x, rq.y, rq.z, rq.w], color: c, weld: id, shape: o.wheel ? 'cyl' : 'box', seat: o.seat, trans: o.trans }));
+    out.push(makePart({ size, pos: pos.toArray(), quat: [rq.x, rq.y, rq.z, rq.w], color: c, weld: id, shape: o.wheel ? 'cyl' : 'box', seat: o.seat, wheel: o.wheel, trans: o.trans }));
   };
   // (a hair of space between the pieces, so they never rub on each other)
   put(0, 1.5, 0, [6, 1, 10], color);
@@ -5694,6 +5723,7 @@ function frame(now) {
   // only makes the next frame later still (and everything stays slow until the bricks are gone)
   sitDrive(dt);
   world.step(1 / 120, dt, 3);
+  if (!net.mode) weldSnap(weldGroups.values());
   while (afterStep.length) afterStep.shift()();
 
   if (net.mode) netLerpParts(dt);   // online: glide the mirrored bricks toward where the server says they are
@@ -6033,6 +6063,7 @@ const UPDATES = [
     'Build together: on the Multiplayer page, host one of your saved places. Your friends join and build with you, and Save puts it back in your place.',
     'More script blocks: repeat, go back to the top (forever), move up / down, turn, glow, open / close, open the doors, super speed, super jump, heal, explode!, make it night / day, and show everyone a message.',
     'Fixed: the billboard by the sidewalk finally shows its picture again.',
+    'Cars fixed: they really go now (wheels roll instead of dragging), and welded bricks stay exactly where they belong: no more wheels falling off!',
     'Fixed: jumping swings your arms up in front, the classic way, instead of flipping them backwards over your shoulders. Ouch.',
     'SCRIPT BLOCKS! Snap blocks together to make a brick do things, like When touched → wait 1 second → play sound → teleport to spawn. Open Insert → Script a brick. Works in multiplayer too.',
     'Script blocks so far: When touched, When clicked, When the game starts, wait, change color, make invisible / visible, say, play sound, anchor / unanchor, teleport player to spawn, knock out player and give player a hat.',
