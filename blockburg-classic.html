@@ -55,7 +55,10 @@
   #myBadges{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
   #badgePop{right:12px;bottom:84px;width:300px;z-index:8;transform:translateX(340px);transition:transform .35s ease-out}
   #badgePop.in{transform:none}
-  #badgePop .bp-in{display:flex;gap:10px;align-items:center;padding:8px 10px}
+  #badgePop .bp-in{display:flex;gap:16px;align-items:center;padding:12px 10px 12px 18px}
+  .bdg-wrap{position:relative;display:inline-block;width:52px;height:52px;flex:0 0 auto}
+  .spk{position:absolute;image-rendering:pixelated;pointer-events:none;opacity:0;animation:spk 1.2s steps(1) infinite}
+  @keyframes spk{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(.7)}30%{opacity:1;transform:scale(1.1)}45%{opacity:1;transform:scale(.6)}60%,100%{opacity:0;transform:scale(.4)}}
   #badgePop b{display:block;font:bold 13px Arial}
   #badgePop small{display:block;font:11px Arial;color:#333;margin-top:2px}
   #selRect{position:fixed;border:1px dashed #00e5ff;background:rgba(0,229,255,.12);pointer-events:none;z-index:5}
@@ -5121,7 +5124,12 @@ function badgePopup(b) {
 function badgeNext() {
   const b = badgeQueue[0]; if (!b) return;
   const el = $('badgePop');
-  el.innerHTML = `<div class="tb">Badge Awarded!</div><div class="bp-in">${badgeIcon(b, 52)}<div><b>${escHtml(b.name)}</b><small>${escHtml(b.desc)}</small></div></div>`;
+  // retro sparkles twinkle all around the badge (8-bit stars, blinking in choppy steps, each a little after the last)
+  const spk = [0, 1, 2, 3, 4, 5, 6, 7].map(i => {
+    const a = i / 8 * Math.PI * 2 + 0.3, r = i % 2 ? 36 : 31, s = i % 2 ? 10 : 14;
+    return `<img class="spk" src="${pxUrl('sparkle')}" alt="" style="width:${s}px;height:${s}px;left:${26 + Math.cos(a) * r - s / 2}px;top:${26 + Math.sin(a) * r - s / 2}px;animation-delay:${(i * 0.37) % 1.2}s">`;
+  }).join('');
+  el.innerHTML = `<div class="tb">Badge Awarded!</div><div class="bp-in"><span class="bdg-wrap">${badgeIcon(b, 52)}${spk}</span><div><b>${escHtml(b.name)}</b><small>${escHtml(b.desc)}</small></div></div>`;
   el.classList.remove('hidden', 'out'); void el.offsetWidth; el.classList.add('in');
   playWavs(['victory', 'button']);   // (both at the same time)
   setTimeout(() => { el.classList.add('out'); el.classList.remove('in'); }, 4500);
