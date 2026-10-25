@@ -174,6 +174,46 @@
   #bodyPalette{display:grid;grid-template-columns:repeat(10,22px);gap:3px;justify-content:center;margin-top:6px}
   #bodyPalette div{width:22px;height:22px;border:1px solid #333;cursor:pointer}
   .s-foot{border-top:1px solid #b9cbe4;color:#666;font-size:10px;text-align:center;padding:10px}
+  /* your badge (#K7Q2): made from your password, so nobody else can show it */
+  .badge{display:inline-block;background:#0b4a99;color:#fff;font:bold 10px Verdana;padding:1px 4px;border-radius:3px;margin-left:3px;letter-spacing:.5px}
+  .badge.hidden{display:none}
+  /* ---------- sign in: the old website's login box over screenshots of the game ---------- */
+  #signin{position:fixed;inset:0;z-index:60;overflow:auto;background:#5a9ee0;font:12px Verdana,Arial,sans-serif;color:#000}
+  #signin.hidden{display:none}
+  #siBg{position:fixed;inset:0;overflow:hidden;background:#5a9ee0}
+  #siBg div{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transition:opacity 1.6s;transform:scale(1.1)}
+  #siBg div.on{opacity:1;animation:siZoom 7.6s linear forwards}
+  @keyframes siZoom{from{transform:scale(1.02)}to{transform:scale(1.1)}}
+  @media (prefers-reduced-motion:reduce){#siBg div.on{animation:none}}
+  .si-wrap{position:relative;min-height:100%;display:grid;place-items:center;padding:16px;box-sizing:border-box}
+  .si-card{width:min(600px,100%)}
+  .si-card .s-logo{text-align:center;font-size:min(13vw,60px);margin:0 0 14px}
+  .si-card .s-logo small{color:#fff;text-shadow:1px 1px 0 #000,0 0 6px #000}
+  .si-card .box{background:#fff;margin:0;box-shadow:0 6px 30px rgba(0,0,0,.5)}
+  .si-cols{display:grid;grid-template-columns:180px 1fr;gap:12px;align-items:start}
+  #signin #avatarHolder canvas{width:178px !important;height:210px !important}
+  .si-f label{display:block;font:bold 12px Verdana;color:#0b4a99;margin:0 0 3px}
+  .si-f label+*{margin-bottom:9px}
+  .si-f input{width:100%;box-sizing:border-box;font:16px Verdana;padding:5px 6px;border:1px solid #6e99c9}
+  .si-row{display:flex;gap:4px}
+  .si-row .s-btn{font-size:16px;padding:0 9px}
+  .si-hint{font-size:11px;color:#555;margin:-5px 0 9px;line-height:1.4}
+  .si-looks{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+  .si-look{border:1px solid #b9cbe4;background:#f6f9fd;padding:3px 0 2px;cursor:pointer;text-align:center;font:9px Verdana;color:#0b4a99;min-width:0}
+  .si-look img{width:100%;max-width:40px;aspect-ratio:1;display:block;margin:0 auto;background:#fff}
+  .si-sw{display:flex;height:5px;margin:2px 4px;border:1px solid #555}
+  .si-sw i{flex:1}
+  .si-look:hover{background:#fff}
+  .si-look.on{background:#fff6c8;border-color:#d7a800}
+  #siPlay{width:100%;font-size:20px;padding:8px;margin-top:2px}
+  #siPlay:disabled{opacity:.6;cursor:wait}
+  .si-msg{color:#c4281c;font-weight:bold;min-height:15px;margin-top:5px;text-align:center}
+  .si-skip{text-align:center;font-size:11px}
+  @media (max-width:560px){
+    .si-cols{grid-template-columns:1fr}
+    #signin #avatarHolder canvas{width:110px !important;height:130px !important}
+    .si-looks{grid-template-columns:repeat(3,1fr)}
+  }
   /* trailer camera and the admin's free cam (H brings the buttons back): everything else on screen hides */
   body.trailer #menubar, body.trailer #chatlog, body.trailer #chatbar, body.trailer #right, body.trailer #tip,
   body.trailer #toolbar, body.trailer #insertWin, body.trailer #touchUI,
@@ -320,10 +360,32 @@
   </div>
 </div></div>
 
+<div id="signin" class="hidden">
+  <div id="siBg"></div>
+  <div class="si-wrap"><div class="si-card">
+    <div class="s-logo">BLOCKBURG<small>A Free Online Building Game</small></div>
+    <div class="box"><h3 id="siTitle">Welcome to BLOCKBURG!</h3><div class="in si-cols">
+      <div class="si-pv"></div>
+      <form class="si-f" id="siForm" autocomplete="on" onsubmit="return false">
+        <label for="siName">Name</label>
+        <div class="si-row"><input id="siName" name="username" maxlength="16" autocomplete="username" spellcheck="false"><button type="button" class="s-btn" id="siDice" title="Pick a random name">🎲</button></div>
+        <label for="siPass">Password <span class="fm-sm">(optional)</span></label>
+        <input id="siPass" name="password" type="password" maxlength="64" autocomplete="current-password">
+        <div class="si-hint" id="siHint"></div>
+        <label>Pick a look</label>
+        <div class="si-looks" id="siLooks"></div>
+        <button type="submit" class="s-btn go" id="siPlay">PLAY!</button>
+        <div class="si-msg" id="siMsg"></div>
+        <div class="si-skip"><span class="fm-link" id="siSkip">Skip, give me a random name</span></div>
+      </form>
+    </div></div>
+  </div></div>
+</div>
+
 <div id="site"><div class="s-wrap">
   <div class="s-top">
     <div class="s-logo">BLOCKBURG<small>A Free Online Building Game</small></div>
-    <div class="s-user">Logged in as <b>Player</b> <span class="fm-adm hidden" id="adminBadge" style="margin:0">Admin</span> &nbsp;|&nbsp; 🎫 <b>25</b> Tix &nbsp;|&nbsp; 💵 <b>10</b> Bux<br><span id="onlineCount">5</span> people online</div>
+    <div class="s-user">Logged in as <b id="meName">Player</b><span class="badge hidden" id="meBadge"></span> <span class="fm-adm hidden" id="adminBadge" style="margin:0">Admin</span> &nbsp;|&nbsp; 🎫 <b>25</b> Tix &nbsp;|&nbsp; 💵 <b>10</b> Bux<br><span id="onlineCount">5</span> people online &nbsp;|&nbsp; <span class="fm-link" data-signin="out">Logout</span></div>
   </div>
   <div class="s-nav">
     <a data-page="home" class="on">My Blockburg</a><a data-page="games">Games</a><a data-page="catalog">Catalog</a><a data-page="character">Character</a><a data-page="build">Build</a><a data-page="online">Multiplayer</a><a data-page="inbox">Inbox<span id="inboxBadge" class="nbadge hidden"></span></a><a data-page="friends">Friends<span id="frBadge"></span></a><a data-page="forum">Forums</a><a data-page="help">Help</a>
@@ -332,9 +394,10 @@
   <div class="s-body">
     <div class="page" id="p-home"><div class="cols">
       <div>
-        <div class="box"><h3>Hi, Player!</h3><div class="in" style="text-align:center">
+        <div class="box"><h3 id="hiName">Hi, Player!</h3><div class="in" style="text-align:center">
           <div class="avatarSlot"></div>
           <div style="margin-top:6px"><button class="s-btn" data-goto="character">Change Character</button></div>
+          <div class="fm-sm" id="meIdLine" style="margin-top:6px"></div>
         </div></div>
         <div class="box"><h3 id="friendsHd">My Friends (0)</h3><div class="in" id="friends"></div></div>
       </div>
@@ -400,8 +463,8 @@
     <div class="page hidden" id="p-online"><div class="cols">
       <div>
         <div class="box"><h3>Your Name</h3><div class="in">
-          <input id="mpName" maxlength="16" placeholder="Player1234" style="width:100%;box-sizing:border-box;font:13px Verdana;padding:4px">
-          <p style="margin-bottom:0">Shown above your head and in chat.</p>
+          Playing as <b id="mpMe" style="color:#0b4a99">Player</b>
+          <p style="margin-bottom:0">Shown above your head and in chat. <span class="fm-link" data-signin>Change it</span></p>
         </div></div>
         <div class="box"><h3>Status</h3><div class="in" id="mpStatus">Not connected.</div></div>
       </div>
@@ -1699,7 +1762,8 @@ class Humanoid {
     const { c, t } = this.tag.userData, g = c.getContext('2d'), W = c.width, M = W / 2;
     g.clearRect(0, 0, W, c.height);
     g.font = 'bold 26px Arial'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#000'; g.fillStyle = this.admin ? '#ffd23f' : '#fff';
-    const label = this.admin ? '★ ' + this.name + ' [Admin]' : this.name;
+    const who = this.badge ? this.name + ' #' + this.badge : this.name;
+    const label = this.admin ? '★ ' + who + ' [Admin]' : who;
     g.strokeText(label, M, 22, W - 10); g.fillText(label, M, 22, W - 10);
     if (this.health < 100) {
       g.fillStyle = '#000'; g.fillRect(M - 80, 40, 160, 14);
@@ -1715,7 +1779,8 @@ class Humanoid {
     t.needsUpdate = true;
   }
   say(text) {
-    chatLine(this.admin ? '[Admin] ' + this.name : this.name, text, this.admin ? '#ffd23f' : this.chatColor);
+    const who = this.badge ? this.name + ' #' + this.badge : this.name;
+    chatLine(this.admin ? '[Admin] ' + who : who, text, this.admin ? '#ffd23f' : this.chatColor);
     if (this.hid) netEv(['chat', this.hid, text]);
     const { c, t } = this.bubble.userData, g = c.getContext('2d');
     g.clearRect(0, 0, 512, 128);
@@ -2920,7 +2985,7 @@ const sysChat = (t) => chatLine(null, t);
 function renderLB() {
   const rows = humanoids.filter(h => h.enabled).sort((a, b) => b.kos - a.kos || a.wos - b.wos);
   $('lb').innerHTML = '<div class="r hd"><span>Player</span><span>KOs</span><span>WOs</span></div>' +
-    rows.map(h => `<div class="r ${h.isPlayer ? 'me' : ''}"><span>${h.admin ? '★ ' : ''}${h.name}</span><span>${h.kos}</span><span>${h.wos}</span></div>`).join('');
+    rows.map(h => `<div class="r ${h.isPlayer ? 'me' : ''}"><span>${h.admin ? '★ ' : ''}${h.name}${h.badge ? ` <small style="opacity:.75">#${h.badge}</small>` : ''}</span><span>${h.kos}</span><span>${h.wos}</span></div>`).join('');
 }
 $('toolbar').innerHTML = TOOLS.map((t, i) => `<div class="slot" data-i="${i}"><span class="num">${(i + 1) % 10}</span><span class="ic">${t.icon}</span><span class="nm">${t.name}</span></div>`).join('');
 $('toolbar').addEventListener('click', (e) => { const s = e.target.closest('.slot'); if (s) equip(+s.dataset.i); });
@@ -3786,9 +3851,10 @@ function refreshLook() {
   renderCatalog();
 }
 $('site').addEventListener('click', (e) => {
-  const t = e.target.closest('[data-page],[data-goto],[data-play],[data-link],[data-wear],[data-bp],[data-bc],[data-cat]');
+  const t = e.target.closest('[data-page],[data-goto],[data-play],[data-link],[data-wear],[data-bp],[data-bc],[data-cat],[data-signin]');
   if (!t) return;
   const d = t.dataset;
+  if (d.signin !== undefined) { if (d.signin === 'out') signOut(); else openSignin('change'); return; }
   if (d.page || d.goto) showPage(d.page || d.goto);
   if (d.play) playPlace(d.play);
   if (d.link) location.href = d.link;
@@ -3807,6 +3873,7 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
 const ADMIN_PUBS = [
   { kty: 'EC', crv: 'P-256', x: 'zcvKya_RDkqdxJ8vj8q_vOWBN5Bnl1wb0v76V5GLQcg', y: 'hbNJCYuYrZtUIKQJM6B4JnskgxEyW2V9mtI-1cwUsSY' },
   { kty: 'EC', crv: 'P-256', x: 'y_1Q3b3kd2rM-VPatlCv6dJ5oXdlVEu0nnyvruysxtg', y: 'Q3t5rj33ReTlDtMIR1EJX5KrV5N6Pt-Eb8sEH5Db-xg' },   // made 2026-10-21
+  { kty: 'EC', crv: 'P-256', x: '2PRcIqurXJfhCxlB0eB_n1CQGn6y-AONGc9CinZSPmQ', y: 'E9DRJvoR_oTlAFTJs-cdXXWjH0FBXXm0YWGfFFnFimY' },   // signing in as cooltinpot #66JF (2026-10-24)
 ];
 const ADMIN_KEY = 'blockburg-admin-key';
 const ECDSA = { name: 'ECDSA', namedCurve: 'P-256', hash: 'SHA-256' };
@@ -3853,7 +3920,12 @@ function setAdmin(h, on = true) {
     projRender();                                       // (the admin's Inbox has the projects waiting to be checked)
   }
 }
-function helloMsg() { const m = { t: 'hello', v: NET_VERSION, name: myName(), look }; if (net.admSig) m.adm = net.admSig; return m; }
+function helloMsg() {
+  const m = { t: 'hello', v: NET_VERSION, name: myName(), look };
+  if (net.admSig) m.adm = net.admSig;
+  if (net.idSig) m.id = [me.x, me.y, net.idSig];   // proof of the password key behind my badge
+  return m;
+}
 try { const saved = localStorage.getItem(ADMIN_KEY); if (saved) adminLogin(saved); } catch { }
 $('fmAdminBtn').onclick = async () => {
   if (adminPriv) {
@@ -3899,6 +3971,7 @@ async function forumMessage(topic, payload) {
   if (o.ts > Date.now() + 864e5) return;
   const p = { id: o.id, b: o.b, th: typeof o.th === 'string' ? o.th : '', ti: String(o.ti || '').slice(0, 60), tx: o.tx.slice(0, 800), n: o.n.replace(/[^\w \-]/g, '').slice(0, 16) || 'Player', ts: o.ts };
   p.adm = !!o.s && await adminVerify(postSigText(p), o.s);
+  p.bd = o.is ? await idVerify(postSigText(p), o.k, o.is) : '';   // signed with the poster's password key: show their badge
   if (forum.posts.has(p.id)) return;
   forum.posts.set(p.id, p);
   clearTimeout(forum.renderT); forum.renderT = setTimeout(forumRender, 120);
@@ -3929,7 +4002,7 @@ function threadsOf(board) {
     return { t, replies, last: replies.length ? replies[replies.length - 1] : t };
   }).sort((a, b) => b.last.ts - a.last.ts);
 }
-const whoHtml = (p) => `<b>${escHtml(p.n)}</b>${p.adm ? ' <span class="fm-adm">Admin</span>' : ''}`;
+const whoHtml = (p) => `<b>${escHtml(p.n)}</b>${p.bd ? `<span class="badge">#${p.bd}</span>` : ''}${p.adm ? ' <span class="fm-adm">Admin</span>' : ''}`;
 function forumRender() {
   if (!$('p-forum') || $('p-forum').classList.contains('hidden')) return;
   const v = forum.view, crumb = [`<span class="fm-link" data-fm="boards">Blockburg Forums</span>`];
@@ -3947,7 +4020,7 @@ function forumRender() {
     const canPost = !b.adminOnly || adminPriv;
     if (v.v === 'new') {
       crumb.push('New Thread');
-      h = `<div class="fm-form"><div class="fm-sm">Posting as <b>${escHtml(myName())}</b> (change your name on the <span class="fm-link" data-goto="online">Multiplayer</span> page)</div>
+      h = `<div class="fm-form"><div class="fm-sm">Posting as <b>${escHtml(myName())}</b>${me.badge ? `<span class="badge">#${me.badge}</span>` : ''} (<span class="fm-link" data-signin>change</span>)</div>
         <input id="fmTitle" maxlength="60" placeholder="Subject"><textarea id="fmText" maxlength="800" placeholder="Write your post..."></textarea>
         <button class="s-btn go" data-fm="send">Post Thread</button> <button class="s-btn" data-fm="board" data-id="${b.id}">Cancel</button> <span class="fm-sm" id="fmMsg"></span></div>`;
     } else {
@@ -3966,7 +4039,7 @@ function forumRender() {
     crumb.push(`<span class="fm-link" data-fm="board" data-id="${b.id}">${b.name}</span>`, escHtml(cleanText(t.ti || '(no subject)')));
     h = [t, ...x.replies].map(p => `<div class="fm-post ${p.adm ? 'adm' : ''}"><div class="who">${whoHtml(p)}<div class="fm-sm">${fmDate(p.ts)}</div></div>
       <div class="msg">${adminPriv ? `<span class="fm-del" data-fm="del" data-id="${p.id}">delete</span>` : ''}${escHtml(cleanText(p.tx))}</div></div>`).join('') +
-      `<div class="fm-form" style="margin-top:8px"><div class="fm-sm">Reply as <b>${escHtml(myName())}</b></div><textarea id="fmText" maxlength="800" placeholder="Write a reply..."></textarea>
+      `<div class="fm-form" style="margin-top:8px"><div class="fm-sm">Reply as <b>${escHtml(myName())}</b>${me.badge ? `<span class="badge">#${me.badge}</span>` : ''}</div><textarea id="fmText" maxlength="800" placeholder="Write a reply..."></textarea>
       <button class="s-btn go" data-fm="send">Post Reply</button> <span class="fm-sm" id="fmMsg"></span></div>`;
   }
   // don't wipe out what someone is typing when a new post arrives
@@ -3987,11 +4060,11 @@ async function forumSend() {
   if (!tx) return msg('Write something first.');
   const thread = v.v === 'thread' ? forum.posts.get(v.id) : null;
   const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), b: thread ? thread.b : v.id, th: thread ? thread.id : '', ti, tx, n: myName(), ts: Date.now() };
-  const s = await adminSign(postSigText(p));
-  forumPublish(FORUM_PREFIX + 'p/' + p.id, s ? { ...p, s } : p);
+  const s = await adminSign(postSigText(p)), is = await idSign(postSigText(p));
+  forumPublish(FORUM_PREFIX + 'p/' + p.id, { ...p, ...(s && { s }), ...(is && { k: [me.x, me.y], is }) });
   try { localStorage.setItem('blockburg-forum-last', String(Date.now())); } catch { }
   $('fmText').value = ''; if ($('fmTitle')) $('fmTitle').value = '';
-  forum.posts.set(p.id, { ...p, adm: !!s });   // show it right away
+  forum.posts.set(p.id, { ...p, adm: !!s, bd: is ? me.badge : '' });   // show it right away
   if (v.v === 'new') forum.view = { v: 'thread', id: p.id };
   forumRender();
 }
@@ -4256,7 +4329,7 @@ function playPlace(id, { file = null } = {}) {
   renderLB();
   if (id === 'classic') {
     sysChat('Welcome to Blockburg Classic! Press 1-0 for tools, Esc for the menu.');
-    if (!HEADLESS) setTimeout(() => npcs[0].enabled && npcs[0].say('hi Player!'), 1800);
+    if (!HEADLESS) setTimeout(() => npcs[0].enabled && npcs[0].say(`hi ${player.name}!`), 1800);
     const g31 = npcs.find(n => n.name === 'Guest 31');
     if (!HEADLESS && g31) setTimeout(() => g31.enabled && g31.say('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'), 3600);
   } else {
@@ -4465,7 +4538,7 @@ async function loadColyseus() {
 const humByHid = (hid) => humanoids.find(h => h.hid === hid);
 function lookOf(h) { return { colors: h.colors, hat: h.hat, shirt: h.shirt || 'none', pants: h.pants || 'none', face: h.face || 'smile', tshirt: h.tshirt || 'none' }; }
 function applyLook(h, L) { if (!L) return; h.setOutfit(L.colors, L.shirt, L.pants, L.face, L.tshirt || 'none'); h.setHat(L.hat); }
-function humanRec(h) { return { hid: h.hid, name: h.name, look: lookOf(h), npc: !!h.ai, cc: h.chatColor, adm: !!h.admin }; }
+function humanRec(h) { return { hid: h.hid, name: h.name, look: lookOf(h), npc: !!h.ai, cc: h.chatColor, adm: !!h.admin, bd: h.badge || '' }; }
 function setHumBody(h, kinematic) {
   const b = h.body;
   b.type = kinematic ? CANNON.Body.KINEMATIC : CANNON.Body.DYNAMIC; b.mass = kinematic ? 0 : 30;
@@ -4475,12 +4548,10 @@ function setPartXf(p, pos, q) {
   p.body.position.set(...pos); p.body.quaternion.set(...q); p.body.aabbNeedsUpdate = true;
   p.mesh.position.copy(p.body.position); p.mesh.quaternion.copy(p.body.quaternion);
 }
+// the name you signed in with (see SIGN IN)
 function myName() {
-  let n = ($('mpName').value || '').replace(/[^\w \-]/g, '').trim().slice(0, 16);
-  if (!n) n = 'Player' + (1000 + ((Math.random() * 9000) | 0));
-  $('mpName').value = n;
-  try { localStorage.setItem(NAME_KEY, n); } catch { }
-  return n;
+  if (!me.name) me.name = randomName();
+  return me.name;
 }
 function netStatus(text) { $('mpStatus').textContent = text; }
 function updateBadge() {
@@ -4595,6 +4666,10 @@ function hostHello(conn, msg) {
   // the admin proves it's really them by signing the room code + their name with the secret admin key
   if (msg.adm) adminVerify(`bb-admin|${net.code}|${name}`, msg.adm).then(ok => {
     if (ok && net.conns.get(conn.peer)?.h === h) { setAdmin(h); netEv(['adm', h.hid]); applyLook(h, L); }
+  });
+  // a badge counts only if they signed the room code + their name with the key it comes from
+  if (Array.isArray(msg.id)) idVerify(`bb-id|${net.code}|${name}`, msg.id.slice(0, 2), msg.id[2]).then(bd => {
+    if (bd && net.conns.get(conn.peer)?.h === h) { h.badge = bd; h.drawTag(); renderLB(); netEv(['bd', h.hid, bd]); }
   });
   netSendTo(conn, { t: 'welcome', you: h.hid, code: net.code, host: player.name, place: net.place,
     parts: parts.map(p => [p.nid, serialize(p), p.locked]),
@@ -4741,6 +4816,7 @@ async function enterRoom(room, code, mine) {
   });
   // the admin proves it's them by signing the room code and their name
   net.admSig = adminPriv ? await adminSign(`bb-admin|${code}|${myName()}`) : null;
+  net.idSig = await idSign(`bb-id|${code}|${myName()}`);
   if (net.room !== room) return;
   net.conn.send(helloMsg());
   setTimeout(() => {
@@ -4800,6 +4876,7 @@ function addPuppet(rec) {
   h.tools = buildHeldModels(h.char.hand); h.heldTool = null;
   applyLook(h, rec.look);
   h.spawn(); h.netPos = new V3().copy(h.pos);
+  if (rec.bd) { h.badge = cleanBadge(rec.bd); h.drawTag(); }
   if (rec.adm) setAdmin(h);
   renderLB(); updateBadge();
 }
@@ -4835,6 +4912,7 @@ function clientEvent(e) {
     case 'sfx': if (e[3] !== net.myHid) sfxAt(e[1], new V3(...e[2]), ...(e[1] === 'tick' ? e[4] || [] : [])); break;
     case 'join': addPuppet(e[1]); break;
     case 'adm': { const h = who(e[1]); if (h) setAdmin(h); break; }
+    case 'bd': { const h = who(e[1]); if (h) { h.badge = cleanBadge(e[2]); h.drawTag(); renderLB(); } break; }
     case 'leave': { const h = humByHid(e[1]); if (h && !h.ai) removeHumanoid(h); updateBadge(); break; }
   }
 }
@@ -4939,10 +5017,243 @@ function netStop(reason, quiet = false) {
   updateBadge();
   if (!quiet) netStatus(reason || 'Not connected.');
 }
-try { $('mpName').value = localStorage.getItem(NAME_KEY) || ''; } catch { }
 $('hostBtn').onclick = () => hostGame();
 $('joinBtn').onclick = () => joinGame();
 $('mpCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinGame(); });
+
+/* ================= SIGN IN =================
+   No real accounts. You pick a name and, if you like, a password. The password never leaves this device:
+   with your name it makes a secret key (the same kind as the admin key), and the key's public half gives
+   you a badge like #K7Q2. Anyone can type your name, but only your password makes your badge.
+   If that key is one of ADMIN_PUBS, signing in makes you the admin too. */
+const ME_KEY = 'blockburg-me';
+const ID_ROUNDS = 400000;   // PBKDF2 rounds: slow enough that guessing passwords is hard, quick enough to sign in
+let me = { name: '', badge: '', x: '', y: '' }, idKey = null;
+const enc = (s) => new TextEncoder().encode(s);
+const cleanBadge = (b) => String(b || '').replace(/[^A-Z0-9]/g, '').slice(0, 4);
+
+// P-256 (the admin key's curve): just enough math to find the public half of a key made from a password
+const P256 = {
+  p: 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn,
+  n: 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n,
+  G: [0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296n, 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5n] };
+const modp = (a) => { const r = a % P256.p; return r < 0n ? r + P256.p : r; };
+function invp(a) {
+  let r0 = modp(a), r1 = P256.p, s0 = 1n, s1 = 0n;
+  while (r1) { const q = r0 / r1; [r0, r1] = [r1, r0 - q * r1]; [s0, s1] = [s1, s0 - q * s1]; }
+  return modp(s0);
+}
+function ecAdd(P, Q) {
+  if (!P) return Q; if (!Q) return P;
+  let l;
+  if (P[0] === Q[0]) { if (modp(P[1] + Q[1]) === 0n) return null; l = modp(3n * P[0] * P[0] - 3n) * invp(2n * P[1]); }
+  else l = modp(Q[1] - P[1]) * invp(Q[0] - P[0]);
+  l = modp(l);
+  const x = modp(l * l - P[0] - Q[0]);
+  return [x, modp(l * (P[0] - x) - P[1])];
+}
+function ecMul(d) { let R = null, A = P256.G; for (; d > 0n; d >>= 1n) { if (d & 1n) R = ecAdd(R, A); A = ecAdd(A, A); } return R; }
+const big2b64u = (v) => b64u(Uint8Array.from(v.toString(16).padStart(64, '0').match(/../g), h => parseInt(h, 16)));
+// name + password -> the secret key (d) and its public half (x, y), as JWK numbers
+async function idDerive(name, pass) {
+  const raw = await subtle.importKey('raw', enc(pass), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', iterations: ID_ROUNDS, salt: enc('blockburg-id|' + name.toLowerCase()) }, raw, 256));
+  const d = BigInt('0x' + [...bits].map(b => b.toString(16).padStart(2, '0')).join('')) % (P256.n - 1n) + 1n;
+  const [x, y] = ecMul(d);
+  return { d: big2b64u(d), x: big2b64u(x), y: big2b64u(y) };
+}
+async function badgeOf(x, y) {
+  const h = new Uint8Array(await subtle.digest('SHA-256', enc(x + '.' + y)));
+  let s = ''; for (let i = 0; i < 4; i++) s += ROOM_CHARS[h[i] & 31];
+  return s;
+}
+async function idSign(text) {
+  if (!idKey) return null;
+  try { return b64u(new Uint8Array(await subtle.sign(ECDSA, idKey, enc(text)))); } catch { return null; }
+}
+// the badge of whoever signed `text` with the key whose public half is k = [x, y] ('' if it doesn't check out)
+async function idVerify(text, k, sig) {
+  if (!subtle || !Array.isArray(k) || typeof k[0] !== 'string' || typeof k[1] !== 'string' || typeof sig !== 'string') return '';
+  try {
+    const key = await subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', x: k[0], y: k[1] }, ECDSA, false, ['verify']);
+    if (await subtle.verify(ECDSA, key, unb64u(sig), enc(text))) return badgeOf(k[0], k[1]);
+  } catch { }
+  return '';
+}
+async function idUse(rec) {
+  idKey = await subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', d: rec.d, x: rec.x, y: rec.y }, ECDSA, false, ['sign']);
+  me.x = rec.x; me.y = rec.y;
+  me.badge = await idVerify('check', [rec.x, rec.y], await idSign('check'));
+  if (!me.badge) { idKey = null; me.x = me.y = ''; throw new Error('that key does not work'); }
+  if (ADMIN_PUBS.some(k => k.x === rec.x && k.y === rec.y)) { adminPriv = idKey; setAdmin(player); refreshLook(); forumRender(); }
+}
+function idClear() {
+  if (idKey && adminPriv === idKey) {
+    adminPriv = null; setAdmin(player, false);
+    look = withoutAdminClothes(look); saveLook(); refreshLook();
+  }
+  idKey = null; me.badge = me.x = me.y = '';
+}
+
+// names
+const NAME_A = ['Brick', 'Noob', 'Block', 'Stud', 'Tinpot', 'Rocket', 'Turbo', 'Epic', 'Pixel', 'Pizza', 'Super', 'Mega', 'Ninja', 'Cool'];
+const NAME_B = ['Boy', 'Kid', 'Guy', 'Fan', 'King', 'Pro', 'Dude', 'Hero', 'Bot', 'Man', 'Head', 'Builder'];
+function randomName() {
+  const r = (a) => a[(Math.random() * a.length) | 0];
+  return (r(NAME_A) + r(NAME_B) + ((Math.random() * 1000) | 0)).slice(0, 16);
+}
+function nameProblem(n) {
+  if (n.length < 3) return 'Your name needs at least 3 letters.';
+  if (n.length > 16) return 'Your name can be 16 letters at most.';
+  if (/[^\w \-]/.test(n)) return 'Names can only use letters, numbers, spaces, - and _.';
+  if (/^guest\b/i.test(n.replace(/[_-]/g, ' '))) return "Names can't start with Guest. That's what the Guests are called!";
+  if (/admin|moderator|blockburg/i.test(n)) return 'That name is taken. Pick another one!';
+  if (cleanText(n) !== n) return 'Keep it nice! Pick another name.';
+  return '';
+}
+function updateMe() {
+  const n = myName();
+  player.name = n; player.badge = me.badge;
+  $('meName').textContent = n; $('hiName').textContent = `Hi, ${n}!`;
+  $('meBadge').textContent = me.badge ? '#' + me.badge : ''; $('meBadge').classList.toggle('hidden', !me.badge);
+  $('mpMe').textContent = me.badge ? `${n} #${me.badge}` : n;
+  $('meIdLine').innerHTML = me.badge
+    ? `Your badge: <span class="badge">#${me.badge}</span> &middot; <span class="fm-link" id="copyIdBtn" title="Safe to share: it can check your badge but can't make it">copy my public ID</span>`
+    : `<span class="fm-link" data-signin>Add a password</span> to get a badge.`;
+  $('meIdLine').insertAdjacentHTML('beforeend', `<br>Not ${n}? <span class="fm-link" data-signin="out">Sign out</span>`);
+  $('loading').textContent = `Welcome back, ${n}! Pick a game from the Games tab, or hit Play Solo.`;
+  renderLB(); forumRender();
+}
+$('meIdLine').addEventListener('click', (e) => {
+  if (e.target.id !== 'copyIdBtn') return;
+  const id = me.x + '.' + me.y, done = () => { e.target.textContent = 'copied!'; setTimeout(() => (e.target.textContent = 'copy my public ID'), 1500); };
+  try { navigator.clipboard.writeText(id).then(done, () => prompt('Your public ID:', id)); } catch { prompt('Your public ID:', id); }
+});
+
+// the sign-in screen: 'first' (first visit: then straight into the game), 'out' (after Logout) or 'change' (can cancel)
+const SI_SHOTS = ['infinite-blocks', 'cool-hats', 'meet-friends', 'hangout', 'admire-the-view', 'relax'];
+const SI_LOOKS = [
+  { name: 'Noob', c: NOOB, hat: 'none' },
+  { name: 'Viking', c: NOOB, hat: 'viking' },
+  { name: 'Fancy', c: { skin: '#F5CD30', shirt: '#1B2A35', pants: '#1B2A35' }, hat: 'tophat' },
+  { name: 'Cowboy', c: { skin: '#CC8E69', shirt: '#C4281C', pants: '#0D69AC' }, hat: 'cowboy' },
+  { name: 'Party', c: { skin: '#F5CD30', shirt: '#4B974B', pants: '#694028' }, hat: 'party' },
+  { name: 'Pumpkin', c: { skin: '#DA8541', shirt: '#DA8541', pants: '#1B2A35' }, hat: 'pumpkin' },
+];
+const si = { mode: 'first', slide: 0, timer: 0, look: -1, preview: null, previewT: 0, page: 'home' };
+const siMsg = (t) => { $('siMsg').textContent = t; };
+const siKey = (n, p) => n.toLowerCase() + '\n' + p;
+function openSignin(mode) {
+  si.mode = mode;
+  si.page = (document.querySelector('#site .page:not(.hidden)')?.id || 'p-home').slice(2);
+  $('siTitle').textContent = mode === 'first' ? 'Welcome to BLOCKBURG!' : mode === 'out' ? 'Sign In' : 'Your Name & Password';
+  $('siPlay').textContent = mode === 'first' ? 'PLAY!' : mode === 'out' ? 'Sign In' : 'Save';
+  $('siSkip').textContent = mode === 'change' ? 'Cancel' : 'Skip, give me a random name';
+  $('siName').value = myName(); $('siPass').value = ''; siMsg('');
+  si.look = -1; si.preview = null; renderLooks(); siHint();
+  if (!$('siBg').children.length) $('siBg').innerHTML = SI_SHOTS.map(s => `<div style="background-image:url('signin/${s}.webp')"></div>`).join('');
+  clearInterval(si.timer); siSlide(); si.timer = setInterval(siSlide, 6000);
+  document.querySelector('.si-pv').append(pvHolder);
+  $('signin').classList.remove('hidden'); $('signin').scrollTop = 0;
+  if (!matchMedia('(pointer: coarse)').matches) $('siName').focus();   // (on phones the keyboard would cover everything)
+}
+function closeSignin() {
+  clearInterval(si.timer);
+  $('signin').classList.add('hidden');
+  showPage(si.mode === 'change' ? si.page : 'home');
+}
+function siSlide() {
+  const d = $('siBg').children;
+  for (let i = 0; i < d.length; i++) d[i].classList.toggle('on', i === si.slide);
+  si.slide = (si.slide + 1) % d.length;
+}
+function renderLooks() {
+  $('siLooks').innerHTML = SI_LOOKS.map((L, i) => `<div class="si-look ${si.look === i ? 'on' : ''}" data-look="${i}" title="${L.name}">
+    <img src="${L.hat === 'none' ? faceThumbs.smile : hatThumbs[L.hat]}" alt=""><div class="si-sw"><i style="background:${L.c.skin}"></i><i style="background:${L.c.shirt}"></i><i style="background:${L.c.pants}"></i></div>${L.name}</div>`).join('');
+}
+// under the password box: what a password gets you, or (once typed) the badge it makes
+function siHint(text) {
+  $('siHint').innerHTML = text || 'Add a password to get a badge like <span class="badge">#K7Q2</span>, so nobody can pretend to be you. It never leaves this computer.';
+}
+async function siPreview() {
+  const n = $('siName').value.trim().replace(/\s+/g, ' '), p = $('siPass').value;
+  if (!p) { siHint(); return; }
+  if (!subtle) { siHint('Passwords only work on the real website (https). Leave it empty to play.'); return; }
+  if (nameProblem(n)) { siHint('Pick your name first, then your badge shows up here.'); return; }
+  const key = siKey(n, p);
+  if (si.preview && si.preview.key === key) return;
+  siHint('Making your badge...');
+  const rec = await idDerive(n, p), badge = await badgeOf(rec.x, rec.y);
+  if (siKey($('siName').value.trim().replace(/\s+/g, ' '), $('siPass').value) !== key) return;   // they kept typing
+  si.preview = { key, rec };
+  const adm = ADMIN_PUBS.some(k => k.x === rec.x && k.y === rec.y);
+  siHint(`Your badge: <span class="badge">#${badge}</span>${adm ? ' <span class="fm-adm">★ Admin</span>' : ''} Same name + password = same badge, on any computer.`);
+}
+const siPreviewSoon = () => { clearTimeout(si.previewT); si.previewT = setTimeout(siPreview, 450); };
+async function siSubmit() {
+  const n = $('siName').value.trim().replace(/\s+/g, ' '), p = $('siPass').value;
+  const bad = nameProblem(n);
+  if (bad) { siMsg(bad); $('siName').focus(); return; }
+  if (p && !subtle) { siMsg('Passwords only work on the real website. Leave it empty to play.'); return; }
+  $('siPlay').disabled = true; siMsg(p ? 'Signing in...' : '');
+  try {
+    const rec = !p ? null : si.preview && si.preview.key === siKey(n, p) ? si.preview.rec : await idDerive(n, p);
+    idClear();
+    me.name = n;
+    if (rec) await idUse(rec);
+    try {
+      localStorage.setItem(ME_KEY, JSON.stringify(rec ? { name: n, d: rec.d, x: rec.x, y: rec.y } : { name: n }));
+      localStorage.setItem(NAME_KEY, n);
+    } catch { }
+  } catch {
+    siMsg('Something went wrong. Try again?'); $('siPlay').disabled = false; return;
+  }
+  $('siPlay').disabled = false; siMsg('');
+  updateMe(); finishSignin();
+}
+function siSkip() {
+  if (si.mode === 'change') { closeSignin(); return; }
+  idClear(); me.name = randomName();
+  try { localStorage.setItem(ME_KEY, JSON.stringify({ name: me.name })); localStorage.setItem(NAME_KEY, me.name); } catch { }
+  updateMe(); finishSignin();
+}
+function finishSignin() {
+  const mode = si.mode;
+  closeSignin();
+  if (mode === 'first') playPlace('classic');
+}
+function signOut() {
+  idClear(); me.name = '';
+  try { localStorage.removeItem(ME_KEY); } catch { }
+  updateMe(); openSignin('out');
+}
+$('siForm').addEventListener('submit', (e) => { e.preventDefault(); siSubmit(); });
+$('siDice').onclick = () => { $('siName').value = randomName(); siMsg(''); siPreviewSoon(); SFX.click(); };
+$('siSkip').onclick = siSkip;
+$('siName').addEventListener('input', () => { siMsg(''); siPreviewSoon(); });
+$('siPass').addEventListener('input', siPreviewSoon);
+$('siLooks').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-look]');
+  if (!t) return;
+  si.look = +t.dataset.look;
+  const L = SI_LOOKS[si.look];
+  look = { colors: normColors(L.c), hat: L.hat, shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none' };
+  saveLook(); refreshLook(); renderLooks(); SFX.click();
+});
+$('signin').addEventListener('keydown', (e) => { if (e.key === 'Escape' && si.mode === 'change') closeSignin(); });
+// first visit (or signed out last time): show the sign-in. Otherwise you're still signed in.
+async function signinStart() {
+  let rec = null; try { rec = JSON.parse(localStorage.getItem(ME_KEY)); } catch { }
+  if (rec && typeof rec.name === 'string' && !nameProblem(rec.name)) {
+    me.name = rec.name;
+    if (rec.d && subtle) { try { await idUse(rec); } catch { } }
+    updateMe();
+    return;
+  }
+  let old = ''; try { old = localStorage.getItem(NAME_KEY) || ''; } catch { }
+  me.name = nameProblem(old) ? '' : old;   // played before? your old name is already in the box
+  updateMe(); openSignin('first');
+}
 
 humanoids.forEach(h => h.postStep(0, 0));
 pageReady = true;
@@ -4951,6 +5262,7 @@ if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); }   // (the serve
 refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
+if (!HEADLESS) signinStart();
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
   keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,

@@ -13,3 +13,6 @@ blockburg-obby.html
 
 # backups
 *.backup-*.html
+
+# screenshots and logo text being worked on (the sign-in screen's finished ones are in signin/)
+screenshots/
