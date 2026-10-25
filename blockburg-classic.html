@@ -13,9 +13,14 @@
   #menubar button:hover{background:rgba(80,80,80,.75)}
   #netBadge{background:rgba(0,90,200,.65);color:#fff;border:1px solid rgba(255,255,255,.35);font:bold 13px Arial;padding:5px 10px;align-self:center}
   #netBadge.hidden{display:none}
-  #chatlog{position:fixed;top:38px;left:8px;width:min(440px,calc(100vw - 260px));font:bold 14px Arial;display:flex;flex-direction:column;gap:2px;pointer-events:none}
-  #chatlog div{transition:opacity 1.5s}
+  /* chat: scroll up for older messages. Old ones fade out, and come back while your mouse is over the chat */
+  #chatlog{position:fixed;top:38px;left:8px;width:min(440px,calc(100vw - 260px));max-height:min(212px,35vh);overflow-y:auto;overscroll-behavior:contain;
+    font:bold 14px Arial;display:flex;flex-direction:column;gap:2px;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent}
+  #chatlog > :first-child{margin-top:auto}
+  #chatlog div{transition:opacity 1.5s;flex-shrink:0}
   #chatlog div.old{opacity:0}
+  #chatlog:hover{background:rgba(0,0,0,.25);border-radius:4px}
+  #chatlog:hover div.old{opacity:1;transition:opacity .2s}
   #chatbar{position:fixed;left:6px;bottom:6px;width:300px}
   #chatInput{width:100%;box-sizing:border-box;background:rgba(0,0,0,.4);color:#fff;border:1px solid rgba(255,255,255,.3);font:13px Arial;padding:6px}
   #chatInput::placeholder{color:#ccc}
@@ -187,6 +192,58 @@
   #bodyPalette{display:grid;grid-template-columns:repeat(10,22px);gap:3px;justify-content:center;margin-top:6px}
   #bodyPalette div{width:22px;height:22px;border:1px solid #333;cursor:pointer}
   .s-foot{border-top:1px solid #b9cbe4;color:#666;font-size:10px;text-align:center;padding:10px}
+  /* the admin's command bar, its suggestions, the command list and big announcements */
+  #cmdBox{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);width:min(560px,calc(100vw - 32px));z-index:25;font:13px "Courier New",monospace}
+  #cmdBox.hidden,#cmdPanel.hidden,#annBanner.hidden{display:none}
+  .cmd-row{display:flex;align-items:center;background:rgba(10,10,10,.85);border:2px solid #f5c518;border-radius:4px;padding:4px 8px}
+  .cmd-p{color:#f5c518;font-weight:bold;margin-right:6px}
+  #cmdInput{flex:1;background:none;border:0;outline:0;color:#fff;font:14px "Courier New",monospace}
+  #cmdSuggest{background:rgba(10,10,10,.82);border:1px solid #555;border-bottom:0;border-radius:4px 4px 0 0;max-height:min(190px,32vh);overflow-y:auto;
+    overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#f5c518 transparent}
+  #cmdSuggest:empty{display:none}
+  .cmd-s{padding:3px 8px;color:#ccc;cursor:pointer;display:flex;gap:10px}
+  .cmd-s b{color:#fff}
+  .cmd-s .u{color:#f5c518}
+  .cmd-s .d{color:#888;margin-left:auto;font-size:11px;text-align:right}
+  .cmd-s.on{background:rgba(245,197,24,.22)}
+  #cmdPanel{position:fixed;right:8px;top:220px;width:210px;z-index:6;background:rgba(10,10,10,.7);border:1px solid #f5c518;border-radius:4px;
+    font:11px "Courier New",monospace;color:#ddd;max-height:max(120px,calc(100vh - 330px));overflow-y:auto;overscroll-behavior:contain;
+    scrollbar-width:thin;scrollbar-color:#f5c518 rgba(0,0,0,.3)}
+  .cmd-hd{background:#f5c518;color:#2a0f52;font:bold 11px Verdana;padding:3px 6px;cursor:pointer;position:sticky;top:0}
+  .cmd-hd span{float:right}
+  #cmdPanel.folded #cmdList{display:none}
+  #cmdList div{padding:2px 6px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06)}
+  #cmdList div:hover{background:rgba(245,197,24,.2)}
+  #cmdList b{color:#fff}
+  #cmdList i{color:#f5c518;font-style:normal}
+  #annBanner{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:24;max-width:calc(100vw - 32px);text-align:center;pointer-events:none;
+    background:rgba(42,15,82,.85);border:3px solid #f5c518;border-radius:8px;padding:10px 22px;color:#fff;font:bold 22px Verdana,Arial;text-shadow:2px 2px 0 #000}
+  #annBanner small{display:block;font-size:11px;color:#f5c518;text-shadow:none;margin-bottom:4px}
+  body.touch #cmdPanel{display:none}
+  /* 8-bit icons (pxIcon) */
+  img.px{vertical-align:-2px;image-rendering:auto;display:inline-block !important;width:auto !important;aspect-ratio:auto !important;
+    border:0 !important;background:none !important;margin:0}
+  #toolbar .ic img.px{display:block !important;margin:2px auto 0}
+  #lockBtn img.px{vertical-align:middle}
+  /* the shared settings rows: in the Esc menu, or borrowed by the website's Settings page */
+  #setRows{display:flex;flex-direction:column;gap:7px}
+  #setHome #setRows{gap:0}
+  #setHome .row{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #dfe7f2;font-size:12px}
+  #setHome .row input[type=range]{margin-left:auto;width:min(180px,40vw)}
+  #setHome .row input[type=range]+span{width:40px;text-align:right}
+  #setHome .row select{margin-left:auto}
+  #setHome .row:nth-child(odd){background:#f6f9fd}
+  #setHome select{font:12px Verdana}
+  /* friends: the list in the Esc menu, and the invite that pops up when a friend asks you to play */
+  .esc-fr{display:flex;align-items:center;gap:6px;font:12px Arial;text-align:left;background:rgba(255,255,255,.08);border-radius:6px;padding:5px 7px}
+  .esc-fr b{flex:1;font-size:13px}
+  .esc-fr .st{display:block;font-weight:normal;font-size:11px;color:#bbb}
+  .esc-box .esc-fr button{font-size:12px;padding:4px 10px}
+  #invToast{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:80;background:#fff;border:2px solid #0b4a99;
+    box-shadow:0 4px 20px rgba(0,0,0,.45);padding:9px 12px;font:12px Verdana,Arial,sans-serif;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center}
+  #invToast.hidden{display:none}
+  #invToast b{color:#0b4a99}
+  #invText{display:block;margin-bottom:7px}
   /* your badge (#K7Q2): made from your password, so nobody else can show it */
   .badge{display:inline-block;background:#0b4a99;color:#fff;font:bold 10px Verdana;padding:1px 4px;border-radius:3px;margin-left:3px;letter-spacing:.5px}
   .badge.hidden{display:none}
@@ -281,8 +338,8 @@
   <button data-act="menu">Menu (Esc)</button>
   <button data-act="insert">Insert</button>
   <button data-act="full">Fullscreen</button>
-  <button data-act="chat" class="touch-only">💬 Chat</button>
-  <button data-act="trailer" id="trailerBtn" style="display:none" title="Movie camera for recording a trailer (admin only). P or Esc stops it.">🎬 Trailer (P)</button>
+  <button data-act="chat" class="touch-only"><i data-px="chat"></i> Chat</button>
+  <button data-act="trailer" id="trailerBtn" style="display:none" title="Movie camera for recording a trailer (admin only). P or Esc stops it."><i data-px="film"></i> Trailer (P)</button>
   <span id="netBadge" class="hidden"></span>
 </div>
 <div id="chatlog" class="txt"></div>
@@ -297,9 +354,16 @@
 <div id="touchUI">
   <div id="joy"><div id="joyKnob"></div></div>
   <div id="jumpBtn">Jump</div>
-  <div id="lockBtn" title="Shift lock">🔒</div>
+  <div id="lockBtn" title="Shift lock"><i data-px="lock" data-size="26"></i></div>
 </div>
 <div id="fcHint" class="txt"></div>
+<!-- the admin's command bar (press / in a game) and the list of commands -->
+<div id="cmdBox" class="hidden">
+  <div id="cmdSuggest"></div>
+  <div class="cmd-row"><span class="cmd-p">&gt;</span><input id="cmdInput" maxlength="200" autocomplete="off" spellcheck="false" placeholder="type a command... (Tab fills it in, Esc closes)"></div>
+</div>
+<div id="cmdPanel" class="hidden"><div class="cmd-hd" id="cmdFold">Admin Commands <span id="cmdFoldIc">–</span></div><div id="cmdList"></div></div>
+<div id="annBanner" class="hidden"></div>
 <div id="trailerUI" class="hidden">
   <div class="tr-bar top"></div><div class="tr-bar bot"></div>
   <div id="trCard"></div>
@@ -311,13 +375,14 @@
   <div class="bd">
     <h4>Insert part</h4>
     <div class="grid" id="shapeBtns"></div>
-    <div class="row"><label><input type="checkbox" id="anchorChk"> Anchored</label></div>
+    <div class="row"><label><input type="checkbox" id="anchorChk" checked> Anchored</label>
+      <label title="Stays anchored until something explodes next to it, then it gets blown loose"><input type="checkbox" id="destroyChk"> Destroyable</label></div>
     <div class="row">Custom: <input type="number" id="cx" value="6" min="0.2" max="64" step="0.2">x<input type="number" id="cy" value="1.2" min="0.2" max="64" step="0.2">x<input type="number" id="cz" value="4" min="0.2" max="64" step="0.2"><button class="b" id="customBtn">Add</button></div>
     <h4>BrickColor: <span id="colorName"></span></h4>
     <div id="palette"></div>
     <h4>Place</h4>
     <div class="row"><button class="b" id="saveBtn">Save</button><button class="b" id="loadBtn">Load</button><button class="b" id="clearBtn">Clear All</button><button class="b" id="defaultBtn">Default</button></div>
-    <div class="row"><button class="b" id="postBtn" title="Send your Baseplate build to the admin, to show up in Games">📤 Post to Games</button></div>
+    <div class="row"><button class="b" id="postBtn" title="Send your Baseplate build to the admin, to show up in Games"><i data-px="post"></i> Post to Games</button></div>
   </div>
 </div>
 
@@ -327,6 +392,7 @@
     <button data-esc="resume">Return to Game</button>
     <button data-esc="reset">Reset Character</button>
     <button data-esc="settings">Game Settings</button>
+    <button data-esc="friends">Friends</button>
     <button data-esc="help">Help</button>
     <button data-esc="shot">Screenshot</button>
     <button data-esc="leave" class="dark">Leave Game</button>
@@ -343,16 +409,23 @@
     <button data-esc="back" class="dark">No</button>
   </div>
   <div class="esc-view hidden" id="escSettings">
-    <div class="row">Reflectance <input type="range" id="reflect" min="0" max="1" step="0.05" value="0"> <span id="reflectVal">0.00</span></div>
-    <div class="row">Volume <input type="range" id="volume" min="0" max="1" step="0.05" value="0.5"></div>
-    <div class="row"><label><input type="checkbox" id="outlineChk"> Part outlines</label></div>
-    <div class="row"><label><input type="checkbox" id="thoughtChk" checked> Show Guest thoughts</label></div>
-    <div class="row"><label><input type="checkbox" id="shadowChk" checked> Shadows</label></div>
-    <div class="row">Darkness <input type="range" id="darkSlider" min="0" max="0.7" step="0.05" value="0"> <span id="darkVal">0%</span></div>
-    <div class="row">Saturation <input type="range" id="satSlider" min="0" max="2.5" step="0.05" value="1"> <span id="satVal">100%</span></div>
-    <div class="row">Studs <select id="studSel"></select></div>
-    <div class="row">Sky <select id="skySel"><option value="panorama">Cloud Panorama</option><option value="golden">Golden Classic</option></select></div>
+    <!-- these rows are shared with the website's Settings page: whichever one is open borrows them -->
+    <div id="setRows">
+      <div class="row">Reflectance <input type="range" id="reflect" min="0" max="1" step="0.05" value="0"> <span id="reflectVal">0.00</span></div>
+      <div class="row">Volume <input type="range" id="volume" min="0" max="1" step="0.05" value="0.5"> <span id="volumeVal">50%</span></div>
+      <div class="row"><label><input type="checkbox" id="outlineChk"> Part outlines</label></div>
+      <div class="row"><label><input type="checkbox" id="thoughtChk" checked> Show Guest thoughts</label></div>
+      <div class="row"><label><input type="checkbox" id="shadowChk" checked> Shadows</label></div>
+      <div class="row">Darkness <input type="range" id="darkSlider" min="0" max="0.7" step="0.05" value="0"> <span id="darkVal">0%</span></div>
+      <div class="row">Saturation <input type="range" id="satSlider" min="0" max="2.5" step="0.05" value="1"> <span id="satVal">100%</span></div>
+      <div class="row">Studs <select id="studSel"></select></div>
+      <div class="row">Sky <select id="skySel"><option value="panorama">Cloud Panorama</option><option value="golden">Golden Classic</option></select></div>
+    </div>
     <div class="row"><label><input type="checkbox" id="fsChk"> Fullscreen</label></div>
+    <button data-esc="back" class="dark">Back</button>
+  </div>
+  <div class="esc-view hidden" id="escFriends">
+    <div id="escFriendList"></div>
     <button data-esc="back" class="dark">Back</button>
   </div>
   <div class="esc-view hidden" id="escHelp">
@@ -373,6 +446,9 @@
   </div>
 </div></div>
 
+<div id="invToast" class="hidden"><span id="invText"></span>
+  <button class="s-btn go" id="invJoin">Join</button> <button class="s-btn" id="invNo">No thanks</button></div>
+
 <div id="signin" class="hidden">
   <div id="siBg"></div>
   <div class="si-wrap"><div class="si-card">
@@ -381,7 +457,7 @@
       <div class="si-pv"></div>
       <form class="si-f" id="siForm" autocomplete="on" onsubmit="return false">
         <label for="siName">Name</label>
-        <div class="si-row"><input id="siName" name="username" maxlength="16" autocomplete="username" spellcheck="false"><button type="button" class="s-btn" id="siDice" title="Pick a random name">🎲</button></div>
+        <div class="si-row"><input id="siName" name="username" maxlength="16" autocomplete="username" spellcheck="false"><button type="button" class="s-btn" id="siDice" title="Pick a random name"><i data-px="dice" data-size="18"></i></button></div>
         <label for="siPass">Password <span class="fm-sm">(optional)</span></label>
         <input id="siPass" name="password" type="password" maxlength="64" autocomplete="current-password">
         <div class="si-hint" id="siHint"></div>
@@ -398,10 +474,10 @@
 <div id="site"><div class="s-wrap">
   <div class="s-top">
     <div class="s-logo">BLOCKBURG<small>A Free Online Building Game</small></div>
-    <div class="s-user">Logged in as <b id="meName">Player</b><span class="badge hidden" id="meBadge"></span> <span class="fm-adm hidden" id="adminBadge" style="margin:0">Admin</span> &nbsp;|&nbsp; 🎫 <b>25</b> Tix &nbsp;|&nbsp; 💵 <b>10</b> Bux<br><span id="onlineCount">5</span> people online &nbsp;|&nbsp; <span class="fm-link" data-signin="out">Logout</span></div>
+    <div class="s-user">Logged in as <b id="meName">Player</b><span class="badge hidden" id="meBadge"></span> <span class="fm-adm hidden" id="adminBadge" style="margin:0">Admin</span> &nbsp;|&nbsp; <i data-px="tix"></i> <b>25</b> Tix &nbsp;|&nbsp; <i data-px="bux"></i> <b>10</b> Bux<br><span id="onlineCount">5</span> people online &nbsp;|&nbsp; <span class="fm-link" data-signin="out">Logout</span></div>
   </div>
   <div class="s-nav">
-    <a data-page="home" class="on">My Blockburg</a><a data-page="games">Games</a><a data-page="catalog">Catalog</a><a data-page="character">Character</a><a data-page="build">Build</a><a data-page="online">Multiplayer</a><a data-page="inbox">Inbox<span id="inboxBadge" class="nbadge hidden"></span></a><a data-page="friends">Friends<span id="frBadge"></span></a><a data-page="forum">Forums</a><a data-page="help">Help</a>
+    <a data-page="home" class="on">My Blockburg</a><a data-page="games">Games</a><a data-page="catalog">Catalog</a><a data-page="character">Character</a><a data-page="build">Build</a><a data-page="online">Multiplayer</a><a data-page="inbox">Inbox<span id="inboxBadge" class="nbadge hidden"></span></a><a data-page="friends">Friends<span id="frBadge"></span></a><a data-page="forum">Forums</a><a data-page="settings">Settings</a><a data-page="help">Help</a>
   </div>
   <div class="s-sub" id="loading">Loading the game engine...</div>
   <div class="s-body">
@@ -446,7 +522,7 @@
       <div class="cat-tabs"><button class="s-btn on" data-cat="hats">Hats</button><button class="s-btn" data-cat="shirts">Shirts</button><button class="s-btn" data-cat="pants">Pants</button><button class="s-btn" data-cat="tshirts">T-Shirts</button><button class="s-btn" data-cat="faces">Faces</button></div>
       <p>It's Play Solo, so everything is free. Click <b>Wear</b>!</p>
       <div class="hatgrid" id="hatGrid"></div>
-      <h4 class="proj-h">✨ Outfit Sets</h4>
+      <h4 class="proj-h"><i data-px="sparkle" data-size="16"></i> Outfit Sets</h4>
       <p class="fm-sm" style="margin-top:-4px">Wear every piece of a set and you get a special effect that everyone can see!</p>
       <div class="hatgrid" id="setList"></div>
     </div></div></div>
@@ -472,8 +548,9 @@
     <div class="page hidden" id="p-build"><div class="box"><h3>Build</h3><div class="in">
       <p style="margin-top:0">Want to make your own place? Start on an empty baseplate. Open <b>Insert</b> in-game for bricks and BrickColors, use the <b>Grab</b>, <b>Clone</b>, <b>Delete</b> and <b>Paint</b> tools, then <b>Save</b> your place.
         Save it when you leave and it shows up below as a file you can open again.</p>
-      <p>Proud of it? Press <b>📤 Post to Games</b> in the Insert window. The admin checks every project first, and you'll get a message in your <b>Inbox</b>.</p>
+      <p>Proud of it? Press <b><i data-px="post"></i> Post to Games</b> in the Insert window. The admin checks every project first, and you'll get a message in your <b>Inbox</b>.</p>
       <button class="s-btn go" data-play="baseplate">Build on a Baseplate</button>
+      <label style="margin-left:8px" title="The Guests walk around, chat, build things and sometimes blow things up"><input type="checkbox" id="bpGuests"> Bring the Guests</label>
       <div id="myPlaces"></div>
     </div></div></div>
 
@@ -484,6 +561,7 @@
           <p style="margin-bottom:0">Shown above your head and in chat. <span class="fm-link" data-signin>Change it</span></p>
         </div></div>
         <div class="box"><h3>Status</h3><div class="in" id="mpStatus">Not connected.</div></div>
+        <div class="box"><h3>Play with Friends</h3><div class="in" id="mpFriends"></div></div>
       </div>
       <div>
         <div class="box"><h3>Host a Game</h3><div class="in">
@@ -533,6 +611,25 @@
       <div class="fm-sm">Posts are public: anyone who plays Blockburg can read them. <b>Never post your real name, address, school or passwords.</b>
         Be nice! &nbsp; <span class="fm-link" id="fmAdminBtn">Admin login</span></div>
     </div>
+
+    <div class="page hidden" id="p-settings"><div class="cols">
+      <div>
+        <div class="box"><h3>Your Account</h3><div class="in">
+          Signed in as <b id="setMe" style="color:#0b4a99">Player</b>
+          <div style="margin-top:8px"><button class="s-btn" data-signin>Change Name or Password</button></div>
+          <div style="margin-top:6px"><button class="s-btn" data-signin="out">Logout</button></div>
+        </div></div>
+        <div class="box"><h3>About Settings</h3><div class="in news">
+          <p>These are the same settings as in the game (<b>Esc</b> → <b>Game Settings</b>). Change one here and it changes there too.</p>
+          <p>They're saved in this browser, so they stay the way you left them.</p>
+          <p><b>Fullscreen</b> is only in the game menu.</p>
+        </div></div>
+      </div>
+      <div class="box"><h3>Game Settings</h3><div class="in">
+        <div id="setHome"></div>
+        <div style="margin-top:10px"><button class="s-btn" id="setReset">Reset to Defaults</button></div>
+      </div></div>
+    </div></div>
 
     <div class="page hidden" id="p-help"><div class="box"><h3>Help</h3><div class="in"><table>
       <tr><td><b>W A S D</b></td><td>Walk</td></tr><tr><td><b>Space</b></td><td>Jump</td></tr>
@@ -632,6 +729,51 @@ function tex(c, repeat) {
   if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return t;
 }
+
+/* ---- 8-bit icons: tiny pixel pictures, drawn chunky and then a little smudged, like old icons that got
+   scaled up one too many times. pxIcon('grab') gives an <img>; <i data-px="grab"></i> in the page turns into one. ---- */
+const PX_COLORS = { k: '#1a1a1a', w: '#ffffff', g: '#c9cdd2', G: '#7d838b', r: '#e2231a', R: '#9b1b14', y: '#f5cd30', Y: '#c79b00',
+  b: '#3d7fd0', B: '#0b4a99', n: '#4bc436', N: '#2a7a1e', m: '#a8723c', M: '#5a3a1e', o: '#ff8a1a' };
+const PX_ART = {
+  grab: ['.....k.k.k..', '....kykykyk.', '....kykykyk.', '..k.kykykyk.', '.kykkykykyk.', '.kyykyyyyyk.', '..kyyyyyyyk.', '..kyyyyyyyk.', '...kyyyyyk..', '...kyyyyyk..', '....kyyyk...', '....kkkkk...'],
+  clone: ['kkkkkkk.....', 'kwwwwwk.....', 'kwggwwk.....', 'kwwwkkkkkkk.', 'kwggkwwwwwk.', 'kwwwkwbbwwk.', 'kkkkkwwwwwk.', '....kwbbbwk.', '....kwwwwwk.', '....kwbbwwk.', '....kwwwwwk.', '....kkkkkkk.'],
+  hammer: ['.kkkkkkkk...', 'kggggggggk..', 'kgwwggGGGk..', 'kGGGGGGGGk..', '.kkkkmkkk...', '....kmk.....', '....kmk.....', '....kmk.....', '....kMk.....', '....kMk.....', '....kMk.....', '....kkk.....'],
+  bucket: ['...kkkkk....', '..k.....k...', '.k.......k..', 'kkkkkkkkkkk.', 'krrrrrrrrrk.', 'kgrrgggrggk.', '.kgrgggrgk..', '.kGggggrgk..', '.kGgggggGk.r', '..kGgggGk..r', '..kGGGGGk...', '...kkkkk....'],
+  chat: ['.kkkkkkkkkk.', 'kwwwwwwwwwwk', 'kwkkwkkkwwwk', 'kwwwwwwwwwwk', 'kwkkkwkkwwwk', 'kwwwwwwwwwwk', '.kkkwwkkkkk.', '...kwk......', '...kk.......', '..k.........'],
+  film: ['.kkkkkkkkkk.', 'kwwkkwwkkwwk', 'kkkkkkkkkkkk', 'kGGGGGGGGGGk', 'kGwwwwwwwwGk', 'kGGGGGGGGGGk', 'kGwwwwwGGGGk', 'kGGGGGGGGGGk', 'kGwwwwwwwGGk', 'kGGGGGGGGGGk', 'kkkkkkkkkkkk'],
+  lock: ['...kkkkk...', '..kGgggGk..', '..kg...gk..', '..kg...gk..', '.kkkkkkkkk.', '.kyyyyyyyk.', '.kyYYkYYyk.', '.kyyykyyyk.', '.kyyykyyyk.', '.kYyyyyyYk.', '.kkkkkkkkk.'],
+  post: ['.....k......', '....knk.....', '...knnnk....', '..kkknkkk...', '....knk.....', 'k...knk...k.', 'km..kkk..mk.', 'kmmmmmmmmmk.', 'kmMMMMMMMmk.', 'kmmmmmmmmmk.', 'kmmmmmmmmmk.', 'kkkkkkkkkkk.'],
+  tix: ['kkkkkkkkkkkk', 'kyyyyyYyyyyk', 'kyrrryyyyyyk', '.yyyyyYyyyy.', '.yrrryyyyyy.', 'kyyyyyYyyyyk', 'kyyyyyyyyyyk', 'kkkkkkkkkkkk'],
+  bux: ['kkkkkkkkkkkk', 'kNnnnnnnnnNk', 'knnnnkknnnnk', 'knnnkwwknnnk', 'knnnkwwknnnk', 'knnnnkknnnnk', 'kNnnnnnnnnNk', 'kkkkkkkkkkkk'],
+  dice: ['.kkkkkkkkkk.', 'kwwwwwwwwwwk', 'kwrrwwwwrrwk', 'kwrrwwwwrrwk', 'kwwwwrrwwwwk', 'kwwwwrrwwwwk', 'kwrrwwwwrrwk', 'kwrrwwwwrrwk', 'kwwwwwwwwwwk', 'kgwwwwwwwwgk', '.kkkkkkkkkk.'],
+  on: ['..kkkk..', '.knnnnk.', 'knwnnnnk', 'knnnnnnk', 'knnnnnnk', 'knnnnNnk', '.knNNNk.', '..kkkk..'],
+  off: ['..kkkk..', '.kggggk.', 'kgwggggk', 'kggggggk', 'kggggggk', 'kggggGgk', '.kgGGGk.', '..kkkk..'],
+  pad: ['..kkkkkkkk..', '.kggggggggk.', 'kgkggggggrgk', 'kkkkggggrgrk', 'kgkggggggrgk', 'kggggkkggggk', 'kgggk..kgggk', '.kkk....kkk.'],
+  sparkle: ['.....k......', '....kyk.....', '....kyk.....', '...kyyyk....', 'kkkyywyykkk.', 'kyyywwwyyyk.', 'kkkyywyykkk.', '...kyyyk..k.', '....kyk..kyk', '....kyk...k.', '.....k......'],
+  brick: ['..kkk...kkk.', '..krk...krk.', 'kkkkkkkkkkkk', 'krrrrrrrrrrk', 'krwrrrrrrrrk', 'krrrrrrrrrrk', 'kRrrrrrrrrRk', 'kRRRRRRRRRRk', 'kkkkkkkkkkkk'],
+  eye: ['..kkkkkkk...', '.kwwwkwwwk..', 'kwwwkkkwwwk.', 'kwwwkBkwwwk.', '.kwwwkwwwk..', '..kkkkkkk...'],
+  check: ['..........kk', '.........knk', '........knNk', 'k......knNk.', 'kk....knNk..', 'knk..knNk...', 'knnkknNk....', '.knnnNk.....', '..knNk......', '...kk.......'],
+  cross: ['kk......kk', 'krk....krk', '.krk..krk.', '..krkkrk..', '...krrk...', '...krrk...', '..krkkrk..', '.krk..krk.', 'krk....krk', 'kk......kk'],
+  stop: ['..kkkkkk..', '.krrrrrrk.', 'krrrrrrrrk', 'krrrrrrrrk', 'krwwwwwwrk', 'krwwwwwwrk', 'krrrrrrrrk', 'krrrrrrrrk', '.krrrrrrk.', '..kkkkkk..'],
+  clock: ['kkkkkkkkk', 'kmmmmmmmk', '.kwwwwwk.', '.kyyyyyk.', '..kyyyk..', '...kyk...', '..kwywk..', '.kwwywwk.', '.kwyyywk.', 'kmmmmmmmk', 'kkkkkkkkk'],
+  globe: ['...kkkk...', '.kkbbnnkk.', 'kbbnnnbbbk', 'kbnnnbbbbk', 'kbbnbbbnnk', 'kbbbbbnnnk', 'kbbbbbbnbk', '.kkbbbbkk.', '...kkkk...'],
+  trophy: ['kkkkkkkkkk', 'kyyyyyyyyk', 'ykyywyyyky', 'ykyywyyyky', '.kyyyyyyk.', '..kyyyyk..', '...kyyk...', '....kk....', '...kYYk...', '..kkkkkk..'],
+};
+const pxCache = {};
+function pxUrl(name) {
+  if (!pxCache[name]) {
+    const art = PX_ART[name] || PX_ART.brick, S = 4, w = Math.max(...art.map(r => r.length)), h = art.length;
+    pxCache[name] = canvas(w * S, h * S, (g) => {
+      const draw = () => art.forEach((row, y) => [...row].forEach((c, x) => { if (PX_COLORS[c]) { g.fillStyle = PX_COLORS[c]; g.fillRect(x * S, y * S, S, S); } }));
+      draw();
+      g.globalAlpha = 0.35; g.filter = 'blur(1.4px)'; draw();   // the smudge: a soft copy on top
+      g.filter = 'none'; g.globalAlpha = 1;
+    }).toDataURL();
+  }
+  return pxCache[name];
+}
+const pxIcon = (name, size = 14) => `<img class="px" src="${pxUrl(name)}" style="height:${size}px" alt="">`;
+function pxSwap(root = document) { root.querySelectorAll('i[data-px]').forEach(el => { el.outerHTML = pxIcon(el.dataset.px, +el.dataset.size || 14); }); }
 
 /* ---- skybox: the cloud panorama (embedded), also used as the reflection map ---- */
 const SKY_URL = 'data:image/jpeg;base64,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';
@@ -954,7 +1096,8 @@ function makePart(o) {
   else if (o.rot) body.quaternion.setFromEuler(...o.rot);
   body.sleepSpeedLimit = 0.4; body.sleepTimeLimit = 0.6;
   body.aabbNeedsUpdate = true;   // the bounds were computed at the origin before we moved it; anchored parts never refresh them on their own
-  const p = { shape, size: [...size], color, trans, anchored, mass, kill: !!o.kill, win: !!o.win, locked: !!o.locked, bouncy: !!o.bouncy, mesh, body,
+  // destroy: an anchored destroyable. It stays put until an explosion reaches it, then comes loose (see explode)
+  const p = { shape, size: [...size], color, trans, anchored, mass, kill: !!o.kill, win: !!o.win, locked: !!o.locked, bouncy: !!o.bouncy, destroy: !!o.destroy, mesh, body,
     mode: anchored ? 'static' : 'dynamic', startAsleep: !!o.sleep };
   body.userData = { part: p }; mesh.userData.part = p;
   mesh.position.copy(body.position); mesh.quaternion.copy(body.quaternion);
@@ -1010,8 +1153,8 @@ function partSpeedSq(p) {
   return performance.now() - (p.netAt || 0) < 300 ? p.netSpeedSq || 0 : 0;
 }
 const serialize = (p) => ({ s: p.shape, z: p.size, p: p.body.position.toArray().map(n => +n.toFixed(3)),
-  q: p.body.quaternion.toArray().map(n => +n.toFixed(4)), c: p.color, t: p.trans, a: p.anchored, k: p.kill, w: p.win, b: p.bouncy, m: p.mass });
-const deserialize = (d, extra = {}) => makePart({ shape: d.s, size: d.z, pos: d.p, quat: d.q, color: d.c, trans: d.t, anchored: d.a, kill: d.k, win: d.w, bouncy: d.b, mass: d.m, ...extra });
+  q: p.body.quaternion.toArray().map(n => +n.toFixed(4)), c: p.color, t: p.trans, a: p.anchored, k: p.kill, w: p.win, b: p.bouncy, m: p.mass, x: p.destroy });
+const deserialize = (d, extra = {}) => makePart({ shape: d.s, size: d.z, pos: d.p, quat: d.q, color: d.c, trans: d.t, anchored: d.a, kill: d.k, win: d.w, bouncy: d.b, mass: d.m, destroy: d.x, ...extra });
 
 /* ---- the place ---- */
 const SPAWN = new V3(0, 1 + HY + 0.1, 0);
@@ -1030,27 +1173,29 @@ function buildLocked() {
 }
 function buildDefault() {
   const rainbow = ['Bright red', 'Bright orange', 'Bright yellow', 'Br. yellowish green', 'Bright green', 'Bright blue', 'Bright violet', 'Light reddish violet', 'White', 'Black'];
+  // every built thing is anchored; only things meant to move (the beach balls, the seesaw) are loose.
+  // D = anchored destroyable: it stands still until something explodes next to it
+  const A = { anchored: true }, D = { anchored: true, destroy: true }, wall = BC['Brick yellow'];
   // brick tower
   for (let i = 0; i < 10; i++) for (const x of [18, 22]) for (const z of [-32, -28])
-    makePart({ size: [4, 2, 4], pos: [x, 1 + i * 2 + i * 0.002, z], color: BC[rainbow[i]], sleep: true });
+    makePart({ ...D, size: [4, 2, 4], pos: [x, 1 + i * 2 + i * 0.002, z], color: BC[rainbow[i]] });
   // classic brick wall
   for (let r = 0; r < 6; r++) {
     const n = r % 2 ? 7 : 8, off = r % 2 ? 2 : 0;
-    for (let c = 0; c < n; c++) makePart({ size: [4, 1.2, 2], pos: [-34 + c * 4 + off, 0.6 + r * 1.2 + r * 0.002, -32],
-      color: BC[r % 2 ? 'Bright red' : 'Reddish brown'], sleep: true });
+    for (let c = 0; c < n; c++) makePart({ ...D, size: [4, 1.2, 2], pos: [-34 + c * 4 + off, 0.6 + r * 1.2 + r * 0.002, -32],
+      color: BC[r % 2 ? 'Bright red' : 'Reddish brown'] });
   }
   // pyramid
   const pyr = ['Bright yellow', 'Brick yellow', 'Bright yellow', 'Brick yellow', 'Bright orange'];
   for (let L = 0; L < 5; L++) {
     const n = 5 - L;
     for (let i = 0; i < n; i++) for (let j = 0; j < n; j++)
-      makePart({ size: [3, 3, 3], pos: [-40 + (i - (n - 1) / 2) * 3, 1.5 + L * 3 + L * 0.002, 12 + (j - (n - 1) / 2) * 3], color: BC[pyr[L]], sleep: true });
+      makePart({ ...D, size: [3, 3, 3], pos: [-40 + (i - (n - 1) / 2) * 3, 1.5 + L * 3 + L * 0.002, 12 + (j - (n - 1) / 2) * 3], color: BC[pyr[L]] });
   }
-  // beach balls
+  // beach balls (loose: they're for kicking around)
   [[8, 2, 14, 'Bright blue'], [-8, 2, 16, 'Bright yellow'], [12, 2, -8, 'Bright red']]
     .forEach(([x, y, z, c]) => makePart({ shape: 'ball', size: [4, 4, 4], pos: [x, y, z], color: BC[c], bouncy: true }));
-  // house (anchored)
-  const A = { anchored: true }, wall = BC['Brick yellow'];
+  // house
   makePart({ ...A, size: [16, 0.4, 16], pos: [40, 0.2, -10], color: BC['Reddish brown'] });
   makePart({ ...A, size: [16, 8, 1], pos: [40, 4.4, -17.5], color: wall });
   makePart({ ...A, size: [1, 8, 16], pos: [32.5, 4.4, -10], color: wall });
@@ -2089,6 +2234,28 @@ function animateCape(ch, dt, t, moving, air) {
   }
 }
 
+/* ---- the forcefield (spawn protection, /ff, /god): a glowing shell that shifts from blue to cyan to violet,
+   breathes in and out, with sparkles spiraling up around you ---- */
+const SHIELD_N = 18;
+function animateShield(ch, t) {
+  ffMat.color.setHSL(0.58 + Math.sin(t * 1.6) * 0.1, 1, 0.62);
+  ffMat.opacity = 0.38 + Math.sin(t * 8) * 0.12;
+  const s = 1.1 + Math.sin(t * 5) * 0.035;
+  ch.ff.forEach(f => f.scale.setScalar(s));
+  if (!ch.shield) {
+    ch.shield = new THREE.Group();
+    for (let i = 0; i < SHIELD_N; i++) ch.shield.add(new THREE.Sprite(new THREE.SpriteMaterial({ map: sparkleTex, color: 0xa8ecff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })));
+    ch.root.add(ch.shield);
+  }
+  ch.shield.visible = true;
+  ch.shield.children.forEach((sp, i) => {
+    const k = (t * 0.55 + i / SHIELD_N) % 1, a = t * 2.4 + i * 2.39996;   // each one climbs from your feet to over your head, then starts again
+    sp.position.set(Math.cos(a) * 1.85, k * 6, Math.sin(a) * 1.85);
+    const glow = Math.sin(k * Math.PI);
+    sp.material.opacity = glow; sp.scale.setScalar(0.3 + 0.45 * glow);
+  });
+}
+
 /* ---- outfit sets: wear every piece of a set and you get a little effect (everyone sees it) ---- */
 function hexHsl(hex) {
   const n = parseInt(String(hex).slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
@@ -2285,19 +2452,24 @@ class Humanoid {
       return;
     }
     const v = this.body.velocity;
-    v.x = this.move.x * WALK; v.z = this.move.z * WALK;
+    const walk = this.walk || WALK;   // (the admin's /speed and /jump change these)
+    v.x = this.move.x * walk; v.z = this.move.z * walk;
     if (this.grounded && this.jump && this.jumpCd <= 0) {
-      v.y = JUMP; this.jumpCd = 0.25; this.grounded = false;
+      v.y = this.jumpPow || JUMP; this.jumpCd = 0.25; this.grounded = false;
       if (this.isPlayer) SFX.jump();
     }
     this.jumpCd -= dt;
+    if (this.flying) {   // the admin's /fly: Space (or E) goes up, Q goes down, and gravity is cancelled out
+      const up = (this.jump || keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0);
+      v.y = up * walk * 1.5 - world.gravity.y * dt; this.grounded = false; this.fallPeak = 0; this.swooshed = true;
+    }
     if (v.y < -250) v.y = -250;
     if (this.isPlayer) {
       if (!wasGrounded && this.grounded && this.fallPeak < -60) SFX.land();
       if (!this.grounded) { this.fallPeak = Math.min(this.fallPeak, v.y); if (v.y < -75 && !this.swooshed) { SFX.swoosh(); this.swooshed = true; } }
       else { this.fallPeak = 0; this.swooshed = false; }
     }
-    if (b.y < -120) kill(this, null);
+    if (b.y < -120) kill(this, null, false, true);   // (no shield saves you from falling out of the world)
     this.ff = Math.max(0, this.ff - dt);
     if (this.health < 100) { this.health = Math.min(100, this.health + dt); if (this.tag && Math.random() < dt * 2) this.drawTag(); }
   }
@@ -2321,8 +2493,9 @@ class Humanoid {
     [ch.legL, ch.legR, ch.armL, ch.armR].forEach((p, i) => p.rotation.x += (tgt[i] - p.rotation.x) * (i === 3 && holding ? Math.min(1, dt * 30) : k));
     animateCape(ch, dt, t, moving, air);
     animateFx(ch, dt, t);
-    ch.ff.forEach(f => { f.visible = this.ff > 0; });
-    if (this.ff > 0) ffMat.opacity = 0.25 + Math.sin(t * 14) * 0.15;
+    const shielded = this.ff > 0 || !!this.god;
+    ch.ff.forEach(f => { f.visible = shielded; });
+    if (shielded) animateShield(ch, t); else if (ch.shield) ch.shield.visible = false;
     this.shadow.visible = this.groundY > -900 && !shadowsOn;   // the old round blob, only when real shadows are off
     this.shadow.position.set(b.x, this.groundY + 0.06, b.z);
     const head = new V3(b.x, b.y + HY, b.z);
@@ -2356,8 +2529,12 @@ function breakApart(h) {
     if (m === h.char.head) h.headDebris = body;
   }
 }
-function kill(h, killer, fromNet = false) {
+// force: knock out even someone with a forcefield or /god (falling out of the world, Reset Character,
+// the admin's /kill, and the host's word in multiplayer). Everything else bounces off the shield.
+function kill(h, killer, fromNet = false, force = false) {
   if (h.dead) return;
+  if (!force && (h.ff > 0 || h.god)) return;
+  if (h.char.shield) h.char.shield.visible = false;
   h.dead = true; h.health = 0; h.wos++;
   if (killer && killer !== h) killer.kos++;
   sfxAt('uuhhh', h.pos);
@@ -2429,7 +2606,7 @@ function updateHatPickups(dt) {
 }
 
 function damage(h, amt, attacker) {
-  if (h.dead || h.ff > 0) return;
+  if (h.dead || h.ff > 0 || h.god) return;
   h.health -= amt;
   if (h.tag) h.drawTag();
   if (h.health <= 0) { kill(h, attacker); return; }
@@ -2485,6 +2662,10 @@ const PERSONAS = {
   'Guest 777': { brave: 0.2, friendly: 0.75, builder: 0.4, chaos: 0.15, chatty: 0.9, fav: 'Bright yellow' },
   'Guest 31': { brave: 0.5, friendly: 0.8, builder: 0.15, chaos: 0.5, chatty: 1, fav: 'Bright orange' },
 };
+// on a baseplate there's no castle or obby: the Guests wander to spots that are really there
+const BASE_POIS = [{ name: 'the middle', pos: new V3(0, 0, 0) }, { name: 'the far corner', pos: new V3(90, 0, 90) }, { name: 'the other corner', pos: new V3(-90, 0, -90) },
+  { name: 'the edge', pos: new V3(0, 0, -100) }, { name: 'the big empty spot', pos: new V3(-70, 0, 60) }];
+const poisHere = () => (currentPlace === 'classic' ? POIS : BASE_POIS);
 const POIS = [
   { name: 'the castle', pos: new V3(52, 0, -70) }, { name: 'the scaffold tower', pos: new V3(-62, 0, -50) },
   { name: 'the lookout deck', pos: new V3(32, 0, 40) }, { name: 'the sand hill', pos: new V3(-60, 0, 74) },
@@ -2556,6 +2737,126 @@ const BLUEPRINTS = {
     b.push([0, 3, 0, 11, 0.4, 10]);
     return b;
   },
+  // [x, layer, z, w, h, d, color?]: a brick on layer L sits at L × 1.2 studs up; plates (h 0.4) sit at the bottom of their layer,
+  // so nothing goes on top of a plate. No color = the Guest's favorite (layer 3 = red roof).
+  bench: () => [[-2, 0, 0, 1, 1.2, 2, 'Reddish brown'], [2, 0, 0, 1, 1.2, 2, 'Reddish brown'], [0, 1, 0, 6, 0.4, 2],
+    [0, 1, -1.2, 6, 1.2, 0.4], [0, 2, -1.2, 6, 1.2, 0.4]],
+  arch: () => { const b = []; for (let y = 0; y < 4; y++) b.push([-3, y, 0, 2, 1.2, 2], [3, y, 0, 2, 1.2, 2]); b.push([0, 4, 0, 8, 1.2, 2], [0, 5, 0, 4, 1.2, 2, 'Bright yellow']); return b; },
+  pyramid: () => {
+    const b = [];
+    for (let L = 0; L < 4; L++) { const n = 4 - L; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) b.push([(i - (n - 1) / 2) * 2, L, (j - (n - 1) / 2) * 2, 2, 1.2, 2, L === 3 ? 'Bright yellow' : 'Brick yellow']); }
+    return b;
+  },
+  stairs: () => { const b = []; for (let s = 0; s < 6; s++) for (let y = 0; y <= s; y++) b.push([0, y, s * 2 - 5, 4, 1.2, 2]); return b; },
+  well: () => {
+    const b = [[0, 0, 0, 4, 0.4, 3, 'Bright blue']];
+    for (let y = 0; y < 2; y++) for (const [x, z, w, d] of [[0, -2, 4, 1], [0, 2, 4, 1], [-2.5, 0, 1, 5], [2.5, 0, 1, 5]]) b.push([x, y, z, w, 1.2, d, 'Medium stone grey']);
+    for (let y = 2; y < 4; y++) b.push([-2.5, y, 0, 1, 1.2, 1, 'Reddish brown'], [2.5, y, 0, 1, 1.2, 1, 'Reddish brown']);
+    b.push([0, 4, 0, 7, 0.4, 5, 'Bright red']);
+    return b;
+  },
+  fort: () => {
+    const b = [], grey = 'Dark stone grey';
+    for (let y = 0; y < 3; y++) {
+      for (let i = -3; i <= 3; i += 2) { b.push([i, y, -4, 2, 1.2, 1]); if (!(y < 2 && Math.abs(i) === 1)) b.push([i, y, 4, 2, 1.2, 1]); }   // (a door in the front)
+      for (let i = -3; i <= 3; i += 2) b.push([-4.5, y, i, 1, 1.2, 2], [4.5, y, i, 1, 1.2, 2]);
+    }
+    for (const i of [-3, 3]) b.push([i, 3, -4, 2, 1.2, 1, grey], [i, 3, 4, 2, 1.2, 1, grey], [-4.5, 3, i, 1, 1.2, 2, grey], [4.5, 3, i, 1, 1.2, 2, grey]);
+    return b;
+  },
+  lighthouse: () => {
+    const b = [];
+    for (let y = 0; y < 7; y++) { const c = y % 2 ? 'Bright red' : 'White'; for (const x of [-1, 1]) for (const z of [-1, 1]) b.push([x, y, z, 2, 1.2, 2, c]); }
+    b.push([0, 7, 0, 3, 1.2, 3, 'Bright yellow'], [0, 8, 0, 4, 0.4, 4, 'Black']);
+    return b;
+  },
+  snowman: () => [[0, 0, 0, 4, 1.2, 4, 'White'], [0, 1, 0, 4, 1.2, 4, 'White'], [0, 2, 0, 3, 1.2, 3, 'White'], [0, 3, 0, 3, 1.2, 3, 'White'],
+    [0, 4, 0, 2, 1.2, 2, 'White'], [0, 4, 1.25, 0.6, 0.4, 0.6, 'Bright orange'], [0, 5, 0, 2.6, 0.4, 2.6, 'Black'], [0, 5, 0, 1.6, 1.2, 1.6, 'Black']],
+  table: () => {
+    const b = [];
+    for (const x of [-2, 2]) for (const z of [-1.5, 1.5]) b.push([x, 0, z, 1, 1.2, 1, 'Reddish brown']);
+    b.push([0, 1, 0, 6, 0.4, 5, 'Brick yellow'], [-4.5, 0, 0, 2, 1.2, 2], [4.5, 0, 0, 2, 1.2, 2]);
+    return b;
+  },
+  car: () => [[-2, 0, -2.2, 1.4, 1.2, 0.6, 'Black'], [2, 0, -2.2, 1.4, 1.2, 0.6, 'Black'], [-2, 0, 2.2, 1.4, 1.2, 0.6, 'Black'], [2, 0, 2.2, 1.4, 1.2, 0.6, 'Black'],
+    [0, 1, 0, 7, 1.2, 4], [1.5, 2, 0, 3, 1.2, 4], [-0.25, 2, 0, 0.5, 1.2, 3.6, 'Light blue'],
+    [-3.6, 1, 1.3, 0.4, 0.4, 0.8, 'Bright yellow'], [-3.6, 1, -1.3, 0.4, 0.4, 0.8, 'Bright yellow']],
+  tree: () => {
+    const b = [];
+    for (let y = 0; y < 3; y++) b.push([0, y, 0, 1, 1.2, 1, 'Reddish brown']);
+    for (let y = 3; y < 6; y++) { const r = y === 4 ? 2 : 1; for (let x = -r; x <= r; x += 2) for (let z = -r; z <= r; z += 2) b.push([x, y, z, 2, 1.2, 2, 'Dark green']); }
+    return b;
+  },
+  house: () => {
+    const b = [];
+    for (let y = 0; y < 3; y++) {
+      for (const x of [-4, 0, 4]) { b.push([x, y, -4, 4, 1.2, 1]); if (!(x === 0 && y < 2)) b.push([x, y, 4, 4, 1.2, 1]); }
+      for (const z of [-2, 2]) b.push([-6.5, y, z, 1, 1.2, 4], [6.5, y, z, 1, 1.2, 4]);
+    }
+    b.push([3.5, 1, 4.6, 2, 1.2, 0.2, 'Light blue'], [-3.5, 1, 4.6, 2, 1.2, 0.2, 'Light blue']);
+    for (let k = 0; k < 3; k++) b.push([0, 3 + k, 0, 14 - k * 4, 1.2, 10 - k * 3, 'Bright red']);
+    return b;
+  },
+  stage: () => {
+    const b = [];
+    for (const x of [-4, 0, 4]) for (const z of [-2, 2]) b.push([x, 0, z, 4, 1.2, 4, 'Reddish brown']);
+    for (let y = 1; y < 4; y++) for (const x of [-4, 0, 4]) b.push([x, y, -3.5, 4, 1.2, 1, y === 3 ? 'Bright red' : 'Bright violet']);
+    b.push([-5.5, 1, 1.5, 1, 1.2, 1, 'Black'], [5.5, 1, 1.5, 1, 1.2, 1, 'Black']);
+    return b;
+  },
+  fountain: () => {
+    const b = [[0, 0, 0, 6, 0.4, 6, 'Bright blue']];
+    for (const [x, z, w, d] of [[0, -3.5, 8, 1], [0, 3.5, 8, 1], [-3.5, 0, 1, 6], [3.5, 0, 1, 6]]) b.push([x, 0, z, w, 1.2, d, 'Medium stone grey']);
+    for (let y = 0; y < 3; y++) b.push([0, y, 0, 1, 1.2, 1, 'Medium stone grey']);
+    b.push([0, 3, 0, 3, 0.4, 3, 'Light blue']);
+    return b;
+  },
+  statue: () => {
+    const b = [[0, 0, 0, 4, 1.2, 4, 'Medium stone grey']], leg = 'Br. yellowish green', skin = 'Bright yellow';
+    for (const y of [1, 2]) b.push([-0.5, y, 0, 1, 1.2, 1, leg], [0.5, y, 0, 1, 1.2, 1, leg]);
+    for (const y of [3, 4]) b.push([0, y, 0, 2, 1.2, 1, 'Bright blue'], [-1.5, y, 0, 1, 1.2, 1, skin], [1.5, y, 0, 1, 1.2, 1, skin]);
+    b.push([0, 5, 0, 1.2, 1.2, 1.2, skin]);
+    return b;
+  },
+  goal: () => {
+    const b = [];
+    for (let y = 0; y < 3; y++) b.push([-5, y, 0, 1, 1.2, 1, 'White'], [5, y, 0, 1, 1.2, 1, 'White']);
+    b.push([0, 3, 0, 11, 1.2, 1, 'White']);
+    for (let x = -4; x <= 4; x += 2) b.push([x, 0, -3, 2, 0.4, 0.4, 'White']);
+    return b;
+  },
+  watchtower: () => {
+    const b = [], wood = 'Reddish brown';
+    for (let y = 0; y < 5; y++) for (const x of [-2, 2]) for (const z of [-2, 2]) b.push([x, y, z, 1, 1.2, 1, wood]);
+    b.push([0, 5, 0, 6, 1.2, 6, 'Brick yellow']);
+    for (const [x, z, w, d] of [[0, -2.75, 6, 0.5], [0, 2.75, 6, 0.5], [-2.75, 0, 0.5, 5], [2.75, 0, 0.5, 5]]) b.push([x, 6, z, w, 1.2, d, wood]);
+    b.push([0, 7, 0, 7, 0.4, 7, 'Bright red']);
+    return b;
+  },
+  shop: () => {
+    const b = [];
+    for (let x = -3; x <= 3; x += 2) b.push([x, 0, 0, 2, 1.2, 2, 'Brick yellow']);
+    b.push([0, 1, 0, 8, 0.4, 2.4, 'Reddish brown']);
+    for (let y = 1; y < 4; y++) b.push([-3.5, y, -1, 1, 1.2, 1, 'Reddish brown'], [3.5, y, -1, 1, 1.2, 1, 'Reddish brown']);
+    for (let i = 0; i < 8; i++) b.push([-3.5 + i, 4, -0.5, 1, 0.4, 3, i % 2 ? 'White' : 'Bright red']);   // a striped awning
+    return b;
+  },
+  doghouse: () => {
+    const b = [];
+    for (let y = 0; y < 2; y++) {
+      b.push([0, y, -1.5, 3, 1.2, 0.5], [-1.25, y, 0, 0.5, 1.2, 3], [1.25, y, 0, 0.5, 1.2, 3]);
+      if (y) b.push([0, y, 1.5, 3, 1.2, 0.5]);   // (the door is underneath)
+    }
+    b.push([0, 2, 0, 4, 1.2, 4, 'Bright red'], [0, 3, 0, 2, 1.2, 4, 'Bright red'], [0, 0, 2.4, 1.2, 0.4, 0.6, 'White']);
+    return b;
+  },
+  rocketship: () => {
+    const b = [];
+    for (const [x, z] of [[-2, 0], [2, 0], [0, -2], [0, 2]]) for (let y = 0; y < 2; y++) b.push([x, y, z, 1, 1.2, 1, 'Bright red']);
+    for (let y = 0; y < 7; y++) b.push([0, y, 0, 3, 1.2, 3, y === 4 ? 'Light blue' : 'White']);
+    b.push([0, 7, 0, 2, 1.2, 2, 'Bright red'], [0, 8, 0, 1, 1.2, 1, 'Bright red']);
+    return b;
+  },
 };
 const npcBuilt = [];   // every brick the Guests placed, oldest first (so it can be capped)
 let showThoughts = true;
@@ -2616,7 +2917,7 @@ function npcSlash(n, target, lunge) {
   }
 }
 function npcPlaceBrick(n, b, color) {
-  const p = makePart({ size: [b[3], b[4], b[5]], pos: [b[0], b[1], b[2]], color, sleep: true });
+  const p = makePart({ size: [b[3], b[4], b[5]], pos: [b[0], b[1], b[2]], color, anchored: true, destroy: true });   // placed bricks stay put (until something explodes)
   p.owner = n; npcBuilt.push(p);
   sfxAt('clack', p.body.position);
   while (npcBuilt.length > 160) { const old = npcBuilt.shift(); if (parts.includes(old)) removePart(old); }
@@ -2705,7 +3006,7 @@ function think(n) {
   add(0.1 + m.bored * 0.25 + m.joy * 0.1, { type: 'ball' });
   const friends = others.filter(h => !h.isPlayer && flat(h.pos, me) < 60 && op(n, h) > 0);
   if (friends.length && time > (ai.socialCd || 0)) add(P.chatty * 0.3 + m.bored * 0.15, { type: 'social', target: rpick(friends) });
-  add(0.2 + m.bored * 0.25, { type: 'explore', place: rpick(POIS) });
+  add(0.2 + m.bored * 0.25, { type: 'explore', place: rpick(poisHere()) });
   if (m.joy > 0.75) add(0.4, { type: 'dance', until: time + 4 });
   add(0.12, { type: 'idle', until: time + 2 + Math.random() * 3 });
 
@@ -2815,7 +3116,7 @@ function runGoal(n, dt) {
         faceTo(n, t.pos);
         if (!g.said) {
           g.said = true; g.end = time + 3;
-          aiSay(n, 'social', { name: t.name, place: rpick(POIS).name }, true);
+          aiSay(n, 'social', { name: t.name, place: rpick(poisHere()).name }, true);
           if (t.ai) { faceTo(t, me); aiSayLater(t, 'socialReply', { name: n.name }, 1.6); addOp(t, n, 0.03); }
         }
         if (time > g.end) { m.bored = Math.max(0, m.bored - 0.25); ai.socialCd = time + 15 + Math.random() * 25; goalDone(n); }
@@ -2853,10 +3154,10 @@ function runBuild(n, g, dt) {
   if (steerTo(n, pr.site, 8, dt)) {
     faceTo(n, pr.site);
     if (time > (g.nextBrick || 0)) {
-      const [x, y, z, w, h, d] = pr.bricks[pr.i++];
+      const [x, y, z, w, h, d, col] = pr.bricks[pr.i++];
       const c = Math.cos(pr.ry), s = Math.sin(pr.ry), rot = pr.ry !== 0;
       npcPlaceBrick(n, [pr.site.x + x * c + z * s, 0.6 + y * 1.202 + (h < 1 ? -0.4 : 0), pr.site.z - x * s + z * c, rot ? d : w, h, rot ? w : d],
-        y === 3 ? BC['Bright red'] : BC[ai.P.fav]);
+        col ? BC[col] : y === 3 ? BC['Bright red'] : BC[ai.P.fav]);
       g.nextBrick = time + 0.45;
       if (pr.i >= pr.bricks.length) {
         pr.done = true; pr.doneAt = time;
@@ -2870,8 +3171,8 @@ function runBuild(n, g, dt) {
 function runDestroy(n, g, dt) {
   const ai = n.ai, me = n.pos;
   if (!g.aim) {
-    // pick something loose that isn't ours, and not right next to someone we like
-    const cands = parts.filter(p => p.mode === 'dynamic' && !p.locked && p.shape === 'box' && p.owner !== n &&
+    // pick something loose (or an anchored destroyable) that isn't ours, and not right next to someone we like
+    const cands = parts.filter(p => (p.mode === 'dynamic' || p.destroy) && !p.locked && p.shape === 'box' && p.owner !== n &&
       p.body.position.y > 1 && flat(p.body.position, me) < 120 &&
       !humanoids.some(h => h !== n && !h.dead && h.enabled && op(n, h) > -0.3 && flat(h.pos, p.body.position) < 14));
     if (!cands.length) { ai.rocketCd = time + 20; goalDone(n); return; }
@@ -2934,7 +3235,7 @@ function npcThink(n, dt) {
   ai.chatT -= dt;
   if (ai.chatT <= 0) {
     ai.chatT = 25 + Math.random() * 35;
-    if (Math.random() < ai.P.chatty) aiSay(n, m.anger > 0.5 ? 'bad' : m.bored > 0.6 ? 'bored' : m.joy > 0.6 ? 'happy' : 'explore', { place: rpick(POIS).name });
+    if (Math.random() < ai.P.chatty) aiSay(n, m.anger > 0.5 ? 'bad' : m.bored > 0.6 ? 'bored' : m.joy > 0.6 ? 'happy' : 'explore', { place: rpick(poisHere()).name });
   }
 }
 
@@ -3066,7 +3367,7 @@ function respond(n, s, t, direct) {
   if (has(/\b(cool|nice|awesome|great|love|best|gg|good job|pro|epic|amazing)\b/)) { addOp(n, s, 0.15); ai.mood.joy = clamp01(ai.mood.joy + 0.2); aiSay(n, 'thanks', {}, true); return; }
   if (has(/(what are you doing|what r u doing|wyd|whatcha doing|what u doing)/)) { n.say('im ' + (ai.thought || 'just chilling')); return; }
   if (has(/(how are you|how r u|hru|how's it going|hows it going)/)) { aiSay(n, ai.mood.anger > 0.5 || ai.mood.fear > 0.5 ? 'bad' : 'fine', {}, true); return; }
-  if (has(/\b(where)\b/)) { const pl = POIS.find(p => t.includes(p.name.replace('the ', ''))); n.say(pl ? `${pl.name} is over there!` : `idk, try ${rpick(POIS).name}`); if (pl) faceTo(n, pl.pos); return; }
+  if (has(/\b(where)\b/)) { const pl = poisHere().find(p => t.includes(p.name.replace('the ', ''))); n.say(pl ? `${pl.name} is over there!` : `idk, try ${rpick(poisHere()).name}`); if (pl) faceTo(n, pl.pos); return; }
   if (has(/\b(hi|hello|hey|yo|hii+|sup|hiya|howdy)\b/)) { addOp(n, s, 0.05); ai.greeted.set(s, time); aiSay(n, 'greetBack', { name: s.name }, true); return; }
   if (direct) aiSay(n, 'confused', {}, true);
 }
@@ -3080,10 +3381,10 @@ const TOOLS = [
   { id: 'paintball', name: 'Paintball', icon: '🎯', tip: 'Click to shoot paint. Paints any brick a random BrickColor' },
   { id: 'trowel', name: 'Trowel', icon: '🧱', tip: 'Click the ground to build a wall' },
   { id: 'bomb', name: 'Timebomb', icon: '💣', tip: 'Click to toss a timebomb. 3 seconds!' },
-  { id: 'grab', name: 'Grab', icon: '✋', hopper: true, tip: 'Drag bricks. R = rotate, T = tilt, F = anchor' },
-  { id: 'clone', name: 'Clone', icon: '📋', hopper: true, tip: 'Click a brick to copy it, then drag it into place' },
-  { id: 'delete', name: 'Delete', icon: '🔨', hopper: true, tip: 'Click a brick to delete it' },
-  { id: 'paint', name: 'Paint', icon: '🪣', hopper: true, tip: 'Click a brick to paint it (pick a color in Insert)' },
+  { id: 'grab', name: 'Grab', icon: '✋', px: 'grab', hopper: true, tip: 'Drag bricks. R = rotate, T = tilt, F = anchor' },
+  { id: 'clone', name: 'Clone', icon: '📋', px: 'clone', hopper: true, tip: 'Click a brick to copy it, then drag it into place' },
+  { id: 'delete', name: 'Delete', icon: '🔨', px: 'hammer', hopper: true, tip: 'Click a brick to delete it' },
+  { id: 'paint', name: 'Paint', icon: '🪣', px: 'bucket', hopper: true, tip: 'Click a brick to paint it (pick a color in Insert)' },
 ];
 let equipped = null;
 const toolAnim = { arm: 0, lunge: 0 };
@@ -3272,13 +3573,13 @@ function mergeFins() {   // two crossed fin plates at the back of the rocket
   return gm;
 }
 // visual = a look-alike on a client; the real one (that explodes and hurts) lives on the host
-function spawnRocket(o, dir, owner = player, visual = false) {
+function spawnRocket(o, dir, owner = player, visual = false, quiet = false) {
   const m = new THREE.Mesh(rocketGeo, gearMatCache.steel || partMats('#A3A2A5')[0]);
   const tip = new THREE.Mesh(rocketTipGeo, gearMatCache.redband || partMats('#C4281C')[0]); tip.position.z = 1.5; m.add(tip);
   const fins = new THREE.Mesh(rocketFinGeo, gearMatCache.olive || partMats('#635F62')[0]); fins.position.z = -1.0; m.add(fins);
   m.position.copy(o); m.lookAt(o.clone().add(dir)); scene.add(m);
-  rockets.push({ mesh: m, pos: o.clone(), dir, life: 6, smoke: 0, owner, visual });
-  netEv(['fx', 'rk', arr3(o), [r3(dir.x), r3(dir.y), r3(dir.z)]]);
+  rockets.push({ mesh: m, pos: o.clone(), dir, life: 6, smoke: 0, owner, visual, quiet });
+  netEv(['fx', 'rk', arr3(o), [r3(dir.x), r3(dir.y), r3(dir.z)], quiet ? 1 : 0]);
 }
 function spawnPaintball(o, vel, owner = player, color = null, visual = false) {
   const c = color || PALETTE[(Math.random() * PALETTE.length) | 0][1];
@@ -3352,6 +3653,23 @@ function explode(center, radius, attacker) {
   netEv(['boom', arr3(center), radius]);
   const blast = (b) => blastBody(b, center, radius);
   const wreckedOwners = new Set();
+  // anchored destroyables in reach break loose first, so the blast throws them too
+  const loose = [];
+  for (const p of parts) {
+    if (!p.destroy || p.locked || p.mode !== 'static' || p.body.position.distanceTo(center) > radius + Math.max(...p.size) / 2) continue;
+    p.anchored = false; setMode(p, 'dynamic'); loose.push(p);
+  }
+  // ...and so does every destroyable stacked on top of them (no floating towers)
+  while (loose.length) {
+    const q = loose.pop(), qp = q.body.position, qTop = qp.y + q.size[1] / 2, qr = Math.max(q.size[0], q.size[2]) / 2;
+    for (const p of parts) {
+      if (!p.destroy || p.locked || p.mode !== 'static') continue;
+      const pp = p.body.position;
+      if (Math.abs(pp.y - p.size[1] / 2 - qTop) > 0.2) continue;   // not sitting right on top of it
+      if (Math.hypot(pp.x - qp.x, pp.z - qp.z) >= (Math.max(p.size[0], p.size[2]) / 2 + qr) * 0.9) continue;
+      p.anchored = false; setMode(p, 'dynamic'); loose.push(p);
+    }
+  }
   toServer({ t: 'blast', c: arr3(center), r: radius });   // online, the server throws the bricks
   for (const p of parts) {
     if (p.mode !== 'dynamic') continue;
@@ -3427,11 +3745,13 @@ function updateDrag() {
 
 /* ================= HUD ================= */
 function chatLine(name, text, color) {
-  const d = document.createElement('div');
+  const d = document.createElement('div'), log = $('chatlog');
   if (name) { const b = document.createElement('span'); b.style.color = color; b.textContent = name + ': '; d.append(b); }
   d.append(text);
-  $('chatlog').append(d);
-  while ($('chatlog').children.length > 9) $('chatlog').firstChild.remove();
+  const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;   // (scrolled up to read? then stay put)
+  log.append(d);
+  while (log.children.length > 150) log.firstChild.remove();   // the last 150 messages, scroll up to see them
+  if (atBottom) log.scrollTop = log.scrollHeight;
   setTimeout(() => d.classList.add('old'), 30000);
 }
 const sysChat = (t) => chatLine(null, t);
@@ -3440,7 +3760,7 @@ function renderLB() {
   $('lb').innerHTML = '<div class="r hd"><span>Player</span><span>KOs</span><span>WOs</span></div>' +
     rows.map(h => `<div class="r ${h.isPlayer ? 'me' : ''}"><span>${h.admin ? '★ ' : ''}${h.name}${h.badge ? ` <small style="opacity:.75">#${h.badge}</small>` : ''}</span><span>${h.kos}</span><span>${h.wos}</span></div>`).join('');
 }
-$('toolbar').innerHTML = TOOLS.map((t, i) => `<div class="slot" data-i="${i}"><span class="num">${(i + 1) % 10}</span><span class="ic">${t.icon}</span><span class="nm">${t.name}</span></div>`).join('');
+$('toolbar').innerHTML = TOOLS.map((t, i) => `<div class="slot" data-i="${i}"><span class="num">${(i + 1) % 10}</span><span class="ic">${t.px ? pxIcon(t.px, 30) : t.icon}</span><span class="nm">${t.name}</span></div>`).join('');
 $('toolbar').addEventListener('click', (e) => { const s = e.target.closest('.slot'); if (s) equip(+s.dataset.i); });
 // gear slots show a little picture of the real model, like the old gear icons
 (function gearIcons() {
@@ -3493,7 +3813,8 @@ function insertPart(o) {
   const at = new V3(player.pos.x, 0, player.pos.z).addScaledVector(f, 10 + sz[2] / 2);
   snapToStuds(at, (sideways ? sz[2] : sz[0]) / 2, (sideways ? sz[0] : sz[2]) / 2);
   at.y = Math.max(player.pos.y - HY, 0) + sz[1] / 2 + (($('anchorChk').checked) ? 0.01 : 3);
-  const spec = { ...o, color: o.color || selColor, anchored: $('anchorChk').checked, pos: at.toArray(), rot: [0, turns * Math.PI / 2, 0] };
+  const spec = { ...o, color: o.color || selColor, anchored: $('anchorChk').checked, destroy: $('anchorChk').checked && $('destroyChk').checked,
+    pos: at.toArray(), rot: [0, turns * Math.PI / 2, 0] };
   SFX.click();
   if (net.mode === 'client') { netSend({ t: 'insert', o: spec }); return; }
   makePart(spec);
@@ -3543,7 +3864,7 @@ function toggleFullscreen() {
 /* ---- the in-game Escape menu ---- */
 let menuOpen = false, pendingConfirm = null;
 function escView(id, title) {
-  ['escMain', 'escConfirm', 'escSaveLeave', 'escSettings', 'escHelp'].forEach(v => $(v).classList.toggle('hidden', v !== id));
+  ['escMain', 'escConfirm', 'escSaveLeave', 'escSettings', 'escFriends', 'escHelp'].forEach(v => $(v).classList.toggle('hidden', v !== id));
   $('escTitle').textContent = title;
 }
 function openEsc() {
@@ -3557,8 +3878,9 @@ $('escMenu').addEventListener('click', (e) => {
   const a = e.target.dataset.esc; if (!a) return;
   SFX.click();
   if (a === 'resume') closeEsc();
-  if (a === 'reset') confirmEsc('Are you sure you want to reset your character?', () => { closeEsc(); kill(player, null); });
-  if (a === 'settings') { $('fsChk').checked = !!document.fullscreenElement; escView('escSettings', 'Game Settings'); }
+  if (a === 'reset') confirmEsc('Are you sure you want to reset your character?', () => { closeEsc(); kill(player, null, false, true); });
+  if (a === 'settings') { $('escSettings').prepend($('setRows')); $('fsChk').checked = !!document.fullscreenElement; escView('escSettings', 'Game Settings'); }
+  if (a === 'friends') { friendsInit(); frRender(); escView('escFriends', 'Friends'); }
   if (a === 'help') escView('escHelp', 'Help');
   if (a === 'shot') takeScreenshot();
   if (a === 'leave') {
@@ -3584,7 +3906,7 @@ function takeScreenshot() {
   sysChat('Screenshot saved.');
 }
 $('reflect').oninput = (e) => { REFLECT = +e.target.value; $('reflectVal').textContent = REFLECT.toFixed(2); reflectMats.forEach(m => m.reflectivity = REFLECT * REFLECT_GAIN); };
-$('volume').oninput = (e) => { volume = +e.target.value; if (MASTER) MASTER.gain.value = volume; };
+$('volume').oninput = (e) => { volume = +e.target.value; if (MASTER) MASTER.gain.value = volume; $('volumeVal').textContent = Math.round(volume * 100) + '%'; };
 $('outlineChk').onchange = (e) => { outlineMat.visible = e.target.checked; };
 $('thoughtChk').onchange = (e) => { showThoughts = e.target.checked; npcs.forEach(n => n.drawTag()); };
 // shadows on/off (off helps on slow computers)
@@ -3635,6 +3957,27 @@ function applySky(name) {
   try { localStorage.setItem(SKY_KEY, $('skySel').value); } catch { }
 }
 $('skySel').onchange = (e) => applySky(e.target.value);
+// reflectance, volume, outlines and Guest thoughts remember themselves too (the others above save their own)
+const SETTINGS_KEY = 'blockburg-settings';
+const SIMPLE_SETTINGS = [['reflect', 'input', 'reflect'], ['volume', 'input', 'volume'], ['outlineChk', 'change', 'outline'], ['thoughtChk', 'change', 'thoughts']];
+function setControl(id, ev, v) { const el = $(id); if (el.type === 'checkbox') el.checked = !!v; else el.value = v; el.dispatchEvent(new Event(ev)); }
+function saveSettings() {
+  const s = {}; for (const [id, , key] of SIMPLE_SETTINGS) s[key] = $(id).type === 'checkbox' ? $(id).checked : +$(id).value;
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch { }
+}
+{
+  let s = {}; try { s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch { }
+  for (const [id, ev, key] of SIMPLE_SETTINGS) {
+    if (s[key] !== undefined) setControl(id, ev, s[key]);
+    $(id).addEventListener(ev, saveSettings);
+  }
+}
+// the website's Settings page: back to how a new player starts
+$('setReset').onclick = () => {
+  if (!confirm('Put every setting back the way it started?')) return;
+  for (const [id, ev, v] of [['reflect', 'input', 0], ['volume', 'input', 0.5], ['outlineChk', 'change', false], ['thoughtChk', 'change', true],
+    ['shadowChk', 'change', !matchMedia('(pointer: coarse)').matches], ['darkSlider', 'input', 0], ['satSlider', 'input', 1], ['studSel', 'change', '2009'], ['skySel', 'change', 'panorama']]) setControl(id, ev, v);
+};
 
 /* ================= input ================= */
 const keys = {};
@@ -3667,7 +4010,7 @@ addEventListener('keydown', (e) => {
   if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat && !freecam.on) { setShiftLock(!shiftLock); SFX.click(); }   // (in the free cam Shift means fast)
   if (e.code === 'KeyP' && !e.repeat && !dragging) { startTrailer(); return; }
   if (e.code === 'KeyF' && !e.repeat && !dragging && adminPriv) { toggleFreecam(); return; }   // (while dragging, F anchors the brick)
-  if (e.key === '/') { e.preventDefault(); chatInput.focus(); return; }
+  if (e.key === '/') { e.preventDefault(); if (adminPriv) openCmd(); else chatInput.focus(); return; }   // the admin gets the command bar
   if ((e.code === 'Equal' || e.key === '=') && !e.repeat) {
     if (net.mode === 'client') netSend({ t: 'drophat' });   // the host owns dropped hats
     else { dropHat(player); if (player.hat === 'none') { look.hat = 'none'; saveLook(); } }
@@ -4006,7 +4349,7 @@ function frame(now) {
 
   while (wallQueue.length && wallQueue[0].at <= time) {
     const w = wallQueue.shift();
-    makePart({ size: [4, 1.2, 1], pos: w.pos.toArray(), quat: [w.q.x, w.q.y, w.q.z, w.q.w], color: w.color, sleep: true });
+    makePart({ size: [4, 1.2, 1], pos: w.pos.toArray(), quat: [w.q.x, w.q.y, w.q.z, w.q.w], color: w.color, anchored: true, destroy: true });   // trowel walls: anchored destroyables
     sfxAt('clack', w.pos);
   }
   for (let i = bombs.length - 1; i >= 0; i--) {
@@ -4047,6 +4390,7 @@ function frame(now) {
   held.sword.rotation.x += ((toolAnim.lunge > 0 ? Math.PI / 2 : 0) - held.sword.rotation.x) * Math.min(1, dt * 25);
 
   // rockets
+  if (net.mode !== 'client') updateCars(dt);   // the admin's /car (a client sees it as a prop)
   for (let i = rockets.length - 1; i >= 0; i--) {
     const r = rockets[i]; r.life -= dt;
     const next = r.pos.clone().addScaledVector(r.dir, 75 * dt);
@@ -4060,7 +4404,7 @@ function frame(now) {
     }
     r.pos.copy(next); r.mesh.position.copy(next);
     r.smoke -= dt;
-    if (r.smoke <= 0) {
+    if (r.smoke <= 0 && !r.quiet) {   // (a /rockets barrage skips the smoke, or 300 trails would be a lot)
       r.smoke = 0.025;
       const m = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshBasicMaterial({ color: 0xbbbbbb, transparent: true }));
       m.position.copy(r.pos).addScaledVector(r.dir, -1.4); scene.add(m);
@@ -4142,6 +4486,7 @@ function frame(now) {
   const hp = Math.max(0, P.health);
   $('hpFill').style.width = hp + '%';
   lbT -= dt; if (lbT <= 0) { lbT = 0.5; renderLB(); }
+  cmdPanelShow(!!adminPriv && started && !siteOpen && !trailer.on);   // the admin's command list
   if (net.mode === 'host' || net.mode === 'client') netTick(dt);
 
   if (siteOpen) {
@@ -4272,6 +4617,7 @@ function showPage(p) {
   if (p === 'inbox') inboxOpened();
   if (p === 'build') renderPlaces();
   if (p === 'games') { projStart(); projRender(); }
+  if (p === 'settings') $('setHome').append($('setRows'));   // borrow the game menu's settings
   $('site').scrollTop = 0;
 }
 let catTab = 'hats';
@@ -4291,7 +4637,7 @@ function renderCatalog() {
     <button class="s-btn" data-wear="${h.id}">${look[slot] === h.id ? 'Wearing' : (h.id === 'none' ? 'Take Off' : 'Wear')}</button></div>`).join('');
   const on = setOfLook({ ...look, colors: normColors(look.colors) });
   $('setList').innerHTML = SETS.map(s => `<div class="hcard ${on === s ? 'on' : ''}"><img src="${hatThumbs[s.wear.hat]}" alt="">
-    <div class="gt">${s.name}</div><div class="ds">${s.pieces}</div><div class="pr">✨ ${s.effect}</div>
+    <div class="gt">${s.name}</div><div class="ds">${s.pieces}</div><div class="pr">${pxIcon('sparkle', 12)} ${s.effect}</div>
     <button class="s-btn" data-wearset="${s.id}">${on === s ? 'Wearing it!' : 'Wear the Set'}</button></div>`).join('');
 }
 $('setList').addEventListener('click', (e) => {
@@ -4321,7 +4667,7 @@ $('site').addEventListener('click', (e) => {
   const d = t.dataset;
   if (d.signin !== undefined) { if (d.signin === 'out') signOut(); else openSignin('change'); return; }
   if (d.page || d.goto) showPage(d.page || d.goto);
-  if (d.play) playPlace(d.play);
+  if (d.play) playPlace(d.play, { guests: d.play === 'baseplate' && $('bpGuests').checked });
   if (d.link) location.href = d.link;
   if (d.cat) { catTab = d.cat; renderCatalog(); }
   if (d.wear) { look[LOOK_SLOT[catTab]] = d.wear; if (!adminPriv) look = withoutAdminClothes(look); saveLook(); refreshLook(); }
@@ -4338,6 +4684,15 @@ const UPDATES = [
     '8 new hats: Ice Crown, Lava Lord Helm, Galaxy Wizard Hat, Bass Boost Headphones (the lights blink!), Propeller Beanie (it spins!), Pizza Slice Hat, Golden Halo and Knight Helmet.',
     '6 new shirts and 5 new pants, including a Snowflake Sweater, Magma Hoodie, Galaxy Leggings, Knight Chainmail and Pumpkin Patch Overalls.',
     '3 new T-shirts (Pixel Heart, Stay Frosty, I Survived The Rocket) and 4 new faces (Cool Shades, Frozen, Starstruck, Fierce).',
+    'Play with friends the easy way: a Join button when a friend is in a game, and an Invite button that starts a game and asks them to come. No more typing room codes! (Also in the in-game menu: Esc → Friends.)',
+    'New Settings tab on the website, with the same settings as the game. They stay saved now, even your volume.',
+    'Old-school 8-bit icons for the tools and buttons, like Grab, Clone, Delete and Paint.',
+    'Anchored destroyables! The brick tower, the wall, the pyramid, trowel walls and everything the Guests build now stand perfectly still... until something explodes next to them. KABOOM.',
+    'Insert has a new Destroyable box, so you can make your own anchored destroyables.',
+    'The Guests learned to build 20 new things: a lighthouse, a fort, a snowman, a car, a rocket ship, a noob statue and lots more.',
+    'Building on a Baseplate? Tick Bring the Guests on the Build page and they come along.',
+    'The admin got a command bar. It can explode things. Behave.',
+    'Games made by players now always show a picture of the build.',
     'Two super rare OUTFIT SETS! Wear every piece and you get an effect everyone can see: the Pumpkin King shimmers, and stars orbit the Galaxy Wizard. Find them at the bottom of the Catalog.',    'Also new: this Update Log! Press EXTEND on any day to see everything that changed.' ] },
   { date: '10/24/2026', top: 'Sign in is here! Get your own badge!', text: [
     'A brand new sign-in screen, with screenshots of BLOCKBURG fading by behind it.',
@@ -4545,7 +4900,7 @@ function forumRender() {
     } else {
       const th = threadsOf(b.id);
       h = (canPost ? `<div style="margin-bottom:6px"><button class="s-btn go" data-fm="new" data-id="${b.id}">New Thread</button></div>`
-        : `<div class="fm-sm" style="margin-bottom:6px">🔒 Only the admin can start threads here. You can still reply to them!</div>`) +
+        : `<div class="fm-sm" style="margin-bottom:6px">${pxIcon('lock', 12)} Only the admin can start threads here. You can still reply to them!</div>`) +
         `<table class="fm-tbl"><tr><th>Subject</th><th>Author</th><th class="num">Replies</th><th>Last Post</th></tr>` +
         (th.length ? th.map(x => `<tr><td><span class="fm-link" data-fm="thread" data-id="${x.t.id}">${escHtml(cleanText(x.t.ti || '(no subject)'))}</span></td>
           <td>${whoHtml(x.t)}</td><td class="num">${x.replies.length}</td><td class="fm-sm">${fmDate(x.last.ts)}<br>by ${whoHtml(x.last)}</td></tr>`).join('')
@@ -4624,9 +4979,11 @@ function frEnsure() {
 }
 // retained = the server keeps it for whoever connects later; null clears it
 function frPub(topic, obj) { const s = obj ? JSON.stringify(obj) : ''; FR.clients.forEach(c => c.publish(topic, s, { retain: true, qos: 1 })); }
+// what my friends see: in a room (whoever started it), playing alone, or on the website
+const inRoom = () => net.mode === 'client' && /^[A-Z0-9]{4}$/.test(net.code || '');
 function frMyStatus() {
-  const host = net.mode === 'host';
-  return { n: myName(), on: true, st: host ? 'host' : started ? 'play' : 'site', code: host ? net.code : '', pl: host ? net.place : '', ts: Date.now() };
+  const room = inRoom();
+  return { n: myName(), on: true, st: room ? 'room' : started ? 'play' : 'site', code: room ? net.code : '', pl: room ? net.place : '', ts: Date.now() };
 }
 async function friendsInit(create) {
   if (!FR.data) frLoad();
@@ -4642,7 +4999,7 @@ async function friendsInit(create) {
       const c = await relayConnect(url, { will: { topic: frTopic(me, 'status'), payload: JSON.stringify({ n: myName(), on: false, ts: Date.now() }), retain: true, qos: 1 } });
       c.on('message', (t, p) => frMessage(t, p));
       c.on('connect', () => { FR.lastSent = ''; });   // after a reconnect, say we're back
-      c.subscribe([frTopic(me, 'req/+'), frTopic(me, 'acc/+'), frTopic(me, 'rem/+'), ...Object.keys(FR.data.friends).map(f => frTopic(f, 'status'))], { qos: 1 });
+      c.subscribe([frTopic(me, 'req/+'), frTopic(me, 'acc/+'), frTopic(me, 'rem/+'), frTopic(me, 'inv/+'), ...Object.keys(FR.data.friends).map(f => frTopic(f, 'status'))], { qos: 1 });
       FR.clients.push(c);
     } catch { }
   }));
@@ -4687,32 +5044,94 @@ function frMessage(topic, payload) {
   } else if (kind === 'rem') {
     if (d.friends[from]) frDrop(from);
     frPub(frTopic(me, 'rem', from), null);
+  } else if (kind === 'inv') {   // a friend asked us to come play in their room
+    if (d.friends[from] && /^[A-Z0-9]{4}$/.test(o.code || '') && Date.now() - (o.ts || 0) < INVITE_LIFE) frShowInvite(name, o.code, o.pl);
+    frPub(frTopic(me, 'inv', from), null);
   }
   frRender();
 }
+/* ---- invites: one click starts a game (if you aren't in one) and asks a friend to come; they get a Join button ---- */
+const INVITE_LIFE = 10 * 60000;
+FR.invited = {};
+let invCode = '', invT = 0;
+function frShowInvite(name, code, pl) {
+  if (inRoom() && net.code === code) return;   // already there
+  invCode = code;
+  $('invText').innerHTML = `${pxIcon('pad', 14)} <b>${escHtml(name)}</b> invited you to play <b>${PLACE_NAMES[pl] || 'Blockburg'}</b>!`;
+  $('invToast').classList.remove('hidden'); SFX.click();
+  if (started) sysChat(`${name} invited you to play! Click Join at the top of the screen.`);
+  clearTimeout(invT); invT = setTimeout(() => $('invToast').classList.add('hidden'), 60000);
+}
+$('invJoin').onclick = () => { $('invToast').classList.add('hidden'); if (invCode) frJoinCode(invCode); };
+$('invNo').onclick = () => $('invToast').classList.add('hidden');
+function frJoinCode(code) {
+  if (inRoom() && net.code === code) return;
+  closeEsc();
+  $('mpCode').value = code;
+  if (siteOpen) showPage('online');
+  joinGame();
+}
+async function frInvite(id) {
+  const f = FR.data && FR.data.friends[id];
+  if (!f || !FR.clients.length) return;
+  if (!inRoom()) {   // not in a room yet: start one, then invite
+    FR.invited[id] = Date.now(); frRender();
+    await hostGame();
+    for (let i = 0; i < 60 && !inRoom(); i++) await new Promise(r => setTimeout(r, 250));
+    if (!inRoom()) { delete FR.invited[id]; frRender(); return; }   // (the Multiplayer page says why)
+  }
+  frPub(frTopic(id, 'inv', FR.data.id), { n: myName(), code: net.code, pl: net.place, ts: Date.now() });
+  FR.invited[id] = Date.now();
+  sysChat(`Invite sent to ${f.n}! They can hop into your room with one click.`);
+  frRender();
+}
+function frAction(d) {
+  if (d.frjoin) { const s = frState(d.frjoin); if (s.code) frJoinCode(s.code); }
+  if (d.frinv) { closeEsc(); frInvite(d.frinv); }
+}
+$('escFriendList').addEventListener('click', (e) => { const t = e.target.closest('[data-frjoin],[data-frinv]'); if (t) { SFX.click(); frAction(t.dataset); } });
 const PLACE_NAMES = { classic: 'Blockburg Classic', baseplate: 'Happy Home Baseplate' };
 function frState(id) {
   const s = FR.status[id], now = Date.now();
   if (!s || !s.on || now - s.got > 150000 || now - s.ts > 600000) return { on: false, text: 'Offline' };
-  if (s.st === 'host' && /^[A-Z0-9]{4}$/.test(s.code || '')) return { on: true, text: `Hosting ${PLACE_NAMES[s.pl] || 'a game'}`, code: s.code };
-  return { on: true, text: s.st === 'play' ? 'Playing Blockburg' : 'Online' };
+  if ((s.st === 'room' || s.st === 'host') && /^[A-Z0-9]{4}$/.test(s.code || '')) {
+    if (inRoom() && s.code === net.code) return { on: true, text: 'In your game!', here: true };
+    return { on: true, text: `Playing ${PLACE_NAMES[s.pl] || 'a game'} (room ${s.code})`, code: s.code };
+  }
+  return { on: true, text: s.st === 'play' ? 'Playing alone' : 'Online' };
+}
+// Join if they're in a room, Invite if they're online but not, nothing if they're offline
+function frButton(r, small = true) {
+  const st = small ? ' style="font-size:11px;padding:2px 8px"' : '';
+  if (!r.s.on || r.s.here) return '';
+  if (r.s.code) return ` <button class="s-btn go"${st} data-frjoin="${r.id}">Join</button>`;
+  const sent = Date.now() - (FR.invited[r.id] || 0) < 60000;
+  return ` <button class="s-btn"${st} data-frinv="${r.id}" ${sent ? 'disabled' : ''}>${sent ? 'Invited!' : 'Invite'}</button>`;
 }
 function frRender() {
   if (!$('frList')) return;
   const d = FR.data, ids = d ? Object.keys(d.friends) : [];
   $('frMyCode').textContent = d ? d.id : '--------';
   const rows = ids.map(id => ({ id, n: d.friends[id].n || 'Player', s: frState(id) })).sort((a, b) => b.s.on - a.s.on || a.n.localeCompare(b.n));
-  const dot = (on) => (on ? '🟢' : '⚪');
-  const joinBtn = (r) => (r.s.code ? ` <button class="s-btn go" style="font-size:11px;padding:2px 8px" data-frjoin="${r.id}">Join</button>` : '');
+  const dot = (on) => pxIcon(on ? 'on' : 'off', 10);
   $('friendsHd').textContent = $('frListHd').textContent = `My Friends (${ids.length})`;
   $('friends').innerHTML = rows.length
-    ? rows.slice(0, 8).map(r => `<div style="margin:2px 0">${dot(r.s.on)} <b style="color:#0b4a99">${escHtml(r.n)}</b> <span style="color:#777">(${r.s.text})</span>${joinBtn(r)}</div>`).join('')
+    ? rows.slice(0, 8).map(r => `<div style="margin:2px 0">${dot(r.s.on)} <b style="color:#0b4a99">${escHtml(r.n)}</b> <span style="color:#777">(${r.s.text})</span>${frButton(r)}</div>`).join('')
     : `<div class="fm-sm">No friends yet. <span class="fm-link" data-goto="friends">Add some!</span></div>`;
   $('frList').innerHTML = rows.length
     ? rows.map(r => `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #dfe7f2">${dot(r.s.on)}
-        <div style="flex:1"><b style="color:#0b4a99">${escHtml(r.n)}</b><div class="fm-sm">${r.s.text} · code ${r.id}</div></div>${joinBtn(r)}
+        <div style="flex:1"><b style="color:#0b4a99">${escHtml(r.n)}</b><div class="fm-sm">${r.s.text} · code ${r.id}</div></div>${frButton(r)}
         <span class="fm-del" style="float:none" data-frrem="${r.id}">remove</span></div>`).join('')
     : '<div class="fm-sm">No friends yet. Send someone your code, or type theirs in <b>Add a Friend</b>.</div>';
+  // the Multiplayer page and the in-game menu: online friends first, with Join / Invite
+  const online = rows.filter(r => r.s.on);
+  $('mpFriends').innerHTML = !d ? `<div class="fm-sm">Add friends on the <span class="fm-link" data-goto="friends">Friends</span> page, then join them with one click.</div>`
+    : (online.length ? online.map(r => `<div style="display:flex;align-items:center;gap:6px;padding:3px 0">${dot(true)} <div style="flex:1"><b style="color:#0b4a99">${escHtml(r.n)}</b><div class="fm-sm">${r.s.text}</div></div>${frButton(r)}</div>`).join('')
+      : '<div class="fm-sm">None of your friends are online right now.</div>') +
+      `<p class="fm-sm" style="margin-bottom:0"><b>Join</b> hops into their game. <b>Invite</b> starts a game and asks them to come.</p>`;
+  $('escFriendList').innerHTML = !d || !rows.length ? '<div class="esc-msg">No friends yet. Add some on the Friends page of the website!</div>'
+    : rows.slice(0, 8).map(r => `<div class="esc-fr">${dot(r.s.on)}<b>${escHtml(r.n)}<span class="st">${r.s.text}</span></b>${frButton(r, false)}</div>`).join('') +
+      (online.length ? '' : '<div class="esc-msg">Nobody else is online right now.</div>');
   const inc = d ? Object.entries(d.incoming) : [], out = d ? Object.keys(d.outgoing) : [];
   $('frReqs').innerHTML = (inc.length
     ? inc.map(([id, r]) => `<div style="padding:4px 0;border-bottom:1px solid #dfe7f2"><b style="color:#0b4a99">${escHtml(r.n)}</b> wants to be your friend!
@@ -4750,11 +5169,11 @@ $('frCopy').onclick = () => {
   try { navigator.clipboard.writeText(FR.data.id).then(done, () => prompt('Copy your friend code:', FR.data.id)); } catch { prompt('Copy your friend code:', FR.data.id); }
 };
 $('site').addEventListener('click', (e) => {
-  const t = e.target.closest('[data-frjoin],[data-fracc],[data-frdec],[data-frrem],[data-frcan]');
+  const t = e.target.closest('[data-frjoin],[data-frinv],[data-fracc],[data-frdec],[data-frrem],[data-frcan]');
   if (!t || !FR.data) return;
   const d = t.dataset, me = FR.data.id;
   if (!FR.clients.length && !d.frjoin) { $('frMsg').textContent = 'Not connected to the friends server.'; return; }
-  if (d.frjoin) { const s = frState(d.frjoin); if (s.code) { $('mpCode').value = s.code; showPage('online'); joinGame(); } }
+  frAction(d);
   if (d.fracc) frAccept(d.fracc);
   if (d.frdec) { delete FR.data.incoming[d.frdec]; frSave(); frPub(frTopic(me, 'req', d.frdec), null); }
   if (d.frcan) { delete FR.data.outgoing[d.frcan]; frSave(); frPub(frTopic(d.frcan, 'req', me), null); }
@@ -4795,7 +5214,7 @@ function saveBaseplate({ name } = {}) {
     f = { id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: cleanText(String(typed || def).trim()).slice(0, 30) || def, ts: 0, bricks: [] };
     list.push(f); currentFile = f.id;
   }
-  f.bricks = parts.filter(p => !p.locked).map(serialize); f.ts = Date.now();
+  f.bricks = parts.filter(p => !p.locked).map(serialize); f.ts = Date.now(); f.guests = currentGuests;
   try { f.thumb = snapBricksThumb(f.bricks); } catch { }   // its picture on the Build page
   const ok = storePlaces(list);
   renderPlaces();
@@ -4809,7 +5228,7 @@ function renderPlaces() {
   if (list.some(f => !f.thumb)) { for (const f of list) if (!f.thumb) try { f.thumb = snapBricksThumb(f.bricks); } catch { } storePlaces(list); }
   list = list.sort((a, b) => b.ts - a.ts);
   el.innerHTML = `<div class="ib-sec">My Places (${list.length})</div>` + (list.length ? list.map(f => `<div class="ib-item pl-item">
-    ${okThumb(f.thumb) ? `<img class="pl-thumb" src="${f.thumb}" alt="">` : '<div class="pl-thumb ph proj">🧱</div>'}
+    ${okThumb(f.thumb) ? `<img class="pl-thumb" src="${f.thumb}" alt="">` : `<div class="pl-thumb ph proj">${pxIcon('brick', 32)}</div>`}
     <div class="t">📄 ${escHtml(f.name)}</div><div class="s">${f.bricks.length} bricks &middot; saved ${fmDate(f.ts)}</div>
     <button class="s-btn go" data-pl="open" data-id="${f.id}">▶ Open</button><button class="s-btn" data-pl="rename" data-id="${f.id}">✏️ Rename</button><button class="s-btn" data-pl="del" data-id="${f.id}">🗑 Delete</button></div>`).join('')
     : '<div class="gs">No saved places yet. Build on a Baseplate and save it when you leave: it shows up here.</div>');
@@ -4825,14 +5244,19 @@ $('myPlaces').addEventListener('click', (e) => {
   }
   if (t.dataset.pl === 'del' && confirm(`Delete "${f.name}"? This can't be undone.`)) { storePlaces(list.filter(x => x !== f)); renderPlaces(); }
 });
-function playPlace(id, { file = null } = {}) {
+// guests: bring the Guests to a baseplate (a saved place remembers whether it had them)
+let currentGuests = false;
+try { $('bpGuests').checked = localStorage.getItem('blockburg-bp-guests') === 'on'; } catch { }
+$('bpGuests').onchange = (e) => { try { localStorage.setItem('blockburg-bp-guests', e.target.checked ? 'on' : 'off'); } catch { } };
+function playPlace(id, { file = null, guests = false } = {}) {
   audioInit();
   currentPlace = id; currentFile = file ? file.id : null;
+  currentGuests = id === 'classic' || (id === 'baseplate' && (file ? !!file.guests : guests));
   stopDrag(); clearUnlocked();
   [...hatPickups].forEach(removeHatPickup);
   if (id === 'classic') buildDefault();
   npcs.forEach(n => {
-    if (id === 'classic') { if (!n.enabled) n.setEnabled(true); else if (!n.dead) n.spawn(randomNpcSpot()); }
+    if (currentGuests) { if (!n.enabled) n.setEnabled(true); else if (!n.dead) n.spawn(randomNpcSpot()); }
     else if (n.enabled) n.setEnabled(false);
   });
   humanoids.forEach(h => { h.kos = 0; h.wos = 0; });
@@ -4889,11 +5313,17 @@ async function projDigest(p) {
   const bytes = new TextEncoder().encode(JSON.stringify([p.id, p.ti, p.ds, p.n, p.ts, p.parts, p.th || '']));   // (its picture too)
   return b64u(new Uint8Array(await subtle.digest('SHA-256', bytes)));
 }
-const answerSigText = (a) => `proj|${a.id}|${a.ok ? 'yes' : 'no'}|${a.dg}|${a.note}`;
-// what's happened to a project: 'yes' (approved), 'no' (not approved) or 'wait'
+const answerSigText = (a) => `proj|${a.id}|${a.down ? 'down' : a.ok ? 'yes' : 'no'}|${a.dg}|${a.note}`;
+// what's happened to a project: 'yes' (approved), 'no' (not approved), 'down' (was in Games, the admin took it down) or 'wait'
 function projStatus(p) {
   const a = proj.answers.get(p.id);
-  return a && a.dg === p.digest ? (a.ok ? 'yes' : 'no') : 'wait';
+  return a && a.dg === p.digest ? (a.down ? 'down' : a.ok ? 'yes' : 'no') : 'wait';
+}
+// its picture: the one it was posted with, or (older projects) one drawn from its bricks right here
+function projThumb(p) {
+  if (okThumb(p.th)) return p.th;
+  if (p.autoTh === undefined) { try { p.autoTh = snapBricksThumb(p.parts.map(cleanBrick).filter(Boolean)); } catch { p.autoTh = ''; } }
+  return p.autoTh;
 }
 // only believe bricks that look like bricks (sizes and places a Baseplate build could really have)
 function cleanBrick(d) {
@@ -4901,7 +5331,7 @@ function cleanBrick(d) {
   const num = (n, lo, hi) => Math.min(hi, Math.max(lo, +n || 0));
   return { s: ['box', 'ball', 'cyl'].includes(d.s) ? d.s : 'box', z: d.z.map(n => num(n, 0.2, 64)), p: d.p.map(n => num(n, -600, 600)),
     q: Array.isArray(d.q) && d.q.length === 4 ? d.q.map(n => num(n, -1, 1)) : [0, 0, 0, 1],
-    c: /^#[0-9a-f]{6}$/i.test(d.c) ? d.c : '#A3A2A5', t: num(d.t, 0, 1), a: !!d.a, k: !!d.k, w: false, b: !!d.b };
+    c: /^#[0-9a-f]{6}$/i.test(d.c) ? d.c : '#A3A2A5', t: num(d.t, 0, 1), a: !!d.a, k: !!d.k, w: false, b: !!d.b, x: !!d.x };
 }
 async function projMessage(topic, payload) {
   const s = new TextDecoder().decode(payload);
@@ -4915,7 +5345,7 @@ async function projMessage(topic, payload) {
     p.digest = await projDigest(p);
     proj.subs.set(p.id, p);
   } else if (topic.startsWith(PROJ_PREFIX + 'ok/')) {   // the admin's answer: only counts with the admin's signature
-    const a = { id: o.id, ok: !!o.ok, note: String(o.note || '').slice(0, 120), dg: String(o.dg || '') };
+    const a = { id: o.id, ok: !!o.ok && !o.down, down: !!o.down, note: String(o.note || '').slice(0, 300), dg: String(o.dg || '') };
     if (await adminVerify(answerSigText(a), o.s)) proj.answers.set(a.id, a);
   } else return;
   clearTimeout(proj.renderT); proj.renderT = setTimeout(projRender, 150);
@@ -4961,13 +5391,15 @@ async function postProject() {
 }
 $('postBtn').onclick = () => postProject();
 
-// the admin's answer: approve (it shows up in Games) or not, with a note for the builder
-async function answerProject(id, ok) {
+// the admin's answer: approve (it shows up in Games), not approve, or take down one that's already in Games.
+// The note goes to the builder's Inbox.
+async function answerProject(id, what) {
   const p = proj.subs.get(id);
   if (!p || !adminPriv) return;
-  const note = ok ? '' : (prompt('Not approved. Add a note for the builder? (optional)') ?? null);
+  const ask = { no: 'Not approved. Add a note for the builder? (optional)', down: `Taking "${p.ti}" out of Games. Tell ${p.n} what's wrong (it goes to their Inbox):` }[what];
+  const note = ask ? (prompt(ask) ?? null) : '';
   if (note === null) return;   // pressed Cancel
-  const a = { id, ok, note: cleanText(note.trim()).slice(0, 120), dg: p.digest };
+  const a = { id, ok: what === 'yes', down: what === 'down', note: cleanText(note.trim()).slice(0, 300), dg: p.digest };
   projPublish('ok/' + id, { ...a, s: await adminSign(answerSigText(a)) });
   proj.answers.set(id, a);
   projRender();
@@ -4985,10 +5417,11 @@ function playProject(id) {
 function projRender() {
   // Games: approved projects, newest first
   const ok = [...proj.subs.values()].filter(p => projStatus(p) === 'yes').sort((a, b) => b.ts - a.ts);
-  const pic = (p) => (okThumb(p.th) ? `<img class="proj-thumb" src="${p.th}" alt="">` : '<div class="ph proj">🧱</div>');
+  const pic = (p) => (projThumb(p) ? `<img class="proj-thumb" src="${projThumb(p)}" alt="">` : `<div class="ph proj">${pxIcon('brick', 44)}</div>`);
+  const takeDown = (p) => (adminPriv ? ` <button class="s-btn" data-ib="down" data-id="${p.id}">${pxIcon('stop')} Take Down</button>` : '');
   $('projGames').innerHTML = ok.length ? ok.map(p => `<div class="gcard">${pic(p)}<div class="gt">${escHtml(p.ti)}</div>
     <div class="gs">by ${escHtml(p.n)} &middot; ${p.parts.length} bricks</div>${p.ds ? `<div class="gs">${escHtml(p.ds)}</div>` : ''}
-    <button class="s-btn go" data-proj="${p.id}">Play Solo</button></div>`).join('')
+    <button class="s-btn go" data-proj="${p.id}">Play Solo</button>${takeDown(p)}</div>`).join('')
     : `<div class="gs">${proj.started ? 'No projects yet. Build one on a Baseplate and post it!' : 'Loading projects...'}</div>`;
   // the Inbox
   const mine = myProjects().map(id => proj.subs.get(id)).filter(Boolean).sort((a, b) => b.ts - a.ts);
@@ -4998,22 +5431,34 @@ function projRender() {
   const isNew = (p) => projStatus(p) !== 'wait' && seenBefore[p.id] !== projStatus(p);
   const n = waiting.length + fresh.length;
   $('inboxBadge').textContent = n; $('inboxBadge').classList.toggle('hidden', !n);
-  const item = (p, extra) => `<div class="ib-item pl-item">${okThumb(p.th) ? `<img class="pl-thumb" src="${p.th}" alt="">` : '<div class="pl-thumb">🧱</div>'}
+  const item = (p, extra) => `<div class="ib-item pl-item">${projThumb(p) ? `<img class="pl-thumb" src="${projThumb(p)}" alt="">` : `<div class="pl-thumb">${pxIcon('brick', 32)}</div>`}
     <div class="t">${escHtml(p.ti)}${extra.isNew ? '<span class="new">NEW</span>' : ''}</div>
     <div class="s">by ${escHtml(p.n)} &middot; ${p.parts.length} bricks &middot; ${fmDate(p.ts)}${p.ds ? ' &middot; ' + escHtml(p.ds) : ''}</div>${extra.html}</div>`;
   let h = '';
   if (adminPriv) {
     h += `<div class="ib-sec">Waiting for your OK (${waiting.length})</div>`;
-    h += waiting.length ? waiting.map(p => item(p, { html: `<button class="s-btn" data-proj="${p.id}">👀 Look</button>
-      <button class="s-btn go" data-ib="yes" data-id="${p.id}">✅ Approve</button><button class="s-btn" data-ib="no" data-id="${p.id}">❌ Reject</button>` })).join('')
+    h += waiting.length ? waiting.map(p => item(p, { html: `<button class="s-btn" data-proj="${p.id}">${pxIcon('eye')} Look</button>
+      <button class="s-btn go" data-ib="yes" data-id="${p.id}">${pxIcon('check')} Approve</button><button class="s-btn" data-ib="no" data-id="${p.id}">${pxIcon('cross')} Reject</button>` })).join('')
       : '<div class="gs">Nothing to check right now.</div>';
+    // what's in Games now (take one down if something's wrong) and what you took down (put it back)
+    const live = [...proj.subs.values()].filter(p => projStatus(p) === 'yes').sort((a, b) => b.ts - a.ts);
+    const down = [...proj.subs.values()].filter(p => projStatus(p) === 'down').sort((a, b) => b.ts - a.ts);
+    h += `<div class="ib-sec">In Games now (${live.length})</div>`;
+    h += live.length ? live.map(p => item(p, { html: `<button class="s-btn" data-proj="${p.id}">${pxIcon('eye')} Look</button>
+      <button class="s-btn" data-ib="down" data-id="${p.id}">${pxIcon('stop')} Take Down</button>` })).join('') : '<div class="gs">No projects in Games yet.</div>';
+    if (down.length) {
+      h += `<div class="ib-sec">Taken down (${down.length})</div>`;
+      h += down.map(p => { const a = proj.answers.get(p.id); return item(p, { html: `${a && a.note ? `<div class="s">You told them: "${escHtml(a.note)}"</div>` : ''}
+        <button class="s-btn" data-proj="${p.id}">${pxIcon('eye')} Look</button> <button class="s-btn go" data-ib="yes" data-id="${p.id}">${pxIcon('check')} Put Back in Games</button>` }); }).join('');
+    }
   }
   h += `<div class="ib-sec">Your projects</div>`;
   h += mine.length ? mine.map(p => {
-    const st = projStatus(p), a = proj.answers.get(p.id);
-    const msg = st === 'yes' ? '✅ Approved! It\'s in Games now.' : st === 'no' ? `❌ Not approved.${a && a.note ? ' The admin says: "' + escHtml(a.note) + '"' : ''}` : '⏳ Waiting for the admin to check it.';
+    const st = projStatus(p), a = proj.answers.get(p.id), says = a && a.note ? ' The admin says: "' + escHtml(a.note) + '"' : '';
+    const msg = st === 'yes' ? `${pxIcon('check')} Approved! It's in Games now.` : st === 'no' ? `${pxIcon('cross')} Not approved.${says}`
+      : st === 'down' ? `${pxIcon('stop')} <b>Taken down</b> by the admin, so it's not in Games anymore.${says}` : `${pxIcon('clock')} Waiting for the admin to check it.`;
     return item(p, { isNew: isNew(p), html: `<div>${msg}</div>` });
-  }).join('') : '<div class="gs">Nothing here yet. Build something on a Baseplate and press <b>📤 Post to Games</b> in the Insert window.</div>';
+  }).join('') : `<div class="gs">Nothing here yet. Build something on a Baseplate and press <b>${pxIcon('post')} Post to Games</b> in the Insert window.</div>`;
   if (!proj.started && !proj.clients.length) h = '<div class="gs">Connecting...</div>' + h;
   $('inboxBody').innerHTML = h;
 }
@@ -5029,7 +5474,7 @@ $('site').addEventListener('click', (e) => {
   const t = e.target.closest('[data-proj],[data-ib]');
   if (!t) return;
   if (t.dataset.proj) playProject(t.dataset.proj);
-  if (t.dataset.ib) answerProject(t.dataset.id, t.dataset.ib === 'yes');
+  if (t.dataset.ib) answerProject(t.dataset.id, t.dataset.ib);
 });
 
 /* ================= MULTIPLAYER =================
@@ -5077,7 +5522,7 @@ function updateBadge() {
   const b = $('netBadge');
   if (!net.mode) { b.classList.add('hidden'); return; }
   const n = humanoids.filter(h => h.enabled && !h.ai).length;
-  b.textContent = `🌐 Room ${net.code} · ${n} player${n === 1 ? '' : 's'}`;
+  b.innerHTML = `${pxIcon('globe', 12)} Room ${net.code} · ${n} player${n === 1 ? '' : 's'}`;
   b.classList.remove('hidden');
 }
 function netSend(msg) { if (net.conn && net.conn.open) net.conn.send(msg); }
@@ -5215,7 +5660,7 @@ function hostHandle(h, conn, m) {
       npcHold(h, m.tl >= 0 ? HELD_TOOLS[m.tl] : null); h.netArm = m.ar || 0;
       break;
     case 'chat': { const text = String(m.text || '').slice(0, 100); if (text) { h.say(text); aiOnChat(h, text); } break; }
-    case 'die': kill(h, null); break;
+    case 'die': kill(h, null, false, true); break;   // (they already fell apart on their own screen)
     case 'spawned': if (h.dead) h.spawn(new V3(...m.p)); else h.netPos.set(...m.p); break;
     case 'sword': if (!h.dead) { h.faceYaw = m.y; h.yaw = m.y; swordHit(m.lunge ? 7.5 : 6, m.lunge ? 30 : 10, h); } break;
     case 'shoot': {
@@ -5252,11 +5697,16 @@ function hostHandle(h, conn, m) {
     case 'insert': {
       const o = m.o; if (!o || !Array.isArray(o.size) || !Array.isArray(o.pos)) break;
       makePart({ shape: o.shape, size: o.size.map(n => Math.min(64, Math.max(0.2, +n || 1))), pos: o.pos, rot: o.rot,
-        color: o.color, anchored: !!o.anchored, kill: !!o.kill, bouncy: !!o.bouncy, trans: o.trans });
+        color: o.color, anchored: !!o.anchored, destroy: !!o.anchored && !!o.destroy, kill: !!o.kill, bouncy: !!o.bouncy, trans: o.trans });
       aiOnBuild(new V3(...o.pos), h);
       break;
     }
     case 'drophat': dropHat(h); break;
+    case 'cmd': {   // an admin command (only counts if they proved they're the admin when they joined)
+      const out = h.admin ? worldCmd(String(m.line || '').slice(0, 200), h) : 'Only the admin can use commands.';
+      if (out) netSendTo(conn, { t: 'cmdout', text: out });
+      break;
+    }
   }
 }
 // what everyone sees, about 15 times a second: where people are, and flying balls/bombs/hats.
@@ -5276,6 +5726,7 @@ function buildSnapshot() {
   for (const s of superballs) pr.push([s.pid, 'sb', ...arr3(s.body.position), s.color]);
   for (const b of bombs) pr.push([b.pid, 'bm', ...arr3(b.body.position), '']);
   for (const hp of hatPickups) { const q = hp.body.quaternion; pr.push([hp.pid, 'hat', ...arr3(hp.body.position), hp.id, r3(q.x), r3(q.y), r3(q.z), r3(q.w)]); }
+  for (const c of cars) { const q = c.mesh.quaternion; pr.push([c.pid, 'car', ...arr3(c.mesh.position), c.color, r3(q.x), r3(q.y), r3(q.z), r3(q.w)]); }
   return { t: 's', h: hs, p: [], pr };
 }
 // online, the server runs the brick physics, so every loose brick here only follows its updates
@@ -5350,12 +5801,18 @@ function clientHandle(m) {
     case 'ev': for (const e of m.e) clientEvent(e); break;
     case 's': clientSnapshot(m); break;
     case 'hurt': player.health = m.hp; SFX.hurt(); break;
+    case 'cmdout': cmdOut(String(m.text || '')); break;
+    case 'set':   // the admin changed my walk / jump (/freeze) or gave me god mode
+      if ('walk' in m) player.walk = Math.max(0, +m.walk || 0); if ('jumpPow' in m) player.jumpPow = Math.max(0, +m.jumpPow || 0); if ('god' in m) player.god = !!m.god;
+      break;
+    case 'tp': if (Array.isArray(m.p) && !player.dead) { player.body.position.set(+m.p[0] || 0, +m.p[1] || 5, +m.p[2] || 0); player.body.velocity.set(0, 0, 0); } break;   // the admin brought me
     case 'kb': if (!player.dead) { player.body.velocity.x += m.v[0]; player.body.velocity.y += m.v[1]; player.body.velocity.z += m.v[2]; } break;
     case 'cloned': if (partsByNid.has(m.nid)) startDrag(partsByNid.get(m.nid)); else net.pendingClone = m.nid; break;
   }
 }
 function clientEnter(m) {
   net.mode = 'client'; net.myHid = m.you; player.hid = m.you; player.name = myName();
+  if (m.place) net.place = m.place;   // (so friends see which place this room is)
   audioInit(); stopDrag(); if (equipped) equip(TOOLS.indexOf(equipped));
   clearUnlocked(); [...hatPickups].forEach(removeHatPickup);
   mirrorBricks();
@@ -5422,10 +5879,11 @@ function clientEvent(e) {
     }
     case 'chat': { if (e[1] === net.myHid) break; const h = humByHid(e[1]); if (h) h.say(e[2]); break; }
     case 'sys': sysChat(e[1]); break;
-    case 'kill': { const h = who(e[1]); if (h) kill(h, e[2] ? who(e[2]) : null, true); break; }
+    case 'ann': showBanner(String(e[1] || '')); break;
+    case 'kill': { const h = who(e[1]); if (h) kill(h, e[2] ? who(e[2]) : null, true, true); break; }   // the host decided
     case 'boom': explodeFx(new V3(...e[1]), e[2]); break;
     case 'fx':
-      if (e[1] === 'rk') spawnRocket(new V3(...e[2]), new V3(...e[3]), null, true);
+      if (e[1] === 'rk') spawnRocket(new V3(...e[2]), new V3(...e[3]), null, true, !!e[4]);
       else if (e[1] === 'pb') spawnPaintball(new V3(...e[2]), new V3(...e[3]), null, e[4], true);
       break;
     case 'sfx': if (e[3] !== net.myHid) sfxAt(e[1], new V3(...e[2]), ...(e[1] === 'tick' ? e[4] || [] : [])); break;
@@ -5438,7 +5896,11 @@ function clientEvent(e) {
 function clientSnapshot(m) {
   for (const r of m.h) {
     const [hid, x, y, z, yaw, fl, tl, arm, hp, kos, wos, thought] = r;
-    if (hid === net.myHid) { player.kos = kos; player.wos = wos; if (!player.dead) player.health = hp; continue; }
+    if (hid === net.myHid) {
+      player.kos = kos; player.wos = wos; if (!player.dead) player.health = hp;
+      if (fl & 8) player.ff = Math.max(player.ff, 0.3);   // the host says I'm shielded (spawn, /ff): so kill bricks here can't get me either
+      continue;
+    }
     const h = humByHid(hid);
     if (!h || !h.netCtl) continue;
     (h.netPos || (h.netPos = new V3())).set(x, y, z);
@@ -5462,6 +5924,7 @@ function clientSnapshot(m) {
 function makePropMesh(kind, extra) {
   if (kind === 'sb') return new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), partMats(extra || '#C4281C')[0]);
   if (kind === 'bm') return new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 12), phong({ color: '#1B2A35' }));
+  if (kind === 'car') return makeCarMesh(extra);
   return makeHat(extra);
 }
 const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion();
@@ -5635,7 +6098,7 @@ function updateMe() {
   player.name = n; player.badge = me.badge;
   $('meName').textContent = n; $('hiName').textContent = `Hi, ${n}!`;
   $('meBadge').textContent = me.badge ? '#' + me.badge : ''; $('meBadge').classList.toggle('hidden', !me.badge);
-  $('mpMe').textContent = me.badge ? `${n} #${me.badge}` : n;
+  $('mpMe').textContent = $('setMe').textContent = me.badge ? `${n} #${me.badge}` : n;
   $('meIdLine').innerHTML = me.badge
     ? `Your badge: <span class="badge">#${me.badge}</span> &middot; <span class="fm-link" id="copyIdBtn" title="Safe to share: it can check your badge but can't make it">copy my public ID</span>`
     : `<span class="fm-link" data-signin>Add a password</span> to get a badge.`;
@@ -5774,6 +6237,328 @@ async function signinStart() {
   updateMe(); openSignin('first');
 }
 
+/* ================= ADMIN COMMANDS =================
+   The admin's command bar: press / in a game. Commands that only change your own character or view run right
+   here. The ones that touch other people or the world ("world" below) run wherever the world is: this game in
+   solo play, or the room's server in multiplayer, which only runs them for someone who proved they're the admin. */
+const fwd = (h, d) => new V3(h.pos.x + Math.sin(h.yaw) * d, h.pos.y, h.pos.z + Math.cos(h.yaw) * d);
+// who a command means: me, all, others, or the start of someone's name (Guests too)
+function findHum(q, who) {
+  q = String(q || '').trim().toLowerCase();
+  const live = humanoids.filter(h => h.enabled);
+  if (!q || q === 'me') return [who];
+  if (q === 'all') return live;
+  if (q === 'others') return live.filter(h => h !== who);
+  return live.filter(h => h.name.toLowerCase() === q).concat(live.filter(h => h.name.toLowerCase().startsWith(q) && h.name.toLowerCase() !== q)).slice(0, 1);
+}
+const names = (list) => list.map(h => h.name).join(', ');
+const PLAYER_ARG = () => ['me', 'all', 'others', ...humanoids.filter(h => h.enabled).map(h => h.name)];
+const WEARABLES = () => [...HATS, ...SHIRTS, ...PANTS, ...TSHIRTS, ...FACES].filter(i => i.id !== 'none' && (!i.admin || adminPriv));
+function showBanner(text) {
+  if (!text) return;
+  $('annBanner').innerHTML = `<small>ANNOUNCEMENT FROM THE ADMIN</small>${escHtml(text)}`;
+  $('annBanner').classList.remove('hidden'); SFX.spawn();
+  clearTimeout(showBanner.t); showBanner.t = setTimeout(() => $('annBanner').classList.add('hidden'), 6000);
+}
+const CMDS = [
+  { name: 'help', use: '', desc: 'list every command', run: () => { CMDS.forEach(c => cmdOut(`/${c.name} ${c.use}  - ${c.desc}`)); return ''; } },
+  { name: 'speed', use: '<number>', desc: 'your walk speed (normal 16)', hint: () => ['16', '32', '60', '100'],
+    run: ([n]) => { const v = Math.min(200, Math.max(1, +n || WALK)); player.walk = v; return `Walk speed is ${v}.`; } },
+  { name: 'jump', use: '<number>', desc: 'your jump power (normal 50)', hint: () => ['50', '100', '150'],
+    run: ([n]) => { const v = Math.min(400, Math.max(5, +n || JUMP)); player.jumpPow = v; return `Jump power is ${v}.`; } },
+  { name: 'gravity', use: '<number>', desc: 'how hard things fall (normal 196)', hint: () => ['196', '60', '20'],
+    run: ([n]) => { if (net.mode) return 'Gravity only changes in solo play.'; const v = Math.min(600, Math.max(0, +(n ?? GRAV))); world.gravity.set(0, -v, 0); return `Gravity is ${v}.`; } },
+  { name: 'tp', use: '<player|spawn|x y z>', desc: 'teleport yourself', hint: () => ['spawn', ...PLAYER_ARG().slice(3)],
+    run: (a) => {
+      let to;
+      if (a.length >= 3 && a.slice(0, 3).every(s => s !== '' && !isNaN(+s))) to = new V3(+a[0], +a[1], +a[2]);
+      else if ((a[0] || '').toLowerCase() === 'spawn') to = SPAWN.clone();
+      else { const [h] = findHum(a.join(' '), player); if (!h || h === player) return 'Nobody by that name.'; to = fwd(h, -4); to.y = h.pos.y + 1; }
+      player.body.position.set(to.x, to.y + 1, to.z); player.body.velocity.set(0, 0, 0); return 'Whoosh!';
+    } },
+  { name: 'wear', use: '<item>', desc: 'put on any hat, shirt, pants, T-shirt or face', hint: () => WEARABLES().map(i => i.name),
+    run: (a) => {
+      const q = a.join(' ').toLowerCase(), it = WEARABLES().find(i => i.id === q || i.name.toLowerCase() === q) || WEARABLES().find(i => i.name.toLowerCase().startsWith(q));
+      if (!q || !it) return 'No item like that. Try /wear tinpot';
+      const slot = HATS.includes(it) ? 'hat' : SHIRTS.includes(it) ? 'shirt' : PANTS.includes(it) ? 'pants' : TSHIRTS.includes(it) ? 'tshirt' : 'face';
+      look[slot] = it.id; saveLook(); refreshLook(); return `You put on the ${it.name}.`;
+    } },
+  { name: 'sky', use: '<panorama|golden>', desc: 'change the sky', hint: () => ['panorama', 'golden'], run: ([s]) => { applySky(s === 'golden' ? 'golden' : 'panorama'); return 'New sky!'; } },
+  { name: 'freecam', use: '', desc: 'fly the camera around (F)', run: () => { toggleFreecam(); return ''; } },
+  { name: 'trailer', use: '', desc: 'the trailer camera (P)', run: () => { closeCmd(); startTrailer(); return ''; } },
+  { name: 'clearchat', use: '', desc: 'empty the chat', run: () => { $('chatlog').innerHTML = ''; return ''; } },
+  // world commands
+  { name: 'kill', world: true, use: '<player|all|others>', desc: 'knock someone out', hint: PLAYER_ARG,
+    run: (a, who) => { const hs = findHum(a.join(' '), who).filter(h => !h.dead); hs.forEach(h => kill(h, who, false, true)); return hs.length ? `Knocked out ${names(hs)}.` : 'Nobody to knock out.'; } },
+  { name: 'heal', world: true, use: '<player|all>', desc: 'back to full health', hint: PLAYER_ARG,
+    run: (a, who) => { const hs = findHum(a.join(' '), who).filter(h => !h.dead); hs.forEach(h => { h.health = 100; if (h.tag) h.drawTag(); }); return hs.length ? `Healed ${names(hs)}.` : 'Nobody to heal.'; } },
+  { name: 'ff', world: true, use: '<player|all>', desc: 'a forcefield for 20 seconds', hint: PLAYER_ARG,
+    run: (a, who) => { const hs = findHum(a.join(' '), who).filter(h => !h.dead); hs.forEach(h => { h.ff = 20; }); return hs.length ? `Forcefield on ${names(hs)}.` : 'Nobody to protect.'; } },
+  { name: 'explode', world: true, use: '<player|here>', desc: 'KABOOM', hint: () => ['here', ...PLAYER_ARG().slice(3)],
+    run: (a, who) => {
+      const q = a.join(' ').toLowerCase();
+      const at = q === 'here' || !q ? fwd(who, 12) : (() => { const [h] = findHum(q, who); return h && new V3(h.pos.x, h.pos.y, h.pos.z); })();
+      if (!at) return 'Nobody by that name.';
+      explode(at, 9, who); return 'KABOOM!';
+    } },
+  { name: 'bring', world: true, use: '<player|all|others>', desc: 'teleport someone to you', hint: PLAYER_ARG,
+    run: (a, who) => {
+      const hs = findHum(a.join(' ') || 'others', who).filter(h => h !== who && !h.dead);
+      hs.forEach((h, i) => {
+        const to = fwd(who, 5 + i * 2); to.y = who.pos.y + 1;
+        if (h.conn) netSendTo(h.conn, { t: 'tp', p: [to.x, to.y, to.z] });   // a player in my room moves themselves
+        else { h.body.position.set(to.x, to.y, to.z); h.body.velocity.set(0, 0, 0); if (h.netPos) h.netPos.copy(to); }
+      });
+      return hs.length ? `Brought ${names(hs)}.` : 'Nobody to bring.';
+    } },
+  { name: 'build', world: true, use: '<thing>', desc: 'build what the Guests build, in front of you', hint: () => Object.keys(BLUEPRINTS),
+    run: ([t], who) => {
+      const type = Object.keys(BLUEPRINTS).find(k => k === (t || '').toLowerCase()) || Object.keys(BLUEPRINTS).find(k => k.startsWith((t || '').toLowerCase()));
+      if (!t || !type) return `Build what? ${Object.keys(BLUEPRINTS).join(', ')}`;
+      const site = fwd(who, 14);
+      for (const [x, y, z, w, h, d, col] of BLUEPRINTS[type]())
+        makePart({ size: [w, h, d], pos: [site.x + x, 0.6 + y * 1.202 + (h < 1 ? -0.4 : 0), site.z + z], color: col ? BC[col] : y === 3 ? BC['Bright red'] : BC['Bright blue'], anchored: true, destroy: true });
+      return `Built a ${type}!`;
+    } },
+  { name: 'clear', world: true, use: '', desc: 'remove every brick that isn\'t part of the place', run: () => { const n = parts.filter(p => !p.locked).length; clearUnlocked(); return `Removed ${n} bricks.`; } },
+  { name: 'reset', world: true, use: '', desc: 'put the whole place back the way it started', run: () => {
+    if (net.mode) return 'Reset only works in solo play. (Try /clear.)';
+    playPlace(currentPlace === 'classic' ? 'classic' : 'baseplate', { guests: currentGuests }); return 'Place reset.';
+  } },
+  { name: 'guests', world: true, use: '<on|off>', desc: 'bring the Guests in or send them home', hint: () => ['on', 'off'],
+    run: ([s]) => {
+      if (net.mode) return 'The Guests can only be switched in solo play.';
+      const on = s !== 'off'; currentGuests = on;
+      npcs.forEach(n => { if (on && !n.enabled) n.setEnabled(true); else if (!on && n.enabled) n.setEnabled(false); });
+      renderLB(); return on ? 'The Guests are here!' : 'The Guests went home.';
+    } },
+  { name: 'announce', world: true, use: '<message>', desc: 'a big message on everyone\'s screen',
+    run: (a) => { const t = cleanText(a.join(' ')).slice(0, 120); if (!t) return 'Announce what?'; netEv(['ann', t]); netEv(['sys', `📢 ${t}`]); showBanner(t); sysChat(`📢 ${t}`); return ''; } },
+  { name: 'kick', world: true, use: '<player>', desc: 'send a player out of the room', hint: () => PLAYER_ARG().slice(3),
+    run: (a, who) => {
+      if (!net.mode) return 'Kicking only works in multiplayer.';
+      const [h] = findHum(a.join(' '), who);
+      if (!h || !h.conn || h === who) return 'No player by that name.';
+      netSendTo(h.conn, { t: 'reject', why: 'The admin kicked you from the room.' }); setTimeout(() => { h.conn.close(); hostDrop(h.conn); }, 300);
+      return `Kicked ${h.name}.`;
+    } },
+];
+/* ---- the unfair ones >:) ---- */
+const clampN = (n, lo, hi, def) => Math.min(hi, Math.max(lo, Math.round(+n || def)));
+const rnd = (a) => (Math.random() - 0.5) * 2 * a;
+// change someone's walk / jump / god: a player in a room keeps their own character, so they get told
+function setStats(h, s) {
+  if ('walk' in s) h.walk = s.walk; if ('jumpPow' in s) h.jumpPow = s.jumpPow; if ('god' in s) h.god = s.god;
+  if (h.conn) netSendTo(h.conn, { t: 'set', ...s });
+}
+// throw someone (a player in a room gets the push sent to them, the way explosions do)
+function flingHum(h, vx, vy, vz) {
+  if (h.conn) netSendTo(h.conn, { t: 'kb', v: [vx, vy, vz] });
+  else { h.body.velocity.x += vx; h.body.velocity.y += vy; h.body.velocity.z += vz; }
+}
+// /car: a car made of the Guests' car bricks that speeds off, runs over everyone in its way, then blows up
+const cars = [];
+function makeCarMesh(color) {
+  const g = new THREE.Group();
+  for (const [x, y, z, w, h, d, col] of BLUEPRINTS.car()) {
+    const m = new THREE.Mesh(boxGeo(w, h, d), partMats(col ? BC[col] : color || BC['Bright red']));
+    m.position.set(x, 0.6 + y * 1.202 + (h < 1 ? -0.4 : 0), z); m.castShadow = true; g.add(m);
+  }
+  return g;
+}
+function spawnCar(who, toward) {
+  const dir = toward ? new V3(toward.x - who.pos.x, 0, toward.z - who.pos.z).normalize() : new V3(Math.sin(who.yaw), 0, Math.cos(who.yaw));
+  const color = rpick([BC['Bright red'], BC['Bright blue'], BC['Bright yellow'], BC['Bright green'], BC['Black']]);
+  const mesh = makeCarMesh(color); mesh.position.set(who.pos.x + dir.x * 6, who.pos.y - HY, who.pos.z + dir.z * 6);
+  mesh.rotation.y = Math.atan2(dir.z, -dir.x);   // (the car's front is its -x side)
+  scene.add(mesh);
+  cars.push({ mesh, dir, owner: who, life: 3.2, hit: new Set(), pid: net.nextPid++, color });
+  sfxAt('rocket', mesh.position);
+}
+function updateCars(dt) {
+  for (let i = cars.length - 1; i >= 0; i--) {
+    const c = cars[i], p = c.mesh.position;
+    p.addScaledVector(c.dir, 75 * dt); c.life -= dt;
+    for (const h of humanoids) {   // splat
+      if (h === c.owner || h.dead || !h.enabled || c.hit.has(h) || h.ff > 0 || h.god) continue;   // (shields: the car just goes through)
+      if (Math.hypot(h.pos.x - p.x, h.pos.z - p.z) < 4 && Math.abs(h.pos.y - HY - p.y) < 5) {
+        c.hit.add(h); flingHum(h, c.dir.x * 90, 70, c.dir.z * 90); later(() => kill(h, c.owner));
+      }
+    }
+    if (c.life <= 0) { scene.remove(c.mesh); cars.splice(i, 1); explode(new V3(p.x, p.y + 2, p.z), 10, c.owner); }
+  }
+}
+const FUN_CMDS = [
+  { name: 'fly', use: '', desc: 'fly! Space/E up, Q down (again to land)', run: () => { player.flying = !player.flying; return player.flying ? 'You can fly! Space or E goes up, Q goes down.' : 'Back on your feet.'; } },
+  { name: 'god', world: true, use: '', desc: 'nothing can knock you out (again to turn off)',
+    run: (a, who) => { setStats(who, { god: !who.god }); return who.god ? 'God mode ON. Nothing can touch you.' : 'God mode off. You are mortal again.'; } },
+  { name: 'rockets', world: true, use: '[how many]', desc: 'rockets out of you in every direction', hint: () => ['50', '150', '300'],
+    run: ([n], who) => {
+      const N = clampN(n, 1, 300, 300); who.ff = Math.max(who.ff, N * 0.012 + 3);   // (your own rockets can't get you)
+      for (let i = 0; i < N; i++) setTimeout(() => {
+        if (!who.enabled || who.dead) return;
+        const a = i * 2.39996, dir = new V3(Math.cos(a), 0.05 + (i % 9) * 0.07, Math.sin(a)).normalize();
+        spawnRocket(new V3(who.pos.x, who.pos.y + 1.5, who.pos.z).addScaledVector(dir, 3), dir, who, false, true);
+      }, i * 12);
+      return `${N} rockets incoming. Run, everyone.`;
+    } },
+  { name: 'bombs', world: true, use: '[how many]', desc: 'a pile of timebombs all around you', hint: () => ['20', '40', '60'],
+    run: ([n], who) => {
+      const N = clampN(n, 1, 60, 40); who.ff = Math.max(who.ff, 6);
+      for (let i = 0; i < N; i++) spawnBomb(new V3(who.pos.x + rnd(28), who.pos.y + 10 + Math.random() * 10, who.pos.z + rnd(28)), new V3(rnd(6), 0, rnd(6)), who);
+      return `${N} bombs. 3... 2... 1...`;
+    } },
+  { name: 'bombrain', world: true, use: '<player|all|others>', desc: 'bombs fall right on top of them', hint: PLAYER_ARG,
+    run: (a, who) => {
+      const hs = findHum(a.join(' ') || 'others', who).filter(h => !h.dead);
+      hs.forEach(h => { for (let i = 0; i < 6; i++) spawnBomb(new V3(h.pos.x + rnd(4), h.pos.y + 14 + i * 3, h.pos.z + rnd(4)), new V3(0, -5, 0), who); });
+      return hs.length ? `It's raining bombs on ${names(hs)}.` : 'Nobody to bomb.';
+    } },
+  { name: 'car', world: true, use: '[player]', desc: 'a speeding car that runs everyone over', hint: () => PLAYER_ARG().slice(3),
+    run: (a, who) => {
+      const q = a.join(' '), [t] = q ? findHum(q, who) : [];
+      if (q && (!t || t === who)) return 'Nobody by that name.';
+      spawnCar(who, t && new V3(t.pos.x, t.pos.y, t.pos.z)); return t ? `Beep beep, ${t.name}!` : 'Beep beep!';
+    } },
+  { name: 'brickrain', world: true, use: '[how many]', desc: 'bricks fall from the sky on everyone', hint: () => ['40', '80', '150'],
+    run: ([n], who) => {
+      const N = clampN(n, 1, 150, 80), targets = humanoids.filter(h => h.enabled && !h.dead);
+      for (let i = 0; i < N; i++) {
+        const h = targets[i % targets.length] || who;
+        makePart({ size: rpick([[4, 1.2, 2], [2, 1.2, 2], [4, 1.2, 4], [1, 1.2, 4]]), pos: [h.pos.x + rnd(14), 40 + Math.random() * 50, h.pos.z + rnd(14)],
+          rot: [Math.random() * 3, Math.random() * 3, 0], color: PALETTE[(Math.random() * 12) | 0][1] });
+      }
+      return `${N} bricks are on their way down. Look up!`;
+    } },
+  { name: 'ballpit', world: true, use: '[how many]', desc: 'a pile of bouncy balls', hint: () => ['20', '40', '80'],
+    run: ([n], who) => {
+      const N = clampN(n, 1, 80, 40);
+      for (let i = 0; i < N; i++) makePart({ shape: 'ball', size: [3, 3, 3], bouncy: true, pos: [who.pos.x + rnd(16), who.pos.y + 8 + Math.random() * 20, who.pos.z + rnd(16)], color: PALETTE[(Math.random() * 12) | 0][1] });
+      return 'Ball pit!';
+    } },
+  { name: 'fling', world: true, use: '<player|all|others>', desc: 'launch them into the sky', hint: PLAYER_ARG,
+    run: (a, who) => {
+      const hs = findHum(a.join(' ') || 'others', who).filter(h => !h.dead && h !== who);
+      hs.forEach(h => flingHum(h, rnd(60), 170 + Math.random() * 60, rnd(60)));
+      return hs.length ? `Yeet! (${names(hs)})` : 'Nobody to fling.';
+    } },
+  { name: 'freeze', world: true, use: '<player|all|others>', desc: "they can't move for 10 seconds", hint: PLAYER_ARG,
+    run: (a, who) => {
+      const hs = findHum(a.join(' ') || 'others', who).filter(h => !h.dead && h !== who);
+      hs.forEach(h => { setStats(h, { walk: 0.001, jumpPow: 0.001 }); setTimeout(() => setStats(h, { walk: 0, jumpPow: 0 }), 10000); });
+      return hs.length ? `Frozen solid: ${names(hs)}.` : 'Nobody to freeze.';
+    } },
+  { name: 'hat', world: true, use: '<player|all> <hat>', desc: 'put any hat on anyone',
+    hint: (arg) => (arg.includes(' ') ? HATS.filter(h => h.id !== 'none').map(h => arg.slice(0, arg.lastIndexOf(' ') + 1) + h.id) : PLAYER_ARG().map(p => p + ' ')),
+    run: (a, who) => {
+      const q = (a[a.length - 1] || '').toLowerCase(), hat = HATS.find(h => h.id === q) || HATS.find(h => h.id !== 'none' && h.name.toLowerCase().startsWith(q));
+      if (!hat || a.length < 2) return 'Try: /hat all pumpkin';
+      const hs = findHum(a.slice(0, -1).join(' '), who).filter(h => !h.dead);
+      hs.forEach(h => { h.setHat(hat.id); if (h === player) { look.hat = hat.id; saveLook(); } });
+      return hs.length ? `${names(hs)} got the ${hat.name}.` : 'Nobody by that name.';
+    } },
+  { name: 'nuke', world: true, use: '', desc: 'a GIANT explosion around you (you survive)',
+    run: (a, who) => { who.ff = Math.max(who.ff, 4); explode(new V3(who.pos.x, who.pos.y, who.pos.z), 45, who); return '☢ NUKE ☢'; } },
+];
+CMDS.push(...FUN_CMDS);
+// run a world command for "who" (here, or on the room's server); the answer goes back to them
+function worldCmd(line, who) {
+  const [name, ...args] = line.trim().replace(/^\//, '').split(/\s+/);
+  const c = CMDS.find(x => x.world && x.name === (name || '').toLowerCase());
+  if (!c) return `Unknown command "${name}".`;
+  try { return c.run(args, who) || ''; } catch (e) { return `That didn't work (${e.message}).`; }
+}
+const cmdOut = (t) => { if (t) sysChat('» ' + t); };
+const cmdHistory = [];
+let cmdSel = 0, cmdHistI = -1, cmdShown = false;
+// the command bar
+function openCmd() {
+  if (!adminPriv || !started) return;
+  $('cmdBox').classList.remove('hidden'); $('cmdInput').value = '/'; cmdHistI = -1; cmdSuggest();
+  $('cmdInput').focus();   // (right away, so nothing you type next goes to the game)
+}
+function closeCmd() { $('cmdBox').classList.add('hidden'); $('cmdInput').blur(); }
+function runCmd(line) {
+  line = line.trim(); if (!line || line === '/') return;
+  cmdHistory.unshift(line); cmdHistory.length = Math.min(cmdHistory.length, 30);
+  const [name, ...args] = line.replace(/^\//, '').split(/\s+/);
+  const c = CMDS.find(x => x.name === name.toLowerCase());
+  if (!c) { const s = cmdMatches(name)[0]; cmdOut(`Unknown command "/${name}".${s ? ` Did you mean /${s.name}?` : ' Type /help.'}`); return; }
+  if (c.world && net.mode === 'client') { netSend({ t: 'cmd', line }); return; }   // the room's server runs the world
+  try { cmdOut(c.run(args, player)); } catch (e) { cmdOut(`That didn't work (${e.message}).`); }
+}
+// a little "how different are these words" for typos: /kil, /tleport, /explod...
+function editDist(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+// commands that start with what you typed, then ones that contain it, then ones that are close (a typo or two away)
+function cmdMatches(q) {
+  q = q.toLowerCase();
+  if (!q) return CMDS.slice();
+  const starts = CMDS.filter(c => c.name.startsWith(q)), has = CMDS.filter(c => !c.name.startsWith(q) && c.name.includes(q));
+  const close = CMDS.filter(c => !starts.includes(c) && !has.includes(c) && editDist(q, c.name.slice(0, Math.max(q.length, Math.min(c.name.length, q.length + 1)))) <= (q.length > 3 ? 2 : 1));
+  return [...starts, ...has, ...close];
+}
+// the suggestions above the bar: commands while you type the name, then options for what comes after it
+function cmdSuggest() {
+  const v = $('cmdInput').value.replace(/^\//, ''), sp = v.indexOf(' ');
+  let rows = [];
+  if (sp < 0) rows = cmdMatches(v).map(c => ({ fill: `/${c.name} `, html: `<b>/${c.name}</b> <span class="u">${escHtml(c.use)}</span><span class="d">${escHtml(c.desc)}</span>` }));
+  else {
+    const c = CMDS.find(x => x.name === v.slice(0, sp).toLowerCase()), arg = v.slice(sp + 1).toLowerCase();
+    if (c && c.hint) rows = c.hint(v.slice(sp + 1)).filter((o, i, all) => all.indexOf(o) === i && o.toLowerCase().startsWith(arg) && o.toLowerCase() !== arg).slice(0, 60)
+      .map(o => ({ fill: `/${c.name} ${o}`, html: `<b>/${c.name}</b> <span class="u">${escHtml(o)}</span><span class="d">${escHtml(c.desc)}</span>` }));
+    else if (c) rows = [{ fill: `/${c.name} `, html: `<b>/${c.name}</b> <span class="u">${escHtml(c.use)}</span><span class="d">${escHtml(c.desc)}</span>` }];
+  }
+  cmdSuggest.rows = rows; cmdSel = Math.min(cmdSel, Math.max(0, rows.length - 1));
+  $('cmdSuggest').innerHTML = rows.map((r, i) => `<div class="cmd-s ${i === cmdSel ? 'on' : ''}" data-i="${i}">${r.html}</div>`).join('');
+  $('cmdSuggest').querySelector('.cmd-s.on')?.scrollIntoView({ block: 'nearest' });   // (every match is listed: scroll, or use the arrow keys)
+}
+$('cmdInput').addEventListener('input', () => { cmdSel = 0; cmdSuggest(); });
+$('cmdInput').addEventListener('keydown', (e) => {
+  e.stopPropagation();   // typing here never moves you or opens menus
+  const rows = cmdSuggest.rows || [];
+  if (e.key === 'Escape') { closeCmd(); return; }
+  if (e.key === 'Tab') { e.preventDefault(); if (rows[cmdSel]) { $('cmdInput').value = rows[cmdSel].fill; cmdSel = 0; cmdSuggest(); } return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const up = e.key === 'ArrowUp';
+    if (rows.length > 1 && $('cmdInput').value.length > 1) { cmdSel = (cmdSel + (up ? rows.length - 1 : 1)) % rows.length; cmdSuggest(); return; }
+    cmdHistI = Math.max(-1, Math.min(cmdHistory.length - 1, cmdHistI + (up ? 1 : -1)));   // past commands
+    $('cmdInput').value = cmdHistI < 0 ? '/' : cmdHistory[cmdHistI]; cmdSuggest(); return;
+  }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const v = $('cmdInput').value, name = v.replace(/^\//, '').split(/\s+/)[0];
+    // a command name that's not quite right: fill in the suggestion first instead of failing
+    if (name && !CMDS.some(c => c.name === name.toLowerCase()) && rows[cmdSel] && !v.includes(' ')) { $('cmdInput').value = rows[cmdSel].fill; cmdSuggest(); return; }
+    runCmd(v); $('cmdInput').value = '/'; cmdSel = 0; cmdSuggest();
+  }
+});
+$('cmdSuggest').addEventListener('mousedown', (e) => {
+  const r = e.target.closest('.cmd-s'); if (!r) return;
+  e.preventDefault(); $('cmdInput').value = cmdSuggest.rows[+r.dataset.i].fill; cmdSel = 0; cmdSuggest(); $('cmdInput').focus();
+});
+// the side list of commands (click one to start typing it)
+$('cmdList').innerHTML = CMDS.map(c => `<div data-cmd="${c.name}" title="${escHtml(c.desc)}"><b>/${c.name}</b> <i>${escHtml(c.use)}</i></div>`).join('');
+$('cmdList').addEventListener('click', (e) => {
+  const r = e.target.closest('[data-cmd]'); if (!r) return;
+  openCmd(); setTimeout(() => { $('cmdInput').value = `/${r.dataset.cmd} `; cmdSuggest(); }, 0);
+});
+$('cmdFold').onclick = () => {
+  const f = $('cmdPanel').classList.toggle('folded'); $('cmdFoldIc').textContent = f ? '+' : '–';
+  try { localStorage.setItem('blockburg-cmd-folded', f ? '1' : ''); } catch { }
+};
+try { if (localStorage.getItem('blockburg-cmd-folded')) { $('cmdPanel').classList.add('folded'); $('cmdFoldIc').textContent = '+'; } } catch { }
+function cmdPanelShow(on) {
+  if (on === cmdShown) return;
+  cmdShown = on; $('cmdPanel').classList.toggle('hidden', !on);
+  if (!on) closeCmd();
+}
+
 humanoids.forEach(h => h.postStep(0, 0));
 pageReady = true;
 { let s = 'panorama'; try { s = localStorage.getItem(SKY_KEY) || s; } catch { } applySky(s); }
@@ -5781,10 +6566,10 @@ if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); }   // (the serve
 refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
-if (!HEADLESS) { startUpdates(); signinStart(); }
+if (!HEADLESS) { pxSwap(); startUpdates(); signinStart(); }
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
-  keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
+  keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, pxUrl, BLUEPRINTS, makePart, BC, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
   get currentPlace() { return currentPlace; }, get currentFile() { return currentFile; }, loadPlaces, get dragging() { return dragging; },
   pickAt(x, y) { mouseNDC.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); const h = pick(); return h && (h.object.userData.part ? 'part ' + h.object.userData.part.nid : h.object.userData.hum ? 'hum ' + h.object.userData.hum.name : 'other'); },
   tick(frames) { for (let i = 0; i < frames; i++) frame(last + 1000 / 60); } };

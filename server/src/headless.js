@@ -26,7 +26,10 @@ class FakeRenderer {
     this.shadowMap = { enabled: false, type: 0 }; this.capabilities = { getMaxAnisotropy: () => 1 };
     this.info = { render: {} };
   }
-  setSize() { } setPixelRatio() { } render() { } setClearColor() { } dispose() { } getPixelRatio() { return 1; }
+  setSize() { } setPixelRatio() { } setClearColor() { } dispose() { } getPixelRatio() { return 1; }
+  // nothing to draw, but a real render also works out where everything is in the world (matrixWorld).
+  // Rockets and paintballs aim with raycasts that need that, so keep doing that part.
+  render(scene) { scene?.updateMatrixWorld?.(); }
   compile() { } setAnimationLoop() { } getSize(v) { return v ? v.set(800, 600) : { x: 800, y: 600 }; }
 }
 
