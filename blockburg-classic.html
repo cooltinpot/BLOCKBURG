@@ -446,6 +446,9 @@
       <div class="cat-tabs"><button class="s-btn on" data-cat="hats">Hats</button><button class="s-btn" data-cat="shirts">Shirts</button><button class="s-btn" data-cat="pants">Pants</button><button class="s-btn" data-cat="tshirts">T-Shirts</button><button class="s-btn" data-cat="faces">Faces</button></div>
       <p>It's Play Solo, so everything is free. Click <b>Wear</b>!</p>
       <div class="hatgrid" id="hatGrid"></div>
+      <h4 class="proj-h">✨ Outfit Sets</h4>
+      <p class="fm-sm" style="margin-top:-4px">Wear every piece of a set and you get a special effect that everyone can see!</p>
+      <div class="hatgrid" id="setList"></div>
     </div></div></div>
 
     <div class="page hidden" id="p-character"><div class="cols">
@@ -1230,6 +1233,29 @@ const FACES = [
   { id: 'pumpkin', name: 'PUMPKIN', price: 'Free (was 31 Tix)', img: PUMPKIN_IMG,
     desc: 'AAAAAAAAAAAAAA AAAAAAAAAAAAAAAA AAAAAAAAAAAAA!!! (he saw the knife)' },
 ];
+// more faces (face-cool.png, face-frosty.png, face-starstruck.png, face-fierce.png)
+const COOL_IMG = new Image();
+COOL_IMG.src = 'data:image/png;base64,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';
+await imgReady(COOL_IMG);
+const FROSTY_IMG = new Image();
+FROSTY_IMG.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGMAAABnCAYAAAAUqvyDAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAA/eSURBVHhe7Z15cFXVHcexCqLY0QFbrFVbqLgUrahjQUErapFFlggqKCWAAUIgJEASQgiYsCdAXnYSKgJSQdGZ1plil+noTP/pbutM/2m14JTsi1StrVTh18/3vhsMyXlZ8CG8cL8z33m55557zj2/3/kt57yXe3sFCNCCS+F0n/o7wFnET6D5fFEFAc4Ovgw/gS3KqIcBzhKkjBOwRRlvwQBnCWthiyLE38MAZwk/h62VsRfug3+GzfBNOBp+EegNn4LPwy1wEDxvcC9srYiOWATPJG6D/4Kt+zwGy2GPRxz8H2w9+M44E54JXAb/Bl19ikthj8PNcAX8O3QNuivMhdGG1jeuvlqoSaNEI2ZxJXwVvg+b4H+ga6DdpVzHEBhN/A66+mrNbBizSISuQbVlLaxrU9YZD8Jo4XrYOrWOxNdgzKIzZfwbKjjeCA/5ZV2lrOwCGA2kQlcfbamFaR8Yk2jrprSy/gPcBJWqthamXI9LAJEoHx4tZXQnfs2FPRoKjMeha/CRWAWjhSPQ1YeLIdijoRne3RT3VzAaUN+fQlcfLirQ92gMg66Bd8R4GA3cD13tR+JR2KOhLYjuuqkHYDRwE3S1H4lvwx6NKdA18I7YH0YDmdDVfiT2eDc1EHYlz2/NsTAaGAVd7UdiIezRuAq6Bt4Rb4HRgNydq/1I3AZ7NEZA18A7onx9NPAkdLUfiQWwR0PpZXfdlBQYDSRBV/uReAfs0Tgdy1CciQb0RZar/UjU7m6PxwfQNfhI1PogGlgPXe27qC2baG3BnNPQzq1LAC5qxRwtoSg7cvXh4kfwvFDGO9AlgEjUqj0aKIOu9l3UZud5gT9BlwBcjOYm4Rro6sPFmP4+ozvQL0BcAnCxBEYLW6GrDxf1dcB5gdmw9cA7SnUzYLSg7fv/Qlc/bTkRnhfozs5ttNLaFvwCuvppTX2zqA3N8wb6FtAliNb8KYw2ZGmuvlrzddgt5Jh9Keew9S1+2y4+YHZhTo1d2svsggKzSyrNeot+1XMSnW1n6wuo4TDa0Pfanf1yRTvLEWEIeeOH9pWiIzak5IjdH2qwceW19lhprT1eWmfTy+ptVlmtTaNsjsrK620mn+OLa+17lY32NSnJb6rrCB22KwrqbHBhtd1YWm13FNXZLRUNNmRDvQ2U5nPesIv8qqcLKeQvsK0wpIgEeKawELbts4WboROVf7Te5cijrNFGlzdYfHG9LeB4fmmjpZbUWCJcWlxnqRX1llRSb2k6h2KWUzeZv5PLGmw2x/eEjtoVfpMdQwIONdnN5Y02wdNygz1dXBPuFCZ4n002s6TB5nBuGp/jCv9pd+U12tWfQzlDoX6n9ApMhpfDMwn9olD/F6JfrCh5EPVDBbkwnWsHxnoZAn64rM5mSLgSspRA+eIWwRc12KLSeluI3ObrEzkt0rmSWsspQ4YocYaUwTX6uVDHKKmzQQX1NkaNndRooy3j4kzMbBHl2ZoBpQ22UjPA03adLdWNlDXbE1jO5OIqu0Y+028yFqAvrq4J/+nGxiobUPIerkjjbLQ0T7CMu7TG5iPsmVjIo6Ej9mhetX0/hLKKGm1+cbWlc251UQ2yqrYVyHA9x4nIaawXTzoCwh6KkOOZ6ckwheM1CHd9aZNtKKi2zSgiy1NEs82lPKEIrevm6CBDs4AbWo5PXEydJ8ua7K5OO4wRlH5gAxQPNFbkk+WNFWVIAcjhycIjNhXZJFAnXhNWikJJqaoH0zVpZT0oYTlxZHGxvEmj3Z/zV3P/Jiu/wa7CKp7AEmRmsoQSOg4h2E0crynCzKRlGlmKaU7HHOMLa2we16RwLo0ApVmQSMdZnoLCgUuuJ6YhCy+psgcQ4Fw8RCqTbSExM6WoGhfdZEl4jyRi6QpNUrgKua3CEjaVNEGOkVW6JranIGTkyVbuLexJ7nnsQBsPogIEORL3sgDhrqJiJQ0UaqajyS008ArHe9B8OR0USPDlzTSKljkn/5jg3Qxmy82mc7zOc2/EFKV6fjcxiUISFYQ9fTuBWkItQpgoZT6K8LyBvAJMK6qy1Yy7grIK5FBJ2XasYxsTVeeTUFAcHmYySllaWGeZlK1WhrW1xr7hdxUG/ux2aZwL82horxry/BsKoewlLnqBmb6HOs9zEy9TZweuqhIF7OXv9dzAGjqSUlJLmu0ZPrPg/PIam7K9yb7udxOTQHhjvQlXy+wPB+IkYkUKnxmMPbm40Z5CVt6x4ijKyw9VWxrjz+a6sBUwcTk3l+tHFvzDblWskdvCi8zbetg++wZTCxWEPIGGN6LJ52lkJyzGKnZwAzvLqi0HZeRSZxsN7ubcD2mshIYrKSunw3KOK1DGOpks1AzZTGdPU/++Lqdw5yCUxqKMMRIqEzO5RLKQe8Etewqqshu2NdsIAvo8ZLeMcYdQSjGyKVDARibhzKrGspHLAiU3BUfseuSm9DZNcQeLudPvDqtg4SJzQaDr8W8htLWZihUIshQ/uZjPLMpKsJBn6CjtZCZB7KBeBgpb6PtKZQoZXuaFGdLREq4bcVqLm3MEct+MP96LgczmkIKyhI5ysIgJjPkqFJDAuPOQxQE+9yKzkCwmnwXeJjwObu0eKcWTkVxdtU1CifHIJ4vjpFCVffbVQPn7NgLtKCOSsNfiz7LocAOdpBKkV3LRBpmgLpQylLLR8FRuZqKCGHWU2qZwfRIZV1Lpe+TWfhBHMZO21Fk/v6uYA/78Sq2iEW4KcphHwuJlUrjfRDzHbYxxMHExXrEUpR1EBgc4X4k8CjRhkdPMSjJKrh3D+RXILJVJ/TiWIRlpzTYfhX623sC/jaQwlQ5SC5TOKiiFhZ9RGPaT4YxB/hBzk5+jwXiU5eXXyhy4YSkxU41jikr/ltBJpjIQ3bTfVcwh7S3rp5nvCY7ERDMeWSxHyCmM8T4Fd2Z+HDIJUe+gz19y/BLXrENO4z23VG0zKF+idlBMNspYrIlN2fRQrX3T745Fnp8/q4JHuSDNhEY6VaDBHSHgldTL4zOFG9GCTyamxlKVXdD55kLl39wwSpiG9SRwfgH1FoXq7W6/q5gD8fJaJtxUrbKZqE8z3pW+UFfisqYoU2SCPsyEW8C4d+HudyPDcmQY0vgLyKBQ2EwpEWWu0ERGrulqz48lcSdTWwUoKkxUCgvTC6stV4pBqIsUlGRqmGE2jW2U8Mmdlaatpt4KKUnXUD+bG8yik5B3LdZQ0GyPy6+qHbk0r7MYRPJrdjFWP1vB21MIwmOc2hZKRg4ZuOnJyOQmvMJwBLsEOWRL6GUsESQbf0InS4nUT2TiJir4S046VgLgdxUGi7hJOolmF1M5R2ZITr2c8kSVoyx1shGmckPKnl6FuSFSOq0+PUWGTa+U8jVY0Bzc02w/0KUTvOIw1Uv87mIK2vJGEeMQ4GLNdFm8PIk8iKyesgytpfIO2whlVflHbCwTeB5ylMBXIpsFXPuM5BhqsinIcoY3SWuwsHr7QUHbtJ/Cu70GpG1SWjSdVAHVCXFEStIqMp9ZnsuNlXEzBzi3G80qg1Dat5A8OpXj3XJf6lhK0qeoTmM5o8IDjPZT1DVSQKE2SOvsCc14eQfK0+W6kVOKNgk1ZuSZyeRdwrllKG6hFnz5xGbKvN1dT0ZN9mA7uRTU2a2qhKktwRrylMIy01MLwvvyc72YQZkCNQrZRgevogQt/J7l2vB1cmM1VuG5NHwr186RhVG2lBscz406d0FjAUr9JXwJkImoNVciQXe2khgFcsabwjkF9jR5AylJSpBMmZSTcVUT/FCgRbFklYzcJuYfNv3e+FQofaPRKWhflTfToRZ8y5npM+FIGkzQDTArsnE/pQSsvWi3QgoiiK2ifCUdlHBTLzIL1kg50r5MmJtaSF490u8qZsF4bmDs0zQeGLaEam/DL4txb4SaqLneRNZ2ECtuZPI0yctTyEGJzErvU66+2eYi6+FabPvNfwYVUukR3JO0m0dnu7h4HY2lbKuy0QTrSUpRZaLUWyfrwAKeY9bv8JRHPazmWa7L93xpE+sSAp72csqa7NFY3w4RkNFFjHMQwfkxLwgr49QCOLwUWMb4Jexw9okMpCzJBfnoa4g05JWsZIbj6Uzs7/jNuqGvAXFHMzCnVC74ER28gPAl1MzyowRk/F5hlecftUmWKteFS8tBSUuwom1cs7MliJMWr8JsNWMUgyYxkJj91922IBHpTxC/k/E+4iUqpKpyX9q1lbA9wftuSsrROSbkLJQYr5U2C+Cv+k11DBobSgOzFLAR8AEEuY9Oi3BVq+lYq+8MhK/jtZRvYEGYS71y/tYupXZ4KzBn7VbmeGbMyjWW96U6grzJ1g/sStYe1zNp7ytuJpEhxjIBH0MWTyKDqUzMCfpunDR/qJToX9o1KI1Di3dtJ2VF6BsUF2h0H43vJzAVMfPXyVI4ziQubMB95aMA+ckyXyHPUm+rZgN/T9I3Y37T5wWkoF1mfeUJovC7AK/BPixYhqHtufKDnquqs+cQ+HNYzV7M8iU+d1G2D83vxBxflsIo34kvXSt3hhIf6bI5Bugc2i/RJp8yKYSfpKwBweeSSe3AjT2Lknbhhl5SMPeyLzIo/OKc4mqbuD1QRPQht4Xwr0MZY0qP2mQC8zwUMdsLWARuLEJxIYn40OIjvx3LO7Qxg9mHrS/Z09VYyi367VSowYaJLOiGbKu2a2N1uyNAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABApx70KN+9HTlnfDHUE/Z1NtV9M5VvdhKL8XV27zO9POgzmvcDn8DXU8mi0Q9OOtnMGb/vfhcxOk8KL419RQzWcz3YIDPiTegS8inQ71o/bswwGlCsaCdYAcMGGCjRo2yhx56yMaNG+d9Dhs2zPr169euroN6UeKlMEA30fad2JaSkmLHjh2zSDh06JDNmjXrlGsclJVcBwN0A3nwpBAvvPDCE/v37/fF3jHeeecdGzRoUGsFtKUeiXo1DNBF6H/Q2rkquaSuKOXDDz+0uLi4U65tQ2Vd34IBugg90Nf5cPj+/ftbWlqavfvuu7742+PTTz+1LVu2tLu2FfXywQ4fVxrgVOhpBhFfv9O3b1+79957PWv56KOPfDWcij179jiv9bkBBugG9PD0fKhVt0ugHvv06WPjx4+3N99801dDGMePH7eMjAznNfBj2GP+Sf+LhLY7VsHD0CXYkxw8eLDl5eWdtJYTJ07Y8OHDnXXhOBjgc0BbJQdhhy9Uv/zyy23atGn2+uuv28cff+zFGke9B2GAKECLuKfgr2GHiundu/exgQMHNjjO7YEBogylqnrvqXP13gHTYYAziBlQO75decd3tF5+GKAT6FEVet/2b+EnsK0i9DaX9g+9CnDGoUfhtX3rVykMcJawDOpVoFrZV6ogwNlFp29tCRDgHEKvXv8Hq+j+FUg7JY0AAAAASUVORK5CYII=';
+await imgReady(FROSTY_IMG);
+const STARSTRUCK_IMG = new Image();
+STARSTRUCK_IMG.src = 'data:image/png;base64,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';
+await imgReady(STARSTRUCK_IMG);
+const FIERCE_IMG = new Image();
+FIERCE_IMG.src = 'data:image/png;base64,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';
+await imgReady(FIERCE_IMG);
+FACES.push(
+  { id: 'cool', name: 'Cool Shades', price: 'Free (was 80 Tix)', img: COOL_IMG,
+    desc: 'Sunglasses indoors. Sunglasses at night. Sunglasses in the obby. Always.' },
+  { id: 'frosty', name: 'Frozen', price: 'Free (was 45 Tix)', img: FROSTY_IMG,
+    desc: 'Brrrrrrrr. B-b-b-b-brrrr. Someone get this noob a jacket.' },
+  { id: 'starstruck', name: 'Starstruck', price: 'Free (was 70 Tix)', img: STARSTRUCK_IMG,
+    desc: 'You just saw a whole galaxy. Up close. It was AMAZING. (Galaxy Wizard set)' },
+  { id: 'fierce', name: 'Fierce', price: 'Free (was 65 Tix)', img: FIERCE_IMG,
+    desc: "One eye on fire. Grin like a volcano that's about to blow." },
+);
 const faceDef = (id) => FACES.find(f => f.id === id) || FACES[0];
 const rpickFace = () => FACES[1 + ((Math.random() * (FACES.length - 1)) | 0)].id;   // any face but the default smile
 const faceCache = {};
@@ -1262,7 +1288,15 @@ const HATS = [
   { id: 'crown', name: 'Golden Crown', price: 'Free (was 500 Tix)', desc: "Bow down, noobs. Ruler of the whole baseplate." },
   { id: 'cap', name: 'Red Baseball Cap', price: 'Free (was 10 Tix)', desc: "Wear it backwards to look 10x cooler. That's the rule." },
   { id: 'chef', name: 'Chef Hat', price: 'Free (was 20 Tix)', desc: "Can't cook? Doesn't matter. The hat does the cooking." },
-  { id: 'pumpkin', name: 'Screaming Pumpkin', price: 'Free (was 31 Tix)', desc: "It screams. It never stops screaming. We have tried everything. Please take it." },
+  { id: 'pumpkin', name: 'Screaming Pumpkin', price: 'Free (was 31 Tix)', desc: "It screams. It never stops screaming. We have tried everything. Please take it. (Pumpkin King set)" },
+  { id: 'icecrown', name: 'Ice Crown', price: 'Free (was 120 Tix)', desc: 'Carved from the coldest ice in Blockburg. Do not lick.' },
+  { id: 'lavahelm', name: 'Lava Lord Helm', price: 'Free (was 150 Tix)', desc: 'Still warm. Literally. Please hold it by the horns.' },
+  { id: 'wizard', name: 'Galaxy Wizard Hat', price: 'Free (was 130 Tix)', desc: 'Contains at least three galaxies and one very small moon. (Galaxy Wizard set)' },
+  { id: 'headphones', name: 'Bass Boost Headphones', price: 'Free (was 45 Tix)', desc: 'Plays the BLOCKBURG theme on repeat. Forever. The lights blink to the beat.' },
+  { id: 'propeller', name: 'Propeller Beanie', price: 'Free (was 35 Tix)', desc: 'Spins all by itself. Does not make you fly. We checked. Twice.' },
+  { id: 'pizza', name: 'Pizza Slice Hat', price: 'Free (was 25 Tix)', desc: 'Extra cheese, extra pepperoni, extra weird looks.' },
+  { id: 'halo', name: 'Golden Halo', price: 'Free (was 90 Tix)', desc: 'For noobs who have never griefed anyone. (Allegedly.)' },
+  { id: 'knight', name: 'Knight Helmet', price: 'Free (was 85 Tix)', desc: 'Clank clank. The visor is mostly for dramatic effect.' },
 ];
 const hatName = (id) => (HATS.find(h => h.id === id) || HATS[0]).name;
 const partyTex = tex(canvas(128, 64, (g) => {
@@ -1355,6 +1389,106 @@ function makeHat(id) {
       const puff = add(new THREE.SphereGeometry(0.82, 20, 12), M('#F2F3F3'), 0, 0.85, 0); puff.scale.y = 0.6;
       break;
     }
+    case 'icecrown': {
+      // see-through ice spikes on a frosty band, little icicles hanging off the bottom
+      const ice = new THREE.MeshPhongMaterial({ color: '#c8ecff', specular: 0xffffff, shininess: 140, transparent: true, opacity: 0.8,
+        envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.45, emissive: '#1a4a6a' });
+      envMats.push(ice);
+      add(Cyl(0.7, 0.72, 0.3, 28), M('#7cc8f0'), 0, 0.02, 0);
+      add(new THREE.TorusGeometry(0.71, 0.05, 8, 28), ice, 0, 0.17, 0, Math.PI / 2);
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * Math.PI * 2, h = i % 2 ? 0.55 : 0.95;
+        add(new THREE.ConeGeometry(i % 2 ? 0.13 : 0.18, h, 6), ice, Math.sin(a) * 0.6, 0.15 + h / 2, Math.cos(a) * 0.6, Math.cos(a) * 0.18, 0, -Math.sin(a) * 0.18);
+        add(new THREE.ConeGeometry(0.06, 0.24, 5), ice, Math.sin(a + 0.4) * 0.7, -0.22, Math.cos(a + 0.4) * 0.7, Math.PI);
+      }
+      add(new THREE.OctahedronGeometry(0.11), phong({ color: '#2e7bd6', emissive: '#103a6a', shininess: 120 }), 0, 0.05, 0.72);
+      break;
+    }
+    case 'lavahelm': {
+      // dark volcanic rock with glowing cracks, two curled horns with hot tips
+      const lava = new THREE.MeshPhongMaterial({ map: lavaRockTex, emissive: '#ffffff', emissiveMap: lavaGlowTex, shininess: 20 });
+      add(Sph(0.76, true), lava, 0, -0.25, 0);
+      add(Cyl(0.78, 0.78, 0.16), M('#2b2220'), 0, -0.2, 0);
+      add(new THREE.BoxGeometry(0.16, 0.5, 0.1), M('#2b2220'), 0, -0.38, 0.77);
+      const hot = new THREE.MeshBasicMaterial({ color: '#ffb347' });
+      for (const s of [-1, 1]) {
+        add(Cyl(0.15, 0.2, 0.5, 10), lava, s * 0.8, 0.05, 0, 0, 0, -s * 1.1);
+        add(Cyl(0.09, 0.15, 0.45, 10), lava, s * 1.08, 0.38, 0, 0, 0, -s * 0.35);
+        add(new THREE.ConeGeometry(0.09, 0.32, 10), hot, s * 1.13, 0.74, 0, 0, 0, s * 0.15);
+      }
+      break;
+    }
+    case 'wizard': {
+      // a tall bent starry cone with a gold band, a crescent moon and a star on the tip
+      const sky = phong({ map: starTex, shininess: 30 }, false), gold = phong({ color: '#f5c518', emissive: '#5a4300', shininess: 90 });
+      add(Cyl(1.15, 1.15, 0.07, 32), sky, 0, -0.05, 0);
+      add(Cyl(0.36, 0.64, 1.1, 28), sky, 0, 0.5, 0);
+      add(Cyl(0.65, 0.65, 0.14, 28), gold, 0, 0.08, 0);
+      const tip = add(new THREE.ConeGeometry(0.36, 1.05, 28), sky, 0.22, 1.43, 0, 0, 0, -0.45);
+      add(new THREE.TorusGeometry(0.14, 0.045, 8, 16, Math.PI * 1.3), gold, 0, 0.62, 0.53, 0, 0, 0.9);
+      const star = add(new THREE.OctahedronGeometry(0.13), gold, 0.48, 1.9, 0); star.scale.set(1, 1, 0.45);
+      star.userData = { spin: 2 }; tip.userData = {};
+      break;
+    }
+    case 'headphones': {
+      // a padded band over the head, chunky red ear cups with blinking lights
+      const band = add(new THREE.TorusGeometry(0.74, 0.07, 10, 32, Math.PI), M('#1B2A35'), 0, -0.48, 0);
+      band.scale.set(1, 1.05, 1);
+      add(new THREE.BoxGeometry(0.5, 0.1, 0.22), M('#3a3a3a'), 0, 0.3, 0);
+      for (const s of [-1, 1]) {
+        add(Cyl(0.32, 0.32, 0.24, 24), M('#C4281C'), s * 0.74, -0.52, 0, 0, 0, Math.PI / 2);
+        add(new THREE.TorusGeometry(0.28, 0.07, 8, 20), M('#1B2A35'), s * 0.62, -0.52, 0, 0, Math.PI / 2);
+        const led = add(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: '#4ff0ff' }), s * 0.87, -0.52, 0);
+        led.userData = { blink: s > 0 ? 0 : 1.6 };
+      }
+      break;
+    }
+    case 'propeller': {
+      // four-color beanie, a little stem and a propeller that never stops
+      ['#C4281C', '#F5CD30', '#0D69AC', '#4B974B'].forEach((c, i) =>
+        add(new THREE.SphereGeometry(0.68, 12, 8, i * Math.PI / 2, Math.PI / 2, 0, Math.PI / 2), M(c), 0, -0.22, 0));
+      add(new THREE.TorusGeometry(0.68, 0.06, 8, 28), M('#F2F3F3'), 0, -0.2, 0, Math.PI / 2);
+      add(Cyl(0.04, 0.04, 0.32, 8), M('#A3A2A5'), 0, 0.56, 0);
+      const prop = new THREE.Group(); prop.position.y = 0.73; g.add(prop);
+      for (const [r, c] of [[0, '#C4281C'], [Math.PI / 2, '#F5CD30']]) { const b = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.03, 0.18), M(c)); b.rotation.set(0.15, r, 0); prop.add(b); }
+      prop.add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), M('#0D69AC')));
+      prop.userData = { spin: 12 };
+      break;
+    }
+    case 'pizza': {
+      // a slice lying on the head, point to the front: cheese, crust and pepperoni
+      // (built pointing +z from its tip, then turned around so the tip sticks out over the face)
+      const slice = new THREE.Group(); slice.position.set(0, 0.2, 0.72); slice.rotation.set(-0.1, Math.PI, 0); g.add(slice);
+      const piece = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); slice.add(m); return m; };
+      piece(new THREE.CylinderGeometry(1.45, 1.45, 0.1, 20, 1, false, -0.36, 0.72), phong({ map: cheeseTex }), 0, 0, 0);
+      piece(new THREE.CylinderGeometry(1.48, 1.48, 0.24, 20, 1, true, -0.38, 0.76), phong({ color: '#a8641f', side: THREE.DoubleSide }), 0, 0.03, 0);
+      piece(new THREE.CylinderGeometry(1.45, 1.45, 0.06, 20, 1, false, -0.36, 0.72), M('#c98a3c'), 0, -0.07, 0);
+      for (const [x, z] of [[0, 0.5], [-0.17, 0.92], [0.2, 0.95], [0.02, 1.25]]) piece(Cyl(0.12, 0.12, 0.03, 14), M('#a3231b'), x, 0.065, z);
+      piece(new THREE.SphereGeometry(0.1, 10, 6), M('#f2c14e'), 0.05, -0.08, 0.12).scale.set(0.6, 1.4, 0.6);   // a cheese drip
+      break;
+    }
+    case 'halo': {
+      // a glowing gold ring floating above the head, bobbing gently
+      const ring = add(new THREE.TorusGeometry(0.55, 0.075, 12, 40), new THREE.MeshBasicMaterial({ color: '#ffe066' }), 0, 0.55, 0, Math.PI / 2);
+      add(new THREE.TorusGeometry(0.55, 0.14, 8, 40), new THREE.MeshBasicMaterial({ color: '#ffd23f', transparent: true, opacity: 0.25, depthWrite: false }), 0, 0.55, 0, Math.PI / 2)
+        .userData = { bob: 0.07 };
+      ring.userData = { bob: 0.07 };
+      break;
+    }
+    case 'knight': {
+      // a steel bucket helmet with visor slits, breathing holes and a red plume
+      const metal = new THREE.MeshPhongMaterial({ color: '#c3c7cd', specular: 0xffffff, shininess: 110, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.4 });
+      envMats.push(metal);
+      add(Cyl(0.72, 0.72, 1.3, 28), metal, 0, -0.5, 0);
+      add(Sph(0.72, true), metal, 0, 0.15, 0);
+      add(Cyl(0.74, 0.74, 0.09, 28), M('#8a9099'), 0, -1.12, 0);
+      const dark = M('#151515');
+      add(new THREE.BoxGeometry(0.95, 0.07, 0.06), dark, 0, -0.42, 0.7);
+      add(new THREE.BoxGeometry(0.06, 0.55, 0.06), M('#8a9099'), 0, -0.55, 0.72);
+      for (let i = 0; i < 3; i++) for (const s of [-1, 1]) add(new THREE.SphereGeometry(0.035, 6, 4), dark, s * (0.18 + i * 0.12), -0.78, 0.69);
+      for (let i = 0; i < 5; i++) { const f = add(new THREE.SphereGeometry(0.16, 10, 8), M('#C4281C'), 0, 0.72 + i * 0.05, 0.2 - i * 0.2); f.scale.set(0.5, 1.4, 0.9); f.rotation.x = -0.5 - i * 0.18; }
+      break;
+    }
   }
   return g;
 }
@@ -1402,6 +1536,101 @@ const jeans = (g, W, H) => {
   for (let i = 0; i < W / 2; i++) g.fillRect(r() * W, 0, 1, H);
   g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(0, H - 10, W, 10);
 };
+// ---- the big catalog drop: knits, lava rock, galaxies, chainmail and friends ----
+const knit = (base, light) => (g, W, H) => {
+  g.fillStyle = base; g.fillRect(0, 0, W, H);
+  g.strokeStyle = light; g.lineWidth = 1.5;
+  for (let y = 0; y < H; y += 8) for (let x = 0; x < W; x += 8) { g.beginPath(); g.moveTo(x + 1, y + 2); g.lineTo(x + 4, y + 6); g.lineTo(x + 7, y + 2); g.stroke(); }
+};
+const ribbed = (g, x, y, w, h, c) => {
+  g.fillStyle = c; g.fillRect(x, y, w, h);
+  g.fillStyle = 'rgba(0,0,0,.2)'; for (let i = x + 1; i < x + w; i += 4) g.fillRect(i, y, 1.5, h);
+};
+function snowflake(g, x, y, r, color) {
+  g.save(); g.translate(x, y); g.strokeStyle = color; g.lineWidth = Math.max(1.5, r / 7); g.lineCap = 'round';
+  for (let i = 0; i < 6; i++) {
+    g.rotate(Math.PI / 3); g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -r);
+    g.moveTo(0, -r * 0.55); g.lineTo(-r * 0.25, -r * 0.8); g.moveTo(0, -r * 0.55); g.lineTo(r * 0.25, -r * 0.8); g.stroke();
+  }
+  g.restore();
+}
+function sparkle4(g, x, y, r, color = '#fff') {
+  g.fillStyle = color; g.beginPath();
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, rr = i % 2 ? r * 0.28 : r; g.lineTo(x + Math.sin(a) * rr, y - Math.cos(a) * rr); }
+  g.fill();
+}
+// glowing cracks: a wide orange glow, then the hot crack, then a yellow-white core
+function lavaCracks(g, W, H, seed) {
+  const r = rng(seed);
+  g.save(); g.lineJoin = 'round'; g.lineCap = 'round'; g.shadowColor = '#ff5a00';
+  for (let i = 0; i < Math.max(3, W * H / 2400); i++) {
+    let x = r() * W, y = r() * H;
+    const pts = [[x, y]];
+    for (let k = 0; k < 5; k++) { x += (r() - 0.5) * 36; y += (r() - 0.5) * 36; pts.push([x, y]); }
+    for (const [w, c, blur] of [[7, 'rgba(255,90,0,.45)', 10], [3, '#ff8a1f', 4], [1.2, '#ffe07a', 0]]) {
+      g.strokeStyle = c; g.lineWidth = w; g.shadowBlur = blur;
+      g.beginPath(); pts.forEach(([px, py], j) => (j ? g.lineTo(px, py) : g.moveTo(px, py))); g.stroke();
+    }
+  }
+  g.restore();
+}
+const rock = (base, seed) => (g, W, H) => {
+  g.fillStyle = base; g.fillRect(0, 0, W, H);
+  const r = rng(seed);
+  for (let i = 0; i < W * H / 40; i++) { g.fillStyle = r() < 0.5 ? 'rgba(0,0,0,.2)' : 'rgba(255,255,255,.05)'; g.fillRect(r() * W, r() * H, 2 + r() * 3, 2 + r() * 3); }
+  lavaCracks(g, W, H, seed + 1);
+};
+const nebula = (seed) => (g, W, H) => {
+  g.fillStyle = '#0b0a2a'; g.fillRect(0, 0, W, H);
+  const r = rng(seed);
+  for (const c of ['rgba(120,60,200,.6)', 'rgba(40,110,220,.5)', 'rgba(230,90,180,.38)', 'rgba(80,40,160,.5)', 'rgba(40,170,220,.3)']) {
+    const x = r() * W, y = r() * H, rad = 30 + r() * 60, gr = g.createRadialGradient(x, y, 0, x, y, rad);
+    gr.addColorStop(0, c); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  }
+  for (let i = 0; i < W * H / 110; i++) {
+    const s = r(), big = s > 0.94;
+    g.fillStyle = s > 0.88 ? '#fff6c8' : `rgba(255,255,255,${0.35 + s * 0.5})`; g.fillRect(r() * W, r() * H, big ? 2 : 1, big ? 2 : 1);
+  }
+  for (let i = 0; i < W * H / 5000; i++) sparkle4(g, r() * W, r() * H, 4 + r() * 4);
+};
+const fabric = (base, seed) => (g, W, H) => {
+  g.fillStyle = base; g.fillRect(0, 0, W, H);
+  const r = rng(seed);
+  for (let i = 0; i < W * H / 25; i++) { g.fillStyle = r() < 0.5 ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.07)'; g.fillRect(r() * W, r() * H, 1, 1); }
+};
+const chainmail = (g, W, H) => {
+  g.fillStyle = '#3d4045'; g.fillRect(0, 0, W, H);
+  g.lineWidth = 1.6;
+  for (let y = 0, row = 0; y < H + 6; y += 5, row++) for (let x = (row % 2) * 3; x < W + 6; x += 6) {
+    g.strokeStyle = (x + y) % 3 ? '#a9adb3' : '#c9ccd1'; g.beginPath(); g.arc(x, y, 2.6, 0, 7); g.stroke();
+  }
+};
+const steel = (g, W, H) => {
+  const gr = g.createLinearGradient(0, 0, W, 0); gr.addColorStop(0, '#6f757d'); gr.addColorStop(0.45, '#e2e5e9'); gr.addColorStop(1, '#6f757d');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+};
+const rivets = (g, x, y, n, step) => { for (let i = 0; i < n; i++) { g.fillStyle = '#4b4f55'; g.beginPath(); g.arc(x + i * step, y, 2.6, 0, 7); g.fill(); g.fillStyle = '#f4f6f8'; g.fillRect(x + i * step - 1, y - 1.5, 1.4, 1.4); } };
+const pinstripe = (g, W, H) => { g.fillStyle = '#f4f4ee'; g.fillRect(0, 0, W, H); g.fillStyle = '#2a4fa0'; for (let x = 4; x < W; x += 10) g.fillRect(x, 0, 1.5, H); };
+const quilted = (g, W, H) => {
+  g.fillStyle = '#9cc4e0'; g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(30,70,110,.35)'; g.lineWidth = 2;
+  for (let i = -H; i < W + H; i += 18) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + H, H); g.moveTo(i + H, 0); g.lineTo(i, H); g.stroke(); }
+  g.fillStyle = 'rgba(255,255,255,.22)'; for (let y = 9; y < H; y += 18) for (let x = 9; x < W; x += 18) { g.beginPath(); g.arc(x, y, 3, 0, 7); g.fill(); }
+};
+const stitches = (g, x1, y1, x2, y2, c = '#7a3d10') => { g.save(); g.strokeStyle = c; g.lineWidth = 1.5; g.setLineDash([4, 3]); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.restore(); };
+const hood = (g, W) => { g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(W / 2, 0, W * 0.34, 32, 0, 0, Math.PI); g.fill(); };
+const drawstrings = (g, W, c) => { g.strokeStyle = c; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); g.moveTo(W * 0.42, 4); g.lineTo(W * 0.41, 36); g.moveTo(W * 0.58, 4); g.lineTo(W * 0.59, 36); g.stroke(); g.fillStyle = c; g.fillRect(W * 0.41 - 3, 34, 6, 6); g.fillRect(W * 0.59 - 3, 34, 6, 6); };
+const tall = (fn) => (g, W, H) => { if (H > W) fn(g, W, H); };   // sleeve details: only on the long sides, not the shoulder top
+const kangaroo = (g, W, H, c) => { g.fillStyle = c; g.beginPath(); g.roundRect(W * 0.2, H * 0.6, W * 0.6, H * 0.28, 10); g.fill(); };
+// hat textures: the lava helm's rock (and its cracks again on black, so only they glow) and the wizard hat's galaxy
+const lavaRockTex = tex(canvas(256, 128, rock('#2b2220', 81)));
+const lavaGlowTex = tex(canvas(256, 128, (g, W, H) => { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); lavaCracks(g, W, H, 82); }));
+const starTex = tex(canvas(256, 256, nebula(91)));
+const cheeseTex = tex(canvas(128, 128, (g, W, H) => {
+  g.fillStyle = '#ffeaa0'; g.fillRect(0, 0, W, H);
+  const r = rng(95);
+  for (let i = 0; i < 26; i++) { g.fillStyle = r() < 0.5 ? 'rgba(214,120,30,.45)' : 'rgba(255,255,255,.5)'; g.beginPath(); g.ellipse(r() * W, r() * H, 3 + r() * 6, 2 + r() * 4, r() * 3, 0, 7); g.fill(); }
+}));
 const SHIRTS = [
   { id: 'none', name: 'No Shirt', price: '' },
   { id: 'plaid', name: 'Red Plaid Flannel', price: 'Free (was 20 Tix)', desc: "Smells faintly of pancakes and chopped wood.", fill: plaid('#b3261e'),
@@ -1430,6 +1659,69 @@ const SHIRTS = [
     front: (g, W, H) => { g.fillStyle = '#ff8a1f'; g.fillRect(0, 0, W * 0.38, H); g.fillRect(W * 0.62, 0, W * 0.38, H);
       g.fillStyle = '#e8e8e8'; g.fillRect(0, H * 0.55, W * 0.38, 9); g.fillRect(W * 0.62, H * 0.55, W * 0.38, 9); },
     back: (g, W, H) => { g.fillStyle = '#ff8a1f'; g.fillRect(0, 0, W, H); g.fillStyle = '#e8e8e8'; g.fillRect(0, H * 0.55, W, 9); g.fillRect(W / 2 - 5, 0, 10, H * 0.55); } },
+  { id: 'frostsweater', name: 'Snowflake Sweater', price: 'Free (was 45 Tix)', desc: 'Grandma knitted this one out of actual snow.',
+    fill: knit('#3f8fd6', 'rgba(255,255,255,.16)'),
+    front: (g, W, H) => {
+      g.fillStyle = '#f2f8ff'; g.fillRect(0, H * 0.24, W, 22);
+      for (let x = 13; x < W; x += 26) snowflake(g, x, H * 0.24 + 11, 8, '#3f8fd6');
+      snowflake(g, W / 2, H * 0.62, 22, '#f2f8ff'); sparkle4(g, W * 0.2, H * 0.52, 5); sparkle4(g, W * 0.8, H * 0.7, 5);
+      ribbed(g, 0, H - 12, W, 12, '#2a6db0');
+      g.fillStyle = '#2a6db0'; g.beginPath(); g.ellipse(W / 2, 0, W * 0.24, 11, 0, 0, Math.PI); g.fill();
+    },
+    back: (g, W, H) => { g.fillStyle = '#f2f8ff'; g.fillRect(0, H * 0.24, W, 22); for (let x = 13; x < W; x += 26) snowflake(g, x, H * 0.24 + 11, 8, '#3f8fd6'); ribbed(g, 0, H - 12, W, 12, '#2a6db0'); },
+    side: (g, W, H) => { g.fillStyle = '#f2f8ff'; g.fillRect(0, H * 0.24, W, 22); ribbed(g, 0, H - 12, W, 12, '#2a6db0'); },
+    sleeve: tall((g, W, H) => { g.fillStyle = '#f2f8ff'; g.fillRect(0, H * 0.3, W, 12); snowflake(g, W / 2, H * 0.3 + 6, 5, '#3f8fd6'); ribbed(g, 0, H - 14, W, 14, '#2a6db0'); }) },
+  { id: 'magmahoodie', name: 'Magma Hoodie', price: 'Free (was 60 Tix)', desc: 'Fresh out of the volcano. Machine wash cold. VERY cold.',
+    fill: rock('#211b1b', 21),
+    front: (g, W, H) => { kangaroo(g, W, H, 'rgba(0,0,0,.4)'); drawstrings(g, W, '#ff8a1f'); g.fillStyle = '#ff8a1f'; g.fillRect(W / 2 - 1, 40, 2, H * 0.2); },
+    back: (g, W) => hood(g, W),
+    sleeve: tall((g, W, H) => ribbed(g, 0, H - 14, W, 14, '#151111')) },
+  { id: 'galaxyshirt', name: 'Galaxy Shirt', price: 'Free (was 55 Tix)', desc: "There's a whole universe on this shirt. Please don't lose any planets. (Galaxy Wizard set)",
+    fill: nebula(31),
+    front: (g, W, H) => {
+      const x = W * 0.62, y = H * 0.42, gr = g.createRadialGradient(x - 6, y - 6, 2, x, y, 20);
+      gr.addColorStop(0, '#ffd9a0'); gr.addColorStop(1, '#c0602a'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, 18, 0, 7); g.fill();
+      g.strokeStyle = 'rgba(255,230,180,.85)'; g.lineWidth = 3; g.beginPath(); g.ellipse(x, y, 34, 9, -0.35, 0, 7); g.stroke();
+      g.fillStyle = '#e8e8ff'; g.beginPath(); g.arc(W * 0.28, H * 0.72, 7, 0, 7); g.fill();
+    },
+    back: (g, W, H) => {
+      const pts = [[0.2, 0.3], [0.38, 0.22], [0.52, 0.4], [0.7, 0.33], [0.8, 0.6], [0.55, 0.7]];
+      g.strokeStyle = 'rgba(200,220,255,.6)'; g.lineWidth = 1.5; g.beginPath(); pts.forEach(([a, b], i) => (i ? g.lineTo(a * W, b * H) : g.moveTo(a * W, b * H))); g.stroke();
+      pts.forEach(([a, b]) => sparkle4(g, a * W, b * H, 5));
+    } },
+  { id: 'harvesthoodie', name: 'Harvest Hoodie', price: 'Free (was 40 Tix)', orange: true, desc: 'Cozy, crunchy-leaf orange. Counts toward a complete orange outfit. (Pumpkin King set)',
+    fill: fabric('#DA8541', 41),
+    front: (g, W, H) => {
+      kangaroo(g, W, H, 'rgba(120,50,0,.25)'); stitches(g, W * 0.2, H * 0.6, W * 0.8, H * 0.6); drawstrings(g, W, '#f6e7c8');
+      g.fillStyle = '#4b6b2a'; g.beginPath(); g.ellipse(W * 0.74, H * 0.3, 11, 6, -0.6, 0, 7); g.fill();
+      g.strokeStyle = '#2f4519'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(W * 0.67, H * 0.36); g.lineTo(W * 0.8, H * 0.24); g.stroke();
+      ribbed(g, 0, H - 10, W, 10, '#b9692f');
+    },
+    back: (g, W, H) => { hood(g, W); ribbed(g, 0, H - 10, W, 10, '#b9692f'); },
+    sleeve: tall((g, W, H) => ribbed(g, 0, H - 14, W, 14, '#b9692f')) },
+  { id: 'chainmail', name: 'Knight Chainmail', price: 'Free (was 70 Tix)', desc: 'Clinks when you walk. Sneaking is not an option.',
+    fill: chainmail,
+    front: (g, W, H) => {
+      g.fillStyle = '#1f3a93'; g.fillRect(W * 0.27, 0, W * 0.46, H);
+      g.strokeStyle = '#f5c518'; g.lineWidth = 3; g.strokeRect(W * 0.27 + 2, -4, W * 0.46 - 4, H + 8);
+      g.fillStyle = '#f5c518'; g.fillRect(W / 2 - 5, H * 0.14, 10, H * 0.42); g.fillRect(W / 2 - 18, H * 0.26, 36, 10);
+      g.fillStyle = '#5a3a1e'; g.fillRect(0, H * 0.7, W, 10); g.fillStyle = '#d9b44a'; g.fillRect(W / 2 - 8, H * 0.7 - 2, 16, 14); g.fillStyle = '#5a3a1e'; g.fillRect(W / 2 - 4, H * 0.7 + 2, 8, 6);
+    },
+    back: (g, W, H) => { g.fillStyle = '#1f3a93'; g.fillRect(W * 0.27, 0, W * 0.46, H); g.fillStyle = '#5a3a1e'; g.fillRect(0, H * 0.7, W, 10); } },
+  { id: 'baseball', name: 'Blockburg Ballers Jersey', price: 'Free (was 35 Tix)', desc: 'Home team: Blockburg Ballers. Record: 0 wins, 0 losses, 1 rocket.',
+    fill: pinstripe,
+    front: (g, W, H) => {
+      g.fillStyle = '#1f3a93'; g.beginPath(); g.moveTo(W * 0.36, 0); g.lineTo(W / 2, 16); g.lineTo(W * 0.64, 0); g.fill();
+      g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(W / 2 - 1, 16, 2, H);
+      [36, 62, 88, 114].forEach(y => { g.fillStyle = '#ddd'; g.beginPath(); g.arc(W / 2 + 6, y, 3, 0, 7); g.fill(); });
+      g.save(); g.translate(W / 2, H * 0.44); g.rotate(-0.12); g.font = 'italic 900 30px Georgia'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.lineWidth = 5; g.strokeStyle = '#c4281c'; g.strokeText('Ballers', 0, 0); g.fillStyle = '#1f3a93'; g.fillText('Ballers', 0, 0); g.restore();
+    },
+    back: (g, W, H) => {
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#1f3a93'; g.lineWidth = 5; g.strokeStyle = '#c4281c';
+      g.font = '900 20px Arial'; g.fillText('BLOCK', W / 2, 20); g.font = '900 64px Arial'; g.strokeText('07', W / 2, H * 0.58); g.fillText('07', W / 2, H * 0.58);
+    },
+    sleeve: tall((g, W, H) => { g.fillStyle = '#1f3a93'; g.fillRect(0, H - 22, W, 14); g.fillStyle = '#c4281c'; g.fillRect(0, H - 8, W, 4); }) },
   // admin: true = only the admin can wear it (the Catalog hides it, and the server takes it off anyone else)
   { id: 'adminjacket', name: 'Royal Admin Jacket', price: 'Admin only', admin: true, desc: "Gold buttons. Purple velvet. Absolute power.", fill: solid('#4b1d8f'),
     front: (g, W, H) => {
@@ -1459,6 +1751,42 @@ const PANTS = [
   { id: 'track', name: 'Red Track Pants', price: 'Free (was 25 Tix)', desc: "Makes you run 0% faster, but you FEEL 200% faster.", fill: solid('#C4281C'),
     side: (g, W, H) => { g.fillStyle = '#fff'; g.fillRect(W / 2 - 8, 0, 5, H); g.fillRect(W / 2 + 3, 0, 5, H); } },
   { id: 'golf', name: 'Plaid Golf Pants', price: 'Free (was 30 Tix)', desc: "Fore!! (That's golf for 'watch out for my pants.')", fill: plaid('#2f7a3e') },
+  { id: 'frostpants', name: 'Snow Pants', price: 'Free (was 40 Tix)', desc: 'Puffy, quilted and 100% sledding approved.',
+    fill: quilted,
+    front: (g, W, H) => { g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.roundRect(W * 0.18, H * 0.42, W * 0.64, H * 0.16, 8); g.fill(); ribbed(g, 0, H - 14, W, 14, '#5d8fb8'); },
+    side: (g, W, H) => { g.fillStyle = '#f2f8ff'; g.fillRect(W / 2 - 4, 0, 8, H); ribbed(g, 0, H - 14, W, 14, '#5d8fb8'); },
+    back: (g, W, H) => ribbed(g, 0, H - 14, W, 14, '#5d8fb8') },
+  { id: 'lavapants', name: 'Magma Pants', price: 'Free (was 55 Tix)', desc: 'Do not sit on anything you like.',
+    fill: rock('#211b1b', 51),
+    front: (g, W, H) => { g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(W / 2, H * 0.48, W * 0.32, 14, 0, 0, 7); g.fill(); lavaCracks(g, W, 18, 57); g.fillStyle = '#120e0e'; g.fillRect(0, H - 12, W, 12); },
+    back: (g, W, H) => { g.fillStyle = '#120e0e'; g.fillRect(0, H - 12, W, 12); } },
+  { id: 'galaxypants', name: 'Galaxy Leggings', price: 'Free (was 50 Tix)', desc: 'Your legs are now officially out of this world. (Galaxy Wizard set)',
+    fill: nebula(61),
+    side: (g, W, H) => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#ff7ad9'); gr.addColorStop(1, '#7ad9ff'); g.fillStyle = gr; g.fillRect(W / 2 - 2, 0, 4, H); } },
+  { id: 'pumpkinpants', name: 'Pumpkin Patch Overalls', price: 'Free (was 35 Tix)', orange: true, desc: 'Orange denim with a vine growing up the side. Counts toward a complete orange outfit. (Pumpkin King set)',
+    fill: (g, W, H) => { fabric('#DA8541', 71)(g, W, H); g.fillStyle = 'rgba(255,255,255,.06)'; for (let x = 0; x < W; x += 3) g.fillRect(x, 0, 1, H); },
+    front: (g, W, H) => {
+      stitches(g, 4, 0, 4, H); stitches(g, W - 4, 0, W - 4, H);
+      g.strokeStyle = '#7a3d10'; g.lineWidth = 1.5; g.setLineDash([4, 3]); g.beginPath(); g.arc(W * 0.85, 0, W * 0.42, Math.PI / 2, Math.PI); g.stroke(); g.setLineDash([]);
+      g.fillStyle = '#d9b44a'; g.beginPath(); g.arc(W * 0.5, 10, 4, 0, 7); g.fill();
+      g.fillStyle = '#f0a868'; g.fillRect(0, H - 16, W, 16); stitches(g, 0, H - 16, W, H - 16);
+    },
+    side: (g, W, H) => {
+      g.strokeStyle = '#3f6a22'; g.lineWidth = 3; g.beginPath(); g.moveTo(W / 2, H);
+      for (let y = H; y > 0; y -= 16) g.quadraticCurveTo(W / 2 + (y % 32 ? 12 : -12), y - 8, W / 2, y - 16); g.stroke();
+      g.fillStyle = '#5a8f2e'; for (let y = H - 20; y > 10; y -= 30) { g.beginPath(); g.ellipse(W / 2 + 9, y, 8, 4, -0.5, 0, 7); g.fill(); g.beginPath(); g.ellipse(W / 2 - 9, y - 14, 8, 4, 0.5, 0, 7); g.fill(); }
+      g.fillStyle = '#f0a868'; g.fillRect(0, H - 16, W, 16);
+    },
+    back: (g, W, H) => { g.fillStyle = 'rgba(120,50,0,.25)'; g.beginPath(); g.roundRect(W * 0.18, H * 0.12, W * 0.64, H * 0.24, 4); g.fill(); stitches(g, W * 0.18, H * 0.12, W * 0.82, H * 0.12); g.fillStyle = '#f0a868'; g.fillRect(0, H - 16, W, 16); } },
+  { id: 'knightgreaves', name: 'Knight Greaves', price: 'Free (was 65 Tix)', desc: 'Shiny steel leg armor. Great for kicking doors. Bad for stairs.',
+    fill: steel,
+    front: (g, W, H) => {
+      for (let y = 22; y < H; y += 26) { g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, y, W, 3); rivets(g, 8, y + 9, 4, (W - 16) / 3); }
+      const gr = g.createRadialGradient(W / 2 - 5, H * 0.46 - 5, 2, W / 2, H * 0.46, 18); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#8a9099');
+      g.fillStyle = gr; g.beginPath(); g.ellipse(W / 2, H * 0.46, 18, 14, 0, 0, 7); g.fill();
+    },
+    side: (g, W, H) => { g.fillStyle = '#5a3a1e'; g.fillRect(0, H * 0.3, W, 8); g.fillRect(0, H * 0.75, W, 8); g.fillStyle = '#d9b44a'; g.fillRect(W / 2 - 4, H * 0.3 - 1, 8, 10); },
+    back: (g, W, H) => { for (let y = 22; y < H; y += 26) { g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, y, W, 3); } } },
 ];
 /* ---- drawn clothing: the classic 585x559 template (shirt-template.png / pants-template.png) ----
    Box faces are listed in three.js order: +x, -x, top, bottom, front, back.
@@ -1548,6 +1876,42 @@ const TSHIRTS = [
       const s = Math.min(150 / FACE_IMG.width, 150 / FACE_IMG.height);
       g.drawImage(FACE_IMG, 128 - FACE_IMG.width * s / 2, 128 - FACE_IMG.height * s / 2, FACE_IMG.width * s, FACE_IMG.height * s);
     }) },
+  { id: 'pixelheart', name: 'Pixel Heart', price: 'Free (was 20 Tix)', desc: 'Extra life! (Does not actually give you an extra life.)',
+    art: decal((g) => {
+      const H = ['..XX...XX..', '.XRRX.XRRX.', 'XRWRRXRRRRX', 'XRWRRRRRRRX', 'XRRRRRRRRRX', '.XRRRRRRRX.', '..XRRRRRX..', '...XRRRX...', '....XRX....', '.....X.....'];
+      const s = 18, ox = 128 - 11 * s / 2, oy = 20, col = { X: '#111', R: '#e2231a', W: '#fff' };
+      H.forEach((row, y) => [...row].forEach((c, x) => { if (col[c]) { g.fillStyle = col[c]; g.fillRect(ox + x * s, oy + y * s, s, s); } }));
+      g.fillStyle = 'rgba(0,0,0,.25)'; H.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'R' && (H[y + 1] || '')[x] !== 'R') g.fillRect(ox + x * s, oy + y * s + s / 2, s, s / 2); }));
+      g.font = '900 36px "Courier New", monospace'; g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = '#111'; g.fillStyle = '#4bc436';
+      g.strokeText('1UP', 128, 228); g.fillText('1UP', 128, 228);
+    }) },
+  { id: 'stayfrosty', name: 'Stay Frosty', price: 'Free (was 25 Tix)', desc: 'An ice cube with a great attitude. Pairs well with a Snowflake Sweater.',
+    art: decal((g) => {
+      g.save(); g.translate(128, 112); g.rotate(-0.08);
+      const gr = g.createLinearGradient(-70, -70, 70, 70); gr.addColorStop(0, '#e8f7ff'); gr.addColorStop(1, '#7cc8f0');
+      g.fillStyle = gr; g.strokeStyle = '#2a6db0'; g.lineWidth = 7; g.beginPath(); g.roundRect(-72, -72, 144, 144, 22); g.fill(); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,.75)'; g.beginPath(); g.roundRect(-58, -60, 46, 16, 8); g.fill();
+      g.fillStyle = '#111'; g.fillRect(-46, -16, 30, 14); g.fillRect(14, -16, 30, 14); g.fillRect(-16, -14, 30, 5);
+      g.strokeStyle = '#111'; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.arc(4, 18, 24, 0.25, Math.PI - 0.6); g.stroke();
+      g.restore();
+      g.font = '900 34px Arial'; g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = '#fff'; g.fillStyle = '#2a6db0';
+      g.strokeText('STAY FROSTY', 128, 236); g.fillText('STAY FROSTY', 128, 236);
+    }) },
+  { id: 'rocketsurvivor', name: 'I Survived The Rocket', price: 'Free (was 30 Tix)', desc: 'Proof that you were there. Mostly in one piece.',
+    art: decal((g) => {
+      for (const [r, c] of [[70, '#c4281c'], [54, '#ff8a1a'], [36, '#ffe14d']]) { g.fillStyle = c; g.beginPath(); for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2, rr = i % 2 ? r * 0.65 : r; g.lineTo(178 + Math.cos(a) * rr, 92 + Math.sin(a) * rr); } g.fill(); }
+      g.save(); g.translate(92, 112); g.rotate(-0.75);
+      g.fillStyle = '#e8e8e8'; g.strokeStyle = '#111'; g.lineWidth = 5; g.beginPath(); g.roundRect(-16, -50, 32, 96, 6); g.fill(); g.stroke();
+      g.fillStyle = '#c4281c'; g.beginPath(); g.moveTo(-16, -50); g.lineTo(0, -82); g.lineTo(16, -50); g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(-16, 22); g.lineTo(-34, 50); g.lineTo(-16, 46); g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(16, 22); g.lineTo(34, 50); g.lineTo(16, 46); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#0d69ac'; g.beginPath(); g.arc(0, -18, 8, 0, 7); g.fill(); g.stroke();
+      g.fillStyle = '#ff8a1a'; g.beginPath(); g.moveTo(-10, 48); g.lineTo(0, 78); g.lineTo(10, 48); g.fill();
+      g.restore();
+      g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 8; g.strokeStyle = '#fff'; g.fillStyle = '#111';
+      g.font = '900 28px Arial'; g.strokeText('I SURVIVED', 128, 204); g.fillText('I SURVIVED', 128, 204);
+      g.font = '900 26px Arial'; g.strokeText('THE ROCKET', 128, 238); g.fillText('THE ROCKET', 128, 238);
+    }) },
   { id: 'adminstar', name: 'Admin Gold Star', price: 'Admin only', admin: true, desc: 'Only one person in all of Blockburg can wear this. You know who you are.',
     art: decal((g) => {
       g.fillStyle = '#2a0f52'; g.beginPath(); g.roundRect(8, 8, 240, 240, 30); g.fill();
@@ -1624,6 +1988,8 @@ function dressCharacter(ch, colors, shirt = 'none', pants = 'none', face = 'smil
   part(m[3], 'lArm', c.rarm, 1, 1, 2, (f) => [clothLayer(S, 'left', PROC_KIND.shirtArm, f)]);
   part(m[0], 'rLeg', c.lleg, 1, 1, 2, (f) => [clothLayer(P, 'right', PROC_KIND.pantsLeg, f)]);
   part(m[1], 'lLeg', c.rleg, 1, 1, 2, (f) => [clothLayer(P, 'left', PROC_KIND.pantsLeg, f)]);
+  ch.outfit = { colors: c, shirt, pants, face, tshirt };
+  setFx(ch);
 }
 const clothName = (list, id) => (list.find(x => x.id === id) || list[0]).name;
 
@@ -1668,8 +2034,13 @@ function colorCharacter(ch, colors) {
   m[4].material = partMats(c.torso)[0]; m[5].material = faceMat(c.head, ch.face);
 }
 function wearHat(ch, id) {
-  ch.hatHolder.clear();
-  if (id && id !== 'none') ch.hatHolder.add(shadowAll(makeHat(id)));
+  ch.hatHolder.clear(); ch.hatId = id || 'none'; ch.hatAnim = [];
+  if (id && id !== 'none') {
+    const hat = shadowAll(makeHat(id));
+    ch.hatHolder.add(hat);
+    hat.traverse(o => { const u = o.userData; if (u.spin || u.bob || u.blink !== undefined) { u.y0 = o.position.y; ch.hatAnim.push(o); } });
+  }
+  setFx(ch);
 }
 
 /* ---- the admin's cape: royal purple with gold trim and a gold star, sparkling (everyone sees it on the admin) ---- */
@@ -1714,6 +2085,73 @@ function animateCape(ch, dt, t, moving, air) {
     const u = s.userData, k = Math.max(0, Math.sin(t * u.sp + u.ph));
     s.material.opacity = k * k; s.scale.setScalar(0.2 + 0.4 * k);
     u.y -= dt * 0.5; if (u.y < -3.9) { u.y = 0.1; u.x = (Math.random() - 0.5) * 2.5; }
+    s.position.set(u.x, u.y, u.z);
+  }
+}
+
+/* ---- outfit sets: wear every piece of a set and you get a little effect (everyone sees it) ---- */
+function hexHsl(hex) {
+  const n = parseInt(String(hex).slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  if (!d) return [0, 0, l];
+  const h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, d / (1 - Math.abs(2 * l - 1)), l];
+}
+const isOrange = (hex) => { const [h, s, l] = hexHsl(hex); return h >= 15 && h <= 45 && s >= 0.55 && l >= 0.3 && l <= 0.75; };
+// L = { hat, face, shirt, pants, tshirt, colors (all six body parts) }
+const SETS = [
+  { id: 'pumpkin', name: 'Pumpkin King', fx: 'shimmer', effect: 'Tiny golden shimmers above your pumpkin',
+    pieces: 'Screaming Pumpkin hat, PUMPKIN face, I Saw The Knife T-shirt, and an all-orange body (orange clothes count too)',
+    wear: { hat: 'pumpkin', face: 'pumpkin', tshirt: 'pumpkin', shirt: 'harvesthoodie', pants: 'pumpkinpants', colors: { skin: '#DA8541', shirt: '#DA8541', pants: '#DA8541' } },
+    has: (L) => L.hat === 'pumpkin' && L.face === 'pumpkin' && L.tshirt === 'pumpkin' && Object.values(L.colors).every(isOrange) &&
+      [[SHIRTS, L.shirt], [PANTS, L.pants]].every(([list, id]) => id === 'none' || list.find(i => i.id === id)?.orange) },
+  { id: 'galaxy', name: 'Galaxy Wizard', fx: 'orbit', effect: 'Little stars orbit your head',
+    pieces: 'Galaxy Wizard Hat, Starstruck face, Galaxy Shirt, Galaxy Leggings',
+    wear: { hat: 'wizard', face: 'starstruck', shirt: 'galaxyshirt', pants: 'galaxypants', tshirt: 'none' },
+    has: (L) => L.hat === 'wizard' && L.face === 'starstruck' && L.shirt === 'galaxyshirt' && L.pants === 'galaxypants' },
+];
+// each effect: how many sprites, their picture and color, where they appear (spawn) and how they move (step).
+// Sprite positions are in the character's own space: feet at y=0, the top of the head around y=5.2.
+const FX = {
+  shimmer: { n: 12, map: sparkleTex, color: 0xffd98a, size: [0.06, 0.3], tw: 5,
+    spawn(u) { const a = Math.random() * 7, r = Math.random() * 0.8; u.x = Math.cos(a) * r; u.z = Math.sin(a) * r; u.y = 6.3 + Math.random() * 0.5; },
+    step(u, dt) { u.y += dt * 0.22; if (u.y > 7.1) this.spawn(u); } },
+  orbit: { n: 6, map: sparkleTex, color: 0xfff1a8, size: [0.32, 0.5], tw: 2.5,
+    spawn(u, first, i) { if (first) u.a = i / this.n * Math.PI * 2; },
+    step(u, dt, t) { u.a += dt * 1.4; u.x = Math.cos(u.a) * 1.4; u.z = Math.sin(u.a) * 1.4; u.y = 5.0 + Math.sin(t * 2 + u.ph) * 0.3; } },
+};
+function setOfLook(L) { return SETS.find(s => s.has(L)) || null; }
+// after a character's hat or clothes change: start, swap or stop its set effect
+function setFx(ch) {
+  if (!ch.outfit) return;
+  const set = setOfLook({ ...ch.outfit, hat: ch.hatId || 'none' }), id = set ? set.id : '';
+  if ((ch.fx ? ch.fx.id : '') === id) return;
+  if (ch.fx) { ch.root.remove(ch.fx.group); ch.fx = null; }
+  if (!set) return;
+  const kind = FX[set.fx], group = new THREE.Group(), sprites = [];
+  for (let i = 0; i < kind.n; i++) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: kind.map, color: kind.color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+    s.userData = { ph: Math.random() * 7, sp: 0.6 + Math.random() * 0.8, x: 0, y: 0, z: 0 };
+    kind.spawn(s.userData, true, i); group.add(s); sprites.push(s);
+  }
+  ch.root.add(group);
+  ch.fx = { id, kind, group, sprites };
+}
+// every frame: moving hat parts (propellers, halos, blinking lights) and the set effect
+function animateFx(ch, dt, t) {
+  if (ch.hatAnim) for (const o of ch.hatAnim) {
+    const u = o.userData;
+    if (u.spin) o.rotation.y += dt * u.spin;
+    if (u.bob) o.position.y = u.y0 + Math.sin(t * 2.2) * u.bob;
+    if (u.blink !== undefined) o.material.color.setHSL((t * 0.25 + u.blink * 0.3) % 1, 1, 0.6);
+  }
+  const fx = ch.fx; if (!fx) return;
+  const k0 = fx.kind;
+  for (const s of fx.sprites) {
+    const u = s.userData; k0.step(u, dt, t);
+    const k = 0.5 + 0.5 * Math.sin(t * u.sp * k0.tw + u.ph);
+    s.material.opacity = k * k;
+    s.scale.setScalar(k0.size[0] + (k0.size[1] - k0.size[0]) * k);
     s.position.set(u.x, u.y, u.z);
   }
 }
@@ -1882,6 +2320,7 @@ class Humanoid {
     const tgt = [s, -s, air ? Math.PI * 0.95 : -s, holding ? -Math.PI / 2 + armOff : (air ? Math.PI * 0.95 : s)];
     [ch.legL, ch.legR, ch.armL, ch.armR].forEach((p, i) => p.rotation.x += (tgt[i] - p.rotation.x) * (i === 3 && holding ? Math.min(1, dt * 30) : k));
     animateCape(ch, dt, t, moving, air);
+    animateFx(ch, dt, t);
     ch.ff.forEach(f => { f.visible = this.ff > 0; });
     if (this.ff > 0) ffMat.opacity = 0.25 + Math.sin(t * 14) * 0.15;
     this.shadow.visible = this.groundY > -900 && !shadowsOn;   // the old round blob, only when real shadows are off
@@ -3707,6 +4146,7 @@ function frame(now) {
 
   if (siteOpen) {
     pvChar.root.rotation.y = Math.sin(time * 0.7) * 0.7;
+    animateFx(pvChar, dt, time);
     pv.render(pvScene, pvCam);
   } else renderer.render(scene, camera);
 }
@@ -3849,7 +4289,18 @@ function renderCatalog() {
   $('hatGrid').innerHTML = list.map(h => `<div class="hcard ${look[slot] === h.id ? 'on' : ''}"><img src="${h.id === 'none' ? hatThumbs.none : thumbs[h.id]}" alt="">
     <div class="gt">${h.name}</div>${h.desc ? `<div class="ds">"${h.desc}"</div>` : ''}<div class="pr">${h.price || '&nbsp;'}</div>
     <button class="s-btn" data-wear="${h.id}">${look[slot] === h.id ? 'Wearing' : (h.id === 'none' ? 'Take Off' : 'Wear')}</button></div>`).join('');
+  const on = setOfLook({ ...look, colors: normColors(look.colors) });
+  $('setList').innerHTML = SETS.map(s => `<div class="hcard ${on === s ? 'on' : ''}"><img src="${hatThumbs[s.wear.hat]}" alt="">
+    <div class="gt">${s.name}</div><div class="ds">${s.pieces}</div><div class="pr">✨ ${s.effect}</div>
+    <button class="s-btn" data-wearset="${s.id}">${on === s ? 'Wearing it!' : 'Wear the Set'}</button></div>`).join('');
 }
+$('setList').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-wearset]');
+  if (!b) return;
+  const w = SETS.find(s => s.id === b.dataset.wearset).wear;
+  look = { ...look, ...w, colors: w.colors ? normColors(w.colors) : look.colors };
+  saveLook(); refreshLook(); SFX.click();
+});
 let selBP = 'torso';
 $('bodyPalette').innerHTML = PALETTE.map(([n, h]) => `<div title="${n}" data-bc="${h}" style="background:${h}"></div>`).join('');
 function refreshLook() {
@@ -3883,9 +4334,11 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    Every update day gets an entry here, newest first: its date, a headline, and what changed (behind EXTEND).
    The newest headline also shows at the top of Blockburg News. */
 const UPDATES = [
-  { date: '10/25/2026', top: 'Read all about it: the Update Log!', text: [
-    'Every update now gets an entry right here, newest first.',
-    'Press EXTEND on any day to see everything that changed.' ] },
+  { date: '10/25/2026', top: 'HUGE Catalog drop: 26 new items and two super rare outfit sets!', text: [
+    '8 new hats: Ice Crown, Lava Lord Helm, Galaxy Wizard Hat, Bass Boost Headphones (the lights blink!), Propeller Beanie (it spins!), Pizza Slice Hat, Golden Halo and Knight Helmet.',
+    '6 new shirts and 5 new pants, including a Snowflake Sweater, Magma Hoodie, Galaxy Leggings, Knight Chainmail and Pumpkin Patch Overalls.',
+    '3 new T-shirts (Pixel Heart, Stay Frosty, I Survived The Rocket) and 4 new faces (Cool Shades, Frozen, Starstruck, Fierce).',
+    'Two super rare OUTFIT SETS! Wear every piece and you get an effect everyone can see: the Pumpkin King shimmers, and stars orbit the Galaxy Wizard. Find them at the bottom of the Catalog.',    'Also new: this Update Log! Press EXTEND on any day to see everything that changed.' ] },
   { date: '10/24/2026', top: 'Sign in is here! Get your own badge!', text: [
     'A brand new sign-in screen, with screenshots of BLOCKBURG fading by behind it.',
     'Pick a name (or roll a random one with 🎲) and a look, then hit PLAY!',
