@@ -135,6 +135,19 @@
   .fm-del{color:#c4281c;cursor:pointer;font-size:10px;float:right;text-decoration:underline}
   .news p{margin:0 0 8px}
   .news b{color:#0b4a99}
+  .news .new{background:#e2231a;color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;margin-right:4px}
+  /* the Update Log: one entry per update day, newest first, EXTEND to read what changed */
+  .up-item{border-bottom:1px solid #dfe7f2;padding:6px 0}
+  .up-item:first-child{padding-top:0}
+  .up-item:last-child{border-bottom:0;padding-bottom:0}
+  .up-date{font:bold 10px Verdana;color:#666}
+  .up-top{color:#0b4a99;font-weight:bold}
+  .up-ext{font:bold 9px Verdana;color:#fff;background:linear-gradient(#5b97e0,#0b4a99);border:1px solid #062f66;padding:1px 5px;cursor:pointer;margin-left:5px;vertical-align:1px;white-space:nowrap}
+  .up-ext:hover{background:linear-gradient(#7fb0ee,#2a65b3)}
+  .up-text{margin:5px 0 0;padding:6px 8px 6px 22px;background:#f6f9fd;border-left:3px solid #6e99c9}
+  .up-text.hidden{display:none}
+  .up-text li{margin-bottom:3px}
+  .up-more{text-align:center;margin-top:6px}
   .gamegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
   .gcard{border:1px solid #b9cbe4;padding:6px;text-align:center;background:#f6f9fd}
   .gcard img,.gcard .ph{width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid #888;display:block;background:#4b974b}
@@ -408,13 +421,14 @@
             <p>Blow up the tower, build with the trowel, sword fight some Guests and beat the obby!</p>
             <button class="s-btn go" data-play="classic">Play Solo</button></div>
         </div></div>
-        <div class="box news"><h3>Blockburg News</h3><div class="in">
+        <div class="box news"><h3>Blockburg News</h3><div class="in" id="newsBody">
           <p><b>PUMPKIN INVASION!</b> A pumpkin got into the Catalog and it has not stopped screaming. Then it got into the game. It is now a Guest. Its name is Guest 31. Do NOT bring a knife.</p>
           <p><b>New hats in the Catalog!</b> The Viking Helm and the Golden Crown are here. Go check them out.</p>
           <p><b>Rocket Launcher fixed.</b> Rockets now go where you click instead of into your own face. Mostly.</p>
           <p><b>Building contest!</b> Build the coolest house on a baseplate. Prize: bragging rights.</p>
           <p><b>Remember:</b> never tell anyone your password, even if they say they're a Builder.</p>
         </div></div>
+        <div class="box"><h3>Update Log</h3><div class="in" id="updLog"></div></div>
       </div>
     </div></div>
 
@@ -3865,6 +3879,58 @@ $('site').addEventListener('click', (e) => {
 });
 $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'none'; look.pants = 'none'; look.face = 'smile'; look.tshirt = 'none'; saveLook(); refreshLook(); };
 
+/* ================= UPDATE LOG =================
+   Every update day gets an entry here, newest first: its date, a headline, and what changed (behind EXTEND).
+   The newest headline also shows at the top of Blockburg News. */
+const UPDATES = [
+  { date: '10/25/2026', top: 'Read all about it: the Update Log!', text: [
+    'Every update now gets an entry right here, newest first.',
+    'Press EXTEND on any day to see everything that changed.' ] },
+  { date: '10/24/2026', top: 'Sign in is here! Get your own badge!', text: [
+    'A brand new sign-in screen, with screenshots of BLOCKBURG fading by behind it.',
+    'Pick a name (or roll a random one with 🎲) and a look, then hit PLAY!',
+    'Add a password to get a badge like #K7Q2. Nobody can copy your badge without your password, so everyone knows it\'s really you.',
+    'Badges show up in chat, over your head, on the leaderboard and on the forums.',
+    'The admin now signs in just like everybody else. (Yes, the admin is real.)' ] },
+  { date: '10/23/2026', top: 'Build it, save it, show it off!', text: [
+    'Shift lock! Press Shift (or the 🔒 button on phones) and the camera follows your mouse.',
+    'Your baseplate builds save when you leave, and show up as files under My Places on the Build page, each with its own picture.',
+    'Bricks now snap to the studs when you insert or drag them. No more wonky walls.',
+    'Press 📤 Post to Games to send your build to the admin. You\'ll get the answer in your new Inbox!' ] },
+  { date: '10/22/2026', top: 'PUMPKIN INVASION!!', text: [
+    'A pumpkin got into the Catalog, and then into the game. It is now Guest 31. It will not stop screaming.',
+    'New in the Catalog: the Screaming Pumpkin hat, the PUMPKIN face and the I Saw The Knife T-shirt.',
+    'Phones and tablets get the cover picture on the loading screen.' ] },
+  { date: '10/21/2026', top: 'BLOCKBURG goes multiplayer!', text: [
+    'Host a game and send your friends the 4-letter room code. Games now run on the BLOCKBURG server, so they work on more networks.',
+    'The Forums are open! Say hi (and be nice).',
+    'Phones and tablets can play now, with a joystick and a jump button.',
+    'The admin got a trailer camera with the BLOCKBURG theme song, a free cam and a very sparkly cape.',
+    'Credits at the bottom of the site. Music by wayferr!' ] },
+  { date: '10/20/2026', top: 'BLOCKBURG is born!', text: [
+    'The very first version of BLOCKBURG went online. Explode things, pwn people, do it all!' ] },
+];
+const UPD_SHOWN = 5;   // older entries wait behind "Show older updates"
+let updAll = false;
+function renderUpdates() {
+  const list = updAll ? UPDATES : UPDATES.slice(0, UPD_SHOWN);
+  $('updLog').innerHTML = list.map((u, i) => `<div class="up-item"><div class="up-date">${u.date}</div>
+    <span class="up-top">${escHtml(u.top)}</span><span class="up-ext" data-upd="${i}">EXTEND</span>
+    <ul class="up-text hidden">${u.text.map(t => `<li>${escHtml(t)}</li>`).join('')}</ul></div>`).join('') +
+    (UPDATES.length > UPD_SHOWN && !updAll ? `<div class="up-more"><span class="fm-link" data-updall>Show older updates (${UPDATES.length - UPD_SHOWN})</span></div>` : '');
+}
+$('updLog').addEventListener('click', (e) => {
+  if (e.target.closest('[data-updall]')) { updAll = true; renderUpdates(); return; }
+  const b = e.target.closest('[data-upd]');
+  if (!b) return;
+  const open = b.nextElementSibling.classList.toggle('hidden') === false;
+  b.textContent = open ? 'HIDE' : 'EXTEND';
+});
+function startUpdates() {
+  $('newsBody').insertAdjacentHTML('afterbegin', `<p><span class="new">NEW!</span><b>${escHtml(UPDATES[0].top)}</b> ${UPDATES[0].date}. See the Update Log below for everything that changed.</p>`);
+  renderUpdates();
+}
+
 /* ================= ADMIN =================
    There are no real accounts, so the admin title comes from a secret admin key.
    Only the public half lives in this file: it can check the admin's signature but can't make one,
@@ -5262,7 +5328,7 @@ if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); }   // (the serve
 refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
-if (!HEADLESS) signinStart();
+if (!HEADLESS) { startUpdates(); signinStart(); }
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
   keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
