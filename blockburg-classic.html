@@ -1961,6 +1961,9 @@ const HATS = [
   { id: 'pizza', name: 'Pizza Slice Hat', price: 'Free (was 25 Tix)', desc: 'Extra cheese, extra pepperoni, extra weird looks.' },
   { id: 'halo', name: 'Golden Halo', price: 'Free (was 90 Tix)', desc: 'For noobs who have never griefed anyone. (Allegedly.)' },
   { id: 'knight', name: 'Knight Helmet', price: 'Free (was 85 Tix)', desc: 'Clank clank. The visor is mostly for dramatic effect.' },
+  { id: 'fedora', name: 'Classic Fedora', price: 'Free (was 60 Tix)', desc: 'Very mysterious. Tip it to say hello. M\'lady not included.' },
+  { id: 'books', name: 'Stack of Books', price: 'Free (was 40 Tix)', desc: 'Balance them on your head. Smart people do this. Probably.' },
+  { id: 'catears', name: 'Cat Ears', price: 'Free (was 50 Tix)', desc: 'They match your head color, like real ears. Meow.' },
 ];
 const hatName = (id) => (HATS.find(h => h.id === id) || HATS[0]).name;
 const partyTex = tex(canvas(128, 64, (g) => {
@@ -1988,6 +1991,36 @@ function makeHat(id) {
       add(new THREE.SphereGeometry(0.045, 8, 6), tin, 0.69, 0.42, -0.1);
       break;
     }
+    case 'fedora': {
+      // a charcoal fedora: wide brim, a pinched crown with a dent on top, a black band
+      const felt = M('#4D4D4D');
+      add(Cyl(1.08, 1.08, 0.07, 28), felt, 0, 0, 0, 0.06);
+      add(Cyl(0.55, 0.67, 0.74, 24), felt, 0, 0.4, 0).scale.set(1, 1, 0.88);
+      add(Sph(0.56, true), felt, 0, 0.76, 0).scale.set(1, 0.26, 0.76);
+      add(new THREE.BoxGeometry(0.1, 0.07, 0.56), M('#3A3A3A'), 0, 0.88, 0);   // (the dent)
+      add(Cyl(0.675, 0.675, 0.14, 24), M('#151515'), 0, 0.12, 0);
+      add(new THREE.BoxGeometry(0.14, 0.1, 0.04), M('#151515'), 0.62, 0.14, 0.24, 0, 0.6);   // (the band's little bow)
+      break;
+    }
+    case 'books': {
+      // a wobbly stack of four books: colored covers, white pages showing at the edges, a gold title on each spine
+      [['#C4281C', 0.12, 0.04], ['#0D69AC', -0.18, -0.05], ['#4B974B', 0.28, 0.03], ['#DA8541', -0.06, -0.02]].forEach(([c, ry, dx], i) => {
+        const book = new THREE.Group(); book.position.set(dx, 0.13 + i * 0.25, 0); book.rotation.y = ry; g.add(book);
+        const part = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); book.add(m); };
+        part(new THREE.BoxGeometry(1.2 - i * 0.06, 0.24, 0.86 - i * 0.03), M(c), 0, 0, 0);
+        part(new THREE.BoxGeometry(1.14 - i * 0.06, 0.17, 0.88 - i * 0.03), M('#F2F3F3'), 0.05, 0, 0);
+        part(new THREE.BoxGeometry(0.02, 0.07, 0.4), M('#F5CD30'), -0.61 + i * 0.03, 0, 0);
+      });
+      break;
+    }
+    case 'catears':
+      // two pointy ears on top of the head: the outside is the color of your head (see skinParts), the inside is pink
+      for (const s of [-1, 1]) {
+        const ear = add(new THREE.ConeGeometry(0.4, 0.8, 4), M('#F5CD30'), s * 0.44, 0.26, -0.05, 0, Math.PI / 4, -s * 0.3);
+        ear.scale.set(1, 1, 0.45); ear.userData.skin = true;
+        add(new THREE.ConeGeometry(0.24, 0.52, 4), M('#E8BAC8'), s * 0.43, 0.2, 0.07, 0, Math.PI / 4, -s * 0.3).scale.set(1, 1, 0.3);
+      }
+      break;
     case 'tophat':
       add(Cyl(1.0, 1.0, 0.08), M('#151515'), 0, 0, 0);
       add(Cyl(0.6, 0.62, 1.25), M('#151515'), 0, 0.66, 0);
@@ -2635,6 +2668,7 @@ function dressCharacter(ch, colors, shirt = 'none', pants = 'none', face = 'smil
   const T = TSHIRTS.find(t => t.id === tshirt && (t.art || t.img));
   ch.face = face;
   m[5].material = faceMat(c.head, face);
+  ch.headColor = c.head; skinParts(ch);   // (cat ears match the head)
   // w = width (x), d = depth (z), h = height (y) of the body part, in studs
   const part = (mesh, name, base, w, d, h, layersFor) => {
     const lay = FACE_ORDER.map(f => layersFor(f));
@@ -2691,17 +2725,22 @@ function makeCharacter(colors) {
   return { root, meshes, ff, legL, legR, armL, armR, torso, head, hand, hatHolder };
 }
 // recolor in place (mesh order: lleg, rleg, larm, rarm, torso, head)
+function skinParts(ch) {
+  ch.hatHolder.traverse(o => { if (o.userData.skin) o.material = partMats(ch.headColor || BC['Bright yellow'])[0]; });
+}
 function colorCharacter(ch, colors) {
   const c = normColors(colors), m = ch.meshes;
+  ch.headColor = c.head;
   m[0].material = partMats(c.lleg)[0]; m[1].material = partMats(c.rleg)[0];
   m[2].material = partMats(c.larm)[0]; m[3].material = partMats(c.rarm)[0];
   m[4].material = partMats(c.torso)[0]; m[5].material = faceMat(c.head, ch.face);
+  skinParts(ch);
 }
 function wearHat(ch, id) {
   ch.hatHolder.clear(); ch.hatId = id || 'none'; ch.hatAnim = [];
   if (id && id !== 'none') {
     const hat = shadowAll(makeHat(id));
-    ch.hatHolder.add(hat);
+    ch.hatHolder.add(hat); skinParts(ch);
     hat.traverse(o => { const u = o.userData; if (u.spin || u.bob || u.blink !== undefined) { u.y0 = o.position.y; ch.hatAnim.push(o); } });
   }
   setFx(ch);
@@ -6531,6 +6570,7 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest headline also shows at the top of Blockburg News. */
 const UPDATES = [
   { date: '10/25/2026', top: 'ha! we are so back with more updates', text: [
+    '3 new hats in the Catalog: the Classic Fedora, a wobbly Stack of Books, and Cat Ears that are the same color as your head, like real ears (change your head color and they change too).',
     'NEW GAME: RED VS BLUE! Two teams, two bases, two flags. Grab the other team\'s flag and run it back to your own flag stand. First to 3 captures wins! Play it from the front page.',
     'In RED VS BLUE! you only get the Paintball Gun and the Trowel (no Insert), paintballs and trowel walls come in your team\'s color, and there\'s no hurting your own team.',
     'Everyone in RED VS BLUE! glows with a red or blue outline, so you always know who\'s on your team. The Guests play too, and they\'re good at guarding!',
