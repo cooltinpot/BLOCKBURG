@@ -47,6 +47,8 @@
   #shiftIcon::before{left:50%;top:-9px;bottom:-9px;width:2px;margin-left:-1px}
   #shiftIcon::after{top:50%;left:-9px;right:-9px;height:2px;margin-top:-1px}
   #shiftIcon.hidden{display:none}
+  #selRect{position:fixed;border:1px dashed #00e5ff;background:rgba(0,229,255,.12);pointer-events:none;z-index:5}
+  #selRect.hidden{display:none}
   #tip{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);font:bold 13px Arial;white-space:nowrap}
   .win{position:fixed;background:#d4d0c8;color:#000;border:2px outset #fff;font:12px Arial;box-shadow:2px 2px 8px rgba(0,0,0,.5);z-index:6}
   .win.hidden{display:none}
@@ -63,6 +65,30 @@
   .sw.sel{border:3px solid #000;outline:2px solid #fff}
   #palette{display:grid;grid-template-columns:repeat(9,24px);gap:3px}
   #insertWin{left:8px;top:240px;width:276px}
+  /* the Script window: Scratch-colored blocks in an old gray window */
+  #scriptWin{right:8px;top:40px;width:min(580px,calc(100vw - 16px))}
+  .sc-main{display:flex;height:min(400px,calc(100vh - 150px));border-top:1px solid #808080;border-bottom:1px solid #808080}
+  #scPalette{width:178px;flex:0 0 auto;overflow:auto;padding:4px 6px 8px;background:#ece9d8;border-right:2px groove #fff;display:flex;flex-direction:column;align-items:flex-start}
+  #scPalette.sc-drop{background:#ffd9d6}
+  #scArea{flex:1;overflow:auto;padding:8px;background:#fafafa;display:flex;flex-direction:column;align-items:flex-start}
+  .sc-cat{font:bold 11px Arial;color:#444;margin:7px 0 3px}
+  .sc-b{position:relative;color:#fff;font:bold 12px Arial;padding:6px 9px;margin:0 0 1px;border-radius:4px;cursor:grab;white-space:nowrap;
+    text-shadow:0 1px 0 rgba(0,0,0,.3);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2);user-select:none}
+  .sc-b::before{content:'';position:absolute;left:12px;top:-1px;width:14px;height:4px;background:rgba(0,0,0,.18);border-radius:0 0 3px 3px}
+  .sc-b.hat{border-radius:16px 16px 4px 4px;padding-top:10px}
+  .sc-b.hat::before{display:none}
+  .sc-b.sc-drop{box-shadow:0 -3px 0 #1a8cff,inset 0 -2px 0 rgba(0,0,0,.2)}
+  .sc-sw{display:inline-block;width:12px;height:12px;border:1px solid #fff;vertical-align:-2px;margin:0 2px}
+  .sc-in{font:12px Arial;margin:0 4px;border:1px solid #555;border-radius:3px;padding:1px 2px;color:#000;background:#fff;vertical-align:middle;text-shadow:none}
+  .sc-x{margin-left:8px;font:bold 10px Arial;background:rgba(0,0,0,.28);border-radius:3px;padding:0 4px;cursor:pointer;opacity:.35}
+  .sc-b:hover .sc-x{opacity:1}
+  .sc-stack{display:flex;flex-direction:column;align-items:flex-start;margin:0 0 12px;padding:5px;border:1px dashed transparent;border-radius:4px}
+  .sc-stack.on{border-color:#7aa7e0;background:#eef5ff}
+  .sc-end{font:11px Arial;color:#888;padding:3px 6px;min-width:40px;min-height:8px;border:1px dashed transparent}
+  .sc-end.sc-drop{border-color:#1a8cff}
+  .sc-empty{color:#777;font:13px Arial;text-align:center;margin:70px auto 0}
+  .sc-foot{display:flex;gap:6px;align-items:center;padding:6px 8px;flex-wrap:wrap}
+  .sc-help{flex:1;font:11px Arial;color:#333;min-width:150px}
   #setWin{left:270px;top:40px;width:250px}
   #helpWin{left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 20px))}
   #helpWin td{padding:2px 6px;vertical-align:top}
@@ -363,6 +389,7 @@
   <div id="health" class="txt">Health<div class="bar"><div id="hpFill"></div></div></div>
 </div>
 <div id="tip" class="txt"></div>
+<div id="selRect" class="hidden"></div>
 <div id="shiftIcon" class="hidden"></div>
 <div id="toolbar"></div>
 <div id="touchUI">
@@ -389,6 +416,8 @@
   <div class="bd">
     <h4>Insert part</h4>
     <div class="grid" id="shapeBtns"></div>
+    <div class="row"><button class="b" id="undoBtn" title="Ctrl+Z">&#8630; Undo</button><button class="b" id="redoBtn" title="Ctrl+Y">&#8631; Redo</button>
+      <button class="b" id="scriptBtn" title="Snap blocks together into little scripts for a brick"><i data-px="script"></i> Script a brick</button></div>
     <div class="row"><label><input type="checkbox" id="anchorChk" checked> Anchored</label>
       <label title="Stays anchored until something explodes next to it, then it gets blown loose"><input type="checkbox" id="destroyChk"> Destroyable</label></div>
     <div class="row">Custom: <input type="number" id="cx" value="6" min="0.2" max="64" step="0.2">x<input type="number" id="cy" value="1.2" min="0.2" max="64" step="0.2">x<input type="number" id="cz" value="4" min="0.2" max="64" step="0.2"><button class="b" id="customBtn">Add</button></div>
@@ -397,6 +426,17 @@
     <h4>Place</h4>
     <div class="row"><button class="b" id="saveBtn">Save</button><button class="b" id="loadBtn">Load</button><button class="b" id="clearBtn">Clear All</button><button class="b" id="defaultBtn">Default</button></div>
     <div class="row"><button class="b" id="postBtn" title="Send your Baseplate build to the admin, to show up in Games"><i data-px="post"></i> Post to Games</button></div>
+  </div>
+</div>
+
+<!-- script blocks for one brick (Insert -> Script a brick) -->
+<div id="scriptWin" class="win hidden">
+  <div class="tb"><span id="scTitle">Script</span><button id="scClose">x</button></div>
+  <div class="sc-main"><div id="scPalette"></div><div id="scArea"></div></div>
+  <div class="sc-foot">
+    <button class="b" id="scNew">+ New script</button><button class="b" id="scTest">&#9654; Test it</button>
+    <span class="sc-help">Click a block to add it. Drag blocks to move them, or back to the left to throw them away.</span>
+    <button class="b" id="scDone">Done</button>
   </div>
 </div>
 
@@ -448,6 +488,9 @@
       <tr><td>Space</td><td>Jump</td></tr>
       <tr><td>Right-drag / ← →</td><td>Turn the camera</td></tr>
       <tr><td>Shift</td><td>Shift lock (camera follows the mouse)</td></tr>
+      <tr><td>Ctrl+Z / Ctrl+Y</td><td>Undo / redo your building</td></tr>
+      <tr><td>Script a brick</td><td>In Insert: snap blocks together so a brick does things when it's touched or clicked</td></tr>
+      <tr><td>Shift+click</td><td>Pick several bricks (or drag a box on empty space), then use a tool on one to do them all. Del deletes them</td></tr>
       <tr><td>Scroll / I O</td><td>Zoom (all the way in = first person)</td></tr>
       <tr><td>1 – 0</td><td>Pick a tool (again to put it away)</td></tr>
       <tr><td>Left click</td><td>Use the tool</td></tr>
@@ -779,6 +822,7 @@ const PX_ART = {
   stop: ['..kkkkkk..', '.krrrrrrk.', 'krrrrrrrrk', 'krrrrrrrrk', 'krwwwwwwrk', 'krwwwwwwrk', 'krrrrrrrrk', 'krrrrrrrrk', '.krrrrrrk.', '..kkkkkk..'],
   clock: ['kkkkkkkkk', 'kmmmmmmmk', '.kwwwwwk.', '.kyyyyyk.', '..kyyyk..', '...kyk...', '..kwywk..', '.kwwywwk.', '.kwyyywk.', 'kmmmmmmmk', 'kkkkkkkkk'],
   globe: ['...kkkk...', '.kkbbnnkk.', 'kbbnnnbbbk', 'kbnnnbbbbk', 'kbbnbbbnnk', 'kbbbbbnnnk', 'kbbbbbbnbk', '.kkbbbbkk.', '...kkkk...'],
+  script: ['..kkkkkk....', '.kyyyyyykk..', 'kyyyyyyyyyk.', 'kkkkkkkkkkk.', 'koooooooook.', 'koooooooook.', 'kkkkkkkkkkk.', 'kbbbbbbbbbk.', 'kbbbbbbbbbk.', 'kkkkkkkkkkk.'],
   trophy: ['kkkkkkkkkk', 'kyyyyyyyyk', 'ykyywyyyky', 'ykyywyyyky', '.kyyyyyyk.', '..kyyyyk..', '...kyyk...', '....kk....', '...kYYk...', '..kkkkkk..'],
 };
 const pxCache = {};
@@ -1182,6 +1226,8 @@ function makePart(o) {
   // destroy: an anchored destroyable. It stays put until an explosion reaches it, then comes loose (see explode)
   const p = { shape, size: [...size], color, trans, anchored, mass, kill: !!o.kill, win: !!o.win, locked: !!o.locked, bouncy: !!o.bouncy, destroy: !!o.destroy, mesh, body,
     mode: anchored ? 'static' : 'dynamic', startAsleep: !!o.sleep };
+  p.scripts = cleanScripts(o.scripts); if (p.scripts) scripted.add(p);
+  if (o.hidden) { p.hidden = true; mesh.visible = false; }
   body.userData = { part: p }; mesh.userData.part = p;
   mesh.position.copy(body.position); mesh.quaternion.copy(body.quaternion);
   mesh.castShadow = size[0] < 500; mesh.receiveShadow = true;   // (the giant baseplate only catches shadows)
@@ -1199,14 +1245,21 @@ const BRICK_CAP = HEADLESS ? 2500 : 4000;
 const BRICKS_FULL = `This game has the most bricks it can hold (${BRICK_CAP}). Delete some to build more!`;
 const brickRoom = (n = 1) => parts.length + n <= BRICK_CAP;
 // say so to whoever tried (a player in my room hears it from the server)
-function tellFull(who) { if (!who || who === player) sysChat(BRICKS_FULL); else if (who.conn) netSendTo(who.conn, { t: 'cmdout', text: BRICKS_FULL }); }
+function tell(who, text) { if (!who || who === player) sysChat(text); else if (who.conn) netSendTo(who.conn, { t: 'cmdout', text }); }
+const tellFull = (who) => tell(who, BRICKS_FULL);
 function removePart(p) {
   world.removeBody(p.body); scene.remove(p.mesh);
   parts.splice(parts.indexOf(p), 1); pickables.splice(pickables.indexOf(p.mesh), 1);
   partsByNid.delete(p.nid); net.xfTargets.delete(p);
   if (hovered === p) hovered = null;
-  if (dragging === p) dragging = null;
+  selection.delete(p);
+  if (dragging === p) {   // gone from under my hand: the rest of the group drops
+    const rest = dragGroup.map(g => g.p).filter(q => q !== p); dragging = null; dragGroup = [];
+    if (rest.length) { startDrag(rest[0], rest); stopDrag(); }
+  }
   netEv(['pr', p.nid]);
+  scripted.delete(p);
+  if (scEd.p === p) scEdSync();   // (its Script window closes)
 }
 /* ---- far-away bricks, the indie-game way: past LOD.simple a brick is drawn as one plain piece (up close
    it's six, so the top can have studs), past LOD.shadow it stops casting a shadow, and past the haze it isn't
@@ -1220,7 +1273,7 @@ function lodBricks() {
     const p = parts[lodI++ % parts.length];
     if (p.size[0] >= 200 || p.size[2] >= 200) continue;   // the ground and giant baseplates always draw
     const d = p.mesh.position.distanceTo(c) - Math.max(p.size[0], p.size[1], p.size[2]) / 2;
-    p.mesh.visible = d < LOD.hide;
+    p.mesh.visible = !p.hidden && d < LOD.hide;
     p.mesh.castShadow = d < LOD.shadow;
     if (p.shape !== 'box') continue;
     if (!p.fullMat) p.fullMat = p.mesh.material;
@@ -1262,8 +1315,9 @@ function partSpeedSq(p) {
   return performance.now() - (p.netAt || 0) < 300 ? p.netSpeedSq || 0 : 0;
 }
 const serialize = (p) => ({ s: p.shape, z: p.size, p: p.body.position.toArray().map(n => +n.toFixed(3)),
-  q: p.body.quaternion.toArray().map(n => +n.toFixed(4)), c: p.color, t: p.trans, a: p.anchored, k: p.kill, w: p.win, b: p.bouncy, m: p.mass, x: p.destroy });
-const deserialize = (d, extra = {}) => makePart({ shape: d.s, size: d.z, pos: d.p, quat: d.q, color: d.c, trans: d.t, anchored: d.a, kill: d.k, win: d.w, bouncy: d.b, mass: d.m, destroy: d.x, ...extra });
+  q: p.body.quaternion.toArray().map(n => +n.toFixed(4)), c: p.color, t: p.trans, a: p.anchored, k: p.kill, w: p.win, b: p.bouncy, m: p.mass, x: p.destroy,
+  sc: p.scripts || undefined, v: p.hidden ? 1 : undefined });
+const deserialize = (d, extra = {}) => makePart({ shape: d.s, size: d.z, pos: d.p, quat: d.q, color: d.c, trans: d.t, anchored: d.a, kill: d.k, win: d.w, bouncy: d.b, mass: d.m, destroy: d.x, scripts: d.sc, hidden: d.v, ...extra });
 
 /* ---- the place ---- */
 const SPAWN = new V3(0, 1 + HY + 0.1, 0);
@@ -1410,7 +1464,8 @@ function buildTown() {
   makePart({ ...A, shape: 'cyl', size: [0.8, 5, 0.8], pos: [14, 2.5, -94.5], color: BC['White'] });
   makePart({ ...A, shape: 'cyl', size: [0.8, 5, 0.8], pos: [14, 2.5, -85.5], color: BC['White'] });
 }
-function clearUnlocked() { for (const p of [...parts]) if (!p.locked) removePart(p); }
+// (a whole new set of bricks: nobody's undo list makes sense anymore)
+function clearUnlocked() { for (const p of [...parts]) if (!p.locked) removePart(p); for (const h of humanoids) h.hist = null; selection.clear(); scThreads.length = 0; }
 
 /* ================= characters ================= */
 function headGeometry() {
@@ -2457,6 +2512,7 @@ class Humanoid {
       const p = e.body.userData && e.body.userData.part;
       if (!p) return;
       if (p.kill) later(() => kill(this, null));
+      if (p.scripts) later(() => scriptTouched(p, this));
       if (p.win && this.isPlayer && !this.wonObby) { this.wonObby = true; later(() => { sysChat('You beat the obby! 🏆'); SFX.spawn(); }); }
     });
     if (!isPlayer) this.char.meshes.forEach(m => { m.userData.hum = this; pickables.push(m); });
@@ -3491,7 +3547,7 @@ const TOOLS = [
   { id: 'paintball', name: 'Paintball', icon: '🎯', tip: 'Click to shoot paint. Paints any brick a random BrickColor' },
   { id: 'trowel', name: 'Trowel', icon: '🧱', tip: 'Click the ground to build a wall' },
   { id: 'bomb', name: 'Timebomb', icon: '💣', tip: 'Click to toss a timebomb. 3 seconds!' },
-  { id: 'grab', name: 'Grab', icon: '✋', px: 'grab', hopper: true, tip: 'Drag bricks. R = rotate, T = tilt, F = anchor' },
+  { id: 'grab', name: 'Grab', icon: '✋', px: 'grab', hopper: true, tip: 'Drag bricks. R = rotate, T = tilt, F = anchor · Shift+click picks several' },
   { id: 'clone', name: 'Clone', icon: '📋', px: 'clone', hopper: true, tip: 'Click a brick to copy it, then drag it into place' },
   { id: 'delete', name: 'Delete', icon: '🔨', px: 'hammer', hopper: true, tip: 'Click a brick to delete it' },
   { id: 'paint', name: 'Paint', icon: '🪣', px: 'bucket', hopper: true, tip: 'Click a brick to paint it (pick a color in Insert)' },
@@ -3557,7 +3613,9 @@ function equip(i) {
   if (equipped && held[equipped.id]) held[equipped.id].visible = true;
   if (equipped && equipped.id === 'sword') SFX.unsheath(); else SFX.click();
   document.querySelectorAll('.slot').forEach((s, j) => s.classList.toggle('sel', equipped === TOOLS[j]));
+  if (!equipped || !equipped.hopper) clearSelection();   // (switching between building tools keeps the picked bricks)
   $('tip').textContent = equipped ? equipped.tip : '';
+  if (selection.size) selHint();
   if (cursorBeforeTurn === null) renderer.domElement.style.cursor = toolCursor();   // (mid-turn it stays hidden)
 }
 
@@ -3565,7 +3623,7 @@ const raycaster = new THREE.Raycaster(), mouseNDC = new THREE.Vector2();
 function pick(exclude) {
   raycaster.setFromCamera(mouseNDC, camera); raycaster.far = 1500;
   for (const h of raycaster.intersectObjects(pickables, false)) {
-    if (h.object === exclude) continue;
+    if (exclude && (exclude instanceof Set ? exclude.has(h.object) : h.object === exclude)) continue;
     const hum = h.object.userData.hum;
     if (hum && hum.dead) continue;
     return h;
@@ -3581,30 +3639,19 @@ function handPos() {
 
 let lastSword = 0;
 function useTool(e) {
-  if (!equipped || player.dead) return;
+  if (player.dead) return;
+  if (!equipped) { scriptClicked(); return; }   // (an empty hand clicks bricks that have a "When clicked" script)
   const id = equipped.id, now = time, C = net.mode === 'client';
   const hit = pick(dragging ? dragging.mesh : null);
   if (equipped.hopper) {
     const p = hit && hit.object.userData.part;
-    if (!p || p.locked) return;
-    if (id === 'grab') startDrag(p);
-    else if (id === 'clone') {
-      SFX.click();
-      if (C) { netSend({ t: 'clone', nid: p.nid }); return; }   // the host makes the copy, then hands it back to drag
-      if (!brickRoom()) { tellFull(player); return; }
-      const c = deserialize(serialize(p)); c.anchored = p.anchored; startDrag(c);
-      aiOnBuild(p.mesh.position, player);
-    } else if (id === 'delete') {
-      poof(p.mesh.position, p.color); SFX.hammer();
-      if (C) { netSend({ t: 'delete', nid: p.nid }); return; }
-      if (p.owner) aiOnBuildWrecked(p.owner, player);
-      wakeNear(p.body.position, Math.max(...p.size) + 3); removePart(p); netSfx('hammer', p.body.position);
-    }
-    else if (id === 'paint') {
-      SFX.paint();
-      if (C) { netSend({ t: 'paint', nid: p.nid, c: selColor }); return; }
-      paintPart(p, selColor); aiOnPainted(p, player);
-    }
+    if (e && e.shiftKey) shiftTap.used = true;   // (Shift was for picking bricks, not for shift lock)
+    // a click on empty space or the ground: drag a box around bricks to pick them all
+    if (!p || p.locked) { if (e) boxSelStart(e); return; }
+    // Shift+click: add a brick to the picked ones (or take it back out)
+    if (e && e.shiftKey) { toggleSelect(p); return; }
+    if (!selection.has(p)) clearSelection();
+    hopperAct(id, p, selection.has(p) ? [p, ...[...selection].filter(s => s !== p)] : [p]);   // (the brick you clicked goes first)
     return;
   }
   if ((cooldown[id] || 0) > now) return;
@@ -3729,10 +3776,11 @@ function buildWall(point, actor = player, color = selColor) {
   const along = new V3(-d.z, 0, d.x), rotY = Math.atan2(-along.z, along.x);
   const q = new THREE.Quaternion().setFromAxisAngle(new V3(0, 1, 0), rotY);
   let k = 0;
+  const ops = []; histPush(actor, ops, true);   // one undo step for the whole wall (filled in as its bricks go up)
   for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
     const off = (c - 1.5) * 4 + (r % 2 ? 1 : -1);
     const pos = point.clone().addScaledVector(along, off); pos.y = point.y + 0.6 + r * 1.202;
-    wallQueue.push({ at: time + k++ * 0.045, pos, q, color });
+    wallQueue.push({ at: time + k++ * 0.045, pos, q, color, ops });
   }
 }
 function blastBody(b, center, radius) {
@@ -3813,37 +3861,71 @@ function segmentHit(from, to) {
 
 /* ---- dragging (Grab / Clone) ---- */
 let dragging = null, dragRot = { y: 0, x: 0 }, hovered = null;
+// the other picked bricks riding along with the one you hold: where each sits from it (lp) and how it's turned (lq)
+let dragGroup = [];
 const selBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0x1a8cff, depthTest: false }));
 selBox.renderOrder = 999; selBox.visible = false; scene.add(selBox);
-function startDrag(p) {
-  dragging = p; setMode(p, 'kinematic');
-  const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion(...p.body.quaternion.toArray()), 'YXZ');
+const alive = (p) => !!p && partsByNid.get(p.nid) === p;
+const quatOf = (p) => new THREE.Quaternion(p.body.quaternion.x, p.body.quaternion.y, p.body.quaternion.z, p.body.quaternion.w);
+const dragRec = (p) => [p.nid, ...arr3(p.body.position), ...p.body.quaternion.toArray().map(r3)];
+function startDrag(p, group = [p]) {
+  dragging = p; p.histFrom = xfOf(p); setMode(p, 'kinematic');
+  const iq = quatOf(p).invert(), o = new V3().copy(p.body.position);
+  dragGroup = group.filter(s => s !== p && alive(s) && !s.locked).map(s => {
+    s.histFrom = xfOf(s); setMode(s, 'kinematic');
+    return { p: s, lp: new V3().copy(s.body.position).sub(o).applyQuaternion(iq), lq: iq.clone().multiply(quatOf(s)) };
+  });
+  const e = new THREE.Euler().setFromQuaternion(quatOf(p), 'YXZ');
   dragRot = { y: Math.round(e.y / (Math.PI / 2)), x: 0 };
   SFX.click(); updateDrag();
 }
 function stopDrag() {
   if (!dragging) return;
-  const p = dragging; dragging = null;
-  if (net.mode === 'client') {   // the host drops it for real; ours stays a mirror
-    netSend({ t: 'drag', nid: p.nid, p: arr3(p.body.position), q: p.body.quaternion.toArray().map(r3) });
-    netSend({ t: 'dragEnd', nid: p.nid, a: p.anchored });
-    p.mode = p.anchored ? 'static' : 'dynamic';
+  const held = [dragging, ...dragGroup.map(g => g.p)].filter(alive);
+  dragging = null; dragGroup = [];
+  if (!held.length) return;
+  if (net.mode === 'client') {   // the host drops them for real; ours stay mirrors
+    netSend({ t: 'drag', g: held.map(dragRec) });
+    netSend({ t: 'dragEnd', g: held.map(p => [p.nid, p.anchored]) });
+    for (const p of held) p.mode = p.anchored ? 'static' : 'dynamic';
     SFX.clack(); return;
   }
-  setMode(p, p.anchored ? 'static' : 'dynamic');
-  wakeNear(p.body.position, Math.max(...p.size) + 4);
+  dropBricks(held, player);
   SFX.clack();
 }
+// bricks someone let go of (solo: me; in a room the host does it for whoever held them). The move goes in their undo list.
+function dropBricks(list, h) {
+  const ops = [];
+  for (const p of list) {
+    p.netDrag = null; setMode(p, p.anchored ? 'static' : 'dynamic');
+    wakeNear(p.body.position, Math.max(...p.size) + 4);
+    const from = p.histFrom; p.histFrom = null;
+    if (p.histNew) { p.histNew = false; continue; }   // a fresh copy: undoing its "made it" step takes it away, wherever it is
+    const to = xfOf(p);
+    if (from && !sameXf(from, to)) ops.push({ k: 'move', nid: p.nid, from, to });
+  }
+  histPush(h, ops);
+}
+const halfOf = (p) => p.shape === 'ball' ? [p.size[0] / 2, p.size[0] / 2, p.size[0] / 2] : p.size.map(s => s / 2);
+const AXES = [new V3(1, 0, 0), new V3(0, 1, 0), new V3(0, 0, 1)];
 function updateDrag() {
   if (!dragging) return;
-  const p = dragging, hit = pick(p.mesh);
+  const p = dragging;
+  if (dragGroup.length) dragGroup = dragGroup.filter(g => alive(g.p));
+  const hit = pick(dragGroup.length ? new Set([p.mesh, ...dragGroup.map(g => g.p.mesh)]) : p.mesh);
   const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(dragRot.x * Math.PI / 2, dragRot.y * Math.PI / 2, 0, 'YXZ'));
   let pos;
   if (hit) {
     const n = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
-    const half = p.shape === 'ball' ? [p.size[0] / 2, p.size[0] / 2, p.size[0] / 2] : p.size.map(s => s / 2);
-    const ax = [new V3(1, 0, 0), new V3(0, 1, 0), new V3(0, 0, 1)].map(a => a.applyQuaternion(q));
-    const ext = ax.reduce((s, a, i) => s + Math.abs(a.dot(n)) * half[i], 0);
+    const half = halfOf(p);
+    const ax = AXES.map(a => a.clone().applyQuaternion(q));
+    // how far the held bricks reach back toward the surface (all of them, so none sink into it)
+    let ext = ax.reduce((s, a, i) => s + Math.abs(a.dot(n)) * half[i], 0);
+    for (const g of dragGroup) {
+      const gq = q.clone().multiply(g.lq), c = g.lp.clone().applyQuaternion(q), gh = halfOf(g.p);
+      const reach = AXES.reduce((s, a, i) => s + Math.abs(a.clone().applyQuaternion(gq).dot(n)) * gh[i], 0);
+      ext = Math.max(ext, reach - c.dot(n));
+    }
     pos = hit.point.clone().addScaledVector(n, ext + 0.01);
     if (n.y > 0.9) {   // set down on top of something: line its edges up with the studs
       const reach = (axis) => ax.reduce((s, a, i) => s + Math.abs(a[axis]) * half[i], 0);
@@ -3853,7 +3935,526 @@ function updateDrag() {
   p.body.position.set(pos.x, pos.y, pos.z);
   p.body.quaternion.set(q.x, q.y, q.z, q.w);
   p.body.velocity.set(0, 0, 0); p.body.angularVelocity.set(0, 0, 0); p.body.aabbNeedsUpdate = true;
+  // the rest of the group keeps its place around the brick you hold (and turns with it)
+  for (const g of dragGroup) {
+    const b = g.p.body, c = g.lp.clone().applyQuaternion(q).add(pos), gq = q.clone().multiply(g.lq);
+    b.position.set(c.x, c.y, c.z); b.quaternion.set(gq.x, gq.y, gq.z, gq.w);
+    b.velocity.set(0, 0, 0); b.angularVelocity.set(0, 0, 0); b.aabbNeedsUpdate = true;
+  }
 }
+
+/* ---- picking several bricks: Shift+click them, or drag a box around them on empty space ----
+   Then any building tool used on one of them does them all: Grab moves them together, Clone copies
+   them, Delete deletes them, Paint paints them. The Delete key deletes them too. Only on this screen:
+   the picked bricks are mine alone (the host just gets told which bricks to change). */
+const selection = new Set(), SEL_MAX = 300, selBoxes = [];
+const selMat = new THREE.LineBasicMaterial({ color: 0x00e5ff, depthTest: false });
+let boxSel = null;
+function toggleSelect(p) {
+  if (selection.has(p)) selection.delete(p);
+  else if (selection.size < SEL_MAX) selection.add(p);
+  else sysChat(`You can pick up to ${SEL_MAX} bricks at once.`);
+  SFX.click(); selHint();
+}
+function clearSelection() { if (selection.size) { selection.clear(); selHint(); } }
+function selHint() {
+  if (!started) return;
+  $('tip').textContent = selection.size ? `${selection.size} brick${selection.size === 1 ? '' : 's'} picked: use a tool on one to do them all · Del deletes · Ctrl+Z undoes`
+    : equipped ? equipped.tip : '';
+}
+// an outline on every picked brick, every frame
+function drawSelection(show) {
+  let i = 0;
+  if (show) for (const p of selection) {
+    if (!alive(p)) { selection.delete(p); continue; }
+    let b = selBoxes[i];
+    if (!b) { b = new THREE.LineSegments(selBox.geometry, selMat); b.renderOrder = 998; scene.add(b); selBoxes.push(b); }
+    b.visible = true; b.position.copy(p.mesh.position); b.quaternion.copy(p.mesh.quaternion);
+    b.scale.set(...(p.shape === 'ball' ? [p.size[0], p.size[0], p.size[0]] : p.size)).multiplyScalar(1.04);
+    i++;
+  }
+  for (; i < selBoxes.length; i++) selBoxes[i].visible = false;
+}
+function boxSelStart(e) {
+  if (camLocked() || shiftLock) { if (!e.shiftKey) clearSelection(); return; }   // (the mouse is stuck in the middle: no box)
+  boxSel = { x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY, add: e.shiftKey };
+}
+function boxSelMove(e) {
+  if (!boxSel) return;
+  boxSel.x1 = e.clientX; boxSel.y1 = e.clientY;
+  const r = $('selRect'), b = boxSel;
+  if (Math.abs(b.x1 - b.x0) < 6 && Math.abs(b.y1 - b.y0) < 6) { r.classList.add('hidden'); return; }
+  Object.assign(r.style, { left: Math.min(b.x0, b.x1) + 'px', top: Math.min(b.y0, b.y1) + 'px', width: Math.abs(b.x1 - b.x0) + 'px', height: Math.abs(b.y1 - b.y0) + 'px' });
+  r.classList.remove('hidden');
+}
+function boxSelEnd() {
+  const b = boxSel; boxSel = null; $('selRect').classList.add('hidden');
+  if (!b) return;
+  if (Math.abs(b.x1 - b.x0) < 6 && Math.abs(b.y1 - b.y0) < 6) { if (!b.add) clearSelection(); return; }   // just a click on nothing
+  if (!b.add) selection.clear();
+  const x0 = Math.min(b.x0, b.x1), x1 = Math.max(b.x0, b.x1), y0 = Math.min(b.y0, b.y1), y1 = Math.max(b.y0, b.y1), v = new V3();
+  for (const p of parts) {
+    if (p.locked || !p.mesh.visible || selection.size >= SEL_MAX) continue;
+    if (p.mesh.position.distanceTo(camera.position) > 400) continue;
+    v.copy(p.mesh.position).project(camera);
+    if (v.z < -1 || v.z > 1) continue;   // behind the camera
+    const sx = (v.x + 1) / 2 * innerWidth, sy = (1 - v.y) / 2 * innerHeight;
+    if (sx >= x0 && sx <= x1 && sy >= y0 && sy <= y1) selection.add(p);
+  }
+  SFX.click(); selHint();
+}
+// a building tool used on a brick, or on all the picked bricks at once (group[0] is the one clicked)
+function hopperAct(id, p, group) {
+  const C = net.mode === 'client';
+  if (id === 'grab') startDrag(p, group);
+  else if (id === 'clone') {
+    SFX.click();
+    if (C) { netSend({ t: 'clone', nid: p.nid, g: group.map(s => s.nid) }); return; }   // the host makes the copies, then hands them back to drag
+    const copies = cloneBricks(group, player); if (!copies) return;
+    if (group.length > 1) { selection.clear(); copies.forEach(c => selection.add(c)); selHint(); }   // the copies are the picked ones now
+    startDrag(copies[0], copies);
+  } else if (id === 'delete') {
+    group.slice(0, 40).forEach(s => poof(s.mesh.position, s.color)); SFX.hammer();
+    if (C) { netSend({ t: 'delete', g: group.map(s => s.nid) }); return; }
+    netSfx('hammer', p.body.position); deleteBricks(group, player);
+  } else if (id === 'paint') {
+    SFX.paint();
+    if (C) { netSend({ t: 'paint', g: group.map(s => s.nid), c: selColor }); return; }
+    paintBricks(group, selColor, player);
+  }
+}
+function deleteSelection() {
+  if (!selection.size || dragging) return;
+  const g = [...selection].filter(alive);
+  if (g.length) hopperAct('delete', g[0], g);
+  clearSelection();
+}
+
+/* ---- building changes, made where the world lives: here in solo play, on the host in a room (for whoever asked) ---- */
+function cloneBricks(list, h) {
+  list = list.filter(p => alive(p) && !p.locked);
+  if (!list.length) return null;
+  if (!brickRoom(list.length)) { tellFull(h); return null; }
+  const copies = list.map(p => { const c = deserialize(serialize(p)); c.histNew = true; return c; });
+  histPush(h, copies.map(c => ({ k: 'add', nid: c.nid })));
+  aiOnBuild(list[0].mesh.position, h);
+  return copies;
+}
+function deleteBricks(list, h) {
+  const ops = [], owners = new Set();
+  for (const p of list) {
+    if (!alive(p) || p.locked || (p.netDrag && p.netDrag !== h)) continue;
+    ops.push({ k: 'del', nid: p.nid, d: serialize(p) });
+    if (p.owner) owners.add(p.owner);
+    wakeNear(p.body.position, Math.max(...p.size) + 3); removePart(p);
+  }
+  owners.forEach(o => aiOnBuildWrecked(o, h));
+  histPush(h, ops);
+}
+function paintBricks(list, color, h) {
+  const ops = [];
+  for (const p of list) {
+    if (!alive(p) || p.locked || p.color === color) continue;
+    ops.push({ k: 'paint', nid: p.nid, from: p.color, to: color }); paintPart(p, color);
+  }
+  if (alive(list[0])) aiOnPainted(list[0], h);
+  histPush(h, ops);
+}
+
+/* ---- undo / redo (Ctrl+Z / Ctrl+Y, or the buttons in Insert) ----
+   Everyone has their own list of what they built, kept where the world lives: on this computer in solo play,
+   on the host in a room (players just ask it to undo). A step is a list of changes, so a whole group of picked
+   bricks undoes at once. A brick that comes back keeps its old network id, so older steps still find it.
+     add: made it (undo takes it away)      del: deleted it (undo brings it back, d = the brick)
+     paint: from -> to color                move: from -> to (where it was, how it was turned, anchored)
+     script: from -> to (its script blocks) */
+const HIST_MAX = 50;
+const histOf = (h) => h.hist || (h.hist = { undo: [], redo: [] });
+function histPush(h, ops, always = false) {
+  if (!h || (!ops.length && !always)) return;
+  const H = histOf(h);
+  H.undo.push(ops); if (H.undo.length > HIST_MAX) H.undo.shift();
+  H.redo.length = 0;
+}
+const xfOf = (p) => ({ p: p.body.position.toArray(), q: p.body.quaternion.toArray(), a: p.anchored });
+const sameXf = (a, b) => a.a === b.a && a.p.every((n, i) => Math.abs(n - b.p[i]) < 0.01) && a.q.every((n, i) => Math.abs(n - b.q[i]) < 0.001);
+// put a brick somewhere at once (and the server's copy of it, online)
+function placePart(p, x) {
+  const b = p.body;
+  b.position.set(...x.p); b.quaternion.set(...x.q); b.aabbNeedsUpdate = true;
+  p.mesh.position.copy(b.position); p.mesh.quaternion.copy(b.quaternion);
+  p.anchored = !!x.a;
+  if (net.mode === 'host') { setMode(p, 'kinematic'); toServer({ t: 'drag', l: [dragRec(p)] }); }
+  setMode(p, p.anchored ? 'static' : 'dynamic');
+  wakeNear(b.position, Math.max(...p.size) + 4);
+}
+function histStep(h, redo) {
+  const H = histOf(h), ops = (redo ? H.redo : H.undo).pop();
+  if (!ops) { tell(h, redo ? 'Nothing to redo.' : 'Nothing to undo.'); return; }
+  (redo ? H.undo : H.redo).push(ops);
+  let n = 0;
+  for (const op of redo ? ops : [...ops].reverse()) if (histApply(op, redo, h)) n++;
+  if (!n && ops.length) tell(h, `Couldn't ${redo ? 'redo' : 'undo'} that: those bricks are gone (or someone is holding them).`);
+}
+function histApply(op, redo, h) {
+  const p = partsByNid.get(op.nid);
+  if (p && (p.netDrag || p === dragging)) return false;   // someone has it in their hand right now
+  const gone = () => {
+    if (!p) return false;
+    op.d = serialize(p); wakeNear(p.body.position, Math.max(...p.size) + 3); removePart(p); return true;
+  };
+  const back = () => {
+    if (p || !op.d) return false;
+    if (!brickRoom()) { tellFull(h); return false; }
+    deserialize(op.d, { nid: op.nid }); return true;
+  };
+  if (op.k === 'add') return redo ? back() : gone();
+  if (op.k === 'del') return redo ? gone() : back();
+  if (!p) return false;
+  if (op.k === 'paint') { paintPart(p, redo ? op.to : op.from); return true; }
+  if (op.k === 'move') { placePart(p, redo ? op.to : op.from); return true; }
+  if (op.k === 'script') { applyScripts(p, redo ? op.to : op.from); return true; }
+  return false;
+}
+// Ctrl+Z / Ctrl+Y here
+function undoRedo(redo) {
+  if (!started) return;
+  stopDrag(); SFX.click();
+  if (net.mode === 'client') { netSend({ t: redo ? 'redo' : 'undo' }); return; }
+  histStep(player, redo);
+}
+
+/* ================= SCRIPT BLOCKS =================
+   cooltinpot's idea: Scratch-style blocks that snap together into little scripts on a brick, like
+   "When touched -> wait 1 second -> play sound -> teleport to spawn". Open them with Insert -> Script a brick.
+   A brick keeps its scripts in p.scripts: [{ on: 'touch' | 'click' | 'start', do: [[block, value], ...] }].
+   They save with the brick (serialize: sc). The scripts run where the world lives: here in solo play,
+   on the host in a room (players only tell it "I touched / clicked this brick"). */
+const SC_MAX = 8, SC_BLOCKS = 30;   // scripts per brick, blocks per script
+const SC_SOUNDS = [['boing', 'Boing'], ['uuhhh', 'Oof'], ['boom', 'Boom'], ['spawn', 'Ding'], ['click', 'Click'], ['clack', 'Clack'], ['jump', 'Jump'],
+  ['swoosh', 'Swoosh'], ['slash', 'Slash'], ['pew', 'Pew'], ['rocket', 'Rocket'], ['splat', 'Splat'], ['hammer', 'Hammer'], ['paint', 'Spray'], ['hurt', 'Ouch']];
+// (the outfit-set hats stay rare: a script can't hand those out)
+const SC_HATS = () => HATS.filter(h => h.id !== 'none' && !SETS.some(s => s.wear.hat === h.id)).map(h => [h.id, h.name]);
+// the kinds of blocks, in Scratch colors. {} is where the block's value goes.
+const SB_CATS = { when: ['When', '#e6a000'], control: ['Control', '#ff8c1a'], looks: ['Looks', '#9966ff'], sound: ['Sound', '#cf63cf'],
+  motion: ['Motion', '#4c97ff'], players: ['Players', '#e0483e'] };
+const SB = {
+  touch: { cat: 'when', text: 'When touched' },
+  click: { cat: 'when', text: 'When clicked' },
+  start: { cat: 'when', text: 'When the game starts' },
+  wait: { cat: 'control', text: 'wait {} seconds', arg: 'num', def: 1 },
+  color: { cat: 'looks', text: 'change color to {}', arg: 'color', def: BC['Bright red'] },
+  hide: { cat: 'looks', text: 'make invisible' },
+  show: { cat: 'looks', text: 'make visible' },
+  say: { cat: 'looks', text: 'say {}', arg: 'text', def: 'Hello!' },
+  sound: { cat: 'sound', text: 'play sound {}', arg: 'sound', def: 'boing' },
+  anchor: { cat: 'motion', text: 'anchor' },
+  unanchor: { cat: 'motion', text: 'unanchor' },
+  tpspawn: { cat: 'motion', text: 'teleport player to spawn' },
+  ko: { cat: 'players', text: 'knock out player' },
+  hat: { cat: 'players', text: 'give player hat {}', arg: 'hat', def: 'tophat' },
+};
+function cleanArg(type, v, def) {
+  if (type === 'num') { v = +v; return Number.isFinite(v) ? Math.min(60, Math.max(0.1, Math.round(v * 10) / 10)) : def; }
+  if (type === 'text') return cleanText(String(v ?? '').slice(0, 60)) || def;
+  if (type === 'color') return /^#[0-9a-f]{6}$/i.test(v) ? v : def;
+  if (type === 'sound') return SC_SOUNDS.some(s => s[0] === v) ? v : def;
+  if (type === 'hat') return SC_HATS().some(h => h[0] === v) ? v : def;
+  return def;
+}
+// only real blocks with sensible values get in (scripts come from saved files and from other players)
+function cleanScripts(sc) {
+  if (!Array.isArray(sc)) return null;
+  const out = [];
+  for (const s of sc.slice(0, SC_MAX)) {
+    if (!s || !SB[s.on] || SB[s.on].cat !== 'when') continue;
+    const d = [];
+    for (const b of Array.isArray(s.do) ? s.do.slice(0, SC_BLOCKS) : []) {
+      const B = Array.isArray(b) && SB[b[0]];
+      if (!B || B.cat === 'when') continue;
+      d.push(B.arg ? [b[0], cleanArg(B.arg, b[1], B.def)] : [b[0]]);
+    }
+    out.push({ on: s.on, do: d });
+  }
+  return out.length ? out : null;
+}
+const scripted = new Set();   // bricks that have scripts
+function applyScripts(p, sc) {
+  p.scripts = sc; if (sc) scripted.add(p); else scripted.delete(p);
+  netEv(['psc', p.nid, sc]);
+  if (scEd.p === p) scEdSync();
+}
+// someone saved new scripts for a brick (solo: me; in a room the host does it for whoever). It goes in their undo list.
+function setScripts(p, sc, h) {
+  if (!alive(p) || p.locked) return;
+  sc = cleanScripts(sc);
+  const from = p.scripts || null;
+  if (JSON.stringify(from) === JSON.stringify(sc)) return;
+  histPush(h, [{ k: 'script', nid: p.nid, from, to: sc }]);
+  applyScripts(p, sc);
+}
+
+/* ---- running them ---- */
+const scThreads = [];   // scripts running right now: { p, idx, list, i (next block), at (waiting until), who (the player it's about) }
+function fireScripts(p, on, who) {
+  if (net.mode === 'client' || !alive(p) || !p.scripts) return;
+  p.scripts.forEach((s, idx) => {
+    if (on && s.on !== on) return;
+    if (scThreads.some(t => t.p === p && t.idx === idx) || scThreads.length >= 300) return;   // (still going from last time: not twice at once)
+    scThreads.push({ p, idx, list: s.do, i: 0, at: time, who });
+  });
+}
+function stepScripts() {
+  for (let k = scThreads.length - 1; k >= 0; k--) {
+    const t = scThreads[k];
+    if (!alive(t.p)) { scThreads.splice(k, 1); continue; }
+    for (let n = 0; t.i < t.list.length && time >= t.at && n < 50; n++) scBlock(t, t.list[t.i++]);
+    if (t.i >= t.list.length && time >= t.at) scThreads.splice(k, 1);
+  }
+}
+function scBlock(t, [op, v]) {
+  const p = t.p, h = t.who && t.who.enabled && !t.who.dead && humanoids.includes(t.who) ? t.who : null;
+  if (op === 'wait') t.at = time + v;
+  else if (op === 'color') paintPart(p, v);
+  else if (op === 'hide' || op === 'show') setHidden(p, op === 'hide');
+  else if (op === 'say') brickSay(p, v);
+  else if (op === 'sound') {
+    if (net.mode === 'host') netEv(['sfx', v, arr3(p.body.position), null, []]);
+    const vol = Math.max(0, 1 - camera.position.distanceTo(p.body.position) / 160);
+    if (vol >= 0.03) SFX[v](vol);
+  } else if (op === 'anchor' || op === 'unanchor') {
+    const on = op === 'anchor';
+    if (p.anchored !== on && !p.netDrag && p !== dragging && !p.locked) {
+      p.anchored = on; setMode(p, on ? 'static' : 'dynamic');
+      if (!on) wakeNear(p.body.position, Math.max(...p.size) + 4);
+    }
+  } else if (op === 'tpspawn' && h) {
+    const to = SPAWN.clone().add(new V3((Math.random() - 0.5) * 2, 0, (Math.random() - 0.5) * 2));
+    if (h.conn) netSendTo(h.conn, { t: 'tp', p: arr3(to) });   // another player moves themselves
+    else { h.body.position.set(to.x, to.y, to.z); h.body.velocity.set(0, 0, 0); if (h.netPos) h.netPos.copy(to); }
+    sfxAt('spawn', to);
+  } else if (op === 'ko' && h) kill(h, null);
+  else if (op === 'hat' && h && h.hat !== v) {
+    h.setHat(v);   // (another player hears about it from the look event, and wears it from then on)
+    if (h === player) { look.hat = v; saveLook(); sysChat('You put on the ' + hatName(v) + '.'); }
+  }
+}
+// invisible bricks are still there to stand on, bump into and click (like Transparency 1)
+function setHidden(p, on) {
+  p.hidden = on; p.mesh.visible = !on;
+  netEv(['pv', p.nid, on ? 1 : 0]);
+}
+// a speech bubble over a brick, for a few seconds
+const brickBubbles = new Set();
+function brickSay(p, text) {
+  netEv(['bsay', p.nid, text]);
+  if (HEADLESS) return;
+  if (!p.bubble) { p.bubble = makeSprite(512, 128, 9); scene.add(p.bubble); }
+  const { c, t } = p.bubble.userData, g = c.getContext('2d');
+  g.clearRect(0, 0, 512, 128); g.font = 'bold 30px Arial';
+  const w = Math.min(500, g.measureText(text).width + 36);
+  g.fillStyle = '#fff'; g.strokeStyle = '#888'; g.lineWidth = 3;
+  g.beginPath(); g.roundRect(256 - w / 2, 8, w, 70, 14); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(240, 76); g.lineTo(256, 104); g.lineTo(272, 76); g.fill();
+  g.fillStyle = '#000'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 44, 480);
+  t.needsUpdate = true; p.bubble.visible = true; p.bubbleT = 6; brickBubbles.add(p);
+}
+function updateBrickBubbles(dt) {
+  for (const p of brickBubbles) {
+    p.bubbleT -= dt;
+    if (p.bubbleT <= 0 || !alive(p)) { p.bubble.visible = false; if (!alive(p)) scene.remove(p.bubble); brickBubbles.delete(p); continue; }
+    p.bubble.position.set(p.mesh.position.x, p.mesh.position.y + p.size[1] / 2 + 2.6, p.mesh.position.z);
+  }
+}
+// the three ways a script starts
+function scriptsStart() { for (const p of [...scripted]) fireScripts(p, 'start', null); }
+function scriptTouched(p, h) {
+  if (!alive(p) || !p.scripts || h.dead || !p.scripts.some(s => s.on === 'touch')) return;
+  const T = h.scTouch || (h.scTouch = new Map());   // (touching fires every physics step: once every 0.3 seconds is plenty)
+  if (time - (T.get(p.nid) ?? -9) < 0.3) return;
+  T.set(p.nid, time);
+  if (net.mode === 'client') { if (h === player) netSend({ t: 'stouch', nid: p.nid }); return; }
+  fireScripts(p, 'touch', h);
+}
+// with an empty hand, the mouse turns into a pointing hand over bricks you can click
+let scHoverN = 0;
+function scriptHover() {
+  if (equipped || !started || !scripted.size || cursorBeforeTurn !== null || HEADLESS || (scHoverN = (scHoverN + 1) % 6)) return;
+  const h = pick(), p = h && h.object.userData.part;
+  cv.style.cursor = p && p.scripts && p.scripts.some(s => s.on === 'click') ? 'pointer' : 'default';
+}
+// clicking a brick with no tool in your hand
+function scriptClicked() {
+  const hit = pick(), p = hit && hit.object.userData.part;
+  if (!p || !p.scripts || !p.scripts.some(s => s.on === 'click')) return;
+  SFX.click();
+  if (net.mode === 'client') netSend({ t: 'sclick', nid: p.nid }); else fireScripts(p, 'click', player);
+}
+
+/* ---- the Script window: blocks on the left, this brick's scripts on the right ---- */
+const scEd = { p: null, scripts: [], active: 0, sent: '', timer: 0 };
+let scriptPick = false;   // Insert -> Script a brick: waiting for a click on one
+function scriptPickStart() {
+  if (!started) return;
+  const one = selection.size === 1 && [...selection][0];
+  if (one && alive(one)) { openScriptEditor(one); return; }
+  scriptPick = true; $('tip').textContent = '📜 Click a brick to script it (Esc to stop)';
+  SFX.click();
+}
+function scriptPickEnd() { scriptPick = false; selHint(); if (!selection.size) $('tip').textContent = equipped ? equipped.tip : ''; }
+function openScriptEditor(p) {
+  scriptPickEnd();
+  if (!alive(p) || p.locked) { sysChat("That brick is part of the place: it can't have scripts."); return; }
+  scEd.p = p; scEd.scripts = JSON.parse(JSON.stringify(p.scripts || [])); scEd.active = 0; scEd.sent = JSON.stringify(p.scripts || null);
+  const name = (PALETTE.find(c => c[1].toLowerCase() === String(p.color).toLowerCase()) || ['Brick'])[0];
+  $('scTitle').textContent = `Script: ${name} ${p.shape === 'ball' ? 'Ball' : p.shape === 'cyl' ? 'Cylinder' : 'Brick'}`;
+  if (!$('scPalette').innerHTML) scPaletteRender();
+  $('scriptWin').classList.remove('hidden'); scRender(); SFX.click();
+}
+function closeScriptEditor() {
+  if (!scEd.p) return;
+  scFlush(); scEd.p = null; $('scriptWin').classList.add('hidden');
+}
+// the brick's scripts changed from outside (undo, someone else in the room): show them, unless they're my own edits coming back
+function scEdSync() {
+  const p = scEd.p;
+  if (!alive(p)) { scEd.p = null; $('scriptWin').classList.add('hidden'); return; }
+  const now = JSON.stringify(p.scripts || null);
+  if (now === scEd.sent || now === JSON.stringify(cleanScripts(scEd.scripts))) return;
+  scEd.scripts = JSON.parse(JSON.stringify(p.scripts || [])); scEd.sent = now;
+  scEd.active = Math.min(scEd.active, Math.max(0, scEd.scripts.length - 1)); scRender();
+}
+// changes save a moment after you stop clicking and typing (and when the window closes)
+function scChanged() { clearTimeout(scEd.timer); scEd.timer = setTimeout(scFlush, 600); }
+function scFlush() {
+  clearTimeout(scEd.timer);
+  const p = scEd.p; if (!p) return;
+  const sc = cleanScripts(scEd.scripts), js = JSON.stringify(sc);
+  if (js === scEd.sent) return;
+  scEd.sent = js;
+  if (net.mode === 'client') netSend({ t: 'script', nid: p.nid, sc }); else setScripts(p, sc, player);
+}
+function scTest() {
+  const p = scEd.p; if (!alive(p)) return;
+  scFlush(); SFX.click();
+  if (net.mode === 'client') netSend({ t: 'stest', nid: p.nid }); else fireScripts(p, null, player);
+}
+const scOpts = (list, v) => list.map(([id, n]) => `<option value="${id}"${id === v ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
+function scArgHtml(B, v, s, j) {
+  const d = `data-s="${s}" data-j="${j}"`;
+  if (B.arg === 'num') return `<input class="sc-in" type="number" min="0.1" max="60" step="0.5" value="${v}" ${d} style="width:46px">`;
+  if (B.arg === 'text') return `<input class="sc-in" maxlength="60" value="${escHtml(v)}" ${d} style="width:110px">`;
+  if (B.arg === 'sound') return `<select class="sc-in" ${d}>${scOpts(SC_SOUNDS, v)}</select>`;
+  if (B.arg === 'hat') return `<select class="sc-in" ${d}>${scOpts(SC_HATS(), v)}</select>`;
+  if (B.arg === 'color') return `<select class="sc-in sc-col" ${d} style="background:${v};color:${v}">${PALETTE.map(([n, h]) =>
+    `<option value="${h}" style="background:${h};color:#000"${h === v ? ' selected' : ''}>${n}</option>`).join('')}</select>`;
+  return '';
+}
+// one block: in the left list (s = -1), or block j of script s (j = -1 is its yellow "When" block)
+function scBlockHtml(op, v, s, j) {
+  const B = SB[op], [l, r] = B.text.split('{}');
+  // (in the left list a block shows what it starts as: "wait (1) seconds", "play sound (Boing)"...)
+  const shown = { num: `(${B.def})`, text: `"${B.def}"`, sound: `(${(SC_SOUNDS.find(x => x[0] === B.def) || [])[1]})`, hat: `(${hatName(B.def)})`,
+    color: `<span class="sc-sw" style="background:${B.def}"></span>` }[B.arg];
+  const body = s < 0 ? escHtml(l) + (B.arg ? (B.arg === 'color' ? shown : escHtml(shown)) + escHtml(r) : '') : escHtml(l) + (B.arg ? scArgHtml(B, v, s, j) + escHtml(r) : '');
+  return `<div class="sc-b ${B.cat === 'when' ? 'hat' : ''}" style="background:${SB_CATS[B.cat][1]}" draggable="true" data-op="${op}" data-s="${s}" data-j="${j}">${body}` +
+    (s >= 0 ? `<span class="sc-x" title="${j < 0 ? 'Throw this whole script away' : 'Take this block out'}">x</span>` : '') + '</div>';
+}
+function scRender() {
+  $('scArea').innerHTML = scEd.scripts.length ? scEd.scripts.map((sc, s) => `<div class="sc-stack${s === scEd.active ? ' on' : ''}" data-s="${s}">` +
+    scBlockHtml(sc.on, null, s, -1) + sc.do.map((b, j) => scBlockHtml(b[0], b[1], s, j)).join('') +
+    `<div class="sc-end" data-s="${s}" data-j="${sc.do.length}">${sc.do.length ? '' : 'click blocks on the left to add them here'}</div></div>`).join('')
+    : '<div class="sc-empty">No scripts yet!<br>Click a yellow <b>When</b> block to start one.</div>';
+  $('scNew').disabled = scEd.scripts.length >= SC_MAX;
+}
+// the left list (made the first time the window opens: escHtml isn't ready yet while the page starts)
+function scPaletteRender() {
+  $('scPalette').innerHTML = Object.entries(SB_CATS).map(([cat, [name]]) => `<div class="sc-cat">${name}</div>` +
+    Object.keys(SB).filter(op => SB[op].cat === cat).map(op => scBlockHtml(op, null, -1, -1)).join('')).join('');
+}
+// put a block into a script (a "When" block starts a new script instead)
+function scAdd(op, s = scEd.active, at = null) {
+  const B = SB[op];
+  if (B.cat === 'when') {
+    if (scEd.scripts.length >= SC_MAX) { sysChat(`A brick can have up to ${SC_MAX} scripts.`); return; }
+    scEd.scripts.push({ on: op, do: [] }); scEd.active = scEd.scripts.length - 1;
+  } else {
+    if (!scEd.scripts.length) { scEd.scripts.push({ on: 'touch', do: [] }); s = 0; }   // (no script yet: start a "When touched" one)
+    const sc = scEd.scripts[s] || scEd.scripts[0];
+    if (sc.do.length >= SC_BLOCKS) { sysChat(`A script can have up to ${SC_BLOCKS} blocks.`); return; }
+    sc.do.splice(at ?? sc.do.length, 0, B.arg ? [op, B.def] : [op]); scEd.active = scEd.scripts.indexOf(sc);
+  }
+  SFX.clack(); scRender(); scChanged();
+}
+$('scPalette').addEventListener('click', (e) => { const b = e.target.closest('.sc-b'); if (b) scAdd(b.dataset.op); });
+$('scArea').addEventListener('click', (e) => {
+  const x = e.target.closest('.sc-x'), st = e.target.closest('.sc-stack');
+  if (x) {
+    const b = x.closest('.sc-b'), s = +b.dataset.s, j = +b.dataset.j;
+    if (j < 0) scEd.scripts.splice(s, 1); else scEd.scripts[s].do.splice(j, 1);
+    scEd.active = Math.min(scEd.active, Math.max(0, scEd.scripts.length - 1));
+    SFX.hammer(); scRender(); scChanged(); return;
+  }
+  if (st && +st.dataset.s !== scEd.active) {   // pick which script new blocks go into
+    scEd.active = +st.dataset.s;
+    document.querySelectorAll('.sc-stack').forEach(el => el.classList.toggle('on', +el.dataset.s === scEd.active));
+  }
+});
+const scInput = (e) => {
+  const el = e.target.closest('.sc-in'); if (!el) return;
+  const b = scEd.scripts[+el.dataset.s]?.do[+el.dataset.j]; if (!b) return;
+  const B = SB[b[0]];
+  b[1] = e.type === 'change' ? cleanArg(B.arg, el.value, B.def) : el.value;   // (typing: tidied up when it saves)
+  if (B.arg === 'color') { el.style.background = el.style.color = b[1]; }
+  scChanged();
+};
+$('scArea').addEventListener('input', scInput);
+$('scArea').addEventListener('change', scInput);
+// dragging blocks: within a script, between scripts, from the left list, or back to the left list to throw away
+let scDrag = null;
+// (pressing in a box you type in or pick from shouldn't pick up its whole block)
+$('scArea').addEventListener('mousedown', (e) => { const b = e.target.closest('.sc-b'); if (b) b.draggable = !e.target.closest('.sc-in'); });
+document.querySelector('#scriptWin').addEventListener('dragstart', (e) => {
+  const b = e.target.closest?.('.sc-b'); if (!b) return;
+  scDrag = { op: b.dataset.op, s: +b.dataset.s, j: +b.dataset.j };
+  e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', b.dataset.op);
+});
+document.querySelector('#scriptWin').addEventListener('dragend', () => { scDrag = null; document.querySelectorAll('.sc-drop').forEach(el => el.classList.remove('sc-drop')); });
+const scDropAt = (e) => e.target.closest?.('#scArea .sc-b, #scArea .sc-end, #scArea, #scPalette');
+$('scriptWin').addEventListener('dragover', (e) => {
+  const t = scDropAt(e); if (!scDrag || !t) return;
+  e.preventDefault();
+  document.querySelectorAll('.sc-drop').forEach(el => el !== t && el.classList.remove('sc-drop'));
+  t.classList.add('sc-drop');
+});
+$('scriptWin').addEventListener('drop', (e) => {
+  const t = scDropAt(e), d = scDrag; scDrag = null;
+  document.querySelectorAll('.sc-drop').forEach(el => el.classList.remove('sc-drop'));
+  if (!t || !d) return;
+  e.preventDefault();
+  const fromList = d.s < 0, isHat = SB[d.op].cat === 'when';
+  if (t.id === 'scPalette') {   // back to the left list: thrown away
+    if (fromList) return;
+    if (d.j < 0) scEd.scripts.splice(d.s, 1); else scEd.scripts[d.s].do.splice(d.j, 1);
+    scEd.active = Math.min(scEd.active, Math.max(0, scEd.scripts.length - 1));
+    SFX.hammer(); scRender(); scChanged(); return;
+  }
+  if (isHat) { if (fromList) scAdd(d.op); return; }   // (a script's own "When" block stays at its top)
+  // where it lands: in front of the block it's dropped on, or at the end of that script
+  let s = t.dataset.s !== undefined ? +t.dataset.s : scEd.active, j = t.dataset.j !== undefined ? Math.max(0, +t.dataset.j) : null;
+  if (t.id === 'scArea' || !scEd.scripts[s]) { s = scEd.active; j = null; }
+  if (fromList) { scAdd(d.op, s, j); return; }
+  const moving = scEd.scripts[d.s].do.splice(d.j, 1)[0];
+  if (j !== null && d.s === s && d.j < j) j--;
+  const sc = scEd.scripts[s] || scEd.scripts[d.s];
+  sc.do.splice(j ?? sc.do.length, 0, moving); scEd.active = scEd.scripts.indexOf(sc);
+  SFX.clack(); scRender(); scChanged();
+});
+$('scNew').onclick = () => scAdd('touch');
+$('scTest').onclick = scTest;
+$('scDone').onclick = () => { closeScriptEditor(); SFX.click(); };
+$('scClose').onclick = () => closeScriptEditor();
+$('scriptBtn').onclick = () => scriptPickStart();
 
 /* ================= HUD ================= */
 function chatLine(name, text, color) {
@@ -3930,7 +4531,7 @@ function insertPart(o) {
     pos: at.toArray(), rot: [0, turns * Math.PI / 2, 0] };
   SFX.click();
   if (net.mode === 'client') { netSend({ t: 'insert', o: spec }); return; }
-  makePart(spec);
+  histPush(player, [{ k: 'add', nid: makePart(spec).nid }]);
   aiOnBuild(at, player);
 }
 $('palette').innerHTML = PALETTE.map(([n, h]) => `<div class="sw" title="${n}" data-h="${h}" data-n="${n}" style="background:${h}"></div>`).join('');
@@ -3954,9 +4555,14 @@ $('loadBtn').onclick = hostOnly(() => {
   if (currentPlace === 'baseplate') data = currentFile ? (loadPlaces().find(x => x.id === currentFile) || {}).bricks : null;
   else try { data = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { }
   if (!data) { sysChat('No saved place yet.'); return; }
-  stopDrag(); clearUnlocked(); data.forEach(d => deserialize(d, { sleep: true })); sysChat('Place loaded.');
+  stopDrag(); clearUnlocked(); data.forEach(d => deserialize(d, { sleep: true })); sysChat('Place loaded.'); scriptsStart();
 });
-$('clearBtn').onclick = hostOnly(() => { stopDrag(); clearUnlocked(); sysChat('Cleared all bricks.'); });
+$('clearBtn').onclick = hostOnly(() => {   // (Ctrl+Z brings them all back)
+  stopDrag(); const ops = parts.filter(p => !p.locked).map(p => ({ k: 'del', nid: p.nid, d: serialize(p) }));
+  clearUnlocked(); histPush(player, ops); sysChat('Cleared all bricks. (Ctrl+Z brings them back.)');
+});
+$('undoBtn').onclick = () => undoRedo(false);
+$('redoBtn').onclick = () => undoRedo(true);
 $('defaultBtn').onclick = hostOnly(() => { stopDrag(); clearUnlocked(); buildDefault(); sysChat('Restored the default place.'); });
 
 // menu
@@ -4115,12 +4721,18 @@ addEventListener('keydown', (e) => {
   }
   if (e.key === 'Escape') {
     if (!started) return;
+    if (scriptPick) { scriptPickEnd(); return; }
+    if (scEd.p && !menuOpen) { closeScriptEditor(); return; }
     if (menuOpen) closeEsc(); else openEsc();
     return;
   }
-  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  if (typing()) return;
   if (menuOpen || !started) return;
-  if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat && !freecam.on) { setShiftLock(!shiftLock); SFX.click(); }   // (in the free cam Shift means fast)
+  // Shift on its own turns shift lock on or off, when you let go. Held down for Shift+click (picking bricks), it doesn't.
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { if (!e.repeat) { shiftTap.down = true; shiftTap.used = false; } }
+  else if (!e.repeat) shiftTap.used = true;
+  if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyZ' || e.code === 'KeyY')) { e.preventDefault(); undoRedo(e.code === 'KeyY' || e.shiftKey); return; }
+  if ((e.code === 'Delete' || e.code === 'Backspace') && selection.size) { e.preventDefault(); if (!e.repeat) deleteSelection(); return; }
   if (e.code === 'KeyP' && !e.repeat && !dragging) { startTrailer(); return; }
   if (e.code === 'KeyF' && !e.repeat && !dragging && adminPriv) { toggleFreecam(); return; }   // (while dragging, F anchors the brick)
   if (e.key === '/') { e.preventDefault(); if (adminPriv) openCmd(); else chatInput.focus(); return; }   // the admin gets the command bar
@@ -4136,10 +4748,21 @@ addEventListener('keydown', (e) => {
   if (dragging) {
     if (e.code === 'KeyR') { dragRot.y++; SFX.click(); }
     if (e.code === 'KeyT') { dragRot.x++; SFX.click(); }
-    if (e.code === 'KeyF') { dragging.anchored = !dragging.anchored; sysChat(dragging.anchored ? 'Anchored.' : 'Unanchored.'); SFX.click(); }
+    if (e.code === 'KeyF') {   // (a whole group all goes the same way)
+      dragging.anchored = !dragging.anchored; dragGroup.forEach(g => g.p.anchored = dragging.anchored);
+      sysChat(dragging.anchored ? 'Anchored.' : 'Unanchored.'); SFX.click();
+    }
   }
 });
-addEventListener('keyup', (e) => keys[e.code] = false);
+const shiftTap = { down: false, used: false };
+const typing = () => ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+addEventListener('keyup', (e) => {
+  keys[e.code] = false;
+  if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && shiftTap.down) {
+    shiftTap.down = false;
+    if (!shiftTap.used && started && !menuOpen && !freecam.on && !trailer.on && !typing()) { setShiftLock(!shiftLock); SFX.click(); }   // (in the free cam Shift means fast)
+  }
+});
 function sendChat(t) {
   t = String(t || '').trim().slice(0, 100);
   if (!t || !started) return;
@@ -4176,7 +4799,7 @@ function setShiftLock(on) {
   } else if (!rDrag && !touch) { showCursorAfterTurn(); if (camLocked()) document.exitPointerLock(); }
 }
 document.addEventListener('pointerlockerror', () => { });   // refused: hiding the cursor covers it
-addEventListener('blur', () => { for (const k in keys) keys[k] = false; stopDrag(); setShiftLock(false); endCamDrag(); });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; stopDrag(); setShiftLock(false); endCamDrag(); boxSel = null; $('selRect').classList.add('hidden'); shiftTap.down = false; });
 // the browser unlocks the mouse when you press Esc: that ends a turn or turns shift lock off
 document.addEventListener('pointerlockchange', () => { if (!camLocked()) { rDrag = false; setShiftLock(false); } });
 cv.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -4188,11 +4811,17 @@ cv.addEventListener('mousedown', (e) => {
     hideCursorForTurn();
     try { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } catch { }   // falls back to a hidden cursor if refused
   }
-  if (e.button === 0 && started && !freecam.on) useTool(e);   // (no tools while the free cam is flying around)
+  if (e.button === 0 && scriptPick && started) {   // Insert -> Script a brick: this is the brick
+    const h = pick(), p = h && h.object.userData.part;
+    if (p) openScriptEditor(p); else scriptPickEnd();
+    return;
+  }
+  if (e.button === 0 && started && !freecam.on && !menuOpen) useTool(e);   // (no tools while the free cam is flying around)
 });
-addEventListener('mouseup', (e) => { if (e.button === 2) endCamDrag(); if (e.button === 0) stopDrag(); });
+addEventListener('mouseup', (e) => { if (e.button === 2) endCamDrag(); if (e.button === 0) { stopDrag(); boxSelEnd(); } });
 addEventListener('mousemove', (e) => {
   if (!camLocked() && !shiftLock) mouseNDC.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);   // aim stays put while turning
+  boxSelMove(e);
   if (rDrag || (shiftLock && started && !menuOpen)) {
     const dx = camLocked() ? e.movementX : e.clientX - lastX, dy = camLocked() ? e.movementY : e.clientY - lastY;
     camYaw -= dx * 0.007;
@@ -4469,7 +5098,8 @@ function frame(now) {
 
   while (wallQueue.length && wallQueue[0].at <= time) {
     const w = wallQueue.shift();
-    makePart({ size: [4, 1.2, 1], pos: w.pos.toArray(), quat: [w.q.x, w.q.y, w.q.z, w.q.w], color: w.color, anchored: true, destroy: true });   // trowel walls: anchored destroyables
+    const wp = makePart({ size: [4, 1.2, 1], pos: w.pos.toArray(), quat: [w.q.x, w.q.y, w.q.z, w.q.w], color: w.color, anchored: true, destroy: true });   // trowel walls: anchored destroyables
+    w.ops.push({ k: 'add', nid: wp.nid });
     sfxAt('clack', w.pos);
   }
   for (let i = bombs.length - 1; i >= 0; i--) {
@@ -4503,7 +5133,8 @@ function frame(now) {
     if (s.life <= 0 || s.body.position.y < -100) { world.removeBody(s.body); scene.remove(s.mesh); superballs.splice(i, 1); }
   }
   for (const b of bombs) { b.mesh.position.copy(b.body.position); b.mesh.quaternion.copy(b.body.quaternion); }
-  if (net.mode !== 'client') updateHatPickups(dt);
+  if (net.mode !== 'client') { updateHatPickups(dt); stepScripts(); }
+  updateBrickBubbles(dt);
 
   humanoids.forEach(h => h.postStep(dt, time));
   // tool animation easing
@@ -4577,6 +5208,8 @@ function frame(now) {
     selBox.scale.set(...(sel.shape === 'ball' ? [sel.size[0], sel.size[0], sel.size[0]] : sel.size)).multiplyScalar(1.02);
     selBox.material.color.set({ grab: 0x1a8cff, clone: 0x2fd04a, delete: 0xff2020, paint: selColor }[equipped ? equipped.id : 'grab'] || 0x1a8cff);
   }
+  drawSelection(!trailer.on && !freecam.on);
+  scriptHover();
 
   // camera
   const P = player;
@@ -4809,6 +5442,10 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest headline also shows at the top of Blockburg News. */
 const UPDATES = [
   { date: '10/25/2026', top: 'ha! we are so back with more updates', text: [
+    'SCRIPT BLOCKS! Snap blocks together to make a brick do things, like When touched → wait 1 second → play sound → teleport to spawn. Open Insert → Script a brick. Works in multiplayer too.',
+    'Script blocks so far: When touched, When clicked, When the game starts, wait, change color, make invisible / visible, say, play sound, anchor / unanchor, teleport player to spawn, knock out player and give player a hat.',
+    'Undo and Redo! Ctrl+Z / Ctrl+Y (or the new buttons in Insert) take back building, deleting, moving, painting, cloning, trowel walls, script changes and even Clear All.',
+    'Pick lots of bricks at once: Shift+click them, or drag a box around them on empty space. Then Grab, Clone, Delete or Paint one and they all go together. The Delete key deletes them too.',
     '8 new hats: Ice Crown, Lava Lord Helm, Galaxy Wizard Hat, Bass Boost Headphones (the lights blink!), Propeller Beanie (it spins!), Pizza Slice Hat, Golden Halo and Knight Helmet.',
     '6 new shirts and 5 new pants, including a Snowflake Sweater, Magma Hoodie, Galaxy Leggings, Knight Chainmail and Pumpkin Patch Overalls.',
     '3 new T-shirts (Pixel Heart, Stay Frosty, I Survived The Rocket) and 4 new faces (Cool Shades, Frozen, Starstruck, Fierce).',
@@ -5412,6 +6049,7 @@ function playPlace(id, { file = null, guests = false } = {}) {
       sysChat(`Welcome back to "${file.name}" (${file.bricks.length} bricks)! It saves when you leave.`);
     } else sysChat('Happy building! Open Insert for bricks. Save it when you leave and it shows up on the Build page.');
   }
+  scriptsStart();
   SFX.spawn();
 }
 function leaveGame() {
@@ -5627,7 +6265,7 @@ $('site').addEventListener('click', (e) => {
    Every person is a "client": they join with a 4-letter room code, mirror the world, move their own
    character themselves and ask the host to do everything else. serverHost and the host* functions
    below are the server's half: only the HEADLESS copy runs them. */
-const NET_VERSION = 'bb-classic-4';
+const NET_VERSION = 'bb-classic-5';
 const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // no 0/O or 1/I, so codes are easy to read out
 const NAME_KEY = 'blockburg-name';
 // The BLOCKBURG server on Colyseus Cloud (deployed from the GitHub repo's `colyseus` branch)
@@ -5798,6 +6436,8 @@ function hostDrop(conn) {
 // a request from another player: the host does it for them, as them
 function hostHandle(h, conn, m) {
   const part = () => { const p = partsByNid.get(m.nid); return p && !p.locked ? p : null; };
+  // the bricks a building tool was used on: one (nid), or a group they picked (g, the clicked one first)
+  const group = () => [...new Set(Array.isArray(m.g) ? m.g.slice(0, SEL_MAX) : [m.nid])].map(n => partsByNid.get(n)).filter(p => p && !p.locked);
   switch (m.t) {
     case 'me':
       h.netPos.set(m.p[0], m.p[1], m.p[2]); h.faceYaw = m.y; h.aimHold = 1; h.move.set(m.m ? 1 : 0, 0, 0);
@@ -5817,33 +6457,44 @@ function hostHandle(h, conn, m) {
       break;
     }
     case 'trowel': if (!h.dead) buildWall(new V3(...m.p), h, m.c || BC['Bright red']); break;
-    case 'delete': { const p = part(); if (p) { if (p.owner) aiOnBuildWrecked(p.owner, h); wakeNear(p.body.position, Math.max(...p.size) + 3); sfxBy('hammer', p.body.position, h.hid); removePart(p); } break; }
-    case 'paint': { const p = part(); if (p) { paintPart(p, m.c); aiOnPainted(p, h); } break; }
+    case 'delete': { const g = group(); if (g.length) { sfxBy('hammer', g[0].body.position, h.hid); deleteBricks(g, h); } break; }
+    case 'paint': { const g = group(); if (g.length && typeof m.c === 'string') paintBricks(g, m.c.slice(0, 9), h); break; }
     case 'clone': {
-      const p = part(); if (!p) break;
-      if (!brickRoom()) { tellFull(h); break; }
-      const c = deserialize(serialize(p)); c.anchored = p.anchored; setMode(c, 'kinematic'); c.netDrag = h;
-      aiOnBuild(p.mesh.position, h);
-      netSendTo(conn, { t: 'cloned', nid: c.nid });
+      const copies = cloneBricks(group(), h); if (!copies) break;
+      for (const c of copies) { setMode(c, 'kinematic'); c.netDrag = h; }
+      netSendTo(conn, { t: 'cloned', nid: copies[0].nid, g: copies.map(c => c.nid) });
       break;
     }
-    case 'drag': {
-      const p = part(); if (!p || p === dragging) break;
-      if (p.netDrag !== h) { p.netDrag = h; setMode(p, 'kinematic'); }
-      p.body.position.set(...m.p); p.body.quaternion.set(...m.q); p.body.aabbNeedsUpdate = true;
+    case 'drag': {   // where they're holding bricks now: g = [[nid, x, y, z, qx, qy, qz, qw], ...] (or one: nid, p, q)
+      for (const r of Array.isArray(m.g) ? m.g.slice(0, SEL_MAX) : [[m.nid, ...(m.p || []), ...(m.q || [])]]) {
+        const p = Array.isArray(r) && partsByNid.get(r[0]);
+        if (!p || p.locked || p === dragging || r.length < 8 || !r.slice(1, 8).every(Number.isFinite)) continue;
+        if (p.netDrag !== h) { p.histFrom = xfOf(p); p.netDrag = h; setMode(p, 'kinematic'); }
+        p.body.position.set(r[1], r[2], r[3]); p.body.quaternion.set(r[4], r[5], r[6], r[7]); p.body.aabbNeedsUpdate = true;
+      }
       break;
     }
-    case 'dragEnd': {
-      const p = part(); if (!p || p.netDrag !== h) break;
-      p.netDrag = null; p.anchored = !!m.a; setMode(p, p.anchored ? 'static' : 'dynamic');
-      wakeNear(p.body.position, Math.max(...p.size) + 4); sfxBy('clack', p.body.position, h.hid);
+    case 'dragEnd': {   // they let go: g = [[nid, anchored], ...] (or one: nid, a)
+      const held = [];
+      for (const r of Array.isArray(m.g) ? m.g.slice(0, SEL_MAX) : [[m.nid, m.a]]) {
+        const p = Array.isArray(r) && partsByNid.get(r[0]);
+        if (p && p.netDrag === h) { p.anchored = !!r[1]; held.push(p); }
+      }
+      if (held.length) { dropBricks(held, h); sfxBy('clack', held[0].body.position, h.hid); }
       break;
     }
+    case 'undo': case 'redo': histStep(h, m.t === 'redo'); break;
+    // script blocks: new scripts for a brick, or "I touched / clicked / am testing this brick" (the scripts run here)
+    case 'script': { const p = part(); if (p) setScripts(p, m.sc, h); break; }
+    case 'stouch': { const p = partsByNid.get(m.nid); if (p && !h.dead && p.body.position.distanceTo(h.pos) < Math.max(...p.size) / 2 + 8) scriptTouched(p, h); break; }
+    case 'sclick': { const p = partsByNid.get(m.nid); if (p && !h.dead && p.body.position.distanceTo(h.pos) < 150) fireScripts(p, 'click', h); break; }
+    case 'stest': { const p = part(); if (p) fireScripts(p, null, h); break; }
     case 'insert': {
       const o = m.o; if (!o || !Array.isArray(o.size) || !Array.isArray(o.pos)) break;
       if (!brickRoom()) { tellFull(h); break; }
-      makePart({ shape: o.shape, size: o.size.map(n => Math.min(64, Math.max(0.2, +n || 1))), pos: o.pos, rot: o.rot,
+      const np = makePart({ shape: o.shape, size: o.size.map(n => Math.min(64, Math.max(0.2, +n || 1))), pos: o.pos, rot: o.rot,
         color: o.color, anchored: !!o.anchored, destroy: !!o.anchored && !!o.destroy, kill: !!o.kill, bouncy: !!o.bouncy, trans: o.trans });
+      histPush(h, [{ k: 'add', nid: np.nid }]);
       aiOnBuild(new V3(...o.pos), h);
       break;
     }
@@ -5955,7 +6606,7 @@ function clientHandle(m) {
       break;
     case 'tp': if (Array.isArray(m.p) && !player.dead) { player.body.position.set(+m.p[0] || 0, +m.p[1] || 5, +m.p[2] || 0); player.body.velocity.set(0, 0, 0); } break;   // the admin brought me
     case 'kb': if (!player.dead) { player.body.velocity.x += m.v[0]; player.body.velocity.y += m.v[1]; player.body.velocity.z += m.v[2]; } break;
-    case 'cloned': if (partsByNid.has(m.nid)) startDrag(partsByNid.get(m.nid)); else net.pendingClone = m.nid; break;
+    case 'cloned': net.pendingClone = { nid: m.nid, g: Array.isArray(m.g) ? m.g : [m.nid] }; clonedReady(); break;
   }
 }
 function clientEnter(m) {
@@ -6005,6 +6656,14 @@ function addPuppet(rec) {
   if (rec.adm) setAdmin(h);
   renderLB(); updateBadge();
 }
+// the host made my copies: once they've all arrived, pick them up (and they're the picked bricks now)
+function clonedReady() {
+  const pc = net.pendingClone, list = pc ? pc.g.map(n => partsByNid.get(n)) : [];
+  if (!pc || list.some(p => !p)) return;
+  net.pendingClone = null;
+  if (list.length > 1) { selection.clear(); list.forEach(p => selection.add(p)); selHint(); }
+  startDrag(partsByNid.get(pc.nid) || list[0], list);
+}
 function clientEvent(e) {
   const who = (hid) => (hid === net.myHid ? player : humByHid(hid));
   switch (e[0]) {
@@ -6012,11 +6671,14 @@ function clientEvent(e) {
       const [, nid, d, locked] = e;
       if (partsByNid.has(nid)) break;
       deserialize(d, { nid, locked });
-      if (net.pendingClone === nid) { net.pendingClone = null; startDrag(partsByNid.get(nid)); }
+      if (net.pendingClone) clonedReady();
       break;
     }
     case 'pr': { const p = partsByNid.get(e[1]); if (p) removePart(p); break; }
     case 'pp': { const p = partsByNid.get(e[1]); if (p) paintPart(p, e[2]); break; }
+    case 'psc': { const p = partsByNid.get(e[1]); if (p) { p.scripts = cleanScripts(e[2]); if (p.scripts) scripted.add(p); else scripted.delete(p); if (scEd.p === p) scEdSync(); } break; }
+    case 'pv': { const p = partsByNid.get(e[1]); if (p) { p.hidden = !!e[2]; p.mesh.visible = !p.hidden; } break; }
+    case 'bsay': { const p = partsByNid.get(e[1]); if (p) brickSay(p, String(e[2] || '').slice(0, 60)); break; }
     case 'look': {
       if (e[1] === net.myHid) {   // the host changed my hat (picked one up or dropped mine)
         if (e[2].hat !== player.hat) {
@@ -6118,7 +6780,7 @@ function netTick(dt) {
     net.sendT = 1 / 20;
     const P = player, tl = equipped && !equipped.hopper ? HELD_TOOLS.indexOf(equipped.id) : -1;
     netSend({ t: 'me', p: arr3(P.pos), y: r3(P.yaw), m: P.move.lengthSq() > 0.01 ? 1 : 0, tl, ar: r2(toolAnim.arm) });
-    if (dragging) netSend({ t: 'drag', nid: dragging.nid, p: arr3(dragging.body.position), q: dragging.body.quaternion.toArray().map(r3) });
+    if (dragging) netSend({ t: 'drag', g: [dragging, ...dragGroup.map(g => g.p)].map(dragRec) });
   }
 }
 
@@ -6768,6 +7430,7 @@ if (!HEADLESS) { pxSwap(); startUpdates(); signinStart(); }
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
   keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, pxUrl, BLUEPRINTS, makePart, BC, LOD, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
   get currentPlace() { return currentPlace; }, get currentFile() { return currentFile; }, loadPlaces, get dragging() { return dragging; },
+  selection, hopperAct, undoRedo, openScriptEditor, closeScriptEditor, scEd, scThreads, fireScripts, setScripts, histOf, startDrag, stopDrag, insertPart, serialize, deserialize, get dragGroup() { return dragGroup; },
   pickAt(x, y) { mouseNDC.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); const h = pick(); return h && (h.object.userData.part ? 'part ' + h.object.userData.part.nid : h.object.userData.hum ? 'hum ' + h.object.userData.hum.name : 'other'); },
   tick(frames) { for (let i = 0; i < frames; i++) frame(last + 1000 / 60); } };
 requestAnimationFrame(loop);
