@@ -247,6 +247,20 @@
   /* your badge (#K7Q2): made from your password, so nobody else can show it */
   .badge{display:inline-block;background:#0b4a99;color:#fff;font:bold 10px Verdana;padding:1px 4px;border-radius:3px;margin-left:3px;letter-spacing:.5px}
   .badge.hidden{display:none}
+  /* ---------- loading a game: the cover picture, a striped progress bar and a tip ---------- */
+  #loadScreen{position:fixed;inset:0;z-index:55;background:#fff;display:grid;place-items:center;font-family:Verdana,Arial,sans-serif}
+  #loadScreen.hidden{display:none}
+  .ld-box{width:min(420px,calc(100vw - 32px));text-align:center}
+  .ld-cover{display:block;width:min(100%,380px);height:auto;margin:0 auto 14px;
+    -webkit-mask-image:linear-gradient(to right,transparent,#000 3%,#000 97%,transparent),linear-gradient(#000 80%,transparent);-webkit-mask-composite:source-in;
+    mask-image:linear-gradient(to right,transparent,#000 3%,#000 97%,transparent),linear-gradient(#000 80%,transparent);mask-composite:intersect}
+  .ld-bar{height:22px;border:2px solid #0b4a99;background:#e8eef7;padding:2px;box-sizing:border-box}
+  .ld-fill{height:100%;width:0;background:repeating-linear-gradient(-45deg,#3d7fd0 0 12px,#2f6fc0 12px 24px);background-size:34px 34px;
+    animation:ldSlide 1s linear infinite;transition:width .25s}
+  @keyframes ldSlide{to{background-position:34px 0}}
+  .ld-msg{font-size:12px;color:#333;margin-top:8px;min-height:16px}
+  .ld-tip{font-size:11px;color:#777;margin-top:22px}
+  @media (max-height:520px){.ld-cover{width:min(100%,200px)}}
   /* ---------- sign in: the old website's login box over screenshots of the game ---------- */
   #signin{position:fixed;inset:0;z-index:60;overflow:auto;background:#5a9ee0;font:12px Verdana,Arial,sans-serif;color:#000}
   #signin.hidden{display:none}
@@ -444,6 +458,14 @@
     </table>
     <button data-esc="back" class="dark">Back</button>
   </div>
+</div></div>
+
+<!-- shown while a game loads (the same look as the site's own loading page) -->
+<div id="loadScreen" class="hidden"><div class="ld-box">
+  <img class="ld-cover" src="cover.png" width="771" height="760" alt="BLOCKBURG">
+  <div class="ld-bar"><div class="ld-fill" id="ldFill"></div></div>
+  <div class="ld-msg" id="ldMsg">Loading BLOCKBURG... 0%</div>
+  <div class="ld-tip" id="ldTip"></div>
 </div></div>
 
 <div id="invToast" class="hidden"><span id="invText"></span>
@@ -966,8 +988,69 @@ function boxGeo(w, h, d) {
 }
 
 /* ================= physics ================= */
+/* Which bodies might be touching? SAP (cannon's usual answer) compares every brick with its neighbors on every
+   step, even thousands of anchored bricks that never move, and that alone made big builds crawl. Here every body
+   goes into a grid by where it is, and only the bodies that are moving (people, falling bricks, balls) look
+   around their own grid cells. Bricks that sit still cost next to nothing. (server/src/BrickWorld.js has the same.) */
+// cannon remembers "who touched whom" in a table with a slot for EVERY pair of bodies (3,800 bricks = 7 million
+// slots), and wipes all of it clean on every step: that, more than anything, made big builds slow forever.
+// This one only keeps the pairs that really are touching.
+class SparseCollisionMatrix {
+  constructor() { this.m = new Map(); }
+  key(bi, bj) { const i = bi.index, j = bj.index; return i > j ? i * 1048576 + j : j * 1048576 + i; }
+  get(bi, bj) { return this.m.get(this.key(bi, bj)) || 0; }
+  set(bi, bj, value) { if (value) this.m.set(this.key(bi, bj), value); else this.m.delete(this.key(bi, bj)); }
+  reset() { this.m.clear(); }
+  setNumObjects() { }
+}
+class StillBroadphase extends CANNON.Broadphase {
+  constructor(cell = 8) { super(); this.cell = cell; this.useBoundingBoxes = true; this.cells = new Map(); this.big = new Set(); this.stamp = 0; this.ticks = 0; }
+  // a body only moves to new grid cells when it really moved (most bricks never do)
+  place(b, x0, x1, z0, z1) {
+    this.unplace(b);
+    b._bp = [x0, x1, z0, z1];
+    if ((x1 - x0 + 1) * (z1 - z0 + 1) > 16) { b._bpBig = true; this.big.add(b); return; }   // (the ground, giant baseplates: everyone checks those)
+    for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { const k = x * 65536 + z; let c = this.cells.get(k); if (!c) this.cells.set(k, c = []); c.push(b); }
+  }
+  unplace(b) {
+    if (!b._bp) return;
+    if (b._bpBig) { this.big.delete(b); b._bpBig = false; }
+    else { const [x0, x1, z0, z1] = b._bp; for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { const c = this.cells.get(x * 65536 + z); const i = c ? c.indexOf(b) : -1; if (i >= 0) c.splice(i, 1); } }
+    b._bp = null;
+  }
+  collisionPairs(world, p1, p2) {
+    const S = this.cell, movers = [], STATIC = CANNON.Body.STATIC, SLEEPING = CANNON.Body.SLEEPING;
+    if (++this.ticks % 600 === 0) { for (const c of this.cells.values()) for (const b of c) b._bp = null; for (const b of this.big) b._bp = null; this.cells.clear(); this.big.clear(); }   // (now and then: forget removed bodies)
+    for (const b of world.bodies) {
+      if (b.aabbNeedsUpdate) b.updateAABB();
+      if (b.type !== STATIC && b.sleepState !== SLEEPING) movers.push(b);
+      const lo = b.aabb.lowerBound, hi = b.aabb.upperBound, g = b._bp;
+      const x0 = Math.floor(lo.x / S), x1 = Math.floor(hi.x / S), z0 = Math.floor(lo.z / S), z1 = Math.floor(hi.z / S);
+      if (!g || g[0] !== x0 || g[1] !== x1 || g[2] !== z0 || g[3] !== z1) this.place(b, x0, x1, z0, z1);
+    }
+    for (const m of movers) {
+      const st = ++this.stamp;
+      const test = (o) => {
+        if (o === m || o._bpStamp === st || !o.world) return;
+        o._bpStamp = st;
+        if (o.type !== STATIC && o.sleepState !== SLEEPING && o.id < m.id) return;   // two movers: the pair is made once
+        if (this.needBroadphaseCollision(m, o)) this.doBoundingBoxBroadphase(m, o, p1, p2);
+      };
+      this.big.forEach(test);
+      if (m._bpBig) { world.bodies.forEach(test); continue; }   // (something giant is moving)
+      const [x0, x1, z0, z1] = m._bp;
+      for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { const c = this.cells.get(x * 65536 + z); if (c) c.forEach(test); }
+    }
+  }
+  // raycasts (standing on things, aiming) ask what's in a box
+  aabbQuery(world, aabb, result = []) {
+    for (const b of world.bodies) { if (b.aabbNeedsUpdate) b.updateAABB(); if (b.aabb.overlaps(aabb)) result.push(b); }
+    return result;
+  }
+}
 const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -GRAV, 0) });
-world.broadphase = new CANNON.SAPBroadphase(world);
+world.broadphase = new StillBroadphase(); world.broadphase.setWorld(world);
+world.collisionMatrix = new SparseCollisionMatrix(); world.collisionMatrixPrevious = new SparseCollisionMatrix();
 world.allowSleep = true;
 world.solver.iterations = 12;
 const physPart = new CANNON.Material('part'), physHum = new CANNON.Material('hum'), physBall = new CANNON.Material('ball');
@@ -984,7 +1067,7 @@ const later = (fn) => afterStep.push(fn);
 /* ================= audio (synthesized classic-style SFX) ================= */
 let AC = null, MASTER = null, NOISE = null, volume = 0.5;
 function audioInit() {
-  if (AC) return;
+  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }   // (it sleeps while you're on the website)
   AC = new (window.AudioContext || window.webkitAudioContext)();
   MASTER = AC.createGain(); MASTER.gain.value = volume; MASTER.connect(AC.destination);
   NOISE = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
@@ -1111,6 +1194,12 @@ function makePart(o) {
   netEv(['pc', p.nid, serialize(p), p.locked, p.startAsleep]);
   return p;
 }
+// a limit on bricks per game (the place's own included), so nobody can bury the server, or their own computer, in them
+const BRICK_CAP = HEADLESS ? 2500 : 4000;
+const BRICKS_FULL = `This game has the most bricks it can hold (${BRICK_CAP}). Delete some to build more!`;
+const brickRoom = (n = 1) => parts.length + n <= BRICK_CAP;
+// say so to whoever tried (a player in my room hears it from the server)
+function tellFull(who) { if (!who || who === player) sysChat(BRICKS_FULL); else if (who.conn) netSendTo(who.conn, { t: 'cmdout', text: BRICKS_FULL }); }
 function removePart(p) {
   world.removeBody(p.body); scene.remove(p.mesh);
   parts.splice(parts.indexOf(p), 1); pickables.splice(pickables.indexOf(p.mesh), 1);
@@ -1119,8 +1208,28 @@ function removePart(p) {
   if (dragging === p) dragging = null;
   netEv(['pr', p.nid]);
 }
+/* ---- far-away bricks, the indie-game way: past LOD.simple a brick is drawn as one plain piece (up close
+   it's six, so the top can have studs), past LOD.shadow it stops casting a shadow, and past the haze it isn't
+   drawn at all. Only on this screen: the bricks themselves, their physics, the server and every other
+   player are untouched, so nothing pops in or out for anyone else. ---- */
+const LOD = { simple: 90, shadow: 140, hide: 950 };
+let lodI = 0;
+function lodBricks() {
+  const c = camera.position, n = Math.min(parts.length, 600);   // (a slice of the bricks each frame, round and round)
+  for (let k = 0; k < n; k++) {
+    const p = parts[lodI++ % parts.length];
+    if (p.size[0] >= 200 || p.size[2] >= 200) continue;   // the ground and giant baseplates always draw
+    const d = p.mesh.position.distanceTo(c) - Math.max(p.size[0], p.size[1], p.size[2]) / 2;
+    p.mesh.visible = d < LOD.hide;
+    p.mesh.castShadow = d < LOD.shadow;
+    if (p.shape !== 'box') continue;
+    if (!p.fullMat) p.fullMat = p.mesh.material;
+    const want = d < LOD.simple ? p.fullMat : p.fullMat[0];
+    if (p.mesh.material !== want) p.mesh.material = want;
+  }
+}
 function paintPart(p, hex) {
-  p.color = hex;
+  p.color = hex; p.fullMat = null;   // (the far-away look is made again from the new color)
   p.mesh.material = p.shape === 'box' ? partMats(hex, true, p.trans) : partMats(hex, true, p.trans)[0];
   netEv(['pp', p.nid, hex]);
 }
@@ -2917,6 +3026,7 @@ function npcSlash(n, target, lunge) {
   }
 }
 function npcPlaceBrick(n, b, color) {
+  if (!brickRoom()) return null;   // (the game is full of bricks: the Guests just pretend)
   const p = makePart({ size: [b[3], b[4], b[5]], pos: [b[0], b[1], b[2]], color, anchored: true, destroy: true });   // placed bricks stay put (until something explodes)
   p.owner = n; npcBuilt.push(p);
   sfxAt('clack', p.body.position);
@@ -3481,6 +3591,7 @@ function useTool(e) {
     else if (id === 'clone') {
       SFX.click();
       if (C) { netSend({ t: 'clone', nid: p.nid }); return; }   // the host makes the copy, then hands it back to drag
+      if (!brickRoom()) { tellFull(player); return; }
       const c = deserialize(serialize(p)); c.anchored = p.anchored; startDrag(c);
       aiOnBuild(p.mesh.position, player);
     } else if (id === 'delete') {
@@ -3612,6 +3723,7 @@ function spawnBomb(o, vel, owner = player) {
   world.addBody(body); bombs.push({ mesh: m, body, fuse: 3, nextTick: 0, owner, pid: net.nextPid++ });
 }
 function buildWall(point, actor = player, color = selColor) {
+  if (!brickRoom(16)) { tellFull(actor); return; }
   aiOnBuild(point, actor);
   const d = new V3(point.x - actor.pos.x, 0, point.z - actor.pos.z).normalize();
   const along = new V3(-d.z, 0, d.x), rotY = Math.atan2(-along.z, along.x);
@@ -3808,6 +3920,7 @@ function snapToStuds(pos, extX, extZ) {
 }
 function insertPart(o) {
   if (!started) return;
+  if (net.mode !== 'client' && !brickRoom()) { tellFull(player); return; }   // (in a room, the server checks)
   const f = new V3(-Math.sin(camYaw), 0, -Math.cos(camYaw));
   const sz = o.size, turns = Math.round(camYaw / (Math.PI / 2)), sideways = Math.abs(turns) % 2 === 1;   // turned a quarter: x and z swap
   const at = new V3(player.pos.x, 0, player.pos.z).addScaledVector(f, 10 + sz[2] / 2);
@@ -4341,6 +4454,13 @@ function loop(now) {
 }
 function frame(now) {
   const dt = Math.min((now - last) / 1000, 1 / 20); last = now; time += dt;
+  // on the website no game is loaded (see unloadWorld): nothing moves and nothing makes a sound, only the character preview turns
+  if (!started && !HEADLESS) {
+    pvChar.root.rotation.y = Math.sin(time * 0.7) * 0.7;
+    animateFx(pvChar, dt, time);
+    pv.render(pvScene, pvCam);
+    return;
+  }
 
   playerInput(dt);
   npcs.forEach(n => npcThink(n, dt));
@@ -4362,7 +4482,9 @@ function frame(now) {
     }
   }
 
-  world.step(1 / 120, dt, 8);
+  // at most 3 catch-up steps: with lots of bricks a frame can run late, and catching up with even more steps
+  // only makes the next frame later still (and everything stays slow until the bricks are gone)
+  world.step(1 / 120, dt, 3);
   while (afterStep.length) afterStep.shift()();
 
   if (net.mode) netLerpParts(dt);   // online: glide the mirrored bricks toward where the server says they are
@@ -4493,7 +4615,10 @@ function frame(now) {
     pvChar.root.rotation.y = Math.sin(time * 0.7) * 0.7;
     animateFx(pvChar, dt, time);
     pv.render(pvScene, pvCam);
-  } else renderer.render(scene, camera);
+  } else {
+    if (!HEADLESS) lodBricks();
+    renderer.render(scene, camera);
+  }
 }
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
@@ -4594,7 +4719,10 @@ function snapBricksThumb(bricks) {
 // a sensible picture to believe from someone else's post: a small JPEG or PNG image, nothing else
 const okThumb = (s) => typeof s === 'string' && s.length < 60000 && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(s);
 function snapGameThumbs() {
+  const empty = !parts.some(p => !p.locked);   // (on the website the place is unloaded: build it just for the picture)
+  if (empty) buildDefault();
   document.querySelectorAll('.thumbClassic').forEach(i => i.src = snapThumb(new V3(38, 32, 46), new V3(0, 4, -12)));
+  if (empty) clearUnlocked();
   // Happy Home Baseplate: the same baseplate with everything else hidden, plus a few starter bricks
   const hidden = [...parts.filter(p => !p.locked).map(p => p.mesh), ...humanoids.map(h => h.char.root)].filter(o => o.visible);
   hidden.forEach(o => o.visible = false);
@@ -4667,7 +4795,7 @@ $('site').addEventListener('click', (e) => {
   const d = t.dataset;
   if (d.signin !== undefined) { if (d.signin === 'out') signOut(); else openSignin('change'); return; }
   if (d.page || d.goto) showPage(d.page || d.goto);
-  if (d.play) playPlace(d.play, { guests: d.play === 'baseplate' && $('bpGuests').checked });
+  if (d.play) startPlace(d.play, { guests: d.play === 'baseplate' && $('bpGuests').checked });
   if (d.link) location.href = d.link;
   if (d.cat) { catTab = d.cat; renderCatalog(); }
   if (d.wear) { look[LOOK_SLOT[catTab]] = d.wear; if (!adminPriv) look = withoutAdminClothes(look); saveLook(); refreshLook(); }
@@ -4692,6 +4820,8 @@ const UPDATES = [
     'The Guests learned to build 20 new things: a lighthouse, a fort, a snowman, a car, a rocket ship, a noob statue and lots more.',
     'Building on a Baseplate? Tick Bring the Guests on the Build page and they come along.',
     'The admin got a command bar. It can explode things. Behave.',
+    'No more ghost noises: leaving a game really leaves it now, and every game has a loading screen so it is all ready when you land.',
+    'WAY faster with lots of bricks: big builds no longer make games (or the server) slow forever, and far-away bricks are drawn simpler on your screen. Games can now hold up to 2500 bricks online and 4000 solo.',
     'Games made by players now always show a picture of the build.',
     'Two super rare OUTFIT SETS! Wear every piece and you get an effect everyone can see: the Pumpkin King shimmers, and stars orbit the Galaxy Wizard. Find them at the bottom of the Catalog.',    'Also new: this Update Log! Press EXTEND on any day to see everything that changed.' ] },
   { date: '10/24/2026', top: 'Sign in is here! Get your own badge!', text: [
@@ -5237,7 +5367,7 @@ $('myPlaces').addEventListener('click', (e) => {
   const t = e.target.closest('[data-pl]'); if (!t) return;
   const list = loadPlaces(), f = list.find(x => x.id === t.dataset.id); if (!f) return;
   SFX.click();
-  if (t.dataset.pl === 'open') playPlace('baseplate', { file: f });
+  if (t.dataset.pl === 'open') startPlace('baseplate', { file: f });
   if (t.dataset.pl === 'rename') {
     const n = cleanText(String(prompt('New name:', f.name) || '').trim()).slice(0, 30);
     if (n) { f.name = n; storePlaces(list); renderPlaces(); }
@@ -5292,7 +5422,20 @@ function leaveGame() {
   if (equipped) equip(TOOLS.indexOf(equipped));
   $('insertWin').classList.add('hidden');
   siteOpen = true; $('site').classList.remove('hidden');
+  unloadWorld();
   showPage('home');
+}
+// back on the website: take the game apart so nothing keeps running (or making noise) behind the page.
+// playPlace builds everything again when you play.
+function unloadWorld() {
+  if (HEADLESS) return;
+  stopDrag(); clearUnlocked(); [...hatPickups].forEach(removeHatPickup);
+  for (const list of [rockets, paintballs, fx]) { list.forEach(o => scene.remove(o.mesh)); list.length = 0; }
+  for (const list of [superballs, bombs, debris]) { list.forEach(o => { world.removeBody(o.body); scene.remove(o.mesh); }); list.length = 0; }
+  cars.forEach(c => scene.remove(c.mesh)); cars.length = 0;
+  wallQueue.length = 0;
+  npcs.forEach(n => { if (n.enabled) n.setEnabled(false); });
+  if (AC && AC.state === 'running') AC.suspend();
 }
 
 /* ================= PROJECTS + INBOX =================
@@ -5473,7 +5616,7 @@ function inboxOpened() {
 $('site').addEventListener('click', (e) => {
   const t = e.target.closest('[data-proj],[data-ib]');
   if (!t) return;
-  if (t.dataset.proj) playProject(t.dataset.proj);
+  if (t.dataset.proj) { const p = proj.subs.get(t.dataset.proj); if (p) withLoading(`"${p.ti}"`, () => playProject(p.id)); }
   if (t.dataset.ib) answerProject(t.dataset.id, t.dataset.ib);
 });
 
@@ -5586,9 +5729,10 @@ async function hostGame() {
   myName();
   if (net.room || net.joining) netStop(null, true);
   netStatus('Starting your game...');
+  loadShow('Starting your game'); loadStep(5, 'Connecting to the BLOCKBURG server', 35);
   net.place = $('mpPlace').value;
   const room = await openRoom('create');
-  if (!room) return;
+  if (!room) { loadHide(); return; }   // (the Multiplayer page says why)
   $('mpCode').value = room.roomId;
   enterRoom(room, room.roomId, true);
 }
@@ -5677,6 +5821,7 @@ function hostHandle(h, conn, m) {
     case 'paint': { const p = part(); if (p) { paintPart(p, m.c); aiOnPainted(p, h); } break; }
     case 'clone': {
       const p = part(); if (!p) break;
+      if (!brickRoom()) { tellFull(h); break; }
       const c = deserialize(serialize(p)); c.anchored = p.anchored; setMode(c, 'kinematic'); c.netDrag = h;
       aiOnBuild(p.mesh.position, h);
       netSendTo(conn, { t: 'cloned', nid: c.nid });
@@ -5696,6 +5841,7 @@ function hostHandle(h, conn, m) {
     }
     case 'insert': {
       const o = m.o; if (!o || !Array.isArray(o.size) || !Array.isArray(o.pos)) break;
+      if (!brickRoom()) { tellFull(h); break; }
       makePart({ shape: o.shape, size: o.size.map(n => Math.min(64, Math.max(0.2, +n || 1))), pos: o.pos, rot: o.rot,
         color: o.color, anchored: !!o.anchored, destroy: !!o.anchored && !!o.destroy, kill: !!o.kill, bouncy: !!o.bouncy, trans: o.trans });
       aiOnBuild(new V3(...o.pos), h);
@@ -5760,9 +5906,10 @@ async function joinGame() {
   if (net.room || net.joining) netStop(null, true);
   net.joining = code; net.code = code;
   netStatus(`Looking for room ${code}...`);
+  loadShow(`Joining room ${code}`); loadStep(5, 'Connecting to the BLOCKBURG server', 35);
   const room = await openRoom('join', code);
   if (net.joining !== code) { if (room) room.leave(); return; }
-  if (!room) { net.joining = null; net.code = ''; return; }
+  if (!room) { net.joining = null; net.code = ''; loadHide(); return; }
   enterRoom(room, code, false);
 }
 // in a room (one I just started, or someone else's): say hello to the server's game and wait for the welcome
@@ -5784,6 +5931,7 @@ async function enterRoom(room, code, mine) {
     if (net.mode === 'client') clientLost('Lost the connection to the game.');
     else netStop(`Couldn't get into room ${code}.`);
   });
+  loadStep(40, 'Downloading the world', 70);
   // the admin proves it's them by signing the room code and their name
   net.admSig = adminPriv ? await adminSign(`bb-admin|${code}|${myName()}`) : null;
   net.idSig = await idSign(`bb-id|${code}|${myName()}`);
@@ -5844,6 +5992,7 @@ function clientEnter(m) {
     : `You joined room ${m.code}! Press 1-0 for tools, Esc for the menu.`);
   netStatus(`Connected to room ${m.code}.`);
   SFX.spawn(); renderLB(); updateBadge();
+  loadFinish();   // (the world is here: graphics, then in you go)
 }
 function addPuppet(rec) {
   if (!rec || rec.hid === net.myHid || humByHid(rec.hid)) return;
@@ -5975,6 +6124,7 @@ function netTick(dt) {
 
 /* ---- leaving ---- */
 function netStop(reason, quiet = false) {
+  if (loading.on && !loading.local) loadHide();   // a join that didn't work out: back to the website
   const wasClient = net.mode === 'client';
   net.mode = null;   // first, so the cleanup below doesn't get sent anywhere
   const room = net.room; net.room = null;
@@ -6002,6 +6152,50 @@ function netStop(reason, quiet = false) {
 $('hostBtn').onclick = () => hostGame();
 $('joinBtn').onclick = () => joinGame();
 $('mpCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinGame(); });
+
+/* ================= LOADING A GAME =================
+   Starting or joining a game shows the loading screen until the place is built, the physics has
+   settled and the graphics are ready, so you never land in a half-made world. */
+const LOAD_TIPS = ['Tip: Press 1-0 to pick your gear.', 'Tip: Hold right-click and drag to turn the camera.', 'Tip: Press Esc for the menu.',
+  'Tip: The Tinpot Hat is the best hat. Obviously.', 'Tip: Rockets hurt you too. Aim away from your face!', 'Tip: Press Shift for shift lock.',
+  'Tip: Click Join next to a friend to hop into their game.', 'Tip: Tick Bring the Guests on the Build page to build with company.',
+  'Tip: Wear every piece of an outfit set for a secret effect.', 'Tip: Guest 31 saw the knife. Do not mention the knife.'];
+const loading = { on: false, pct: 0, cap: 0, label: '', t0: 0, creep: 0, local: false };
+const nextFrame = () => new Promise(r => { requestAnimationFrame(() => r()); setTimeout(r, 80); });   // (let the screen draw)
+function loadDraw() {
+  $('ldFill').style.width = loading.pct + '%';
+  $('ldMsg').textContent = loading.pct >= 100 ? 'Ready!' : `${loading.label}... ${Math.floor(loading.pct)}%`;
+}
+function loadShow(label, local = false) {
+  if (HEADLESS) return;
+  Object.assign(loading, { on: true, pct: 0, cap: 8, label, t0: performance.now(), local });
+  $('ldTip').textContent = rpick(LOAD_TIPS); $('loadScreen').classList.remove('hidden'); loadDraw();
+  clearInterval(loading.creep);   // while we wait (on the server, say), creep along toward the next step instead of sitting still
+  loading.creep = setInterval(() => { if (loading.pct < loading.cap) { loading.pct = Math.min(loading.cap, loading.pct + 0.6); loadDraw(); } }, 120);
+}
+// a step reached: jump to pct, and creep toward cap until the next one
+function loadStep(pct, label, cap = pct) { if (!loading.on) return; loading.pct = Math.max(loading.pct, pct); loading.cap = Math.max(cap, loading.pct); if (label) loading.label = label; loadDraw(); }
+function loadHide() { clearInterval(loading.creep); loading.on = false; $('loadScreen').classList.add('hidden'); }
+// the last steps every game shares: settle the physics, get the graphics ready, then let you in
+async function loadFinish() {
+  if (!loading.on) return;
+  loadStep(75, 'Getting the graphics ready', 90); await nextFrame();
+  try { renderer.compile(scene, camera); renderer.render(scene, camera); } catch { }
+  loadStep(100, 'Ready!'); await nextFrame();
+  await new Promise(r => setTimeout(r, Math.max(150, 800 - (performance.now() - loading.t0))));   // (long enough to see it, never a flash)
+  loadHide();
+}
+// a solo game: the loading screen, then make the place, then the shared last steps
+async function withLoading(label, make) {
+  if (loading.on) return;
+  loadShow(`Loading ${label}`, true);
+  loadStep(5, `Loading ${label}`, 30); await nextFrame();
+  make();
+  loadStep(40, 'Settling the bricks', 70); await nextFrame();
+  for (let i = 0; i < 20; i++) world.step(1 / 60);   // (anything loose lands now, not while you watch)
+  await loadFinish();
+}
+const startPlace = (id, opts = {}) => withLoading(opts.file ? `"${opts.file.name}"` : PLACE_NAMES[id] || 'BLOCKBURG', () => playPlace(id, opts));
 
 /* ================= SIGN IN =================
    No real accounts. You pick a name and, if you like, a password. The password never leaves this device:
@@ -6202,7 +6396,7 @@ function siSkip() {
 function finishSignin() {
   const mode = si.mode;
   closeSignin();
-  if (mode === 'first') playPlace('classic');
+  if (mode === 'first') startPlace('classic');
 }
 function signOut() {
   idClear(); me.name = '';
@@ -6315,6 +6509,7 @@ const CMDS = [
     run: ([t], who) => {
       const type = Object.keys(BLUEPRINTS).find(k => k === (t || '').toLowerCase()) || Object.keys(BLUEPRINTS).find(k => k.startsWith((t || '').toLowerCase()));
       if (!t || !type) return `Build what? ${Object.keys(BLUEPRINTS).join(', ')}`;
+      if (!brickRoom(BLUEPRINTS[type]().length)) return BRICKS_FULL;
       const site = fwd(who, 14);
       for (const [x, y, z, w, h, d, col] of BLUEPRINTS[type]())
         makePart({ size: [w, h, d], pos: [site.x + x, 0.6 + y * 1.202 + (h < 1 ? -0.4 : 0), site.z + z], color: col ? BC[col] : y === 3 ? BC['Bright red'] : BC['Bright blue'], anchored: true, destroy: true });
@@ -6422,7 +6617,8 @@ const FUN_CMDS = [
     } },
   { name: 'brickrain', world: true, use: '[how many]', desc: 'bricks fall from the sky on everyone', hint: () => ['40', '80', '150'],
     run: ([n], who) => {
-      const N = clampN(n, 1, 150, 80), targets = humanoids.filter(h => h.enabled && !h.dead);
+      const N = Math.min(clampN(n, 1, 150, 80), BRICK_CAP - parts.length), targets = humanoids.filter(h => h.enabled && !h.dead);
+      if (N <= 0) return BRICKS_FULL;
       for (let i = 0; i < N; i++) {
         const h = targets[i % targets.length] || who;
         makePart({ size: rpick([[4, 1.2, 2], [2, 1.2, 2], [4, 1.2, 4], [1, 1.2, 4]]), pos: [h.pos.x + rnd(14), 40 + Math.random() * 50, h.pos.z + rnd(14)],
@@ -6432,7 +6628,8 @@ const FUN_CMDS = [
     } },
   { name: 'ballpit', world: true, use: '[how many]', desc: 'a pile of bouncy balls', hint: () => ['20', '40', '80'],
     run: ([n], who) => {
-      const N = clampN(n, 1, 80, 40);
+      const N = Math.min(clampN(n, 1, 80, 40), BRICK_CAP - parts.length);
+      if (N <= 0) return BRICKS_FULL;
       for (let i = 0; i < N; i++) makePart({ shape: 'ball', size: [3, 3, 3], bouncy: true, pos: [who.pos.x + rnd(16), who.pos.y + 8 + Math.random() * 20, who.pos.z + rnd(16)], color: PALETTE[(Math.random() * 12) | 0][1] });
       return 'Ball pit!';
     } },
@@ -6562,14 +6759,14 @@ function cmdPanelShow(on) {
 humanoids.forEach(h => h.postStep(0, 0));
 pageReady = true;
 { let s = 'panorama'; try { s = localStorage.getItem(SKY_KEY) || s; } catch { } applySky(s); }
-if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); }   // (the server's copy has no screen, friends list or inbox)
+if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); unloadWorld(); }   // (the server's copy has no screen, friends list or inbox)
 refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
 if (!HEADLESS) { pxSwap(); startUpdates(); signinStart(); }
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
-  keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, pxUrl, BLUEPRINTS, makePart, BC, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
+  keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, pxUrl, BLUEPRINTS, makePart, BC, LOD, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
   get currentPlace() { return currentPlace; }, get currentFile() { return currentFile; }, loadPlaces, get dragging() { return dragging; },
   pickAt(x, y) { mouseNDC.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); const h = pick(); return h && (h.object.userData.part ? 'part ' + h.object.userData.part.nid : h.object.userData.hum ? 'hum ' + h.object.userData.hum.name : 'other'); },
   tick(frames) { for (let i = 0; i < frames; i++) frame(last + 1000 / 60); } };

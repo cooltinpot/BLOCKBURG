@@ -9,13 +9,74 @@ import * as CANNON from 'cannon-es';
    bouncing a superball off it still knocks it over. */
 
 const GRAV = 196.2;
+
+/* Which bodies might be touching? SAP (cannon's usual answer) compares every brick with its neighbors on every
+   step, even thousands of anchored bricks that never move, and that alone made big builds crawl. Here every body
+   goes into a grid by where it is, and only the bodies that are moving (falling bricks, people's ghosts, balls)
+   look around their own grid cells. Bricks that sit still cost next to nothing. (The game has the same.) */
+// cannon remembers "who touched whom" in a table with a slot for EVERY pair of bodies (3,800 bricks = 7 million
+// slots), and wipes all of it clean on every step: that, more than anything, made big builds slow forever.
+// This one only keeps the pairs that really are touching.
+class SparseCollisionMatrix {
+  constructor() { this.m = new Map(); }
+  key(bi, bj) { const i = bi.index, j = bj.index; return i > j ? i * 1048576 + j : j * 1048576 + i; }
+  get(bi, bj) { return this.m.get(this.key(bi, bj)) || 0; }
+  set(bi, bj, value) { if (value) this.m.set(this.key(bi, bj), value); else this.m.delete(this.key(bi, bj)); }
+  reset() { this.m.clear(); }
+  setNumObjects() { }
+}
+class StillBroadphase extends CANNON.Broadphase {
+  constructor(cell = 8) { super(); this.cell = cell; this.useBoundingBoxes = true; this.cells = new Map(); this.big = new Set(); this.stamp = 0; this.ticks = 0; }
+  // a body only moves to new grid cells when it really moved (most bricks never do)
+  place(b, x0, x1, z0, z1) {
+    this.unplace(b);
+    b._bp = [x0, x1, z0, z1];
+    if ((x1 - x0 + 1) * (z1 - z0 + 1) > 16) { b._bpBig = true; this.big.add(b); return; }   // (the ground, giant baseplates: everyone checks those)
+    for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { const k = x * 65536 + z; let c = this.cells.get(k); if (!c) this.cells.set(k, c = []); c.push(b); }
+  }
+  unplace(b) {
+    if (!b._bp) return;
+    if (b._bpBig) { this.big.delete(b); b._bpBig = false; }
+    else { const [x0, x1, z0, z1] = b._bp; for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { const c = this.cells.get(x * 65536 + z); const i = c ? c.indexOf(b) : -1; if (i >= 0) c.splice(i, 1); } }
+    b._bp = null;
+  }
+  collisionPairs(world, p1, p2) {
+    const S = this.cell, movers = [], STATIC = CANNON.Body.STATIC, SLEEPING = CANNON.Body.SLEEPING;
+    if (++this.ticks % 600 === 0) { for (const c of this.cells.values()) for (const b of c) b._bp = null; for (const b of this.big) b._bp = null; this.cells.clear(); this.big.clear(); }   // (now and then: forget removed bodies)
+    for (const b of world.bodies) {
+      if (b.aabbNeedsUpdate) b.updateAABB();
+      if (b.type !== STATIC && b.sleepState !== SLEEPING) movers.push(b);
+      const lo = b.aabb.lowerBound, hi = b.aabb.upperBound, g = b._bp;
+      const x0 = Math.floor(lo.x / S), x1 = Math.floor(hi.x / S), z0 = Math.floor(lo.z / S), z1 = Math.floor(hi.z / S);
+      if (!g || g[0] !== x0 || g[1] !== x1 || g[2] !== z0 || g[3] !== z1) this.place(b, x0, x1, z0, z1);
+    }
+    for (const m of movers) {
+      const st = ++this.stamp;
+      const test = (o) => {
+        if (o === m || o._bpStamp === st || !o.world) return;
+        o._bpStamp = st;
+        if (o.type !== STATIC && o.sleepState !== SLEEPING && o.id < m.id) return;   // two movers: the pair is made once
+        if (this.needBroadphaseCollision(m, o)) this.doBoundingBoxBroadphase(m, o, p1, p2);
+      };
+      this.big.forEach(test);
+      if (m._bpBig) { world.bodies.forEach(test); continue; }   // (something giant is moving)
+      const [x0, x1, z0, z1] = m._bp;
+      for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { const c = this.cells.get(x * 65536 + z); if (c) c.forEach(test); }
+    }
+  }
+  aabbQuery(world, aabb, result = []) {
+    for (const b of world.bodies) { if (b.aabbNeedsUpdate) b.updateAABB(); if (b.aabb.overlaps(aabb)) result.push(b); }
+    return result;
+  }
+}
 const G_PART = 1, G_GHOST = 4;
 const r2 = (n) => Math.round(n * 100) / 100, r3 = (n) => Math.round(n * 1000) / 1000;
 
 export class BrickWorld {
   constructor() {
     const world = this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, -GRAV, 0) });
-    world.broadphase = new CANNON.SAPBroadphase(world);
+    world.broadphase = new StillBroadphase(); world.broadphase.setWorld(world);
+    world.collisionMatrix = new SparseCollisionMatrix(); world.collisionMatrixPrevious = new SparseCollisionMatrix();
     world.allowSleep = true;
     world.solver.iterations = 12;
     this.physPart = new CANNON.Material('part'); this.physHum = new CANNON.Material('hum'); this.physBall = new CANNON.Material('ball');
@@ -147,7 +208,9 @@ export class BrickWorld {
   /* ---- every tick ---- */
   step(dt, now) {
     for (const g of this.ghosts.values()) if (now - g.seen > 150) g.body.velocity.set(0, 0, 0);   // no news: stand still
-    this.world.step(1 / 120, Math.min(dt, 1 / 20), 8);
+    // at most 3 catch-up steps: with lots of bricks a tick can run late, and catching up with even more steps
+    // only makes the next tick later still, until the whole room crawls
+    this.world.step(1 / 120, Math.min(dt, 1 / 20), 3);
     for (const p of [...this.parts.values()]) {
       if (!p.locked && p.body.position.y < -200) { this.remove(p.nid); this.fellOut.push(p.nid); }
     }
