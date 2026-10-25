@@ -73,6 +73,9 @@
   .ch-row.small{font:11px Arial;opacity:.9;margin-top:2px}
   .ch-row.small img{vertical-align:-2px}
   .ch-me{margin-top:4px;border-radius:4px;padding:2px 6px;text-shadow:1px 1px 0 #000}
+  #rsLabel{position:fixed;z-index:7;background:#ffffe1;color:#000;border:1px solid #000;font:12px Arial;padding:2px 6px;pointer-events:none;white-space:nowrap;box-shadow:2px 2px 0 rgba(0,0,0,.25)}
+  #rsLabel.hidden{display:none}
+  #rsLabel small{color:#555}
   #selRect{position:fixed;border:1px dashed #00e5ff;background:rgba(0,229,255,.12);pointer-events:none;z-index:5}
   #selRect.hidden{display:none}
   #tip{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);font:bold 13px Arial;white-space:nowrap}
@@ -312,6 +315,7 @@
   @keyframes ldSlide{to{background-position:34px 0}}
   .ld-msg{font-size:12px;color:#333;margin-top:8px;min-height:16px}
   .ld-tip{font-size:11px;color:#777;margin-top:22px}
+  .ld-cover.shot{-webkit-mask-image:none;mask-image:none;border:2px solid #0b4a99;box-sizing:border-box}   /* (a full picture, framed) */
   @media (max-height:520px){.ld-cover{width:min(100%,200px)}}
   /* ---------- sign in: the old website's login box over screenshots of the game ---------- */
   #signin{position:fixed;inset:0;z-index:60;overflow:auto;background:#5a9ee0;font:12px Verdana,Arial,sans-serif;color:#000}
@@ -416,6 +420,7 @@
 </div>
 <div id="tip" class="txt"></div>
 <div id="selRect" class="hidden"></div>
+<div id="rsLabel" class="hidden"></div>
 <div id="badgePop" class="win hidden"></div>
 <div id="ctfHud" class="hidden"></div>
 <div id="shiftIcon" class="hidden"></div>
@@ -4505,6 +4510,16 @@ function rsParam(o, d) {
   if (Math.abs(denom) < 1e-4) return null;
   return (b * rd.dot(w0) - d.dot(w0)) / denom;
 }
+function rsLabel(e) {
+  const el = $('rsLabel');
+  if (!rs) { el.classList.add('hidden'); return; }
+  const n = (v) => +v.toFixed(2), z = rs.newSize, b = (i, s) => i === rs.axis || (rs.p.shape === 'ball') || (rs.p.shape === 'cyl' && rs.axis === 0 && i === 2) ? `<b>${s}</b>` : s;
+  const was = rs.size[rs.axis], now = z[rs.axis], d = n(now - was);
+  el.innerHTML = rs.p.shape === 'ball' ? `<b>${n(z[0])}</b> studs across` :
+    `${b(0, n(z[0]))} wide × ${b(1, n(z[1]))} tall × ${b(2, n(z[2]))} long` + (d ? ` <small>(${d > 0 ? '+' : ''}${d})</small>` : '');
+  if (e) Object.assign(el.style, { left: e.clientX + 16 + 'px', top: e.clientY + 14 + 'px' });
+  el.classList.remove('hidden');
+}
 function rsStart(e) {
   const p = rsTarget(); if (!p || camLocked() || shiftLock) return false;
   raycaster.setFromCamera(mouseNDC, camera);
@@ -4514,7 +4529,7 @@ function rsStart(e) {
   const o = h.object.position.clone(), t0 = rsParam(o, d);
   if (t0 === null) return false;
   rs = { p, axis, d, o, t0, size: [...p.size], pos: new V3().copy(p.body.position), newSize: [...p.size], newPos: new V3().copy(p.body.position) };
-  SFX.click(); return true;
+  SFX.click(); rsLabel(e); return true;
 }
 function rsMove() {
   if (!rs) return;
@@ -4533,7 +4548,7 @@ function rsMove() {
 }
 function rsEnd() {
   if (!rs) return;
-  const { p, newSize, newPos, size } = rs; rs = null; rsGhost.visible = false;
+  const { p, newSize, newPos, size } = rs; rs = null; rsGhost.visible = false; rsLabel();
   if (!alive(p) || newSize.every((n, i) => n === size[i])) return;
   SFX.clack();
   if (net.mode === 'client') { net.reselect = p.nid; netSend({ t: 'resize', nid: p.nid, z: newSize, p: arr3(newPos) }); return; }
@@ -5944,7 +5959,7 @@ cv.addEventListener('mousedown', (e) => {
 addEventListener('mouseup', (e) => { if (e.button === 2) endCamDrag(); if (e.button === 0) { stopDrag(); boxSelEnd(); rsEnd(); } });
 addEventListener('mousemove', (e) => {
   if (!camLocked() && !shiftLock) mouseNDC.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);   // aim stays put while turning
-  boxSelMove(e); rsMove();
+  boxSelMove(e); rsMove(); if (rs) rsLabel(e);
   if (rDrag || (shiftLock && started && !menuOpen)) {
     const dx = camLocked() ? e.movementX : e.clientX - lastX, dy = camLocked() ? e.movementY : e.clientY - lastY;
     camYaw -= dx * 0.007;
@@ -6590,6 +6605,8 @@ const UPDATES = [
     '3 new hats in the Catalog: the Classic Fedora, a wobbly Stack of Books, and Cat Ears that are the same color as your head, like real ears (change your head color and they change too).',
     'Fixed: the Cat Ears face the front now, instead of being twisted sideways.',
     'Another new hat: the Builder Hard Hat (with a ridge over the top, a badge on the front and a peak over your eyes). Safety first on every baseplate!',
+    'Resizing a brick now shows its size as you drag, like "7 wide × 1.2 tall × 2 long (+3)", with the side you\'re stretching in bold.',
+    'New loading picture for sandbox games (Happy Home Baseplate, your saved places and baseplate rooms): a builder at work, made by cooltinpot!',
     'The admin can take the cape off now: /cape off (and /cape on to put it back). Everyone in the room sees it, and it stays that way next time.',
     'NEW GAME: RED VS BLUE! Two teams, two bases, two flags. Grab the other team\'s flag and run it back to your own flag stand. First to 3 captures wins! Play it from the front page.',
     'In RED VS BLUE! you only get the Paintball Gun and the Trowel (no Insert), paintballs and trowel walls come in your team\'s color, and there\'s no hurting your own team.',
@@ -7583,7 +7600,9 @@ async function hostGame() {
   myName();
   if (net.room || net.joining) netStop(null, true);
   netStatus('Starting your game...');
-  loadShow('Starting your game'); loadStep(5, 'Connecting to the BLOCKBURG server', 35);
+  const pick = $('mpPlace').value;
+  loadShow('Starting your game', false, pick === 'baseplate' || pick.startsWith('file:') ? SANDBOX_PIC : undefined);
+  loadStep(5, 'Connecting to the BLOCKBURG server', 35);
   net.place = $('mpPlace').value; net.hostFile = null;
   if (net.place.startsWith('file:')) { net.hostFile = net.place.slice(5); net.place = 'baseplate'; }   // (one of my places, on a baseplate)
   const room = await openRoom('create');
@@ -8102,8 +8121,14 @@ function loadDraw() {
   $('ldFill').style.width = loading.pct + '%';
   $('ldMsg').textContent = loading.pct >= 100 ? 'Ready!' : `${loading.label}... ${Math.floor(loading.pct)}%`;
 }
-function loadShow(label, local = false) {
+// pic: the picture on top (cooltinpot's builder picture for sandbox games, the cover for the rest)
+const SANDBOX_PIC = 'loading-build.png';
+if (!HEADLESS) new Image().src = SANDBOX_PIC;   // (fetched now, so it's there the moment it's needed)
+function loadShow(label, local = false, pic = 'cover.png') {
   if (HEADLESS) return;
+  const cov = document.querySelector('#loadScreen .ld-cover');
+  if (!cov.src.endsWith(pic)) cov.src = pic;
+  cov.classList.toggle('shot', pic !== 'cover.png');
   Object.assign(loading, { on: true, pct: 0, cap: 8, label, t0: performance.now(), local });
   $('ldTip').textContent = rpick(LOAD_TIPS); $('loadScreen').classList.remove('hidden'); loadDraw();
   clearInterval(loading.creep);   // while we wait (on the server, say), creep along toward the next step instead of sitting still
@@ -8122,16 +8147,17 @@ async function loadFinish() {
   loadHide();
 }
 // a solo game: the loading screen, then make the place, then the shared last steps
-async function withLoading(label, make) {
+async function withLoading(label, make, pic) {
   if (loading.on) return;
-  loadShow(`Loading ${label}`, true);
+  loadShow(`Loading ${label}`, true, pic);
   loadStep(5, `Loading ${label}`, 30); await nextFrame();
   make();
   loadStep(40, 'Settling the bricks', 70); await nextFrame();
   for (let i = 0; i < 20; i++) world.step(1 / 60);   // (anything loose lands now, not while you watch)
   await loadFinish();
 }
-const startPlace = (id, opts = {}) => withLoading(opts.file ? `"${opts.file.name}"` : PLACE_NAMES[id] || 'BLOCKBURG', () => playPlace(id, opts));
+const startPlace = (id, opts = {}) => withLoading(opts.file ? `"${opts.file.name}"` : PLACE_NAMES[id] || 'BLOCKBURG', () => playPlace(id, opts),
+  id === 'baseplate' ? SANDBOX_PIC : undefined);   // (a sandbox game: the builder picture)
 
 /* ================= SIGN IN =================
    No real accounts. You pick a name and, if you like, a password. The password never leaves this device:
