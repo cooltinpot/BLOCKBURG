@@ -106,6 +106,9 @@ export class BlockburgRoom extends Room {
       case 'drag': for (const r of Array.isArray(m.l) ? m.l : []) if (Array.isArray(r)) B.drag(...r); break;
       case 'kick': B.kick(m.nid, m.v); break;                      // a sword swing or a Guest kicking a ball
       case 'blast': B.blast(m.c, m.r); break;                      // an explosion
+      case 'door': B.door(m.nid, !!m.on); break;                  // a door opened or closed
+      case 'weld': B.weld(m.nid, m.id ?? null); break;              // welded together (or apart)
+      case 'drive': B.drive(m.nid, +m.th, +m.st, this.clock.currentTime); break;   // someone driving a car
     }
   }
 

@@ -10,6 +10,34 @@ import * as CANNON from 'cannon-es';
 
 const GRAV = 196.2;
 
+// a driver's seat moves its whole welded car: th = gas (-1 reverse .. 1), st = steer (-1 left .. 1 right). (The game has the same.)
+function driveBodies(seat, bodies, th, st, dt) {
+  const f = seat.quaternion.vmult(new CANNON.Vec3(0, 0, -1)), up = seat.quaternion.vmult(new CANNON.Vec3(0, 1, 0)), len = Math.hypot(f.x, f.z);
+  const tipped = len < 0.2;   // (pointing straight up or down: no gas, just getting back on its wheels)
+  if (tipped) { f.x = 0; f.z = -1; } else { f.x /= len; f.z /= len; }
+  // the car keeps its own speed (the ground's friction would eat it), unless something really is stopping it
+  const v = seat.velocity, real = v.x * f.x + v.z * f.z, was = seat.carSpeed || 0;
+  const speed = Math.sign(was) * Math.min(Math.abs(was), Math.abs(real) + 10);
+  const target = tipped ? 0 : th > 0 ? th * 60 : th * 25;
+  const s = seat.carSpeed = speed + (target - speed) * Math.min(1, dt * (th ? 2.2 : 0.9));
+  const w = -st * 1.8 * Math.max(-1, Math.min(1, s / 15));   // (no turning on the spot; backing up steers the other way)
+  const k = up.y < 0.7 ? 6 : 3;   // (it gently stays on its wheels, and leans back up harder when it tips)
+  for (const b of bodies) {
+    if (b.type !== CANNON.Body.DYNAMIC) continue;
+    const rx = b.position.x - seat.position.x, rz = b.position.z - seat.position.z;
+    b.velocity.set(f.x * s + w * rz, v.y, f.z * s - w * rx); b.angularVelocity.set(-up.z * k, w, up.x * k); b.wakeUp();
+  }
+}
+
+// wedges: their corners (half sizes) and faces, counterclockwise seen from outside. (The game has the same polyOf.)
+function polyOf(shape, size) {
+  const [x, y, z] = size.map(s => s / 2);
+  if (shape === 'wedge') return { verts: [[-x, -y, -z], [x, -y, -z], [x, -y, z], [-x, -y, z], [-x, y, -z], [x, y, -z]],
+    faces: [[0, 1, 2, 3], [0, 4, 5, 1], [3, 2, 5, 4], [0, 3, 4], [1, 5, 2]] };
+  return { verts: [[-x, -y, -z], [x, -y, -z], [x, -y, z], [-x, -y, z], [x, y, -z]],   // corner wedge: the tip is at the back right
+    faces: [[0, 1, 2, 3], [0, 4, 1], [1, 4, 2], [3, 2, 4], [0, 3, 4]] };
+}
+
 /* Which bodies might be touching? SAP (cannon's usual answer) compares every brick with its neighbors on every
    step, even thousands of anchored bricks that never move, and that alone made big builds crawl. Here every body
    goes into a grid by where it is, and only the bodies that are moving (falling bricks, people's ghosts, balls)
@@ -87,7 +115,9 @@ export class BrickWorld {
     world.addContactMaterial(new CANNON.ContactMaterial(this.physBall, this.physPart, { friction: 0.2, restitution: 0.92 }));
     this.parts = new Map();    // nid -> { nid, d (the brick's description), locked, mode, body, sent }
     this.ghosts = new Map();   // 'h:<hid>' or 'p:<pid>' -> { body, seen }
-    this.fellOut = [];         // bricks that fell off the world since the last update
+    this.fellOut = [];
+    this.welds = new Map();    // weld number -> the bricks welded together
+    this.driven = new Map();   // driver's seat nid -> { th, st, at }: someone is driving that car         // bricks that fell off the world since the last update
   }
 
   /* ---- bricks ---- */
@@ -98,6 +128,10 @@ export class BrickWorld {
     let shape;
     if (d.s === 'ball') shape = new CANNON.Sphere(size[0] / 2);
     else if (d.s === 'cyl') shape = new CANNON.Cylinder(size[0] / 2, size[0] / 2, size[1], 12);
+    else if (d.s === 'wedge' || d.s === 'cwedge') {
+      const { verts, faces } = polyOf(d.s, size);
+      shape = new CANNON.ConvexPolyhedron({ vertices: verts.map(v => new CANNON.Vec3(...v)), faces });
+    }
     else shape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
     const mass = +d.m || Math.max(1, size[0] * size[1] * size[2] * 0.7);
     const body = new CANNON.Body({ mass, shape, material: d.s === 'ball' && d.b ? this.physBall : this.physPart,
@@ -105,16 +139,19 @@ export class BrickWorld {
     body.position.set(...d.p);
     if (Array.isArray(d.q)) body.quaternion.set(...d.q);
     body.sleepSpeedLimit = 0.4; body.sleepTimeLimit = 0.6;
+    if (d.op) body.collisionResponse = false;   // an open door
     const p = { nid, d: { ...d, z: size }, locked, mass, body, mode: d.a ? 'static' : 'dynamic', sent: null };
     body.userData = { part: p };
     this.setBody(p, p.mode);
     this.world.addBody(body);
     if (asleep && p.mode === 'dynamic') body.sleep();
     this.parts.set(nid, p);
+    if (d.wd) { p.d.wd = undefined; this.weldJoin(p, d.wd); }
   }
   remove(nid) {
     const p = this.parts.get(nid);
     if (!p) return;
+    if (p.d.wd) this.weldJoin(p, null);   // (the rest of its group stays welded)
     for (const c of [...this.world.constraints]) if (c.bodyA === p.body || c.bodyB === p.body) this.world.removeConstraint(c);
     this.world.removeBody(p.body); this.parts.delete(nid);
     this.wakeNear(p.body.position, Math.max(...p.d.z) + 3);   // whatever it was holding up can fall now
@@ -133,6 +170,38 @@ export class BrickWorld {
     else { b.type = mode === 'static' ? CANNON.Body.STATIC : CANNON.Body.KINEMATIC; b.mass = 0; }
     b.updateMassProperties(); b.velocity.set(0, 0, 0); b.angularVelocity.set(0, 0, 0);
     b.aabbNeedsUpdate = true; b.wakeUp();
+  }
+  /* welds: bricks with the same weld number hang on the group's first brick with lock constraints (the game has the same) */
+  weldJoin(p, id) {
+    id = id || null;
+    if ((p.d.wd || null) === id) return;
+    if (p.weldC) { this.world.removeConstraint(p.weldC); p.weldC = null; }
+    const old = p.d.wd;
+    if (old) { const g = this.welds.get(old); if (g) { g.delete(p); if (g.size) this.weldRelink(old); else this.welds.delete(old); } }
+    p.d.wd = id || undefined;
+    if (id) { if (!this.welds.has(id)) this.welds.set(id, new Set()); this.welds.get(id).add(p); this.weldRelink(id); }
+  }
+  weldRelink(id) {
+    const g = this.welds.get(id); if (!g) return;
+    for (const q of g) if (q.weldC) { this.world.removeConstraint(q.weldC); q.weldC = null; }
+    let root = null;
+    for (const q of g) {
+      if (!root) { root = q; continue; }
+      q.weldC = new CANNON.LockConstraint(root.body, q.body); q.weldC.collideConnected = false;   // (welded bricks don't push on each other)
+      this.world.addConstraint(q.weldC); q.body.wakeUp();
+    }
+  }
+  drive(nid, th, st, now) {
+    const p = this.parts.get(nid);
+    if (p && p.d.st === 2 && Number.isFinite(th) && Number.isFinite(st)) this.driven.set(nid, { th: Math.max(-1, Math.min(1, th)), st: Math.max(-1, Math.min(1, st)), at: now });
+  }
+  weld(nid, id) { const p = this.parts.get(nid); if (p && (id === null || Number.isFinite(id))) this.weldJoin(p, id); }
+  // a door (or any brick a script opens): open = things pass through it
+  door(nid, on) {
+    const p = this.parts.get(nid);
+    if (!p) return;
+    p.d.op = on ? 1 : undefined; p.body.collisionResponse = !on;
+    if (!on) this.wakeNear(p.body.position, Math.max(...p.d.z) + 3);
   }
   // a brick being dragged: [nid, x, y, z, qx, qy, qz, qw]
   drag(nid, x, y, z, qx, qy, qz, qw) {
@@ -210,6 +279,12 @@ export class BrickWorld {
     for (const g of this.ghosts.values()) if (now - g.seen > 150) g.body.velocity.set(0, 0, 0);   // no news: stand still
     // at most 3 catch-up steps: with lots of bricks a tick can run late, and catching up with even more steps
     // only makes the next tick later still, until the whole room crawls
+    for (const [nid, d] of this.driven) {   // cars being driven (a driver stops counting half a second after their last word)
+      const p = this.parts.get(nid);
+      if (!p || now - d.at > 500) { this.driven.delete(nid); continue; }
+      const g = p.d.wd && this.welds.get(p.d.wd);
+      driveBodies(p.body, g ? [...g].map(q => q.body) : [p.body], d.th, d.st, Math.min(dt, 1 / 20));
+    }
     this.world.step(1 / 120, Math.min(dt, 1 / 20), 3);
     for (const p of [...this.parts.values()]) {
       if (!p.locked && p.body.position.y < -200) { this.remove(p.nid); this.fellOut.push(p.nid); }

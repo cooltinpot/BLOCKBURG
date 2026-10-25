@@ -417,7 +417,8 @@
     <h4>Insert part</h4>
     <div class="grid" id="shapeBtns"></div>
     <div class="row"><button class="b" id="undoBtn" title="Ctrl+Z">&#8630; Undo</button><button class="b" id="redoBtn" title="Ctrl+Y">&#8631; Redo</button>
-      <button class="b" id="scriptBtn" title="Snap blocks together into little scripts for a brick"><i data-px="script"></i> Script a brick</button></div>
+      <button class="b" id="weldBtn" title="Stick the picked bricks together, so they move as one">&#128279; Weld</button><button class="b" id="unweldBtn" title="Unstick the picked bricks">Unweld</button></div>
+    <div class="row"><button class="b" id="scriptBtn" title="Snap blocks together into little scripts for a brick"><i data-px="script"></i> Script a brick</button></div>
     <div class="row"><label><input type="checkbox" id="anchorChk" checked> Anchored</label>
       <label title="Stays anchored until something explodes next to it, then it gets blown loose"><input type="checkbox" id="destroyChk"> Destroyable</label></div>
     <div class="row">Custom: <input type="number" id="cx" value="6" min="0.2" max="64" step="0.2">x<input type="number" id="cy" value="1.2" min="0.2" max="64" step="0.2">x<input type="number" id="cz" value="4" min="0.2" max="64" step="0.2"><button class="b" id="customBtn">Add</button></div>
@@ -494,7 +495,10 @@
       <tr><td>Scroll / I O</td><td>Zoom (all the way in = first person)</td></tr>
       <tr><td>1 – 0</td><td>Pick a tool (again to put it away)</td></tr>
       <tr><td>Left click</td><td>Use the tool</td></tr>
-      <tr><td>Grab tool</td><td>R rotate, T tilt, F anchor while dragging</td></tr>
+      <tr><td>Grab tool</td><td>While dragging: R turn, T tilt, Q / E / G turn or tilt a little, F anchor</td></tr>
+      <tr><td>Seats and cars</td><td>Walk into a seat to sit, Space to get up. In a car's black seat: W / S gas, A / D steer</td></tr>
+      <tr><td>Weld</td><td>Pick bricks, then Insert → Weld: they stick together and move as one</td></tr>
+      <tr><td>Resize</td><td>Shift+click ONE brick, then drag the blue balls on its sides</td></tr>
       <tr><td>=</td><td>Drop your hat (touch a hat to wear it)</td></tr>
       <tr><td>/</td><td>Chat</td></tr>
       <tr><td>Esc</td><td>This menu</td></tr>
@@ -1206,6 +1210,14 @@ function makePart(o) {
     const r = size[0] / 2;
     mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, size[1], 20), partMats(color, true, trans)[0]);
     cshape = new CANNON.Cylinder(r, r, size[1], 12);
+  } else if (shape === 'wedge' || shape === 'cwedge') {
+    const { verts, faces } = polyOf(shape, size);
+    mesh = new THREE.Mesh(polyGeo(verts, faces), partMats(color, true, trans)[0]);
+    mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), outlineMat));
+    cshape = new CANNON.ConvexPolyhedron({ vertices: verts.map(v => new CANNON.Vec3(...v)), faces });
+  } else if (shape === 'truss') {
+    mesh = new THREE.Mesh(trussGeo(size), partMats(color, true, trans)[0]);
+    cshape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
   } else {
     mesh = new THREE.Mesh(boxGeo(...size), partMats(color, !o.matte, trans));
     const lines = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), outlineMat);
@@ -1225,17 +1237,24 @@ function makePart(o) {
   body.aabbNeedsUpdate = true;   // the bounds were computed at the origin before we moved it; anchored parts never refresh them on their own
   // destroy: an anchored destroyable. It stays put until an explosion reaches it, then comes loose (see explode)
   const p = { shape, size: [...size], color, trans, anchored, mass, kill: !!o.kill, win: !!o.win, locked: !!o.locked, bouncy: !!o.bouncy, destroy: !!o.destroy, mesh, body,
-    mode: anchored ? 'static' : 'dynamic', startAsleep: !!o.sleep };
+    mode: anchored ? 'static' : 'dynamic', startAsleep: !!o.sleep, matte: !!o.matte,
+    spawn: !!o.spawn, btn: !!o.btn, door: !!o.door, neon: !!o.neon, open: !!o.open, seat: o.seat === 2 ? 2 : o.seat ? 1 : 0 };   // (the new parts: see partLook)
+  if (p.open) body.collisionResponse = false;
+  if (shape === 'truss') trusses.add(p);
+  if (p.spawn) spawns.add(p);
   p.scripts = cleanScripts(o.scripts); if (p.scripts) scripted.add(p);
   if (o.hidden) { p.hidden = true; mesh.visible = false; }
+  p.sign = cleanSign(o.sign);
   body.userData = { part: p }; mesh.userData.part = p;
   mesh.position.copy(body.position); mesh.quaternion.copy(body.quaternion);
   mesh.castShadow = size[0] < 500; mesh.receiveShadow = true;   // (the giant baseplate only catches shadows)
+  if (p.sign || p.neon || p.open || p.spawn) partLook(p);
   world.addBody(body); scene.add(mesh); parts.push(p); pickables.push(mesh);
   if (o.sleep && !anchored) body.sleep();
   // every part has a network id so host and clients agree on which brick is which
   p.nid = o.nid ?? net.nextNid++;
   partsByNid.set(p.nid, p);
+  if (o.weld) weldJoin(p, +o.weld);
   if (net.mode && !anchored) setBodyMode(p, 'kinematic');   // online, the server's physics moves it; this is a mirror
   netEv(['pc', p.nid, serialize(p), p.locked, p.startAsleep]);
   return p;
@@ -1248,6 +1267,7 @@ const brickRoom = (n = 1) => parts.length + n <= BRICK_CAP;
 function tell(who, text) { if (!who || who === player) sysChat(text); else if (who.conn) netSendTo(who.conn, { t: 'cmdout', text }); }
 const tellFull = (who) => tell(who, BRICKS_FULL);
 function removePart(p) {
+  if (p.weld) weldJoin(p, null);   // (the rest of its group stays welded)
   world.removeBody(p.body); scene.remove(p.mesh);
   parts.splice(parts.indexOf(p), 1); pickables.splice(pickables.indexOf(p.mesh), 1);
   partsByNid.delete(p.nid); net.xfTargets.delete(p);
@@ -1258,7 +1278,7 @@ function removePart(p) {
     if (rest.length) { startDrag(rest[0], rest); stopDrag(); }
   }
   netEv(['pr', p.nid]);
-  scripted.delete(p);
+  scripted.delete(p); trusses.delete(p); spawns.delete(p);
   if (scEd.p === p) scEdSync();   // (its Script window closes)
 }
 /* ---- far-away bricks, the indie-game way: past LOD.simple a brick is drawn as one plain piece (up close
@@ -1275,7 +1295,7 @@ function lodBricks() {
     const d = p.mesh.position.distanceTo(c) - Math.max(p.size[0], p.size[1], p.size[2]) / 2;
     p.mesh.visible = !p.hidden && d < LOD.hide;
     p.mesh.castShadow = d < LOD.shadow;
-    if (p.shape !== 'box') continue;
+    if (p.shape !== 'box' || p.neon) continue;
     if (!p.fullMat) p.fullMat = p.mesh.material;
     const want = d < LOD.simple ? p.fullMat : p.fullMat[0];
     if (p.mesh.material !== want) p.mesh.material = want;
@@ -1283,13 +1303,14 @@ function lodBricks() {
 }
 function paintPart(p, hex) {
   p.color = hex; p.fullMat = null;   // (the far-away look is made again from the new color)
-  p.mesh.material = p.shape === 'box' ? partMats(hex, true, p.trans) : partMats(hex, true, p.trans)[0];
+  partLook(p);
   netEv(['pp', p.nid, hex]);
 }
 // dynamic = physics moves it, static = anchored, kinematic = being dragged.
 // p.mode is what the brick is doing in the game; online the server's physics does it, so here it only mirrors.
 function setMode(p, mode) {
   p.mode = mode;
+  if (net.mode === 'host' && p.anchored !== p.sentA) { p.sentA = p.anchored; netEv(['pa', p.nid, p.anchored ? 1 : 0]); }
   toServer({ t: 'mode', nid: p.nid, m: mode, a: p.anchored });
   setBodyMode(p, net.mode && mode === 'dynamic' ? 'kinematic' : mode);
 }
@@ -1316,8 +1337,10 @@ function partSpeedSq(p) {
 }
 const serialize = (p) => ({ s: p.shape, z: p.size, p: p.body.position.toArray().map(n => +n.toFixed(3)),
   q: p.body.quaternion.toArray().map(n => +n.toFixed(4)), c: p.color, t: p.trans, a: p.anchored, k: p.kill, w: p.win, b: p.bouncy, m: p.mass, x: p.destroy,
-  sc: p.scripts || undefined, v: p.hidden ? 1 : undefined });
-const deserialize = (d, extra = {}) => makePart({ shape: d.s, size: d.z, pos: d.p, quat: d.q, color: d.c, trans: d.t, anchored: d.a, kill: d.k, win: d.w, bouncy: d.b, mass: d.m, destroy: d.x, scripts: d.sc, hidden: d.v, ...extra });
+  sc: p.scripts || undefined, v: p.hidden ? 1 : undefined, sg: p.sign || undefined,
+  wd: p.weld || undefined, st: p.seat || undefined, sp: p.spawn ? 1 : undefined, bt: p.btn ? 1 : undefined, dr: p.door ? 1 : undefined, n: p.neon ? 1 : undefined, op: p.open ? 1 : undefined });
+const deserialize = (d, extra = {}) => makePart({ shape: d.s, size: d.z, pos: d.p, quat: d.q, color: d.c, trans: d.t, anchored: d.a, kill: d.k, win: d.w, bouncy: d.b, mass: d.m, destroy: d.x, scripts: d.sc, hidden: d.v, sign: d.sg,
+  weld: d.wd, seat: d.st, spawn: d.sp, btn: d.bt, door: d.dr, neon: d.n, open: d.op, ...extra });
 
 /* ---- the place ---- */
 const SPAWN = new V3(0, 1 + HY + 0.1, 0);
@@ -1460,9 +1483,254 @@ function buildTown() {
 
   // billboard beside the sidewalk
   const bb = makePart({ ...A, size: [12, 6, 0.6], pos: [14, 8, -90], rot: [0, -Math.PI / 2, 0], color: BC['White'] });
+  billboardTex.repeat.set(1 / 12, 1 / 6);   // (brick faces are measured in studs: the picture covers the 12x6 front once)
   const bm = [...partMats(BC['White'])]; bm[4] = phong({ map: billboardTex }); bb.mesh.material = bm;
   makePart({ ...A, shape: 'cyl', size: [0.8, 5, 0.8], pos: [14, 2.5, -94.5], color: BC['White'] });
   makePart({ ...A, shape: 'cyl', size: [0.8, 5, 0.8], pos: [14, 2.5, -85.5], color: BC['White'] });
+  buildTownMore();
+}
+/* ---- the new parts: wedges, corner wedges, trusses (climb them), spawn points, buttons, doors, neon ---- */
+// wedges: their corners (half sizes) and faces (corner numbers, counterclockwise seen from outside).
+// The slope faces +z (toward you when you insert one), rising to the back. (server/src/BrickWorld.js has the same.)
+function polyOf(shape, size) {
+  const [x, y, z] = size.map(s => s / 2);
+  if (shape === 'wedge') return { verts: [[-x, -y, -z], [x, -y, -z], [x, -y, z], [-x, -y, z], [-x, y, -z], [x, y, -z]],
+    faces: [[0, 1, 2, 3], [0, 4, 5, 1], [3, 2, 5, 4], [0, 3, 4], [1, 5, 2]] };
+  return { verts: [[-x, -y, -z], [x, -y, -z], [x, -y, z], [-x, -y, z], [x, y, -z]],   // corner wedge: the tip is at the back right
+    faces: [[0, 1, 2, 3], [0, 4, 1], [1, 4, 2], [3, 2, 4], [0, 3, 4]] };
+}
+function polyGeo(verts, faces) {
+  const pos = [];
+  for (const f of faces) for (let i = 1; i < f.length - 1; i++) pos.push(...verts[f[0]], ...verts[f[i]], ...verts[f[i + 1]]);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+  return g;
+}
+// a truss: four corner posts with rungs every 2 studs, all one piece (so clicking any bar picks it)
+function trussGeo([w, h, d]) {
+  const t = 0.24, pos = [], idx = [];
+  const add = (sx, sy, sz, x, y, z) => {
+    const g = new THREE.BoxGeometry(sx, sy, sz).translate(x, y, z), off = pos.length / 3;
+    pos.push(...g.attributes.position.array); for (const i of g.index.array) idx.push(i + off);
+  };
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) add(t, h, t, sx * (w / 2 - t / 2), 0, sz * (d / 2 - t / 2));
+  const n = Math.max(1, Math.round(h / 2));
+  for (let i = 0; i <= n; i++) {
+    const y = -h / 2 + t / 2 + (h - t) * i / n;
+    for (const s of [-1, 1]) { add(w, t, t, 0, y, s * (d / 2 - t / 2)); add(t, t, d, s * (w / 2 - t / 2), y, 0); }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+const trusses = new Set(), spawns = new Set();
+// a truss you're right next to (walk into it to climb)
+function trussNear(h) {
+  if (!trusses.size) return null;
+  const b = h.body.position, l = new THREE.Vector3(), iq = new THREE.Quaternion();
+  for (const p of trusses) {
+    const c = p.body.position;
+    if (Math.abs(c.x - b.x) > 40 || Math.abs(c.z - b.z) > 40) continue;
+    l.set(b.x - c.x, b.y - c.y, b.z - c.z).applyQuaternion(iq.copy(quatOf(p)).invert());
+    if (Math.abs(l.x) < p.size[0] / 2 + 1.4 && Math.abs(l.z) < p.size[2] / 2 + 1.4 && l.y > -p.size[1] / 2 - 2.6 && l.y < p.size[1] / 2 + 2.4) return p;
+  }
+  return null;
+}
+// where people (re)appear: on a spawn point if the place has any
+function spawnSpot() {
+  const list = [...spawns].filter(alive);
+  if (!list.length) return SPAWN.clone().add(new V3((Math.random() - 0.5) * 2, 0, (Math.random() - 0.5) * 2));
+  const p = list[(Math.random() * list.length) | 0], c = p.body.position;
+  return new V3(c.x + (Math.random() - 0.5) * Math.max(0, p.size[0] - 2), c.y + p.size[1] / 2 + HY + 0.1, c.z + (Math.random() - 0.5) * Math.max(0, p.size[2] - 2));
+}
+// what a brick looks like: its color (see-through if it's glass or an open door), glowing if it's neon, plus words or a spawn mark
+const neonCache = {};
+function partLook(p) {
+  const trans = p.open ? Math.max(p.trans, 0.6) : p.trans;
+  if (p.neon) {
+    const key = p.color + '|' + trans;
+    p.mesh.material = neonCache[key] || (neonCache[key] = new THREE.MeshBasicMaterial({ color: new THREE.Color(p.color).lerp(new THREE.Color('#ffffff'), 0.08),
+      transparent: !!trans, opacity: 1 - trans }));
+    p.mesh.castShadow = false;
+  } else p.mesh.material = p.shape === 'box' ? partMats(p.color, !p.matte, trans) : partMats(p.color, true, trans)[0];
+  p.fullMat = null;
+  if (p.sign && !p.neon) signPart(p);
+  if (p.spawn && !p.neon && p.shape === 'box' && !HEADLESS) {
+    const key = 'spawn|' + p.size[0] + 'x' + p.size[2];
+    const t = signTexCache[key] || (signTexCache[key] = tex(canvas(256, 256, (g) => {
+      g.fillStyle = '#fff'; g.fillRect(0, 0, 256, 256);   // (white shows the brick's own color; the mark is a darker shade of it)
+      g.strokeStyle = '#555'; g.lineWidth = 14; g.beginPath(); g.arc(128, 128, 96, 0, Math.PI * 2); g.stroke();
+      g.fillStyle = '#555'; g.beginPath(); g.arc(128, 84, 22, 0, Math.PI * 2); g.fill();   // a little person
+      g.fillRect(104, 112, 48, 56); g.fillRect(106, 168, 18, 34); g.fillRect(132, 168, 18, 34); g.fillRect(80, 116, 18, 46); g.fillRect(158, 116, 18, 46);
+    })));
+    t.repeat.set(1 / p.size[0], 1 / p.size[2]);
+    const m = [...p.mesh.material]; m[2] = phong({ map: t, color: p.color }); p.mesh.material = m;
+  }
+}
+// doors (or any brick a script opens): open = people and bricks pass through, and it's see-through
+function setOpen(p, on) {
+  on = !!on; if (!!p.open === on) return;
+  p.open = on; p.body.collisionResponse = !on; partLook(p);
+  netEv(['pd', p.nid, on ? 1 : 0]); toServer({ t: 'door', nid: p.nid, on });
+}
+function setNeon(p, on) {
+  on = !!on; if (!!p.neon === on) return;
+  p.neon = on; if (!on) p.mesh.castShadow = p.size[0] < 500; partLook(p);
+  netEv(['pn', p.nid, on ? 1 : 0]);
+}
+// a button sinks in for a moment when it's pressed
+function pressButton(p) {
+  if (HEADLESS || !p.btn) return;
+  p.mesh.scale.y = 0.5; setTimeout(() => { p.mesh.scale.y = 1; }, 220);
+}
+
+/* ---- day and night (the Day/Night switch, or a script) ---- */
+let night = false;
+function setNight(on) {
+  night = !!on; netEv(['night', night ? 1 : 0]);
+  if (!HEADLESS) applySky($('skySel').value);
+}
+function nightLook() {   // (applySky calls this last, so changing the sky at night stays night)
+  scene.background = new THREE.Color('#0b1030'); scene.fog.color.set(0x0b1030);
+  hemi.intensity *= 0.4; hemi.color.set(0x8090c0); sun.intensity *= 0.18; sun.color.set(0x9fb4ff);
+  farGround.material.color.set('#173119');
+}
+
+/* ---- signs: a brick with words on its front (they travel with the brick, so everyone in a room sees them) ---- */
+const signTexCache = {};
+function cleanSign(s) {
+  if (!s || typeof s !== 'object') return null;
+  let t = String(s.t || '').slice(0, 24);
+  try { t = cleanText(t); } catch { }   // (the town's own signs go up before the word filter is ready)
+  t = t.trim();
+  return t ? { t, c: /^#[0-9a-f]{6}$/i.test(s.c) ? s.c : '#1f6f2f' } : null;
+}
+function signPart(p) {
+  if (HEADLESS || p.shape !== 'box') return;
+  const key = p.sign.c + '|' + p.sign.t + '|' + p.size[0] + 'x' + p.size[1];
+  const t = signTexCache[key] || (signTexCache[key] = tex(canvas(512, 128, (g) => {
+    g.fillStyle = p.sign.c; g.fillRect(0, 0, 512, 128);
+    g.strokeStyle = '#fff'; g.lineWidth = 8; g.strokeRect(6, 6, 500, 116);
+    g.fillStyle = '#fff'; g.font = '900 54px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.lineWidth = 5; g.strokeStyle = '#1b1b1b'; g.strokeText(p.sign.t, 256, 68, 470); g.fillText(p.sign.t, 256, 68, 470);
+  })));
+  t.repeat.set(1 / p.size[0], 1 / p.size[1]);   // (brick faces are measured in studs: the words cover the whole front once)
+  const m = [...partMats(p.color, true, p.trans)]; m[4] = phong({ map: t }); p.mesh.material = m; p.fullMat = null;
+}
+
+/* ---- the bigger town: five new places around the edges, each with a sign ---- */
+function buildTownMore() {
+  const A = { anchored: true };
+  // a brick by its bottom: x, y (where it sits), z, size, color
+  const box = (x, y, z, w, h, d, c, o = {}) => makePart({ ...A, size: [w, h, d], pos: [x, y + h / 2, z], color: BC[c] || c, ...o });
+  const cyl = (x, y, z, r, h, c) => makePart({ ...A, shape: 'cyl', size: [r * 2, h, r * 2], pos: [x, y + h / 2, z], color: BC[c] });
+  const ball = (x, y, z, s, c, o = {}) => makePart({ ...A, shape: 'ball', size: [s, s, s], pos: [x, y, z], color: BC[c], ...o });
+  // a sign on two posts; ry turns it (its words face +z before turning)
+  const sign = (text, x, z, ry, bg) => {
+    makePart({ ...A, size: [10, 2.6, 0.4], pos: [x, 4.3, z], rot: [0, ry, 0], color: BC['White'], sign: { t: text, c: bg } });
+    for (const s of [-4, 4]) cyl(x + Math.cos(ry) * s, 0, z - Math.sin(ry) * s, 0.25, 3, 'White');
+  };
+  const lamp = (x, z) => { cyl(x, 0, z, 0.3, 7, 'Black'); ball(x, 7.4, z, 1.3, 'Bright yellow', { neon: true }); };   // (they glow at night)
+
+  // the sidewalks reach the new places
+  box(175, 0, 24, 110, 0.2, 6, 'Institutional white'); box(-175, 0, 24, 110, 0.2, 6, 'Institutional white');
+  box(0, 0, -141, 6, 0.2, 30, 'Institutional white');
+  box(-16, 0, 69, 6, 0.2, 84, 'Institutional white');
+  for (const z of [50, 80, 108]) lamp(-21, z);
+
+  // ---- Blockburg Park (north): a pond with a bridge, a fountain, benches, flowers, trees ----
+  const P = { x: 12, z: 150 };
+  box(P.x, 0, P.z, 36, 0.3, 22, 'Light blue', { trans: 0.25 });
+  box(P.x, 0, P.z - 11.5, 38, 0.6, 1, 'Medium stone grey'); box(P.x, 0, P.z + 11.5, 38, 0.6, 1, 'Medium stone grey');
+  box(P.x - 18.5, 0, P.z, 1, 0.6, 22, 'Medium stone grey'); box(P.x + 18.5, 0, P.z, 1, 0.6, 22, 'Medium stone grey');
+  // the bridge: up, across, down
+  const ba = Math.atan2(2.2, 6);
+  box(P.x, 2, P.z, 4, 0.4, 14, 'Reddish brown');
+  makePart({ ...A, size: [4, 0.4, Math.hypot(6, 2.2)], pos: [P.x, 0.9, P.z + 10], rot: [ba, 0, 0], color: BC['Reddish brown'] });
+  makePart({ ...A, size: [4, 0.4, Math.hypot(6, 2.2)], pos: [P.x, 0.9, P.z - 10], rot: [-ba, 0, 0], color: BC['Reddish brown'] });
+  for (const s of [-1, 1]) box(P.x + s * 1.8, 2.4, P.z, 0.4, 1.2, 14, 'White');   // railings
+  // the fountain
+  const F = { x: -26, z: 150 };
+  cyl(F.x, 0, F.z, 5, 1, 'Medium stone grey'); cyl(F.x, 1, F.z, 4, 0.2, 'Light blue');
+  cyl(F.x, 1, F.z, 0.6, 4, 'Medium stone grey'); cyl(F.x, 5, F.z, 2, 0.6, 'Medium stone grey'); ball(F.x, 6.4, F.z, 1.6, 'Light blue');
+  // benches around it
+  const bench = (x, z, ry) => {
+    makePart({ ...A, size: [5, 0.4, 1.6], pos: [x, 1.4, z], rot: [0, ry, 0], color: BC['Reddish brown'] });
+    for (const s of [-2, 2]) box(x + Math.cos(ry) * s, 0, z - Math.sin(ry) * s, 0.4, 1.2, 0.4, 'Black');
+  };
+  bench(F.x, F.z - 9, 0); bench(F.x, F.z + 9, 0); bench(F.x - 9, F.z, Math.PI / 2); bench(F.x + 9, F.z, Math.PI / 2);
+  // flower beds
+  const fl = ['Bright red', 'Bright yellow', 'Bright violet', 'Light reddish violet', 'Bright orange', 'White', 'Bright blue'];
+  for (const z of [P.z - 22, P.z + 22]) {
+    box(P.x, 0, z, 16, 0.4, 3, 'Reddish brown');
+    fl.forEach((c, i) => box(P.x - 6 + i * 2, 0.4, z, 1, 0.8, 1, c));
+  }
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + 0.3; tree(-6 + Math.cos(a) * 52, P.z + Math.sin(a) * 40, 0.9 + (i % 3) * 0.15); }
+  lamp(-10, 128); lamp(36, 128); lamp(-10, 172); lamp(36, 172);
+  sign('BLOCKBURG PARK', -16, 113, Math.PI, '#287f47');
+
+  // ---- Sword Arena (south): a raised fighting floor, red side vs blue side ----
+  const S = { x: 0, z: -190 };
+  box(S.x, 0, S.z, 50, 4, 50, 'Medium stone grey');
+  makePart({ ...A, size: [8, 0.6, Math.hypot(9, 4)], pos: [S.x, 1.85, S.z + 29.5], rot: [Math.atan2(4, 9), 0, 0], color: BC['Medium stone grey'] });
+  box(S.x - 12, 4, S.z, 22, 0.2, 46, 'Bright red'); box(S.x + 12, 4, S.z, 22, 0.2, 46, 'Bright blue');
+  box(S.x, 4, S.z, 10, 1.2, 10, 'Dark stone grey');
+  for (const sx of [-1, 1]) {
+    box(S.x + sx * 24.5, 4, S.z, 1, 3, 50, 'Dark stone grey');
+    box(S.x + sx * 15, 4, S.z + 24.5, 20, 3, 1, 'Dark stone grey');   // (a gap in the middle to walk in)
+    for (const sz of [-1, 1]) box(S.x + sx * 13, 4, S.z + sz * 13, 3, 10, 3, 'Dark stone grey');
+  }
+  box(S.x, 4, S.z - 24.5, 50, 3, 1, 'Dark stone grey');
+  sign('SWORD ARENA', 9, -150, 0, '#9b1b14');
+
+  // ---- Brick Street (east): a road with houses on both sides ----
+  const R = 170;
+  box(R, 0, 15, 10, 0.16, 170, 'Dark stone grey');
+  for (let z = -60; z <= 90; z += 15) box(R, 0.16, z, 0.4, 0.04, 5, 'Bright yellow');
+  const house = (cx, cz, face, wall, roof) => {   // face: +1 = the door looks toward +x
+    box(cx, 0, cz, 12, 0.4, 12, 'Reddish brown');
+    box((cx + face * 6 + R - face * 5) / 2, 0, cz, Math.abs(R - face * 5 - cx - face * 6), 0.2, 12, 'Br. yellowish green');   // the lawn
+    box(cx - face * 5.5, 0.4, cz, 1, 7, 12, wall);
+    for (const s of [-1, 1]) {
+      box(cx, 0.4, cz + s * 5.5, 10, 7, 1, wall);
+      box(cx + face * 5.5, 0.4, cz + s * 4, 1, 7, 4, wall);
+      box(cx, 2.8, cz + s * 6.1, 2.4, 2.4, 0.2, 'Light blue', { trans: 0.3 });   // windows
+    }
+    box(cx + face * 5.5, 5.4, cz, 1, 2, 4, wall);
+    box(cx, 7.4, cz, 14, 0.8, 14, roof); box(cx, 8.2, cz, 10, 0.8, 10, roof); box(cx, 9, cz, 6, 0.8, 6, roof);
+    box(cx - face * 3, 8.2, cz + 3, 1.5, 3, 1.5, 'Dark stone grey');   // chimney
+    box(R - face * 6.5, 0, cz + 5, 0.4, 2.5, 0.4, 'Reddish brown'); box(R - face * 6.5, 2.5, cz + 5, 1.4, 0.8, 0.8, 'Bright blue');   // mailbox
+  };
+  house(R - 20, -50, 1, 'Brick yellow', 'Bright red'); house(R - 20, -15, 1, 'White', 'Bright blue'); house(R - 20, 55, 1, 'Light reddish violet', 'Dark stone grey');
+  house(R + 20, -50, -1, 'Nougat', 'Dark green'); house(R + 20, -15, -1, 'Light blue', 'Reddish brown'); house(R + 20, 55, -1, 'Bright yellow', 'Bright red');
+  for (const z of [-50, -15, 55]) { tree(R - 34, z, 0.9); tree(R + 34, z, 0.9); }
+  for (const z of [-30, 5, 40, 75]) lamp(R + 6.5, z);
+  sign('BRICK STREET', 158, 30, -Math.PI / 2, '#0b4a99');
+
+  // ---- Mega Obby (west): jumps, a kill-brick run, a tightrope, then up to the yellow win pad ----
+  const O = { z: 24 };
+  box(-240, 0, O.z, 10, 1, 10, 'Bright green');
+  const rb = ['Bright red', 'Bright orange', 'Bright yellow', 'Bright green', 'Bright blue', 'Bright violet'];
+  for (let i = 0; i < 6; i++) box(-250 - i * 8, 1 + i * 1.5, O.z + (i % 2 ? 3 : -3), 4, 1, 4, rb[i]);
+  box(-304, 9, O.z, 16, 1, 4, 'Medium stone grey');
+  box(-300, 10, O.z, 1, 1.2, 4, 'Bright red', { kill: true }); box(-308, 10, O.z, 1, 1.2, 4, 'Bright red', { kill: true });
+  box(-319, 9, O.z, 14, 1, 1, 'White');   // tightrope
+  box(-330, 10, O.z, 4, 1, 4, 'Bright blue');
+  [[-331, 11.5, 32], [-328, 13, 40], [-332, 14.5, 48], [-329, 16, 56]].forEach(([x, y, z], i) => box(x, y, z, 3, 1, 3, rb[(i + 2) % 6]));
+  box(-330, 17.5, 66, 8, 1, 8, 'Bright yellow', { win: true });
+  sign('MEGA OBBY', -232, 33, Math.PI / 2, '#c4281c');
+
+  // ---- Race Track (north-east): a black ring with red and white curbs, a start line and a grandstand ----
+  const T = { x: 170, z: 150 }, TR = 40;
+  box(R, 0, 115, 10, 0.16, 50, 'Dark stone grey');   // the road goes on up to it
+  for (let i = 0; i < 32; i++) {
+    const a = i / 32 * Math.PI * 2;
+    makePart({ ...A, size: [10, 0.2, 8.4], pos: [T.x + Math.cos(a) * TR, 0.1, T.z + Math.sin(a) * TR], rot: [0, -a, 0], color: BC['Black'] });
+    makePart({ ...A, size: [1, 0.3, 7.6], pos: [T.x + Math.cos(a) * (TR + 5.5), 0.15, T.z + Math.sin(a) * (TR + 5.5)], rot: [0, -a, 0], color: BC[i % 2 ? 'White' : 'Bright red'] });
+  }
+  for (let i = 0; i < 5; i++) for (let j = 0; j < 2; j++)
+    box(T.x + TR - 4 + i * 2, 0.2, T.z - 0.5 + j, 2, 0.04, 1, (i + j) % 2 ? 'Black' : 'White');
+  [0, 1, 2].forEach(k => box(T.x + TR + 10 + k * 4, 0, T.z, 4, 1 + k, 20, k % 2 ? 'Medium stone grey' : 'White'));
+  ['Bright red', 'Bright blue', 'Bright yellow'].forEach((c, i) => buildCar(new V3(T.x + TR, 0.22, T.z - 10 - i * 13), Math.PI, BC[c]));
+  sign('RACE TRACK', R - 8, 100, Math.PI, '#635f62');
 }
 // (a whole new set of bricks: nobody's undo list makes sense anymore)
 function clearUnlocked() { for (const p of [...parts]) if (!p.locked) removePart(p); for (const h of humanoids) h.hist = null; selection.clear(); scThreads.length = 0; }
@@ -2513,6 +2781,7 @@ class Humanoid {
       if (!p) return;
       if (p.kill) later(() => kill(this, null));
       if (p.scripts) later(() => scriptTouched(p, this));
+      if (p.seat && this === player && !this.seat) later(() => trySit(p));
       if (p.win && this.isPlayer && !this.wonObby) { this.wonObby = true; later(() => { sysChat('You beat the obby! 🏆'); SFX.spawn(); }); }
     });
     if (!isPlayer) this.char.meshes.forEach(m => { m.userData.hum = this; pickables.push(m); });
@@ -2578,7 +2847,7 @@ class Humanoid {
     t.needsUpdate = true; this.bubble.visible = true; this.bubbleT = 7;
   }
   spawn(at) {
-    const p = at || SPAWN.clone().add(new V3((Math.random() - 0.5) * 2, 0, (Math.random() - 0.5) * 2));
+    const p = at || spawnSpot();
     this.body.position.set(p.x, p.y, p.z); this.body.velocity.set(0, 0, 0);
     if (!world.bodies.includes(this.body)) world.addBody(this.body);
     this.dead = false; this.health = 100; this.ff = this.isPlayer || this.remote ? 4 : 2; this.headDebris = null;
@@ -2601,6 +2870,10 @@ class Humanoid {
     const wasGrounded = this.grounded;
     this.grounded = hitDist <= 1.35 && this.body.velocity.y < 8;
     this.groundY = groundRay.hasHit ? groundRay.hitPointWorld.y : -999;
+    if (this === player && !this.seat && hitDist < 1.6) {   // standing on a seat: sit down
+      const gp = groundRay.body && groundRay.body.userData && groundRay.body.userData.part;
+      if (gp && gp.seat) trySit(gp);
+    }
     // someone driven over the network: glide toward the latest reported position (kinematic, so it still bumps bricks)
     if (this.netCtl) {
       const t = this.netPos, v = this.body.velocity;
@@ -2619,6 +2892,13 @@ class Humanoid {
     const v = this.body.velocity;
     const walk = this.walk || WALK;   // (the admin's /speed and /jump change these)
     v.x = this.move.x * walk; v.z = this.move.z * walk;
+    const tr = !this.flying && trussNear(this);
+    if (tr) {   // on a truss: walking into it climbs, letting go of the keys hangs on, jumping lets go
+      const c = tr.body.position, into = this.move.x * (c.x - b.x) + this.move.z * (c.z - b.z) > 0;
+      if (this.jump && !into) { /* jump off */ }
+      else if (into) { v.y = 13 - world.gravity.y * dt; this.grounded = false; this.fallPeak = 0; }
+      else if (!this.grounded) { v.y = -world.gravity.y * dt; this.fallPeak = 0; }
+    }
     if (this.grounded && this.jump && this.jumpCd <= 0) {
       v.y = this.jumpPow || JUMP; this.jumpCd = 0.25; this.grounded = false;
       if (this.isPlayer) SFX.jump();
@@ -2654,7 +2934,9 @@ class Humanoid {
     const s = moving && !air ? Math.sin(t * 8.5) * 0.85 : 0;
     const holding = this.isPlayer ? (equipped && !equipped.hopper) : !!this.heldTool;
     const armOff = this.isPlayer ? toolAnim.arm : this.netCtl ? (this.netArm || 0) : (this.ai ? this.ai.armAnim : 0);
-    const tgt = [s, -s, air ? Math.PI * 0.95 : -s, holding ? -Math.PI / 2 + armOff : (air ? Math.PI * 0.95 : s)];
+    // (arms turn forward with a minus: jumping swings them up in front, like a tool held out, not back over the shoulders)
+    const tgt = [s, -s, air ? -Math.PI * 0.95 : -s, holding ? -Math.PI / 2 + armOff : (air ? -Math.PI * 0.95 : s)];
+    if (this.isPlayer ? this.seat : this.sitting) { tgt[0] = tgt[1] = -Math.PI / 2; if (!holding) tgt[2] = tgt[3] = -0.4; }   // sitting
     [ch.legL, ch.legR, ch.armL, ch.armR].forEach((p, i) => p.rotation.x += (tgt[i] - p.rotation.x) * (i === 3 && holding ? Math.min(1, dt * 30) : k));
     animateCape(ch, dt, t, moving, air);
     animateFx(ch, dt, t);
@@ -2837,6 +3119,8 @@ const POIS = [
   { name: 'the rainbow tower', pos: new V3(20, 0, -20) }, { name: 'the pyramid', pos: new V3(-40, 0, 26) },
   { name: 'the obby', pos: new V3(0, 0, 28) }, { name: 'the house', pos: new V3(40, 0, 3) },
   { name: 'spawn', pos: new V3(0, 0, 7) }, { name: 'the billboard', pos: new V3(8, 0, -90) },
+  { name: 'the park', pos: new V3(-10, 0, 135) }, { name: 'the sword arena', pos: new V3(0, 0, -158) },
+  { name: 'brick street', pos: new V3(170, 0, 0) }, { name: 'the mega obby', pos: new V3(-236, 0, 18) }, { name: 'the race track', pos: new V3(170, 0, 104) },
 ];
 const LINES = {
   greet: ['hi {name}!', 'hey {name}', 'sup {name}', 'hello!!', 'oh hi {name} :)'],
@@ -3304,7 +3588,7 @@ function runBuild(n, g, dt) {
     let site = null;
     for (let i = 0; i < 14 && !site; i++) {
       const a = Math.random() * Math.PI * 2, r = 15 + Math.random() * 40;
-      const s = new V3(THREE.MathUtils.clamp(n.pos.x + Math.cos(a) * r, -115, 115), 0, THREE.MathUtils.clamp(n.pos.z + Math.sin(a) * r, -115, 115));
+      const s = new V3(THREE.MathUtils.clamp(n.pos.x + Math.cos(a) * r, -200, 200), 0, THREE.MathUtils.clamp(n.pos.z + Math.sin(a) * r, -200, 200));
       const free = !parts.some(p => !p.locked && p.size[1] > 0.3 && flat(p.body.position, s) < 9 + Math.max(p.size[0], p.size[2]) / 2) && flat(s, SPAWN) > 12;
       if (free) site = s;
     }
@@ -3547,7 +3831,7 @@ const TOOLS = [
   { id: 'paintball', name: 'Paintball', icon: '🎯', tip: 'Click to shoot paint. Paints any brick a random BrickColor' },
   { id: 'trowel', name: 'Trowel', icon: '🧱', tip: 'Click the ground to build a wall' },
   { id: 'bomb', name: 'Timebomb', icon: '💣', tip: 'Click to toss a timebomb. 3 seconds!' },
-  { id: 'grab', name: 'Grab', icon: '✋', px: 'grab', hopper: true, tip: 'Drag bricks. R = rotate, T = tilt, F = anchor · Shift+click picks several' },
+  { id: 'grab', name: 'Grab', icon: '✋', px: 'grab', hopper: true, tip: 'Drag bricks. R / T = turn / tilt, Q / E / G = a little, F = anchor · Shift+click picks several' },
   { id: 'clone', name: 'Clone', icon: '📋', px: 'clone', hopper: true, tip: 'Click a brick to copy it, then drag it into place' },
   { id: 'delete', name: 'Delete', icon: '🔨', px: 'hammer', hopper: true, tip: 'Click a brick to delete it' },
   { id: 'paint', name: 'Paint', icon: '🪣', px: 'bucket', hopper: true, tip: 'Click a brick to paint it (pick a color in Insert)' },
@@ -3860,7 +4144,8 @@ function segmentHit(from, to) {
 }
 
 /* ---- dragging (Grab / Clone) ---- */
-let dragging = null, dragRot = { y: 0, x: 0 }, hovered = null;
+let dragging = null, dragRot = { y: 0, x: 0 }, hovered = null;   // (dragRot: how the held brick is turned and tilted)
+const TURN = Math.PI / 12;   // Q / E / G turn a held brick 15 degrees at a time
 // the other picked bricks riding along with the one you hold: where each sits from it (lp) and how it's turned (lq)
 let dragGroup = [];
 const selBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0x1a8cff, depthTest: false }));
@@ -3876,7 +4161,7 @@ function startDrag(p, group = [p]) {
     return { p: s, lp: new V3().copy(s.body.position).sub(o).applyQuaternion(iq), lq: iq.clone().multiply(quatOf(s)) };
   });
   const e = new THREE.Euler().setFromQuaternion(quatOf(p), 'YXZ');
-  dragRot = { y: Math.round(e.y / (Math.PI / 2)), x: 0 };
+  dragRot = { y: Math.round(e.y / TURN) * TURN, x: Math.round(e.x / TURN) * TURN };
   SFX.click(); updateDrag();
 }
 function stopDrag() {
@@ -3913,7 +4198,7 @@ function updateDrag() {
   const p = dragging;
   if (dragGroup.length) dragGroup = dragGroup.filter(g => alive(g.p));
   const hit = pick(dragGroup.length ? new Set([p.mesh, ...dragGroup.map(g => g.p.mesh)]) : p.mesh);
-  const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(dragRot.x * Math.PI / 2, dragRot.y * Math.PI / 2, 0, 'YXZ'));
+  const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(dragRot.x, dragRot.y, 0, 'YXZ'));
   let pos;
   if (hit) {
     const n = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
@@ -3959,7 +4244,8 @@ function toggleSelect(p) {
 function clearSelection() { if (selection.size) { selection.clear(); selHint(); } }
 function selHint() {
   if (!started) return;
-  $('tip').textContent = selection.size ? `${selection.size} brick${selection.size === 1 ? '' : 's'} picked: use a tool on one to do them all · Del deletes · Ctrl+Z undoes`
+  $('tip').textContent = selection.size === 1 ? '1 brick picked: drag the blue balls to resize it · use a tool on it · Del deletes · Ctrl+Z undoes'
+    : selection.size ? `${selection.size} bricks picked: use a tool on one to do them all · Del deletes · Ctrl+Z undoes`
     : equipped ? equipped.tip : '';
 }
 // an outline on every picked brick, every frame
@@ -3974,6 +4260,7 @@ function drawSelection(show) {
     i++;
   }
   for (; i < selBoxes.length; i++) selBoxes[i].visible = false;
+  updateHandles(show);
 }
 function boxSelStart(e) {
   if (camLocked() || shiftLock) { if (!e.shiftKey) clearSelection(); return; }   // (the mouse is stuck in the middle: no box)
@@ -4006,9 +4293,9 @@ function boxSelEnd() {
 // a building tool used on a brick, or on all the picked bricks at once (group[0] is the one clicked)
 function hopperAct(id, p, group) {
   const C = net.mode === 'client';
-  if (id === 'grab') startDrag(p, group);
+  if (id === 'grab') startDrag(p, withWelds(group));   // (welded bricks come along)
   else if (id === 'clone') {
-    SFX.click();
+    SFX.click(); group = withWelds(group);
     if (C) { netSend({ t: 'clone', nid: p.nid, g: group.map(s => s.nid) }); return; }   // the host makes the copies, then hands them back to drag
     const copies = cloneBricks(group, player); if (!copies) return;
     if (group.length > 1) { selection.clear(); copies.forEach(c => selection.add(c)); selHint(); }   // the copies are the picked ones now
@@ -4023,6 +4310,81 @@ function hopperAct(id, p, group) {
     paintBricks(group, selColor, player);
   }
 }
+/* ---- resizing: pick ONE brick (Shift+click) and blue balls appear on its sides. Drag one to stretch or shrink
+   the brick that way (whole studs, or 0.2 for height); the other side stays put. ---- */
+const rsMat = new THREE.MeshBasicMaterial({ color: 0x1a8cff, depthTest: false });
+const rsHandles = [0, 1, 2].flatMap(axis => [1, -1].map(sign => {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 8), rsMat); m.renderOrder = 1000; m.visible = false; m.userData = { axis, sign };
+  scene.add(m); return m;
+}));
+const rsGhost = new THREE.LineSegments(selBox.geometry, new THREE.LineBasicMaterial({ color: 0xffa31a, depthTest: false }));
+rsGhost.renderOrder = 999; rsGhost.visible = false; scene.add(rsGhost);
+let rs = null;   // a resize in progress
+const rsAxes = (p) => p.shape === 'ball' ? [1] : p.shape === 'truss' ? [1] : [0, 1, 2];   // (a ball grows all ways; a truss only gets taller)
+function rsTarget() { const one = selection.size === 1 && [...selection][0]; return one && alive(one) && !one.locked && !dragging ? one : null; }
+function updateHandles(show) {
+  const p = show && !rs ? rsTarget() : null;
+  for (const m of rsHandles) {
+    const { axis, sign } = m.userData;
+    m.visible = !!p && rsAxes(p).includes(axis) && !(p.shape === 'cyl' && axis === 2);   // (a cylinder's two round sides are one size)
+    if (!m.visible) continue;
+    const half = halfOf(p)[axis];
+    m.position.copy(AXES[axis]).multiplyScalar(sign * (half + 0.9)).applyQuaternion(p.mesh.quaternion).add(p.mesh.position);
+  }
+}
+// the point along the handle's line closest to where the mouse points
+function rsParam(o, d) {
+  raycaster.setFromCamera(mouseNDC, camera);
+  const r0 = raycaster.ray.origin, rd = raycaster.ray.direction, w0 = o.clone().sub(r0);
+  const b = d.dot(rd), denom = 1 - b * b;
+  if (Math.abs(denom) < 1e-4) return null;
+  return (b * rd.dot(w0) - d.dot(w0)) / denom;
+}
+function rsStart(e) {
+  const p = rsTarget(); if (!p || camLocked() || shiftLock) return false;
+  raycaster.setFromCamera(mouseNDC, camera);
+  const h = raycaster.intersectObjects(rsHandles.filter(m => m.visible), false)[0];
+  if (!h) return false;
+  const { axis, sign } = h.object.userData, d = AXES[axis].clone().applyQuaternion(quatOf(p)).multiplyScalar(sign);
+  const o = h.object.position.clone(), t0 = rsParam(o, d);
+  if (t0 === null) return false;
+  rs = { p, axis, d, o, t0, size: [...p.size], pos: new V3().copy(p.body.position), newSize: [...p.size], newPos: new V3().copy(p.body.position) };
+  SFX.click(); return true;
+}
+function rsMove() {
+  if (!rs) return;
+  if (!alive(rs.p)) { rs = null; rsGhost.visible = false; return; }
+  const t = rsParam(rs.o, rs.d); if (t === null) return;
+  const step = rs.axis === 1 ? 0.2 : 1, was = rs.size[rs.axis];
+  const now = Math.min(128, Math.max(step === 1 ? 1 : 0.2, Math.round((was + t - rs.t0) / step) * step));
+  const size = [...rs.size];
+  if (rs.p.shape === 'ball') size[0] = size[1] = size[2] = now;
+  else { size[rs.axis] = now; if (rs.p.shape === 'cyl' && rs.axis === 0) size[2] = now; }
+  rs.newSize = size.map(n => +n.toFixed(2));
+  rs.newPos = rs.pos.clone().addScaledVector(rs.d, (now - was) / 2);   // (the far side stays where it was)
+  rsGhost.visible = true; rsGhost.position.copy(rs.newPos); rsGhost.quaternion.copy(rs.p.mesh.quaternion);
+  rsGhost.scale.set(...rs.newSize).multiplyScalar(1.02);
+}
+function rsEnd() {
+  if (!rs) return;
+  const { p, newSize, newPos, size } = rs; rs = null; rsGhost.visible = false;
+  if (!alive(p) || newSize.every((n, i) => n === size[i])) return;
+  SFX.clack();
+  if (net.mode === 'client') { net.reselect = p.nid; netSend({ t: 'resize', nid: p.nid, z: newSize, p: arr3(newPos) }); return; }
+  const np = resizeBrick(p, newSize, newPos.toArray(), player);
+  if (np) { selection.clear(); selection.add(np); }
+}
+// a brick gets a new size: it's made again (same network id) from its own data with the new size
+function resizeBrick(p, size, pos, h) {
+  if (!alive(p) || p.locked || p.netDrag) return null;
+  const from = serialize(p), to = { ...from, z: size, p: pos, m: undefined };
+  histPush(h, [{ k: 'swap', nid: p.nid, from, to }]);
+  return swapPart(p, to);
+}
+function swapPart(p, d) {
+  const nid = p.nid; removePart(p);
+  return deserialize(d, { nid });
+}
 function deleteSelection() {
   if (!selection.size || dragging) return;
   const g = [...selection].filter(alive);
@@ -4035,7 +4397,13 @@ function cloneBricks(list, h) {
   list = list.filter(p => alive(p) && !p.locked);
   if (!list.length) return null;
   if (!brickRoom(list.length)) { tellFull(h); return null; }
-  const copies = list.map(p => { const c = deserialize(serialize(p)); c.histNew = true; return c; });
+  const ids = new Map();   // (copies of a welded group are welded to each other, not to the originals)
+  const copies = list.map(p => {
+    const d = serialize(p), w = d.wd; d.wd = undefined;
+    const c = deserialize(d); c.histNew = true;
+    if (w) { if (!ids.has(w)) ids.set(w, newWeldId()); setWeld(c, ids.get(w)); }
+    return c;
+  });
   histPush(h, copies.map(c => ({ k: 'add', nid: c.nid })));
   aiOnBuild(list[0].mesh.position, h);
   return copies;
@@ -4061,13 +4429,141 @@ function paintBricks(list, color, h) {
   histPush(h, ops);
 }
 
+/* ---- welding: bricks with the same p.weld number stick together (grab one and they all come, and loose
+   ones tumble as one piece). Solo, cannon holds them with lock constraints; in a room the server's BrickWorld
+   does (it has the same code), and here we only remember who's in which group. ---- */
+const weldGroups = new Map();   // weld number -> the bricks in it
+const newWeldId = () => 1 + ((Math.random() * 2e9) | 0);
+function weldJoin(p, id) {
+  id = id || null;
+  if ((p.weld || null) === id) return;
+  if (p.weldC) { world.removeConstraint(p.weldC); p.weldC = null; }
+  const old = p.weld;
+  if (old) { const g = weldGroups.get(old); if (g) { g.delete(p); if (g.size) weldRelink(old); else weldGroups.delete(old); } }
+  p.weld = id;
+  if (id) { if (!weldGroups.has(id)) weldGroups.set(id, new Set()); weldGroups.get(id).add(p); weldRelink(id); }
+}
+// every brick of the group hangs on its first brick
+function weldRelink(id) {
+  const g = weldGroups.get(id); if (!g) return;
+  for (const q of g) if (q.weldC) { world.removeConstraint(q.weldC); q.weldC = null; }
+  if (net.mode) return;   // (online the server's physics holds them together)
+  let root = null;
+  for (const q of g) {
+    if (!root) { root = q; continue; }
+    q.weldC = new CANNON.LockConstraint(root.body, q.body); q.weldC.collideConnected = false;   // (welded bricks don't push on each other)
+    world.addConstraint(q.weldC); q.body.wakeUp();
+  }
+}
+// weld a brick into a group (or out of it, id = null): here, on the server's physics, and for everyone in the room
+function setWeld(p, id) {
+  weldJoin(p, id);
+  netEv(['pw', p.nid, p.weld]); toServer({ t: 'weld', nid: p.nid, id: p.weld });
+}
+// the bricks plus everything welded to them (the first one stays first)
+function withWelds(list) {
+  const out = new Set(list);
+  for (const p of list) if (p.weld && weldGroups.has(p.weld)) for (const q of weldGroups.get(p.weld)) out.add(q);
+  return [...out];
+}
+// the Weld / Unweld buttons: the picked bricks become one group (or each goes back to being on its own)
+function weldBricks(list, on, h) {
+  list = list.filter(p => alive(p) && !p.locked);
+  if (on && list.length < 2) { tell(h, 'Pick 2 or more bricks to weld (Shift+click them).'); return; }
+  const id = on ? newWeldId() : null, ops = [];
+  for (const p of list) { ops.push({ k: 'weld', nid: p.nid, from: p.weld || null, to: id }); setWeld(p, id); }
+  histPush(h, ops);
+  tell(h, on ? `Welded ${list.length} bricks together. Grab one and they all come along.` : `Unwelded ${list.length} brick${list.length === 1 ? '' : 's'}.`);
+}
+function weldPicked(on) {
+  const g = [...selection].filter(alive);
+  if (!g.length) { sysChat('Shift+click bricks (or drag a box around them) first, then press Weld.'); return; }
+  SFX.click();
+  if (net.mode === 'client') netSend({ t: 'weld', g: g.map(p => p.nid), on }); else weldBricks(g, on, player);
+}
+
+/* ---- seats and cars: walk into a seat to sit down, jump to get up. A driver's seat (p.seat = 2) drives
+   everything welded to it: W / S = gas and reverse, A / D = steer. Solo the car moves here; in a room my
+   computer tells the host, and the server's BrickWorld moves the car (it has the same driveBodies). ---- */
+function driveBodies(seat, bodies, th, st, dt) {
+  const f = seat.quaternion.vmult(new CANNON.Vec3(0, 0, -1)), up = seat.quaternion.vmult(new CANNON.Vec3(0, 1, 0)), len = Math.hypot(f.x, f.z);
+  const tipped = len < 0.2;   // (pointing straight up or down: no gas, just getting back on its wheels)
+  if (tipped) { f.x = 0; f.z = -1; } else { f.x /= len; f.z /= len; }
+  // the car keeps its own speed (the ground's friction would eat it), unless something really is stopping it
+  const v = seat.velocity, real = v.x * f.x + v.z * f.z, was = seat.carSpeed || 0;
+  const speed = Math.sign(was) * Math.min(Math.abs(was), Math.abs(real) + 10);
+  const target = tipped ? 0 : th > 0 ? th * 60 : th * 25;
+  const s = seat.carSpeed = speed + (target - speed) * Math.min(1, dt * (th ? 2.2 : 0.9));
+  const w = -st * 1.8 * Math.max(-1, Math.min(1, s / 15));   // (no turning on the spot; backing up steers the other way)
+  const k = up.y < 0.7 ? 6 : 3;   // (it gently stays on its wheels, and leans back up harder when it tips)
+  for (const b of bodies) {
+    if (b.type !== CANNON.Body.DYNAMIC) continue;
+    const rx = b.position.x - seat.position.x, rz = b.position.z - seat.position.z;
+    b.velocity.set(f.x * s + w * rz, v.y, f.z * s - w * rx); b.angularVelocity.set(-up.z * k, w, up.x * k); b.wakeUp();
+  }
+}
+const SIT_DROP = HY - 2;   // sitting: the hips (2 studs above the feet) rest on the seat
+function seatTop(p) { return new V3(0, p.size[1] / 2 + SIT_DROP, 0).applyQuaternion(p.mesh.quaternion).add(p.mesh.position); }
+let seatCd = 0;
+function trySit(p) {
+  const P = player;
+  if (P.seat || P.dead || time < seatCd || !alive(p)) return;
+  const top = seatTop(p);
+  if (humanoids.some(h => h !== P && h.sitting && h.pos.distanceTo(top) < 1.5)) return;   // (someone's already there)
+  P.seat = p; P.body.collisionResponse = false; SFX.click();
+  if (p.seat === 2) sysChat('Driving! W / S = gas and reverse, A / D = steer, Space = get out.');
+}
+function leaveSeat(jump = true) {
+  const P = player, p = P.seat; if (!p) return;
+  P.seat = null; P.body.collisionResponse = true; seatCd = time + 1;
+  if (net.mode === 'client' && p.seat === 2) netSend({ t: 'drive', nid: p.nid, th: 0, st: 0 });
+  if (jump && alive(p)) { const t = seatTop(p); P.body.position.set(t.x, t.y + 2.5, t.z); P.body.velocity.set(0, JUMP * 0.8, 0); }
+}
+// every frame while I'm sitting, before the physics: get up on Space, and drive if it's a driver's seat
+function sitDrive(dt) {
+  const P = player, p = P.seat;
+  if (!p) return;
+  if (!alive(p) || P.dead) { leaveSeat(false); return; }
+  if (keys.Space) { leaveSeat(); return; }
+  if (p.seat !== 2 || menuOpen || document.activeElement === chatInput) { P.drive = null; return; }
+  const th = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) + (Math.abs(joy.y) > 0.2 ? -Math.sign(joy.y) : 0);
+  const st = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + (Math.abs(joy.x) > 0.2 ? Math.sign(joy.x) : 0);
+  P.drive = { nid: p.nid, th: Math.max(-1, Math.min(1, th)), st: Math.max(-1, Math.min(1, st)) };
+  if (!net.mode && !p.anchored) driveBodies(p.body, (p.weld && weldGroups.has(p.weld) ? [...weldGroups.get(p.weld)] : [p]).map(q => q.body), P.drive.th, P.drive.st, dt);
+}
+// ...and after it (once the seat has moved): sit right on it, facing where it faces
+function sitPlace() {
+  const P = player, p = P.seat;
+  if (!p || !alive(p)) return;
+  const t = seatTop(p), f = new V3(0, 0, -1).applyQuaternion(p.mesh.quaternion);
+  P.body.position.set(t.x, t.y, t.z); P.body.velocity.set(0, 0, 0);
+  P.faceYaw = Math.atan2(f.x, f.z); P.yaw = P.faceYaw; P.aimHold = 0.2;
+}
+// a ready-made car: a body, four wheels, a windshield and a driver's seat, all welded, facing yaw
+function buildCar(at, yaw, color) {
+  const id = newWeldId(), q = new THREE.Quaternion().setFromAxisAngle(new V3(0, 1, 0), yaw), out = [];
+  const put = (x, y, z, size, c, o = {}) => {
+    const pos = new V3(x, y, z).applyQuaternion(q).add(at), rq = q.clone();
+    if (o.wheel) rq.multiply(new THREE.Quaternion().setFromAxisAngle(new V3(0, 0, 1), Math.PI / 2));
+    out.push(makePart({ size, pos: pos.toArray(), quat: [rq.x, rq.y, rq.z, rq.w], color: c, weld: id, shape: o.wheel ? 'cyl' : 'box', seat: o.seat, trans: o.trans }));
+  };
+  // (a hair of space between the pieces, so they never rub on each other)
+  put(0, 1.5, 0, [6, 1, 10], color);
+  put(0, 2.55, -3.6, [6, 1, 2.8], color); put(0, 2.55, 4, [6, 1, 2], color);
+  put(0, 3.6, -1.7, [6, 1.6, 0.4], BC['Light blue'], { trans: 0.4 });
+  put(0, 2.55, 0.6, [2, 1, 2], BC['Black'], { seat: 2 });
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) put(sx * 3.6, 1.2, sz * 3.2, [2.4, 1, 2.4], BC['Black'], { wheel: true });
+  return out;
+}
+
 /* ---- undo / redo (Ctrl+Z / Ctrl+Y, or the buttons in Insert) ----
    Everyone has their own list of what they built, kept where the world lives: on this computer in solo play,
    on the host in a room (players just ask it to undo). A step is a list of changes, so a whole group of picked
    bricks undoes at once. A brick that comes back keeps its old network id, so older steps still find it.
      add: made it (undo takes it away)      del: deleted it (undo brings it back, d = the brick)
      paint: from -> to color                move: from -> to (where it was, how it was turned, anchored)
-     script: from -> to (its script blocks) */
+     script: from -> to (its script blocks)       swap: from -> to (the whole brick, e.g. resized)
+     weld: from -> to (its weld group) */
 const HIST_MAX = 50;
 const histOf = (h) => h.hist || (h.hist = { undo: [], redo: [] });
 function histPush(h, ops, always = false) {
@@ -4114,6 +4610,8 @@ function histApply(op, redo, h) {
   if (op.k === 'paint') { paintPart(p, redo ? op.to : op.from); return true; }
   if (op.k === 'move') { placePart(p, redo ? op.to : op.from); return true; }
   if (op.k === 'script') { applyScripts(p, redo ? op.to : op.from); return true; }
+  if (op.k === 'swap') { swapPart(p, redo ? op.to : op.from); return true; }
+  if (op.k === 'weld') { setWeld(p, redo ? op.to : op.from); return true; }
   return false;
 }
 // Ctrl+Z / Ctrl+Y here
@@ -4137,25 +4635,45 @@ const SC_SOUNDS = [['boing', 'Boing'], ['uuhhh', 'Oof'], ['boom', 'Boom'], ['spa
 const SC_HATS = () => HATS.filter(h => h.id !== 'none' && !SETS.some(s => s.wear.hat === h.id)).map(h => [h.id, h.name]);
 // the kinds of blocks, in Scratch colors. {} is where the block's value goes.
 const SB_CATS = { when: ['When', '#e6a000'], control: ['Control', '#ff8c1a'], looks: ['Looks', '#9966ff'], sound: ['Sound', '#cf63cf'],
-  motion: ['Motion', '#4c97ff'], players: ['Players', '#e0483e'] };
+  motion: ['Motion', '#4c97ff'], players: ['Players', '#e0483e'], world: ['World', '#0fa37a'] };
 const SB = {
   touch: { cat: 'when', text: 'When touched' },
   click: { cat: 'when', text: 'When clicked' },
   start: { cat: 'when', text: 'When the game starts' },
   wait: { cat: 'control', text: 'wait {} seconds', arg: 'num', def: 1 },
+  repeat: { cat: 'control', text: 'repeat everything above {} times', arg: 'count', def: 3 },
+  forever: { cat: 'control', text: 'go back to the top (forever)' },
   color: { cat: 'looks', text: 'change color to {}', arg: 'color', def: BC['Bright red'] },
   hide: { cat: 'looks', text: 'make invisible' },
+  glow: { cat: 'looks', text: 'glow (neon)' },
+  unglow: { cat: 'looks', text: 'stop glowing' },
   show: { cat: 'looks', text: 'make visible' },
   say: { cat: 'looks', text: 'say {}', arg: 'text', def: 'Hello!' },
+  message: { cat: 'looks', text: 'show everyone the message {}', arg: 'text', def: 'You found the secret!' },
   sound: { cat: 'sound', text: 'play sound {}', arg: 'sound', def: 'boing' },
+  up: { cat: 'motion', text: 'move up {} studs', arg: 'num', def: 2 },
+  down: { cat: 'motion', text: 'move down {} studs', arg: 'num', def: 2 },
+  turn: { cat: 'motion', text: 'turn {} degrees', arg: 'deg', def: 45 },
   anchor: { cat: 'motion', text: 'anchor' },
   unanchor: { cat: 'motion', text: 'unanchor' },
   tpspawn: { cat: 'motion', text: 'teleport player to spawn' },
+  open: { cat: 'motion', text: 'open (walk right through it)' },
+  close: { cat: 'motion', text: 'close (solid again)' },
+  doors: { cat: 'motion', text: 'open / close the {} doors', arg: 'color', def: BC['Bright red'] },
   ko: { cat: 'players', text: 'knock out player' },
+  heal: { cat: 'players', text: 'heal player' },
+  fast: { cat: 'players', text: 'super speed for {} seconds', arg: 'num', def: 5 },
+  high: { cat: 'players', text: 'super jump for {} seconds', arg: 'num', def: 5 },
   hat: { cat: 'players', text: 'give player hat {}', arg: 'hat', def: 'tophat' },
+  night: { cat: 'world', text: 'make it night' },
+  day: { cat: 'world', text: 'make it day' },
+  daynight: { cat: 'world', text: 'switch day / night' },
+  boom: { cat: 'world', text: 'explode!' },
 };
 function cleanArg(type, v, def) {
   if (type === 'num') { v = +v; return Number.isFinite(v) ? Math.min(60, Math.max(0.1, Math.round(v * 10) / 10)) : def; }
+  if (type === 'count') { v = Math.round(+v); return v >= 1 ? Math.min(100, v) : def; }
+  if (type === 'deg') { v = Math.round(+v); return Number.isFinite(v) && v !== 0 ? Math.max(-360, Math.min(360, v)) : def; }
   if (type === 'text') return cleanText(String(v ?? '').slice(0, 60)) || def;
   if (type === 'color') return /^#[0-9a-f]{6}$/i.test(v) ? v : def;
   if (type === 'sound') return SC_SOUNDS.some(s => s[0] === v) ? v : def;
@@ -4208,15 +4726,43 @@ function stepScripts() {
   for (let k = scThreads.length - 1; k >= 0; k--) {
     const t = scThreads[k];
     if (!alive(t.p)) { scThreads.splice(k, 1); continue; }
-    for (let n = 0; t.i < t.list.length && time >= t.at && n < 50; n++) scBlock(t, t.list[t.i++]);
+    for (let n = 0; t.i < t.list.length && time >= t.at && n < 50; n++) { const j = t.i++; scBlock(t, t.list[j], j); }
     if (t.i >= t.list.length && time >= t.at) scThreads.splice(k, 1);
   }
 }
-function scBlock(t, [op, v]) {
+// back to the top of the script (always at least a tenth of a second per time around, so it can't freeze the game)
+function scLoop(t) { t.i = 0; if (!t.waited) t.at = Math.max(t.at, time + 0.1); t.waited = false; }
+function scBlock(t, [op, v], j) {
   const p = t.p, h = t.who && t.who.enabled && !t.who.dead && humanoids.includes(t.who) ? t.who : null;
-  if (op === 'wait') t.at = time + v;
+  if (op === 'wait') { t.at = time + v; t.waited = true; }
+  else if (op === 'forever') scLoop(t);
+  else if (op === 'repeat') {
+    const left = t.reps = t.reps || {};
+    if (left[j] === undefined) left[j] = v - 1;   // (it already went through once)
+    if (left[j] > 0) { left[j]--; scLoop(t); } else delete left[j];
+  }
+  else if (op === 'up' || op === 'down' || op === 'turn') {
+    if (p.netDrag || p === dragging) return;
+    const x = xfOf(p);
+    if (op === 'turn') { const q = quatOf(p).premultiply(new THREE.Quaternion().setFromAxisAngle(new V3(0, 1, 0), v * Math.PI / 180)); x.q = [q.x, q.y, q.z, q.w]; }
+    else x.p[1] += op === 'up' ? v : -v;
+    placePart(p, x);
+  }
+  else if (op === 'message') { showBanner(v, 'MESSAGE'); netEv(['ann', v, 1]); }
+  else if (op === 'boom') explode(new V3().copy(p.body.position), 10, null);
+  else if (op === 'heal' && h) { h.health = 100; if (h.tag) h.drawTag(); }
+  else if ((op === 'fast' || op === 'high') && h) {   // a power-up for a few seconds (another player's own computer moves them, so it's told)
+    const set = op === 'fast' ? { walk: WALK * 2 } : { jumpPow: JUMP * 1.6 }, back = op === 'fast' ? { walk: WALK } : { jumpPow: JUMP };
+    const give = (s) => { if (h.conn) netSendTo(h.conn, { t: 'set', ...s }); else Object.assign(h, s); };
+    give(set); setTimeout(() => { if (humanoids.includes(h)) give(back); }, v * 1000);
+  }
   else if (op === 'color') paintPart(p, v);
   else if (op === 'hide' || op === 'show') setHidden(p, op === 'hide');
+  else if (op === 'glow' || op === 'unglow') setNeon(p, op === 'glow');
+  else if (op === 'open' || op === 'close') setOpen(p, op === 'open');
+  else if (op === 'doors') { for (const q of parts) if (q.door && String(q.color).toLowerCase() === v.toLowerCase()) setOpen(q, !q.open); }
+  else if (op === 'night' || op === 'day') setNight(op === 'night');
+  else if (op === 'daynight') setNight(!night);
   else if (op === 'say') brickSay(p, v);
   else if (op === 'sound') {
     if (net.mode === 'host') netEv(['sfx', v, arr3(p.body.position), null, []]);
@@ -4229,7 +4775,7 @@ function scBlock(t, [op, v]) {
       if (!on) wakeNear(p.body.position, Math.max(...p.size) + 4);
     }
   } else if (op === 'tpspawn' && h) {
-    const to = SPAWN.clone().add(new V3((Math.random() - 0.5) * 2, 0, (Math.random() - 0.5) * 2));
+    const to = spawnSpot();
     if (h.conn) netSendTo(h.conn, { t: 'tp', p: arr3(to) });   // another player moves themselves
     else { h.body.position.set(to.x, to.y, to.z); h.body.velocity.set(0, 0, 0); if (h.netPos) h.netPos.copy(to); }
     sfxAt('spawn', to);
@@ -4287,7 +4833,7 @@ function scriptHover() {
 function scriptClicked() {
   const hit = pick(), p = hit && hit.object.userData.part;
   if (!p || !p.scripts || !p.scripts.some(s => s.on === 'click')) return;
-  SFX.click();
+  SFX.click(); pressButton(p);
   if (net.mode === 'client') netSend({ t: 'sclick', nid: p.nid }); else fireScripts(p, 'click', player);
 }
 
@@ -4343,6 +4889,7 @@ const scOpts = (list, v) => list.map(([id, n]) => `<option value="${id}"${id ===
 function scArgHtml(B, v, s, j) {
   const d = `data-s="${s}" data-j="${j}"`;
   if (B.arg === 'num') return `<input class="sc-in" type="number" min="0.1" max="60" step="0.5" value="${v}" ${d} style="width:46px">`;
+  if (B.arg === 'count' || B.arg === 'deg') return `<input class="sc-in" type="number" step="${B.arg === 'deg' ? 15 : 1}" value="${v}" ${d} style="width:46px">`;
   if (B.arg === 'text') return `<input class="sc-in" maxlength="60" value="${escHtml(v)}" ${d} style="width:110px">`;
   if (B.arg === 'sound') return `<select class="sc-in" ${d}>${scOpts(SC_SOUNDS, v)}</select>`;
   if (B.arg === 'hat') return `<select class="sc-in" ${d}>${scOpts(SC_HATS(), v)}</select>`;
@@ -4354,7 +4901,7 @@ function scArgHtml(B, v, s, j) {
 function scBlockHtml(op, v, s, j) {
   const B = SB[op], [l, r] = B.text.split('{}');
   // (in the left list a block shows what it starts as: "wait (1) seconds", "play sound (Boing)"...)
-  const shown = { num: `(${B.def})`, text: `"${B.def}"`, sound: `(${(SC_SOUNDS.find(x => x[0] === B.def) || [])[1]})`, hat: `(${hatName(B.def)})`,
+  const shown = { num: `(${B.def})`, count: `(${B.def})`, deg: `(${B.def})`, text: `"${B.def}"`, sound: `(${(SC_SOUNDS.find(x => x[0] === B.def) || [])[1]})`, hat: `(${hatName(B.def)})`,
     color: `<span class="sc-sw" style="background:${B.def}"></span>` }[B.arg];
   const body = s < 0 ? escHtml(l) + (B.arg ? (B.arg === 'color' ? shown : escHtml(shown)) + escHtml(r) : '') : escHtml(l) + (B.arg ? scArgHtml(B, v, s, j) + escHtml(r) : '');
   return `<div class="sc-b ${B.cat === 'when' ? 'hat' : ''}" style="background:${SB_CATS[B.cat][1]}" draggable="true" data-op="${op}" data-s="${s}" data-j="${j}">${body}` +
@@ -4508,7 +5055,19 @@ const SHAPES = [
   ['Baseplate', { size: [16, 0.4, 16] }], ['Ball', { shape: 'ball', size: [3, 3, 3] }], ['Superball', { shape: 'ball', size: [3, 3, 3], bouncy: true }],
   ['Kill Brick', { size: [4, 1.2, 2], kill: true, color: BC['Bright red'] }],
   ['Cylinder', { shape: 'cyl', size: [2, 4, 2] }], ['Glass', { size: [4, 1.2, 2], trans: 0.5 }],
+  ['Wedge', { shape: 'wedge', size: [4, 2, 4] }], ['Corner', { shape: 'cwedge', size: [4, 2, 4] }], ['Truss', { shape: 'truss', size: [2, 10, 2] }],
+  ['Spawn', { size: [6, 1, 6], spawn: true, color: BC['Medium stone grey'] }], ['Button', { shape: 'cyl', size: [2, 0.6, 2], btn: true }],
+  ['Door', { size: [4, 7, 1], door: true }], ['Neon', { size: [4, 1.2, 2], neon: true }],
+  ['Seat', { size: [2, 1, 2], seat: 1 }], ['Drive Seat', { size: [2, 1, 2], seat: 2, color: BC['Black'] }], ['Car', { car: true, size: [6, 4, 10] }],
+  ['Day/Night', { size: [4, 2, 1], color: BC['Black'], sign: { t: 'DAY / NIGHT', c: '#20204a' }, scripts: [{ on: 'click', do: [['daynight']] }] }],
 ];
+// a tip the first time each new part goes in
+const PART_TIPS = { truss: 'Truss: walk into it to climb!', spawn: 'Spawn: people appear here when they (re)spawn.',
+  btn: 'Button: click it with an empty hand (no tool) to open and close the doors that are the same color.',
+  door: 'Door: a Button of the same color opens and closes it. Scripts can open it too.', neon: 'Neon: it glows, best at night!',
+  sign: 'Day/Night switch: click it with an empty hand.', seat: 'Seat: walk into it to sit down, Space to get up. A Drive Seat drives everything welded to it!',
+  car: 'Car: walk into its black seat to drive! W / S = gas and reverse, A / D = steer, Space = get out.' };
+const tipped = new Set();
 $('shapeBtns').innerHTML = SHAPES.map(([n], i) => `<button class="b" data-s="${i}">${n}</button>`).join('');
 $('shapeBtns').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) insertPart(SHAPES[+b.dataset.s][1]); });
 $('customBtn').onclick = () => insertPart({ size: ['cx', 'cy', 'cz'].map(id => Math.min(64, Math.max(0.2, +$(id).value || 1))) });
@@ -4529,8 +5088,16 @@ function insertPart(o) {
   at.y = Math.max(player.pos.y - HY, 0) + sz[1] / 2 + (($('anchorChk').checked) ? 0.01 : 3);
   const spec = { ...o, color: o.color || selColor, anchored: $('anchorChk').checked, destroy: $('anchorChk').checked && $('destroyChk').checked,
     pos: at.toArray(), rot: [0, turns * Math.PI / 2, 0] };
+  if (o.btn) spec.scripts = [{ on: 'click', do: [['sound', 'click'], ['doors', spec.color]] }];   // (a button opens the doors of its own color)
+  const kind = ['car', 'seat', 'spawn', 'btn', 'door', 'neon', 'sign'].find(k => o[k]) || (o.shape === 'truss' ? 'truss' : null);
+  if (kind && !tipped.has(kind)) { tipped.add(kind); sysChat(PART_TIPS[kind]); }
   SFX.click();
   if (net.mode === 'client') { netSend({ t: 'insert', o: spec }); return; }
+  if (o.car) {   // (a whole car, welded together)
+    if (!brickRoom(9)) { tellFull(player); return; }
+    histPush(player, buildCar(new V3(at.x, at.y - sz[1] / 2, at.z), turns * Math.PI / 2, spec.color).map(p => ({ k: 'add', nid: p.nid })));
+    aiOnBuild(at, player); return;
+  }
   histPush(player, [{ k: 'add', nid: makePart(spec).nid }]);
   aiOnBuild(at, player);
 }
@@ -4545,7 +5112,11 @@ const SAVE_KEY = 'blockburg-classic-place';
 // in someone else's game, only the host can save, load or reset the place
 const hostOnly = (fn) => () => { if (net.mode === 'client') sysChat('Saving, loading and resetting the place only work in solo play.'); else fn(); };
 // (on your baseplate, Save saves this place's file on the Build page, and Load goes back to its last save)
-$('saveBtn').onclick = hostOnly(() => {
+$('saveBtn').onclick = () => {
+  if (net.mode === 'client' && net.mine && net.hostFile) { const f = saveRoomPlace(); sysChat(f ? `Saved "${f.name}" with everyone's building.` : 'Could not save (storage blocked).'); return; }
+  saveSolo();
+};
+const saveSolo = hostOnly(() => {
   if (currentPlace === 'baseplate') { const f = saveBaseplate(); sysChat(f ? `Saved "${f.name}".` : 'Could not save (storage blocked).'); return; }
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(parts.filter(p => !p.locked).map(serialize))); sysChat('Place saved.'); }
   catch { sysChat('Could not save (storage blocked).'); }
@@ -4562,6 +5133,8 @@ $('clearBtn').onclick = hostOnly(() => {   // (Ctrl+Z brings them all back)
   clearUnlocked(); histPush(player, ops); sysChat('Cleared all bricks. (Ctrl+Z brings them back.)');
 });
 $('undoBtn').onclick = () => undoRedo(false);
+$('weldBtn').onclick = () => weldPicked(true);
+$('unweldBtn').onclick = () => weldPicked(false);
 $('redoBtn').onclick = () => undoRedo(true);
 $('defaultBtn').onclick = hostOnly(() => { stopDrag(); clearUnlocked(); buildDefault(); sysChat('Restored the default place.'); });
 
@@ -4603,11 +5176,11 @@ $('escMenu').addEventListener('click', (e) => {
   if (a === 'help') escView('escHelp', 'Help');
   if (a === 'shot') takeScreenshot();
   if (a === 'leave') {
-    if (currentPlace === 'baseplate' && !net.mode) escView('escSaveLeave', 'Leave Game');   // your own baseplate: save it first?
+    if ((currentPlace === 'baseplate' && !net.mode) || (net.mode === 'client' && net.mine && net.hostFile)) escView('escSaveLeave', 'Leave Game');   // your own baseplate: save it first?
     else confirmEsc('Are you sure you want to leave this game?', () => { closeEsc(); leaveGame(); });
   }
   if (a === 'saveleave') {   // save, then show it on the Build page
-    const f = saveBaseplate(); closeEsc(); leaveGame();
+    const f = net.mode === 'client' && net.hostFile ? saveRoomPlace() : saveBaseplate(); closeEsc(); leaveGame();
     if (f) showPage('build'); else alert("Couldn't save your place (this browser blocks saving).");
   }
   if (a === 'justleave') { closeEsc(); leaveGame(); }
@@ -4673,6 +5246,7 @@ function applySky(name) {
   farGround.material.color.set(s.land);
   for (const m of [...reflectMats, ...envMats]) { m.envMap = s.tex; m.needsUpdate = true; }
   $('skySel').value = SKIES[name] ? name : 'panorama';
+  if (night) nightLook();
   try { localStorage.setItem(SKY_KEY, $('skySel').value); } catch { }
 }
 $('skySel').onchange = (e) => applySky(e.target.value);
@@ -4746,8 +5320,9 @@ addEventListener('keydown', (e) => {
   const m = e.code.match(/^Digit(\d)$/);
   if (m) equip((+m[1] + 9) % 10);
   if (dragging) {
-    if (e.code === 'KeyR') { dragRot.y++; SFX.click(); }
-    if (e.code === 'KeyT') { dragRot.x++; SFX.click(); }
+    // R turns a quarter, T tilts a quarter; Q / E turn and G tilts just 15 degrees
+    const turn = { KeyR: ['y', Math.PI / 2], KeyT: ['x', Math.PI / 2], KeyQ: ['y', TURN], KeyE: ['y', -TURN], KeyG: ['x', TURN] }[e.code];
+    if (turn) { dragRot[turn[0]] += turn[1]; SFX.click(); }
     if (e.code === 'KeyF') {   // (a whole group all goes the same way)
       dragging.anchored = !dragging.anchored; dragGroup.forEach(g => g.p.anchored = dragging.anchored);
       sysChat(dragging.anchored ? 'Anchored.' : 'Unanchored.'); SFX.click();
@@ -4805,6 +5380,7 @@ document.addEventListener('pointerlockchange', () => { if (!camLocked()) { rDrag
 cv.addEventListener('contextmenu', (e) => e.preventDefault());
 cv.addEventListener('mousedown', (e) => {
   chatInput.blur();
+  if (!camLocked() && !shiftLock) mouseNDC.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);   // (aim right where the click is)
   if (trailer.on) return;   // no tools or camera turning while the trailer films
   if (e.button === 2) {
     rDrag = true; lastX = e.clientX; lastY = e.clientY;
@@ -4816,12 +5392,13 @@ cv.addEventListener('mousedown', (e) => {
     if (p) openScriptEditor(p); else scriptPickEnd();
     return;
   }
+  if (e.button === 0 && started && !freecam.on && !menuOpen && rsStart(e)) return;   // (a resize handle)
   if (e.button === 0 && started && !freecam.on && !menuOpen) useTool(e);   // (no tools while the free cam is flying around)
 });
-addEventListener('mouseup', (e) => { if (e.button === 2) endCamDrag(); if (e.button === 0) { stopDrag(); boxSelEnd(); } });
+addEventListener('mouseup', (e) => { if (e.button === 2) endCamDrag(); if (e.button === 0) { stopDrag(); boxSelEnd(); rsEnd(); } });
 addEventListener('mousemove', (e) => {
   if (!camLocked() && !shiftLock) mouseNDC.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);   // aim stays put while turning
-  boxSelMove(e);
+  boxSelMove(e); rsMove();
   if (rDrag || (shiftLock && started && !menuOpen)) {
     const dx = camLocked() ? e.movementX : e.clientX - lastX, dy = camLocked() ? e.movementY : e.clientY - lastY;
     camYaw -= dx * 0.007;
@@ -5075,6 +5652,7 @@ function playerInput(dt) {
   if (P.move.lengthSq() > 1) P.move.normalize();
   P.jump = !!keys.Space;
   if ((camDist < 1.5 || shiftLock) && !trailer.on) { P.faceYaw = Math.atan2(f.x, f.z); P.aimHold = 0.1; }
+  if (P.seat) { P.move.set(0, 0, 0); P.jump = false; }   // (sitting: the keys drive instead, see sitDrive)
 }
 
 function loop(now) {
@@ -5114,6 +5692,7 @@ function frame(now) {
 
   // at most 3 catch-up steps: with lots of bricks a frame can run late, and catching up with even more steps
   // only makes the next frame later still (and everything stays slow until the bricks are gone)
+  sitDrive(dt);
   world.step(1 / 120, dt, 3);
   while (afterStep.length) afterStep.shift()();
 
@@ -5122,6 +5701,7 @@ function frame(now) {
     p.mesh.position.copy(p.body.position); p.mesh.quaternion.copy(p.body.quaternion);
     if (p.body.position.y < -200 && !p.locked && !net.mode) removePart(p);   // (online the server does this)
   }
+  sitPlace();
   for (let i = debris.length - 1; i >= 0; i--) {
     const d = debris[i]; d.life -= dt;
     d.mesh.position.copy(d.body.position); d.mesh.quaternion.copy(d.body.quaternion);
@@ -5352,6 +5932,7 @@ function snapBricksThumb(bricks) {
 // a sensible picture to believe from someone else's post: a small JPEG or PNG image, nothing else
 const okThumb = (s) => typeof s === 'string' && s.length < 60000 && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(s);
 function snapGameThumbs() {
+  if (!renderer.domElement.width || !renderer.domElement.height) return;   // (a window with no size yet: no picture, and no crash)
   const empty = !parts.some(p => !p.locked);   // (on the website the place is unloaded: build it just for the picture)
   if (empty) buildDefault();
   document.querySelectorAll('.thumbClassic').forEach(i => i.src = snapThumb(new V3(38, 32, 46), new V3(0, 4, -12)));
@@ -5377,6 +5958,7 @@ function showPage(p) {
   if (p === 'friends') friendsInit(true);
   if (p === 'inbox') inboxOpened();
   if (p === 'build') renderPlaces();
+  if (p === 'online') mpPlaceOptions();
   if (p === 'games') { projStart(); projRender(); }
   if (p === 'settings') $('setHome').append($('setRows'));   // borrow the game menu's settings
   $('site').scrollTop = 0;
@@ -5442,6 +6024,16 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest headline also shows at the top of Blockburg News. */
 const UPDATES = [
   { date: '10/25/2026', top: 'ha! we are so back with more updates', text: [
+    'BLOCKBURG CLASSIC GOT WAY BIGGER! Five new places, each with a sign: Blockburg Park (pond, bridge, fountain), the Sword Arena (red vs blue), Brick Street (six houses), the Mega Obby and a Race Track.',
+    'CARS! Three of them wait at the Race Track. Walk into the black seat to drive: W / S for gas and reverse, A / D to steer, Space to get out. Insert a Car to make your own.',
+    'New parts in Insert: Wedge, Corner wedge, Truss (walk into it to climb!), Spawn, Button, Door, Neon, Seat, Drive Seat, Car and a Day/Night switch.',
+    'A Button opens and closes the Doors of its own color. Neon glows, and the street lamps light up at night.',
+    'Resize bricks: Shift+click ONE brick and drag the blue balls on its sides. While dragging, Q / E / G turn and tilt it a little at a time.',
+    'Weld: pick bricks, then Insert → Weld. They stick together and move, fall and tumble as one.',
+    'Build together: on the Multiplayer page, host one of your saved places. Your friends join and build with you, and Save puts it back in your place.',
+    'More script blocks: repeat, go back to the top (forever), move up / down, turn, glow, open / close, open the doors, super speed, super jump, heal, explode!, make it night / day, and show everyone a message.',
+    'Fixed: the billboard by the sidewalk finally shows its picture again.',
+    'Fixed: jumping swings your arms up in front, the classic way, instead of flipping them backwards over your shoulders. Ouch.',
     'SCRIPT BLOCKS! Snap blocks together to make a brick do things, like When touched → wait 1 second → play sound → teleport to spawn. Open Insert → Script a brick. Works in multiplayer too.',
     'Script blocks so far: When touched, When clicked, When the game starts, wait, change color, make invisible / visible, say, play sound, anchor / unanchor, teleport player to spawn, knock out player and give player a hat.',
     'Undo and Redo! Ctrl+Z / Ctrl+Y (or the new buttons in Insert) take back building, deleting, moving, painting, cloning, trowel walls, script changes and even Clear All.',
@@ -5973,6 +6565,34 @@ function loadPlaces() {
 function storePlaces(list) { try { localStorage.setItem(PLACES_KEY, JSON.stringify(list)); return true; } catch { return false; } }
 // save the baseplate you're on into its file; a new place asks for a name (or takes `name`) and gets a new file.
 // Gives back the file, or null if this browser won't let us save.
+/* ---- building together: host a room with one of my saved places. My computer hands the bricks to the
+   room's host (a bit at a time), everyone builds, and I can save it back into my place. ---- */
+function mpPlaceOptions() {
+  const sel = $('mpPlace'), was = sel.value;
+  sel.innerHTML = '<option value="classic">Blockburg Classic</option><option value="baseplate">Happy Home Baseplate</option>' +
+    loadPlaces().sort((a, b) => b.ts - a.ts).map(f => `<option value="file:${f.id}">My place: ${escHtml(f.name)}</option>`).join('');
+  if ([...sel.options].some(o => o.value === was)) sel.value = was;
+}
+function sendMyPlace() {
+  const f = loadPlaces().find(x => x.id === net.hostFile);
+  if (!f || !Array.isArray(f.bricks)) return;
+  const b = f.bricks;
+  for (let i = 0; i === 0 || i < b.length; i += 250)
+    netSend({ t: 'loadplace', b: b.slice(i, i + 250), first: i === 0, last: i + 250 >= b.length, name: f.name });
+  sysChat(`Bringing in "${f.name}" for everyone (${b.length} bricks)...`);
+}
+// my own room's bricks, saved back into my place (what everyone built, as my screen has it)
+function saveRoomPlace() {
+  const list = loadPlaces(), f = list.find(x => x.id === net.hostFile);
+  if (!f) return null;
+  f.bricks = parts.filter(p => !p.locked).map(serialize); f.ts = Date.now();
+  try { f.thumb = snapBricksThumb(f.bricks); } catch { }
+  const ok = storePlaces(list); renderPlaces();
+  return ok ? f : null;
+}
+// a brick from someone's saved place: only sensible numbers get in
+const okBrick = (d) => d && typeof d === 'object' && [[d.z, 3], [d.p, 3], [d.q, 4]].every(([a, n]) => Array.isArray(a) && a.length === n && a.every(Number.isFinite))
+  && d.z.every(n => n > 0 && n <= 1024) && d.p.every(n => Math.abs(n) < 5000);
 function saveBaseplate({ name } = {}) {
   const list = loadPlaces();
   let f = currentFile && list.find(x => x.id === currentFile);
@@ -6030,6 +6650,7 @@ function playPlace(id, { file = null, guests = false } = {}) {
   npcs.forEach(n => { n.ai = makeBrain(n); npcHold(n, null); n.drawTag(); });   // fresh server, fresh memories
   npcBuilt.length = 0;
   player.wonObby = false;
+  if (night) setNight(false);
   refreshLook();
   player.setHat(look.hat); player.spawn();
   camYaw = 0; camPitch = 0.38; camDist = 22;
@@ -6072,6 +6693,7 @@ function unloadWorld() {
   for (const list of [superballs, bombs, debris]) { list.forEach(o => { world.removeBody(o.body); scene.remove(o.mesh); }); list.length = 0; }
   cars.forEach(c => scene.remove(c.mesh)); cars.length = 0;
   wallQueue.length = 0;
+  if (night) setNight(false);
   npcs.forEach(n => { if (n.enabled) n.setEnabled(false); });
   if (AC && AC.state === 'running') AC.suspend();
 }
@@ -6368,7 +6990,8 @@ async function hostGame() {
   if (net.room || net.joining) netStop(null, true);
   netStatus('Starting your game...');
   loadShow('Starting your game'); loadStep(5, 'Connecting to the BLOCKBURG server', 35);
-  net.place = $('mpPlace').value;
+  net.place = $('mpPlace').value; net.hostFile = null;
+  if (net.place.startsWith('file:')) { net.hostFile = net.place.slice(5); net.place = 'baseplate'; }   // (one of my places, on a baseplate)
   const room = await openRoom('create');
   if (!room) { loadHide(); return; }   // (the Multiplayer page says why)
   $('mpCode').value = room.roomId;
@@ -6407,6 +7030,7 @@ function hostHello(conn, msg) {
   h.remote = true; h.netCtl = true; h.conn = conn; setHumBody(h, true);
   h.tools = buildHeldModels(h.char.hand); h.heldTool = null;
   h.spawn(); h.netPos = new V3().copy(h.pos);
+  if (!net.conns.size) h.owner = true;   // the first one in started the room: it's their place
   net.conns.set(conn.peer, { conn, h });
   applyLook(h, withoutAdminClothes(L));   // the admin's clothes wait until we know it's the admin
   // the admin proves it's really them by signing the room code + their name with the secret admin key
@@ -6417,7 +7041,7 @@ function hostHello(conn, msg) {
   if (Array.isArray(msg.id)) idVerify(`bb-id|${net.code}|${name}`, msg.id.slice(0, 2), msg.id[2]).then(bd => {
     if (bd && net.conns.get(conn.peer)?.h === h) { h.badge = bd; h.drawTag(); renderLB(); netEv(['bd', h.hid, bd]); }
   });
-  netSendTo(conn, { t: 'welcome', you: h.hid, code: net.code, host: player.name, place: net.place,
+  netSendTo(conn, { t: 'welcome', you: h.hid, code: net.code, host: player.name, place: net.place, night,
     parts: parts.map(p => [p.nid, serialize(p), p.locked]),
     humans: humanoids.filter(x => x.enabled && x !== h).map(humanRec) });
   netEv(['join', humanRec(h)]);
@@ -6441,8 +7065,13 @@ function hostHandle(h, conn, m) {
   switch (m.t) {
     case 'me':
       h.netPos.set(m.p[0], m.p[1], m.p[2]); h.faceYaw = m.y; h.aimHold = 1; h.move.set(m.m ? 1 : 0, 0, 0);
-      npcHold(h, m.tl >= 0 ? HELD_TOOLS[m.tl] : null); h.netArm = m.ar || 0;
+      npcHold(h, m.tl >= 0 ? HELD_TOOLS[m.tl] : null); h.netArm = m.ar || 0; h.sitting = !!m.st;
       break;
+    case 'drive': {   // driving a car: the server's physics moves it
+      const p = partsByNid.get(m.nid), cl = (n) => Math.max(-1, Math.min(1, +n || 0));
+      if (p && p.seat === 2 && h.pos.distanceTo(p.body.position) < 12) toServer({ t: 'drive', nid: p.nid, th: cl(m.th), st: cl(m.st) });
+      break;
+    }
     case 'chat': { const text = String(m.text || '').slice(0, 100); if (text) { h.say(text); aiOnChat(h, text); } break; }
     case 'die': kill(h, null, false, true); break;   // (they already fell apart on their own screen)
     case 'spawned': if (h.dead) h.spawn(new V3(...m.p)); else h.netPos.set(...m.p); break;
@@ -6484,16 +7113,44 @@ function hostHandle(h, conn, m) {
       break;
     }
     case 'undo': case 'redo': histStep(h, m.t === 'redo'); break;
+    case 'loadplace': {   // the room's owner brought one of their saved places (in pieces)
+      if (!h.owner || net.place !== 'baseplate' || !Array.isArray(m.b)) break;
+      if (m.first) { clearUnlocked(); h.placeLoaded = 0; }
+      for (const d of m.b.slice(0, 250)) {
+        if (!okBrick(d)) continue;
+        if (!brickRoom()) { tellFull(h); break; }
+        deserialize({ ...d, wd: d.wd }, { sleep: true }); h.placeLoaded++;
+      }
+      if (m.last) {
+        scriptsStart();
+        const msg = `${h.name} brought "${cleanText(String(m.name || 'their place')).slice(0, 30)}" (${h.placeLoaded} bricks). Build together!`;
+        netEv(['sys', msg]); sysChat(msg);
+      }
+      break;
+    }
+    case 'weld': weldBricks(group(), !!m.on, h); break;
+    case 'resize': {
+      const p = part(), z = Array.isArray(m.z) && m.z.slice(0, 3), at = Array.isArray(m.p) && m.p.slice(0, 3);
+      if (!p || !z || !at || ![...z, ...at].every(Number.isFinite) || p.body.position.distanceTo(new V3(...at)) > 150) break;
+      resizeBrick(p, z.map(n => Math.min(128, Math.max(0.2, n))), at, h);
+      break;
+    }
     // script blocks: new scripts for a brick, or "I touched / clicked / am testing this brick" (the scripts run here)
     case 'script': { const p = part(); if (p) setScripts(p, m.sc, h); break; }
     case 'stouch': { const p = partsByNid.get(m.nid); if (p && !h.dead && p.body.position.distanceTo(h.pos) < Math.max(...p.size) / 2 + 8) scriptTouched(p, h); break; }
     case 'sclick': { const p = partsByNid.get(m.nid); if (p && !h.dead && p.body.position.distanceTo(h.pos) < 150) fireScripts(p, 'click', h); break; }
     case 'stest': { const p = part(); if (p) fireScripts(p, null, h); break; }
     case 'insert': {
-      const o = m.o; if (!o || !Array.isArray(o.size) || !Array.isArray(o.pos)) break;
-      if (!brickRoom()) { tellFull(h); break; }
+      const o = m.o; if (!o || !Array.isArray(o.size) || !Array.isArray(o.pos) || !o.pos.every(Number.isFinite)) break;
+      if (!brickRoom(o.car ? 9 : 1)) { tellFull(h); break; }
+      if (o.car) {
+        const yaw = Array.isArray(o.rot) ? +o.rot[1] || 0 : 0;
+        histPush(h, buildCar(new V3(o.pos[0], o.pos[1] - 2, o.pos[2]), yaw, typeof o.color === 'string' ? o.color : BC['Bright red']).map(p => ({ k: 'add', nid: p.nid })));
+        break;
+      }
       const np = makePart({ shape: o.shape, size: o.size.map(n => Math.min(64, Math.max(0.2, +n || 1))), pos: o.pos, rot: o.rot,
-        color: o.color, anchored: !!o.anchored, destroy: !!o.anchored && !!o.destroy, kill: !!o.kill, bouncy: !!o.bouncy, trans: o.trans });
+        color: o.color, anchored: !!o.anchored, destroy: !!o.anchored && !!o.destroy, kill: !!o.kill, bouncy: !!o.bouncy, trans: o.trans,
+        spawn: !!o.spawn, btn: !!o.btn, door: !!o.door, neon: !!o.neon, sign: o.sign, scripts: o.scripts, seat: o.seat });
       histPush(h, [{ k: 'add', nid: np.nid }]);
       aiOnBuild(new V3(...o.pos), h);
       break;
@@ -6515,7 +7172,7 @@ function buildSnapshot() {
     const me = h === player;
     const tool = me ? (equipped && !equipped.hopper ? equipped.id : null) : h.heldTool;
     const arm = me ? toolAnim.arm : h.netCtl ? (h.netArm || 0) : (h.ai ? h.ai.armAnim : 0);
-    const flags = (h.move.lengthSq() > 0.01 ? 1 : 0) | (h.grounded ? 2 : 0) | (h.dead ? 4 : 0) | (h.ff > 0 ? 8 : 0);
+    const flags = (h.sitting ? 16 : 0) | (h.move.lengthSq() > 0.01 ? 1 : 0) | (h.grounded ? 2 : 0) | (h.dead ? 4 : 0) | (h.ff > 0 ? 8 : 0);
     hs.push([h.hid, r2(h.pos.x), r2(h.pos.y), r2(h.pos.z), r3(h.yaw), flags, tool ? HELD_TOOLS.indexOf(tool) : -1, r2(arm),
       Math.round(h.health), h.kos, h.wos, h.ai ? h.ai.thought : '']);
   }
@@ -6612,6 +7269,7 @@ function clientHandle(m) {
 function clientEnter(m) {
   net.mode = 'client'; net.myHid = m.you; player.hid = m.you; player.name = myName();
   if (m.place) net.place = m.place;   // (so friends see which place this room is)
+  setNight(!!m.night);
   audioInit(); stopDrag(); if (equipped) equip(TOOLS.indexOf(equipped));
   clearUnlocked(); [...hatPickups].forEach(removeHatPickup);
   mirrorBricks();
@@ -6642,6 +7300,7 @@ function clientEnter(m) {
   sysChat(net.mine ? `Your game is ready! The room code is ${m.code}. Give it to your friends. Press 1-0 for tools, Esc for the menu.`
     : `You joined room ${m.code}! Press 1-0 for tools, Esc for the menu.`);
   netStatus(`Connected to room ${m.code}.`);
+  if (net.mine && net.hostFile) sendMyPlace();   // (my own room with one of my places: bring it in)
   SFX.spawn(); renderLB(); updateBadge();
   loadFinish();   // (the world is here: graphics, then in you go)
 }
@@ -6672,10 +7331,16 @@ function clientEvent(e) {
       if (partsByNid.has(nid)) break;
       deserialize(d, { nid, locked });
       if (net.pendingClone) clonedReady();
+      if (net.reselect === nid) { net.reselect = null; selection.add(partsByNid.get(nid)); selHint(); }   // (the brick I resized, made again)
       break;
     }
     case 'pr': { const p = partsByNid.get(e[1]); if (p) removePart(p); break; }
     case 'pp': { const p = partsByNid.get(e[1]); if (p) paintPart(p, e[2]); break; }
+    case 'pa': { const p = partsByNid.get(e[1]); if (p) p.anchored = !!e[2]; break; }
+    case 'pw': { const p = partsByNid.get(e[1]); if (p) weldJoin(p, e[2]); break; }
+    case 'pd': { const p = partsByNid.get(e[1]); if (p) { p.open = !!e[2]; p.body.collisionResponse = !p.open; partLook(p); } break; }
+    case 'pn': { const p = partsByNid.get(e[1]); if (p) { p.neon = !!e[2]; if (!p.neon) p.mesh.castShadow = true; partLook(p); } break; }
+    case 'night': setNight(!!e[1]); break;
     case 'psc': { const p = partsByNid.get(e[1]); if (p) { p.scripts = cleanScripts(e[2]); if (p.scripts) scripted.add(p); else scripted.delete(p); if (scEd.p === p) scEdSync(); } break; }
     case 'pv': { const p = partsByNid.get(e[1]); if (p) { p.hidden = !!e[2]; p.mesh.visible = !p.hidden; } break; }
     case 'bsay': { const p = partsByNid.get(e[1]); if (p) brickSay(p, String(e[2] || '').slice(0, 60)); break; }
@@ -6690,7 +7355,7 @@ function clientEvent(e) {
     }
     case 'chat': { if (e[1] === net.myHid) break; const h = humByHid(e[1]); if (h) h.say(e[2]); break; }
     case 'sys': sysChat(e[1]); break;
-    case 'ann': showBanner(String(e[1] || '')); break;
+    case 'ann': showBanner(String(e[1] || ''), e[2] ? 'MESSAGE' : undefined); break;
     case 'kill': { const h = who(e[1]); if (h) kill(h, e[2] ? who(e[2]) : null, true, true); break; }   // the host decided
     case 'boom': explodeFx(new V3(...e[1]), e[2]); break;
     case 'fx':
@@ -6715,7 +7380,7 @@ function clientSnapshot(m) {
     const h = humByHid(hid);
     if (!h || !h.netCtl) continue;
     (h.netPos || (h.netPos = new V3())).set(x, y, z);
-    h.faceYaw = yaw; h.aimHold = 1; h.move.set(fl & 1 ? 1 : 0, 0, 0); h.ff = fl & 8 ? 1 : 0;
+    h.faceYaw = yaw; h.aimHold = 1; h.move.set(fl & 1 ? 1 : 0, 0, 0); h.ff = fl & 8 ? 1 : 0; h.sitting = !!(fl & 16);
     npcHold(h, tl >= 0 ? HELD_TOOLS[tl] : null); h.netArm = arm;
     h.kos = kos; h.wos = wos;
     if (h.health !== hp) { h.health = hp; if (h.tag) h.drawTag(); }
@@ -6779,7 +7444,8 @@ function netTick(dt) {
     net.sendT -= dt; if (net.sendT > 0) return;
     net.sendT = 1 / 20;
     const P = player, tl = equipped && !equipped.hopper ? HELD_TOOLS.indexOf(equipped.id) : -1;
-    netSend({ t: 'me', p: arr3(P.pos), y: r3(P.yaw), m: P.move.lengthSq() > 0.01 ? 1 : 0, tl, ar: r2(toolAnim.arm) });
+    netSend({ t: 'me', p: arr3(P.pos), y: r3(P.yaw), m: P.move.lengthSq() > 0.01 ? 1 : 0, tl, ar: r2(toolAnim.arm), st: P.seat ? 1 : 0 });
+    if (P.drive) netSend({ t: 'drive', ...P.drive });   // (in a driver's seat: the server moves the car)
     if (dragging) netSend({ t: 'drag', g: [dragging, ...dragGroup.map(g => g.p)].map(dragRec) });
   }
 }
@@ -6807,6 +7473,7 @@ function netStop(reason, quiet = false) {
     if (p.netDrag) { p.netDrag = null; p.mode = p.anchored ? 'static' : 'dynamic'; }
     if (p !== dragging && p.mode === 'dynamic') setBodyMode(p, 'dynamic');
   }
+  for (const id of weldGroups.keys()) weldRelink(id);   // (and the welds are ours to hold again)
   net.myHid = 'H'; player.hid = 'H'; net.code = '';
   updateBadge();
   if (!quiet) netStatus(reason || 'Not connected.');
@@ -7110,9 +7777,10 @@ function findHum(q, who) {
 const names = (list) => list.map(h => h.name).join(', ');
 const PLAYER_ARG = () => ['me', 'all', 'others', ...humanoids.filter(h => h.enabled).map(h => h.name)];
 const WEARABLES = () => [...HATS, ...SHIRTS, ...PANTS, ...TSHIRTS, ...FACES].filter(i => i.id !== 'none' && (!i.admin || adminPriv));
-function showBanner(text) {
+// from = who it's from (the admin's /announce, or a brick's script)
+function showBanner(text, from = 'ANNOUNCEMENT FROM THE ADMIN') {
   if (!text) return;
-  $('annBanner').innerHTML = `<small>ANNOUNCEMENT FROM THE ADMIN</small>${escHtml(text)}`;
+  $('annBanner').innerHTML = `<small>${escHtml(from)}</small>${escHtml(text)}`;
   $('annBanner').classList.remove('hidden'); SFX.spawn();
   clearTimeout(showBanner.t); showBanner.t = setTimeout(() => $('annBanner').classList.add('hidden'), 6000);
 }
@@ -7430,6 +8098,7 @@ if (!HEADLESS) { pxSwap(); startUpdates(); signinStart(); }
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
   keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, pxUrl, BLUEPRINTS, makePart, BC, LOD, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
   get currentPlace() { return currentPlace; }, get currentFile() { return currentFile; }, loadPlaces, get dragging() { return dragging; },
+  saveBaseplate, saveRoomPlace, mpPlaceOptions, weldPicked, trySit, get night() { return night; },
   selection, hopperAct, undoRedo, openScriptEditor, closeScriptEditor, scEd, scThreads, fireScripts, setScripts, histOf, startDrag, stopDrag, insertPart, serialize, deserialize, get dragGroup() { return dragGroup; },
   pickAt(x, y) { mouseNDC.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); const h = pick(); return h && (h.object.userData.part ? 'part ' + h.object.userData.part.nid : h.object.userData.hum ? 'hum ' + h.object.userData.hum.name : 'other'); },
   tick(frames) { for (let i = 0; i < frames; i++) frame(last + 1000 / 60); } };
