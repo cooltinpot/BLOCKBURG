@@ -338,6 +338,8 @@
   .si-row{display:flex;gap:4px}
   .si-row .s-btn{font-size:16px;padding:0 9px}
   .si-hint{font-size:11px;color:#555;margin:-5px 0 9px;line-height:1.4}
+  .si-caps{font:bold 11px Verdana,Arial,sans-serif;color:#b00000;background:#fff3c4;border:1px solid #e0b400;padding:2px 5px;margin:-5px 0 8px}
+  .si-caps.hidden{display:none}
   .si-looks{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
   .si-look{border:1px solid #b9cbe4;background:#f6f9fd;padding:3px 0 2px;cursor:pointer;text-align:center;font:9px Verdana;color:#0b4a99;min-width:0}
   .si-look img{width:100%;max-width:40px;aspect-ratio:1;display:block;margin:0 auto;background:#fff}
@@ -562,6 +564,7 @@
         <div class="si-row"><input id="siName" name="username" maxlength="16" autocomplete="username" spellcheck="false"><button type="button" class="s-btn" id="siDice" title="Pick a random name"><i data-px="dice" data-size="18"></i></button></div>
         <label for="siPass">Password <span class="fm-sm">(optional)</span></label>
         <input id="siPass" name="password" type="password" maxlength="64" autocomplete="current-password">
+        <div class="si-caps hidden" id="siCaps">&#9888; Caps Lock is on! Capital letters make a different badge.</div>
         <div class="si-hint" id="siHint"></div>
         <label>Pick a look</label>
         <div class="si-looks" id="siLooks"></div>
@@ -6623,6 +6626,7 @@ const UPDATES = [
     'New T-shirt: POV: admins. You saw an admin, but you have no proof...',
     'Walking has the classic old footsteps sound now, looping the whole time you walk.',
     'More classic sounds: the sword\'s real slash and lunge, and a swoosh when you jump.',
+    'Signing in warns you when Caps Lock is on, since capital letters in your password make a different badge.',
     'Resizing is easier to start: Shift+click a brick even with an empty hand (you get the Grab tool), shift lock turns itself off so you can reach the blue balls, and the balls stay big enough to grab from far away.',
     'Resizing a brick now shows its size as you drag, like "7 wide × 1.2 tall × 2 long (+3)", with the side you\'re stretching in bold.',
     'New loading picture for sandbox games (Happy Home Baseplate, your saved places and baseplate rooms): a builder at work, made by cooltinpot!',
@@ -8390,6 +8394,11 @@ $('siDice').onclick = () => { $('siName').value = randomName(); siMsg(''); siPre
 $('siSkip').onclick = siSkip;
 $('siName').addEventListener('input', () => { siMsg(''); siPreviewSoon(); });
 $('siPass').addEventListener('input', siPreviewSoon);
+// a warning when Caps Lock is on while you type your password (capital letters make a different badge)
+const siCaps = (e) => { if (e.getModifierState) $('siCaps').classList.toggle('hidden', !e.getModifierState('CapsLock')); };
+for (const ev of ['keydown', 'keyup']) $('siPass').addEventListener(ev, siCaps);
+$('siPass').addEventListener('mousedown', siCaps);
+$('siPass').addEventListener('blur', () => $('siCaps').classList.add('hidden'));
 $('siLooks').addEventListener('click', (e) => {
   const t = e.target.closest('[data-look]');
   if (!t) return;
