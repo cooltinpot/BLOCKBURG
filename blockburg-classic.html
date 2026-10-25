@@ -4082,6 +4082,10 @@ function handPos() {
 let lastSword = 0;
 function useTool(e) {
   if (player.dead) return;
+  if (!equipped && e && e.shiftKey && TOOLS.some(t => t.id === 'grab' && toolOK(t))) {   // Shift+click with an empty hand: grab the Grab tool and pick it
+    const h0 = pick(), p0 = h0 && h0.object.userData.part;
+    if (p0 && !p0.locked) { equip(TOOLS.findIndex(t => t.id === 'grab')); shiftTap.used = true; toggleSelect(p0); return; }
+  }
   if (!equipped) { scriptClicked(); return; }   // (an empty hand clicks bricks that have a "When clicked" script)
   const id = equipped.id, now = time, C = net.mode === 'client';
   const hit = pick(dragging ? dragging.mesh : null);
@@ -4406,7 +4410,7 @@ const selMat = new THREE.LineBasicMaterial({ color: 0x00e5ff, depthTest: false }
 let boxSel = null;
 function toggleSelect(p) {
   if (selection.has(p)) { selection.delete(p); SFX.click(); }
-  else if (selection.size < SEL_MAX) { selection.add(p); playWavs(['ping'], 0.8); }   // (picked: ping!)
+  else if (selection.size < SEL_MAX) { selection.add(p); playWavs(['ping'], 0.8); if (selection.size === 1 && shiftLock) setShiftLock(false); }   // (picked: ping! and the mouse is freed to resize)
   else sysChat(`You can pick up to ${SEL_MAX} bricks at once.`);
   selHint();
 }
@@ -4499,7 +4503,9 @@ function updateHandles(show) {
     m.visible = !!p && rsAxes(p).includes(axis) && !(p.shape === 'cyl' && axis === 2);   // (a cylinder's two round sides are one size)
     if (!m.visible) continue;
     const half = halfOf(p)[axis];
-    m.position.copy(AXES[axis]).multiplyScalar(sign * (half + 0.9)).applyQuaternion(p.mesh.quaternion).add(p.mesh.position);
+    const big = Math.max(1, camera.position.distanceTo(p.mesh.position) * 0.045);   // (they grow with distance, so they're always easy to grab)
+    m.scale.setScalar(big);
+    m.position.copy(AXES[axis]).multiplyScalar(sign * (half + 0.5 + 0.45 * big)).applyQuaternion(p.mesh.quaternion).add(p.mesh.position);
   }
 }
 // the point along the handle's line closest to where the mouse points
@@ -6605,6 +6611,7 @@ const UPDATES = [
     '3 new hats in the Catalog: the Classic Fedora, a wobbly Stack of Books, and Cat Ears that are the same color as your head, like real ears (change your head color and they change too).',
     'Fixed: the Cat Ears face the front now, instead of being twisted sideways.',
     'Another new hat: the Builder Hard Hat (with a ridge over the top, a badge on the front and a peak over your eyes). Safety first on every baseplate!',
+    'Resizing is easier to start: Shift+click a brick even with an empty hand (you get the Grab tool), shift lock turns itself off so you can reach the blue balls, and the balls stay big enough to grab from far away.',
     'Resizing a brick now shows its size as you drag, like "7 wide × 1.2 tall × 2 long (+3)", with the side you\'re stretching in bold.',
     'New loading picture for sandbox games (Happy Home Baseplate, your saved places and baseplate rooms): a builder at work, made by cooltinpot!',
     'The admin can take the cape off now: /cape off (and /cape on to put it back). Everyone in the room sees it, and it stays that way next time.',
