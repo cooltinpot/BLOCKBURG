@@ -357,6 +357,9 @@
   .si-card{width:min(600px,100%)}
   .si-card .s-logo{text-align:center;font-size:min(13vw,60px);margin:0 0 14px}
   .si-card .s-logo small{color:#fff;text-shadow:1px 1px 0 #000,0 0 6px #000}
+  /* how many people are in BLOCKBURG right now (see WHO'S ONLINE) */
+  .si-online{text-align:center;color:#fff;font:bold 13px Verdana;text-shadow:1px 1px 0 #000,0 0 6px #000;margin:-6px 0 12px;min-height:16px}
+  .on-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#4fd14f;border:1px solid #1f6e10;margin-right:5px;vertical-align:0;box-shadow:0 0 5px #4fd14f}
   .si-card .box{background:#fff;margin:0;box-shadow:0 6px 30px rgba(0,0,0,.5)}
   .si-cols{display:grid;grid-template-columns:180px 1fr;gap:12px;align-items:start}
   #signin #avatarHolder canvas{width:178px !important;height:210px !important}
@@ -618,6 +621,7 @@
   <div id="siBg"></div>
   <div class="si-wrap"><div class="si-card">
     <div class="s-logo">BLOCKBURG<small>A Free Online Building Game</small></div>
+    <div class="si-online" id="siOnline"></div>
     <div class="box"><h3 id="siTitle">Welcome to BLOCKBURG!</h3><div class="in si-cols">
       <div class="si-pv"></div>
       <form class="si-f" id="siForm" autocomplete="on" onsubmit="return false">
@@ -640,7 +644,7 @@
 <div id="site"><div class="s-wrap">
   <div class="s-top">
     <div class="s-logo">BLOCKBURG<small>A Free Online Building Game</small></div>
-    <div class="s-user">Logged in as <b id="meName">Player</b><span class="badge hidden" id="meBadge"></span> <span class="fm-adm hidden" id="adminBadge" style="margin:0">Admin</span> &nbsp;|&nbsp; <i data-px="tix"></i> <b>25</b> Tix &nbsp;|&nbsp; <i data-px="bux"></i> <b>10</b> Bux<br><span id="onlineCount">5</span> people online &nbsp;|&nbsp; <span class="fm-link" data-signin="out">Logout</span></div>
+    <div class="s-user">Logged in as <b id="meName">Player</b><span class="badge hidden" id="meBadge"></span> <span class="fm-adm hidden" id="adminBadge" style="margin:0">Admin</span> &nbsp;|&nbsp; <i data-px="tix"></i> <b>25</b> Tix &nbsp;|&nbsp; <i data-px="bux"></i> <b>10</b> Bux<br><span id="onlineCount" style="display:none"></span><span class="fm-link" data-signin="out">Logout</span></div>
   </div>
   <div class="s-nav">
     <a data-page="home" class="on">My Blockburg</a><a data-page="games">Games</a><a data-page="catalog">Catalog</a><a data-page="character">Character</a><a data-page="build">Build</a><a data-page="online">Multiplayer</a><a data-page="inbox">Inbox<span id="inboxBadge" class="nbadge hidden"></span></a><a data-page="friends">Friends<span id="frBadge"></span></a><a data-page="forum">Forums</a><a data-page="settings">Settings</a><a data-page="help">Help</a>
@@ -6699,7 +6703,8 @@ const UPDATES = [
     'If a server room lags too much, it restarts itself with a fresh world and the same room code. Everyone gets a message saying what happened, with a Rejoin button.',
     'You also get sent out (with the reason and an error code) if your internet goes out, your ping stays really high, the server stops answering, your device can\'t keep up, or you leave the game in the background for over 5 minutes. A red warning shows up first, so you know it\'s coming.',
     'Every other way an online game can end has a name now too: room full, room not found, kicked by the admin, out-of-date game, server restarting, and more.',
-    'Your ping shows next to the room code at the top of the screen (green is good, yellow is OK, red is laggy).' ] },
+    'Your ping shows next to the room code at the top of the screen (green is good, yellow is OK, red is laggy).',
+    'The "people online" count at the top of the website is real now! The front page and the sign-in screen also say how many people are in BLOCKBURG right now.' ] },
   { date: '10/26/2026', ver: '3.1', top: 'Halloween countdown: the pumpkins leave soon!', text: [
     'The Pumpkin King set and its pieces (Screaming Pumpkin hat, PUMPKIN face, I Saw The Knife T-shirt, Harvest Hoodie and Pumpkin Patch Overalls) are Halloween-only. They leave the Catalog when October 31st is over, so grab them now! If you are wearing one when they go, you keep it.',
     'Every update in this log has a build number now, and the newest one is in red. Big updates get a new whole number (3.0), normal updates add a tenth (3.1), and bug fixes add a third number (3.1.1).',
@@ -7045,6 +7050,64 @@ $('fmBody').addEventListener('click', async (e) => {
   forum.view = fm === 'boards' ? { v: 'boards' } : { v: fm, id };
   forumRender(); $('site').scrollTop = 0;
 });
+
+/* ================= WHO'S ONLINE =================
+   "7 people in BLOCKBURG right now": every open BLOCKBURG page checks in on the free message servers
+   (RELAY_BROKERS) every 30 seconds with a random id and what it's doing (on the website, playing, or in an
+   online room). No names. Each page counts the check-ins it heard lately. Closing the page (or the internet
+   dropping) clears its check-in, and old ones stop counting after a bit anyway. */
+const ONLINE_PREFIX = 'blockburg-online-v1/';
+const ONLINE_EVERY = 30000, ONLINE_STALE = 75000;
+const ON = { id: Array.from({ length: 10 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[(Math.random() * 32) | 0]).join(''), clients: [], seen: new Map() };
+const onTopic = () => ONLINE_PREFIX + ON.id;
+const onMyState = () => (inRoom() ? 'room' : started ? 'play' : 'site');
+async function onlineStart() {
+  try { await loadMqtt(); } catch { return; }
+  await Promise.all(RELAY_BROKERS.map(async (url) => {
+    try {
+      // the tab closes or the internet drops: the server clears my check-in
+      const c = await relayConnect(url, { will: { topic: onTopic(), payload: '', retain: true, qos: 0 } });
+      c.on('message', onlineHeard);
+      c.on('connect', () => onlineBeat());   // (back after a reconnect)
+      c.subscribe(ONLINE_PREFIX + '+', { qos: 0 });
+      ON.clients.push(c);
+    } catch { }
+  }));
+  if (!ON.clients.length) return;
+  onlineBeat(); setInterval(onlineBeat, ONLINE_EVERY); setInterval(onlineRender, 5000);
+  addEventListener('pagehide', () => ON.clients.forEach(c => c.publish(onTopic(), '', { retain: true, qos: 0 })));
+  addEventListener('pageshow', (e) => { if (e.persisted) onlineBeat(); });   // (back from the phone's back button)
+}
+// "I'm here": kept (retained) on the server, so pages that open later count me straight away
+function onlineBeat() {
+  const msg = JSON.stringify({ ts: Date.now(), st: onMyState() });
+  ON.clients.forEach(c => { if (c.connected) c.publish(onTopic(), msg, { retain: true, qos: 0 }); });
+  onlineRender();
+}
+function onlineHeard(topic, payload, packet) {
+  const id = topic.slice(ONLINE_PREFIX.length);
+  if (!/^[A-Z0-9]{10}$/.test(id) || id === ON.id) return;
+  const s = new TextDecoder().decode(payload);
+  if (!s) { ON.seen.delete(id); onlineRender(); return; }   // they left
+  let o; try { o = JSON.parse(s); } catch { return; }
+  // a kept check-in could be left over from a page that closed without saying so: only a recent one counts
+  if (packet && packet.retain && !(Math.abs(Date.now() - (+o.ts || 0)) < ONLINE_STALE)) return;
+  ON.seen.set(id, { st: o.st === 'room' || o.st === 'play' ? o.st : 'site', got: Date.now() });
+  clearTimeout(onlineHeard.t); onlineHeard.t = setTimeout(onlineRender, 300);   // (a burst of check-ins: count once)
+}
+function onlineRender() {
+  if (HEADLESS) return;
+  const hi = $('onlineHi'), head = $('onlineCount'), si = $('siOnline');
+  if (!ON.clients.length) { if (hi) hi.textContent = ''; head.style.display = 'none'; si.textContent = ''; return; }   // (couldn't count: say nothing)
+  const now = Date.now();
+  for (const [id, v] of ON.seen) if (now - v.got > ONLINE_STALE) ON.seen.delete(id);
+  const all = [...ON.seen.values(), { st: onMyState() }];   // (and me)
+  const n = all.length, inRooms = all.filter(v => v.st === 'room').length, people = n === 1 ? '1 person' : `${n} people`;
+  head.innerHTML = `<span class="on-dot"></span>${people} online &nbsp;|&nbsp; `; head.style.display = '';
+  if (hi) hi.textContent = n === 1 ? "You're the only one in BLOCKBURG right now. Invite a friend! "
+    : `There are ${n} people in BLOCKBURG right now${inRooms ? ` (${inRooms} playing online)` : ''}! `;
+  si.innerHTML = `<span class="on-dot"></span>${n === 1 ? 'Just you in BLOCKBURG right now' : `${people} in BLOCKBURG right now`}`;
+}
 
 /* ================= FRIENDS =================
    Each browser gets a friend code. Requests, accepts and "who's online" go through the same free
@@ -8525,7 +8588,8 @@ function updateMe() {
     ? `Your badge: <span class="badge">#${me.badge}</span> &middot; <span class="fm-link" id="copyIdBtn" title="Safe to share: it can check your badge but can't make it">copy my public ID</span>`
     : `<span class="fm-link" data-signin>Add a password</span> to get a badge.`;
   $('meIdLine').insertAdjacentHTML('beforeend', `<br>Not ${n}? <span class="fm-link" data-signin="out">Sign out</span>`);
-  $('loading').textContent = `Welcome back, ${n}! Pick a game from the Games tab, or hit Play Solo.`;
+  $('loading').innerHTML = `Welcome back, ${escHtml(n)}! <span id="onlineHi"></span>Pick a game from the Games tab, or hit Play Solo.`;
+  setTimeout(onlineRender);   // (fills in onlineHi)
   renderLB(); forumRender();
 }
 $('meIdLine').addEventListener('click', (e) => {
@@ -9002,7 +9066,7 @@ if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); unloadWorld(); re
 refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
-if (!HEADLESS) { pxSwap(); startUpdates(); signinStart(); }
+if (!HEADLESS) { pxSwap(); startUpdates(); signinStart(); onlineStart(); }
 // start-up is done: fill the bar and fade the start-up screen away
 {
   const boot = $('bootScreen');
