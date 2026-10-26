@@ -8,6 +8,20 @@ const PLACES = ['classic', 'baseplate', 'redblue'];
 // each running room's game uses about a fifth of a CPU core; past this many, new games wait for one to close
 const MAX_ROOMS = Number(process.env.MAX_ROOMS) || 4;
 
+/* The lag watch. Once a second each room checks how its game and its brick physics are keeping up.
+   A room that stays too slow (or keeps crashing) sends everyone out with the reason, then restarts
+   itself with a fresh world and the same code, so they can rejoin. When the whole server is slow,
+   only the room doing the most work restarts (and then the others get a moment to recover). */
+const LAG = {
+  minFps: 20,         // the game normally runs 60 frames a second
+  minSteps: 25,       // the brick physics normally steps 60 times a second
+  badFor: 8,          // seconds in a row that slow before restarting
+  maxErrors: 60,      // game errors in 10 seconds before it counts as crashed
+  calm: 15000,        // after any room restarts, the others wait this long before restarting too
+};
+const rooms = new Set();
+let lastRestart = 0;
+
 async function freeCode() {
   for (let i = 0; i < 50; i++) {
     const code = Array.from({ length: 4 }, () => CODE_CHARS[(Math.random() * CODE_CHARS.length) | 0]).join('');
@@ -33,22 +47,76 @@ export class BlockburgRoom extends Room {
   async onCreate(options) {
     if ((await matchMaker.query({ name: 'blockburg' })).length >= MAX_ROOMS) throw new Error('The server is full right now. Join a friend\'s room with their code, or try again later.');
     this.roomId = await freeCode();
-    const place = PLACES.includes(options.place) ? options.place : 'classic';
-    await this.setMetadata({ place });
-    this.bricks = new BrickWorld();
+    this.place = PLACES.includes(options.place) ? options.place : 'classic';
+    await this.setMetadata({ place: this.place });
+    await this.boot();
 
-    // boot the game and make it this room's host
-    this.game = await loadGame();
-    this.host = this.makeHostLink();
-    this.game.g.serverHost(this.host.room, place);
-
-    this.onMessage('toHost', (client, m) => this.toHost({ from: client.sessionId, m }));
+    this.onMessage('toHost', (client, m) => { if (!this.restarting) this.toHost({ from: client.sessionId, m }); });
     // a player who just got the welcome: the game's copy of the bricks can be a moment behind, so here's where every brick really is
     this.onMessage('bricks', (client) => client.send('w', { t: 'bs', p: this.bricks.all() }));
 
     // physics 60 times a second, brick positions out to everyone 15 times a second
-    this.setSimulationInterval((dt) => this.bricks.step(dt / 1000, this.clock.currentTime), 1000 / 60);
-    this.clock.setInterval(() => this.sendBricks(), 1000 / 15);
+    this.setSimulationInterval((dt) => {
+      if (this.restarting) return;
+      const t0 = performance.now();
+      try { this.bricks.step(dt / 1000, this.clock.currentTime); } catch (e) { this.errors++; this.lastError = String(e?.message || e).slice(0, 120); }
+      this.steps++; this.busy += performance.now() - t0;
+    }, 1000 / 60);
+    this.clock.setInterval(() => { if (!this.restarting) this.sendBricks(); }, 1000 / 15);
+    this.clock.setInterval(() => this.lagWatch(), 1000);
+    rooms.add(this);
+  }
+
+  // a fresh world: a new brick world, and a new copy of the game as its host
+  async boot() {
+    this.bricks = new BrickWorld();
+    this.game = await loadGame();
+    this.host = this.makeHostLink();
+    this.game.g.serverHost(this.host.room, this.place);
+    Object.assign(this, { steps: 0, busy: 0, errors: 0, lastError: '', slowFor: 0, errLog: [], seen: { at: performance.now(), frames: 0, busy: 0, errors: 0 } });
+  }
+
+  // once a second: is this room keeping up?
+  lagWatch() {
+    if (this.restarting || !this.game) return;
+    const now = performance.now(), p = this.game.perf, s = this.seen, secs = Math.max(0.25, (now - s.at) / 1000);
+    const fps = (p.frames - s.frames) / secs, steps = this.steps / secs;
+    this.work = (p.busy - s.busy + this.busy) / secs;   // ms of work each second (1000 = a whole CPU core)
+    const errors = p.errors - s.errors + this.errors;
+    Object.assign(s, { at: now, frames: p.frames, busy: p.busy, errors: p.errors }); this.steps = 0; this.busy = 0; this.errors = 0;
+    // crashing: lots of errors over the last 10 seconds
+    this.errLog.push(errors); if (this.errLog.length > 10) this.errLog.shift();
+    if (this.errLog.reduce((a, b) => a + b, 0) >= LAG.maxErrors) return this.restart('crash', `error: ${p.lastError || this.lastError || 'unknown'}`);
+    // lagging
+    const slow = fps < LAG.minFps || steps < LAG.minSteps;
+    this.slowFor = slow ? this.slowFor + secs : 0;
+    this.lagNote = `${Math.round(fps)} game frames and ${Math.round(steps)} physics steps a second, instead of 60`;
+    if (this.slowFor < LAG.badFor || Date.now() - lastRestart < LAG.calm) return;
+    // the whole server can be slow because of one room: only the busiest slow room restarts
+    const worst = [...rooms].filter(r => !r.restarting && r.slowFor >= LAG.badFor).sort((a, b) => (b.work || 0) - (a.work || 0))[0];
+    if (worst === this) this.restart('serverlag', this.lagNote);
+  }
+
+  // send everyone out (saying why), then start the room over: same code, fresh world
+  async restart(why, detail) {
+    if (this.restarting) return;
+    this.restarting = true; lastRestart = Date.now();
+    console.warn(`BLOCKBURG room ${this.roomId}: restarting (${why}: ${detail})`);
+    this.autoDispose = false;   // (stay open while it's empty, so everyone can rejoin with the same code)
+    await this.lock();
+    for (const c of [...this.clients]) {
+      c.send('m', { t: 'kicked', why, detail, code: this.roomId });
+      c.leave(4000);
+    }
+    try { this.game?.stop(); } catch { }
+    try { await this.boot(); } catch (e) {
+      console.warn(`BLOCKBURG room ${this.roomId}: couldn't restart`, e);
+      this.restarting = false; this.disconnect(); return;
+    }
+    this.restarting = false;
+    await this.unlock();
+    this.autoDispose = true;
+    this.resetAutoDisposeTimeout(60);   // nobody back in a minute: then it closes like any empty room
   }
 
   // what the game sees as its room: the same send / onMessage a browser's Colyseus room has
@@ -63,7 +131,7 @@ export class BlockburgRoom extends Room {
       send: (type, msg) => this.fromHost(type, msg),
     };
     const deliver = (type, msg) => {
-      try { handlers[type]?.(msg); } catch (e) { console.warn('BLOCKBURG game error:', e); }
+      try { handlers[type]?.(msg); } catch (e) { this.errors++; this.lastError = String(e?.message || e).slice(0, 120); console.warn('BLOCKBURG game error:', e); }
     };
     return { room, deliver };
   }
@@ -123,11 +191,12 @@ export class BlockburgRoom extends Room {
   }
 
   onLeave(client) {
-    this.toHost({ from: client.sessionId, m: { t: 'bye' } });
+    if (!this.restarting) this.toHost({ from: client.sessionId, m: { t: 'bye' } });
   }
 
   // the last player left (Colyseus closes empty rooms by itself): stop this room's game
   onDispose() {
+    rooms.delete(this);
     this.game?.stop();
   }
 }

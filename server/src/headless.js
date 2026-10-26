@@ -50,7 +50,14 @@ function fake2d(canvas) {
 export async function loadGame() {
   const window = startGame();
   let stopped = false;
-  window.requestAnimationFrame = (cb) => setTimeout(() => { if (!stopped) cb(performance.now()); }, 1000 / 60);
+  // how it's doing, for the room's lag watch: frames run, time spent running them, and frames that threw an error
+  const perf = { frames: 0, busy: 0, errors: 0, lastError: '' };
+  window.requestAnimationFrame = (cb) => setTimeout(() => {
+    if (stopped) return;
+    const t0 = performance.now();
+    try { cb(t0); } catch (e) { perf.errors++; perf.lastError = String((e && e.message) || e).slice(0, 120); }
+    perf.frames++; perf.busy += performance.now() - t0;
+  }, 1000 / 60);
   for (let waited = 0; !window.__g; waited += 50) {
     if (window.__bootError) throw window.__bootError;
     if (waited > 15000) throw new Error('The game took too long to start');
@@ -59,6 +66,7 @@ export async function loadGame() {
   return {
     g: window.__g,
     window,
+    perf,
     stop() { stopped = true; window.happyDOM.abort().catch(() => { }); window.close(); },
   };
 }

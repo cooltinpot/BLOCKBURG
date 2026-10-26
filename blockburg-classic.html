@@ -332,6 +332,19 @@
   /* the start-up screen: covers the page from the moment it opens until the game engine is ready */
   #bootScreen{position:fixed;inset:0;z-index:9000;background:#fff;display:grid;place-items:center;font-family:Verdana,Arial,sans-serif;transition:opacity .4s}
   #bootScreen.out{opacity:0;pointer-events:none}
+  /* sent out of an online game: what happened (a name for it, like "Your internet went out"), and a way back in */
+  #kickScreen{position:fixed;inset:0;z-index:58;background:rgba(10,25,50,.55);display:grid;place-items:center;font:12px Verdana,Arial,sans-serif}
+  #kickScreen.hidden{display:none}
+  #kickScreen .box{width:min(420px,calc(100vw - 32px));background:#fff;box-shadow:0 6px 30px rgba(0,0,0,.5);margin:0}
+  #kickScreen .in{text-align:center;padding:16px 14px 14px}
+  #ksWhat{display:block;font:bold 17px Verdana;color:#c4281c;margin:8px 0 6px}
+  #ksWhy{margin:0 0 8px;line-height:1.45;color:#222}
+  #ksCode{font-size:10px;color:#888;margin-bottom:12px}
+  #kickScreen .s-btn{margin:2px}
+  /* the connection's going bad: a warning at the top of the screen before it kicks you */
+  #lagWarn{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:23;background:#c4281c;color:#fff;font:bold 12px Verdana,Arial,sans-serif;
+    padding:5px 12px;border:2px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.4);max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;pointer-events:none}
+  #lagWarn.hidden{display:none}
   /* ---------- sign in: the old website's login box over screenshots of the game ---------- */
   #signin{position:fixed;inset:0;z-index:60;overflow:auto;background:#5a9ee0;font:12px Verdana,Arial,sans-serif;color:#000}
   #signin.hidden{display:none}
@@ -588,6 +601,16 @@
   <div class="ld-tip" id="ldTip"></div>
 </div></div>
 
+<!-- sent out of an online game (see netKick) -->
+<div id="kickScreen" class="hidden"><div class="box"><h3 id="ksTitle">Disconnected</h3><div class="in">
+  <span id="ksIcon"></span>
+  <b id="ksWhat"></b>
+  <p id="ksWhy"></p>
+  <div id="ksCode"></div>
+  <button class="s-btn go" id="ksRejoin">Rejoin</button> <button class="s-btn" id="ksOk">OK</button>
+</div></div></div>
+<div id="lagWarn" class="hidden"></div>
+
 <div id="invToast" class="hidden"><span id="invText"></span>
   <button class="s-btn go" id="invJoin">Join</button> <button class="s-btn" id="invNo">No thanks</button></div>
 
@@ -807,7 +830,7 @@ import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cann
 // no screen, no sound, no local player, just the world, the tools, the damage and the Guests
 const HEADLESS = !!globalThis.__BLOCKBURG_HEADLESS__;
 const net = { mode: null, nextNid: 1, nextPid: 1, q: [], conns: new Map(), room: null, conn: null, myHid: 'H', code: '',
-  props: new Map(), xfTargets: new Set(), pendingClone: null, sendT: 0, snapT: 0 };
+  props: new Map(), xfTargets: new Set(), pendingClone: null, sendT: 0, snapT: 0, frames: 0, ping: 0 };
 const partsByNid = new Map();
 const netEv = (e) => { if (net.mode === 'host') net.q.push(e); };
 // brick physics news for the server (it runs the bricks; the host tells it what the game did to them)
@@ -6273,6 +6296,7 @@ function playerInput(dt) {
 
 function loop(now) {
   requestAnimationFrame(loop);
+  net.frames++;   // (the online watchdog checks this device keeps up)
   frame(now);
 }
 function frame(now) {
@@ -6671,6 +6695,11 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '10/26/2026', ver: '3.2', top: 'No more frozen games online', text: [
+    'If a server room lags too much, it restarts itself with a fresh world and the same room code. Everyone gets a message saying what happened, with a Rejoin button.',
+    'You also get sent out (with the reason and an error code) if your internet goes out, your ping stays really high, the server stops answering, your device can\'t keep up, or you leave the game in the background for over 5 minutes. A red warning shows up first, so you know it\'s coming.',
+    'Every other way an online game can end has a name now too: room full, room not found, kicked by the admin, out-of-date game, server restarting, and more.',
+    'Your ping shows next to the room code at the top of the screen (green is good, yellow is OK, red is laggy).' ] },
   { date: '10/26/2026', ver: '3.1', top: 'Halloween countdown: the pumpkins leave soon!', text: [
     'The Pumpkin King set and its pieces (Screaming Pumpkin hat, PUMPKIN face, I Saw The Knife T-shirt, Harvest Hoodie and Pumpkin Patch Overalls) are Halloween-only. They leave the Catalog when October 31st is over, so grab them now! If you are wearing one when they go, you keep it.',
     'Every update in this log has a build number now, and the newest one is in red. Big updates get a new whole number (3.0), normal updates add a tenth (3.1), and bug fixes add a third number (3.1.1).',
@@ -7634,7 +7663,8 @@ function updateBadge() {
   const b = $('netBadge');
   if (!net.mode) { b.classList.add('hidden'); return; }
   const n = humanoids.filter(h => h.enabled && !h.ai).length;
-  b.innerHTML = `${pxIcon('globe', 12)} Room ${net.code} · ${n} player${n === 1 ? '' : 's'}`;
+  const ms = net.mode === 'client' && net.ping ? ` · <span style="color:${net.ping > 600 ? '#ff6b5e' : net.ping > 250 ? '#f5c518' : '#8be07a'}">${net.ping} ms</span>` : '';
+  b.innerHTML = `${pxIcon('globe', 12)} Room ${net.code} · ${n} player${n === 1 ? '' : 's'}${ms}`;
   b.classList.remove('hidden');
 }
 function netSend(msg) { if (net.conn && net.conn.open) net.conn.send(msg); }
@@ -7674,15 +7704,18 @@ function relayConnect(url, opts = {}) {
 // start a new room (how = 'create') or join one by its code; gives back the room, or null after saying why
 async function openRoom(how, code) {
   let client;
-  try { client = await loadColyseus(); } catch { netStatus("Couldn't load the multiplayer library. Are you online?"); return null; }
+  net.lastTry = { how, code };   // (what the Rejoin / Try again button does)
+  if (!navigator.onLine) { netKick('offline', { code }); return null; }
+  try { client = await loadColyseus(); } catch { netKick('nolib'); return null; }
   try {
     return how === 'create' ? await client.create('blockburg', { place: net.place }) : await client.joinById(code);
   } catch (e) {
     const why = String((e && e.message) || e);
-    if (how === 'join' && /not found|invalid/i.test(why)) netStatus(`There's no room ${code}. Check the code. (A room closes when everyone has left it.)`);
-    else if (how === 'join' && /full|locked/i.test(why)) netStatus('That room is full (8 players).');
-    else if (how === 'create' && /server is full/i.test(why)) netStatus(why);
-    else netStatus(`Couldn't reach the BLOCKBURG server (${SERVER_URL}). Is it running?`);
+    if (!navigator.onLine) netKick('offline', { code });
+    else if (how === 'join' && /not found|invalid/i.test(why)) netKick('notfound', { code });
+    else if (how === 'join' && /full|locked/i.test(why)) netKick('full', { code });   // (locked: also while it restarts)
+    else if (how === 'create' && /server is full/i.test(why)) netKick('serverfull');
+    else netKick('noserver', { url: SERVER_URL });
     return null;
   }
 }
@@ -7731,10 +7764,10 @@ function hostMessage(from, m) {
   try { hostHandle(entry.h, entry.conn, m); } catch (e) { console.warn('Blockburg: bad message', e); }
 }
 function hostHello(conn, msg) {
-  const no = (why) => { netSendTo(conn, { t: 'reject', why }); setTimeout(() => conn.close(), 500); };
-  if (net.mode !== 'host') return no('That game is not running anymore.');
-  if (msg.v !== NET_VERSION) return no('That room is running a different version of Blockburg. Make sure everyone has the same game file.');
-  if (net.conns.size >= 8) return no('That room is full (8 players).');
+  const no = (why, k) => { netSendTo(conn, { t: 'reject', why, k }); setTimeout(() => conn.close(), 500); };
+  if (net.mode !== 'host') return no('That game is not running anymore.', 'closed');
+  if (msg.v !== NET_VERSION) return no('That room is running a different version of Blockburg. Make sure everyone has the same game file.', 'version');
+  if (net.conns.size >= 8) return no('That room is full (8 players).', 'full');
   const L = msg.look && msg.look.colors ? msg.look : { colors: normColors(NOOB), hat: 'none', shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none' };
   const name = String(msg.name || 'Player').replace(/[^\w \-]/g, '').slice(0, 16) || 'Player';
   const h = new Humanoid({ name, colors: L.colors, chatColor: '#ffd27f', hid: conn.peer });
@@ -7944,18 +7977,28 @@ async function enterRoom(room, code, mine) {
   net.conn = { open: true,
     send(msg) { if (this.open) room.send('toHost', msg); },
     close() { if (!this.open) return; this.open = false; if (room.connection.isOpen) room.leave(); } };
+  // (the server doesn't keep a seat for anyone who drops, so don't spend a minute trying to get it back: say what happened)
+  room.reconnection.enabled = false;
+  watchStart(room);
   room.onMessage('m', (m) => {
     if (!m || net.room !== room) return;
-    if (m.t === 'closed') { clientLost('The game closed.'); return; }
+    netHeard(m);
+    if (m.t === 'closed') { netKick('closed'); return; }
+    // the server is about to send me out, and says why (it restarted the room because it was lagging, say)
+    if (m.t === 'kicked') { net.kickWhy = m; setTimeout(() => { if (net.room === room) netKick(m.why, m); }, 1500); return; }
     // until we're welcomed, ignore the updates being sent to everyone else
     if (net.mode !== 'client' && m.t !== 'welcome' && m.t !== 'reject') return;
-    try { clientHandle(m); } catch (e) { console.warn('Blockburg: bad message', e); }
+    try { clientHandle(m); } catch (e) { console.warn('Blockburg: bad message', e); if (net.wd) net.wd.errs++; }
   });
-  room.onMessage('w', (m) => { if (m && net.room === room && net.mode === 'client') worldMsg(m); });
-  room.onLeave(() => {
+  room.onMessage('w', (m) => { if (m && net.room === room) { netHeard(m); if (net.mode === 'client') worldMsg(m); } });
+  room.onLeave((cc) => {
     if (net.room !== room) return;
-    if (net.mode === 'client') clientLost('Lost the connection to the game.');
-    else netStop(`Couldn't get into room ${code}.`);
+    const k = net.kickWhy;
+    if (k) netKick(k.why, k);
+    else if (!navigator.onLine) netKick('offline');
+    else if (cc === 4001) netKick('shutdown');   // (Colyseus: the whole server is shutting down)
+    else if (net.mode === 'client') netKick('dropped', { cc });
+    else netKick('noanswer');
   });
   loadStep(40, 'Downloading the world', 70);
   // the admin proves it's them by signing the room code and their name
@@ -7964,13 +8007,13 @@ async function enterRoom(room, code, mine) {
   if (net.room !== room) return;
   net.conn.send(helloMsg());
   setTimeout(() => {
-    if (net.room === room && net.mode !== 'client') netStop(`Room ${code} didn't answer. Try again in a moment.`);
-  }, 10000);
+    if (net.room === room && net.mode !== 'client') netKick('noanswer');
+  }, 20000);   // (the welcome carries the whole world: on a slow connection that takes a while)
 }
 function clientHandle(m) {
   if (net.debug) (net.log || (net.log = [])).push(m.t === 'ev' ? 'ev:' + m.e.map(e => e[0]).join(',') : m.t);
   switch (m.t) {
-    case 'reject': netStatus(m.why); netStop(null, true); break;
+    case 'reject': netKick(KICKS[m.k] ? m.k : 'rejected', { text: m.why }); break;   // turned away (or the admin kicked me)
     case 'welcome': clientEnter(m); break;
     case 'ev': for (const e of m.e) clientEvent(e); break;
     case 's': clientSnapshot(m); break;
@@ -8016,6 +8059,7 @@ function clientEnter(m) {
   siteOpen = false; started = true; $('site').classList.add('hidden');
   player.spawn();
   net.joining = null;
+  if (net.wd) { net.wd.last = performance.now(); net.wd.frames = net.frames; }   // (the watchdog starts counting from here)
   sysChat(net.mine ? `Your game is ready! The room code is ${m.code}. Give it to your friends. Press 1-0 for tools, Esc for the menu.`
     : `You joined room ${m.code}! Press 1-0 for tools, Esc for the menu.`);
   netStatus(`Connected to room ${m.code}.`);
@@ -8146,12 +8190,135 @@ function netLerpParts(dt) {
     if (pr.q) { _qb.set(...pr.q); pr.mesh.quaternion.slerp(_qb, k); }
   }
 }
-function clientLost(reason) {
-  if (net.mode !== 'client') return;
-  netStop(reason);
+
+/* ---- getting sent out: lag, the internet going out, the server restarting... ----
+   Every way an online game can end has a name, and a screen that says what happened and how to get back in.
+   While you're in a room, the watchdog checks the connection every second, and warns you before it kicks you. */
+const KICKS = {
+  // kind: [error code, what happened, why and what to do]   ({code}, {ms}... get filled in)
+  offline: [277, 'Your internet went out', 'Your device lost its internet connection, so you were taken out of the game. Check your Wi-Fi or mobile data, then rejoin.'],
+  lag: [278, 'Your connection is too laggy', 'Your ping was {ms} ms for too long (good is under 250), so the game sent you out before everyone saw you teleporting around. Get closer to your Wi-Fi, or stop any downloads and videos, then rejoin.'],
+  timeout: [279, 'The server stopped responding', 'Nothing came from the BLOCKBURG server for {s} seconds. Your connection froze, or the server is having trouble. Rejoin in a moment.'],
+  serverlag: [280, 'The server was lagging, so it restarted', 'Room {code} got way too laggy ({detail}), so the server restarted it with a fresh world. Everyone in it was sent out too. Rejoin with the same code!'],
+  crash: [281, "The room's game crashed", 'Something broke inside room {code} ({detail}), so the server restarted it. Rejoin with the same code!'],
+  slowserver: [282, 'The server is lagging too much', 'Room {code} was only sending {n} updates a second (it should be 15), so the game took you out. Rejoin in a moment, or host a new game.'],
+  device: [283, 'Your device is lagging too much', 'BLOCKBURG was only running at {fps} frames a second here, too slow to keep up with the room. Close other tabs and apps, then rejoin.'],
+  away: [284, 'You were away too long', 'The game was in the background for {min} minutes, so you were taken out of room {code}. Rejoin to keep playing.'],
+  dropped: [285, 'Lost the connection to the server', 'The connection to room {code} broke (close code {cc}). Rejoin to keep playing.'],
+  shutdown: [286, 'The server is restarting', 'The whole BLOCKBURG server is restarting, probably for an update. Wait a minute, then try again.'],
+  closed: [287, 'The room closed', "Room {code} isn't running anymore. Host a new game, or join another one."],
+  admin: [288, 'You were kicked by the admin', 'The admin sent you out of room {code}.'],
+  version: [289, 'Your game is out of date', 'Room {code} is running a different version of BLOCKBURG. Refresh the page to get the newest one.'],
+  full: [290, 'The room is full', 'Room {code} has 8 players already (or it is restarting). Wait a moment, or host your own game.'],
+  notfound: [291, "That room doesn't exist", "There's no room {code}. Check the code. (A room closes when everyone has left it.)"],
+  serverfull: [292, 'The server is full', "Every game on the server is taken right now. Join a friend's room with their code, or try again later."],
+  noserver: [293, "Couldn't reach the server", "Couldn't connect to the BLOCKBURG server ({url}). Check your internet. The server might also be down for a moment."],
+  nolib: [294, "Couldn't load multiplayer", "The multiplayer part of the game didn't download. Are you online?"],
+  noanswer: [295, "The room didn't answer", "Room {code} didn't answer in time. It might be busy, or restarting. Try again in a moment."],
+  error: [296, 'Something went wrong', 'Room {code} kept sending things this copy of the game could not understand, so it left to keep you safe. Rejoin, or refresh the page if it keeps happening.'],
+  rejected: [297, "Couldn't join", '{text}'],
+};
+function netKick(kind, info = {}) {
+  if (HEADLESS) return;
+  const K = KICKS[kind] || KICKS.dropped;
+  const was = net.mode === 'client', code = info.code || net.code || (net.lastTry && net.lastTry.code) || '';
+  const vals = { code, ...info };
+  console.warn(`BLOCKBURG: sent out (${kind}, Error Code ${K[0]})`, info);
+  netStop(K[1], true);
   if (started) leaveGame();
-  showPage('online');
+  showPage('online'); netStatus(`${K[1]}. (Error Code: ${K[0]})`);
+  $('ksTitle').textContent = was ? 'Disconnected' : "Couldn't connect";
+  $('ksIcon').innerHTML = pxIcon(kind === 'offline' || kind === 'noserver' || kind === 'nolib' ? 'globe' : kind === 'away' || kind === 'timeout' ? 'clock' : 'stop', 40);
+  $('ksWhat').textContent = K[1];
+  $('ksWhy').innerHTML = escHtml(K[2]).replace(/\{(\w+)\}/g, (_, k) => escHtml(String(vals[k] ?? '?')));
+  $('ksCode').textContent = `(Error Code: ${K[0]})`;
+  // the green button: back into the same room, or try the same thing again
+  const t = net.lastTry, rb = $('ksRejoin');
+  const again = kind === 'version' ? 'refresh' : kind === 'admin' || kind === 'notfound' || kind === 'closed' || !t ? null
+    : t.how === 'join' || (code && was) ? 'join' : 'host';
+  rb.classList.toggle('hidden', !again);
+  rb.textContent = again === 'refresh' ? 'Refresh' : again === 'join' ? (was ? `Rejoin ${code}` : 'Try again') : 'Try again';
+  rb.onclick = () => {
+    $('kickScreen').classList.add('hidden');
+    if (again === 'refresh') location.reload();
+    else if (again === 'join') { $('mpCode').value = code; joinGame(); }
+    else hostGame();
+  };
+  $('kickScreen').classList.remove('hidden');
 }
+$('ksOk').onclick = () => $('kickScreen').classList.add('hidden');
+
+const WD = {
+  pingEvery: 2, pingBad: 1000, pingBadFor: 12,   // ping over a second for 12 seconds: kicked
+  quietWarn: 4, quietKick: 20,                   // nothing from the server (it sends 15 updates a second)
+  slowSnaps: 3, slowFor: 15,                     // the server sending under 3 updates a second
+  fpsBad: 5, fpsBadFor: 30,                      // this device under 5 frames a second
+  offlineFor: 3, awayMax: 5 * 60, errMax: 30,
+};
+function watchStart(room) {
+  watchStop();
+  net.wd = { room, at: performance.now(), last: performance.now(), frames: net.frames, pingAt: 0, pings: [], badPing: 0, badFps: 0,
+    slow: 0, snaps: 0, errs: 0, off: 0, hidAt: 0 };
+  net.wdT = setInterval(watchTick, 1000);
+}
+function watchStop() { clearInterval(net.wdT); net.wd = null; $('lagWarn').classList.add('hidden'); }
+// something arrived from the room: it's alive
+function netHeard(m) { const w = net.wd; if (w) { w.last = performance.now(); if (m.t === 's') w.snaps++; } }
+function lagWarn(text) { const el = $('lagWarn'); el.classList.toggle('hidden', !text); if (text) el.textContent = text; }
+function watchTick() {
+  const w = net.wd;
+  if (!w || net.room !== w.room) return watchStop();
+  const now = performance.now(), dt = Math.max(0.2, (now - w.at) / 1000); w.at = now;
+  const code = net.code;
+  // in the background (another tab, the phone locked): timers run late and nothing draws, so only count how long
+  if (document.hidden) {
+    w.hidAt = w.hidAt || Date.now();
+    if (Date.now() - w.hidAt > WD.awayMax * 1000) netKick('away', { min: Math.round((Date.now() - w.hidAt) / 60000) });
+    return;
+  }
+  if (w.hidAt) { w.hidAt = 0; w.last = now; w.frames = net.frames; w.snaps = 0; w.badFps = w.slow = 0; return; }   // (back: start counting again)
+  // the internet
+  w.off = navigator.onLine ? 0 : w.off + dt;
+  if (w.off >= WD.offlineFor) return netKick('offline');
+  if (net.mode !== 'client') { w.last = now; w.frames = net.frames; w.snaps = 0; return; }   // (still joining: the hello timeout covers that)
+  // ping: one at a time, so a slow answer shows as slow
+  if (!w.pingAt && (now - (w.pingSent || 0)) / 1000 >= WD.pingEvery) {
+    w.pingAt = w.pingSent = now;
+    try {
+      w.room.ping((ms) => {
+        if (net.wd !== w) return;
+        w.pingAt = 0; w.pings.push(ms); if (w.pings.length > 3) w.pings.shift();
+        net.ping = Math.round(w.pings.reduce((a, b) => a + b, 0) / w.pings.length); updateBadge();
+      });
+    } catch { w.pingAt = 0; }
+  }
+  // silence: nothing at all from the server
+  const quiet = (now - w.last) / 1000;
+  if (quiet >= WD.quietKick) return netKick('timeout', { s: Math.round(quiet) });
+  // lag: things still arrive, just late (an unanswered ping during a silence counts as the silence, not as lag)
+  const ping = quiet >= WD.quietWarn ? net.ping : Math.max(net.ping, w.pingAt ? Math.round(now - w.pingAt) : 0);
+  w.badPing = ping > WD.pingBad ? w.badPing + dt : Math.max(0, w.badPing - dt * 2);
+  if (w.badPing >= WD.pingBadFor) return netKick('lag', { ms: ping });
+  // the server's updates slowing to a crawl (while the connection itself is fine)
+  const rate = w.snaps / dt; w.snaps = 0;
+  w.slow = rate < WD.slowSnaps && ping < WD.pingBad && quiet < WD.quietWarn ? w.slow + dt : 0;
+  if (w.slow >= WD.slowFor) return netKick('slowserver', { n: Math.round(rate * 10) / 10 });
+  // this device
+  const fps = (net.frames - w.frames) / dt; w.frames = net.frames;
+  w.badFps = fps < WD.fpsBad ? w.badFps + dt : 0;
+  if (w.badFps >= WD.fpsBadFor) return netKick('device', { fps: Math.round(fps * 10) / 10 });
+  // errors: a few now and then are fine, a flood isn't
+  if (w.errs > WD.errMax) return netKick('error');
+  w.errs = Math.max(0, w.errs - 3 * dt);
+  // warn before it comes to that
+  const left = (n) => Math.max(1, Math.ceil(n));
+  lagWarn(!navigator.onLine ? 'Your internet went out! Reconnect or you\'ll be kicked.'
+    : quiet >= WD.quietWarn ? `The server isn't answering... (kicked in ${left(WD.quietKick - quiet)}s if it doesn't come back)`
+    : ping > WD.pingBad ? `Your connection is lagging! (${ping} ms, kicked in ${left(WD.pingBadFor - w.badPing)}s if it stays this bad)`
+    : w.slow >= 4 ? `The server is lagging... (${Math.round(rate)} updates a second)`
+    : w.badFps >= 6 ? `Your device is lagging! (${Math.round(fps)} FPS)` : '');
+}
+window.addEventListener('offline', () => { if (net.wd) lagWarn("Your internet went out! Reconnect or you'll be kicked."); });
 
 /* ---- every frame while online ---- */
 function netTick(dt) {
@@ -8180,6 +8347,7 @@ function netStop(reason, quiet = false) {
   const wasClient = net.mode === 'client';
   net.mode = null;   // first, so the cleanup below doesn't get sent anywhere
   const room = net.room; net.room = null;
+  watchStop(); net.kickWhy = null; net.ping = 0;
   if (net.conn) net.conn.open = false;
   for (const { conn, h } of net.conns.values()) { conn.open = false; removeHumanoid(h); }
   net.conns.clear(); net.conn = null;
@@ -8605,7 +8773,7 @@ const CMDS = [
       if (!net.mode) return 'Kicking only works in multiplayer.';
       const [h] = findHum(a.join(' '), who);
       if (!h || !h.conn || h === who) return 'No player by that name.';
-      netSendTo(h.conn, { t: 'reject', why: 'The admin kicked you from the room.' }); setTimeout(() => { h.conn.close(); hostDrop(h.conn); }, 300);
+      netSendTo(h.conn, { t: 'reject', why: 'The admin kicked you from the room.', k: 'admin' }); setTimeout(() => { h.conn.close(); hostDrop(h.conn); }, 300);
       return `Kicked ${h.name}.`;
     } },
 ];
