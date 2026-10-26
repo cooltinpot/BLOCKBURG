@@ -245,6 +245,7 @@
   .hcard .gt{font:bold 11px Verdana;color:#0b4a99;margin:4px 0 1px}
   .cat-tabs{display:flex;gap:4px}
   .cat-tabs .on{background:#0b4a99;color:#fff}
+  .hcard .gone{font:bold 11px Verdana;color:#e2231a;margin-top:5px}
   .hcard .ds{font-size:10px;font-style:italic;color:#555;margin-bottom:3px}
   .hcard .pr{font-size:10px;color:#2f7d16;margin-bottom:4px}
   #avatarHolder{display:grid;place-items:center;background:linear-gradient(#fff,#e8eef7);border:1px solid #ccc}
@@ -622,7 +623,7 @@
           <p><b>RED VS BLUE is here!</b> Grab the other team's flag and run it back to your base. First to 3 captures wins. Warning: the Guests are scary good at guarding. Play it from the front page!</p>
           <p><b>Start your engines!</b> Three cars are waiting at the Race Track in Blockburg Classic. Please do not run over Guest 31. He has been through enough.</p>
           <p><b>Badge hunting season!</b> 12 badges to collect, from Obby Champ to Night Owl. Hover a faded one under My Badges to see how to get it.</p>
-          <p><b>Halloween special!</b> Wear the whole Pumpkin King set from the bottom of the Catalog and you'll shimmer. Guest 31 says AAAAAAAAAAAA. We think that means "nice outfit".</p>
+          <p id="newsHalloween"><b>Halloween special!</b> Wear the whole Pumpkin King set from the bottom of the Catalog and you'll shimmer. Guest 31 says AAAAAAAAAAAA. We think that means "nice outfit". <b style="color:#e2231a">Gone October 31st!!</b></p>
           <p><b>Building contest, round 2!</b> Make something with script blocks (a secret door, a trap, a launch pad...) and send it with Post to Games. Prize: still bragging rights.</p>
           <p><b>Remember:</b> never tell anyone your password, even if they say they're a Builder. Real admins never need it.</p>
         </div></div>
@@ -6575,17 +6576,26 @@ const faceThumbs = Object.fromEntries(FACES.map(f => [f.id, canvas(128, 128, (g)
   const s = Math.min(100 / f.img.width, 100 / f.img.height), w = f.img.width * s, h = f.img.height * s;
   g.drawImage(f.img, 64 - w / 2, 64 - h / 2, w, h);
 }).toDataURL()]));
+/* Halloween limited items: the Pumpkin King set and its pieces leave the Catalog once October 31st
+   is over (the player's own clock). Anyone already wearing one keeps it. */
+const LIMITED_UNTIL = new Date(2026, 10, 1);   // midnight as November 1st begins
+const LIMITED = { hats: ['pumpkin'], faces: ['pumpkin'], tshirts: ['pumpkin'], shirts: ['harvesthoodie'], pants: ['pumpkinpants'], sets: ['pumpkin'] };
+const limitedOver = () => Date.now() >= LIMITED_UNTIL.getTime();
+const isLimited = (tab, id) => (LIMITED[tab] || []).includes(id);
+const goneNote = (tab, id) => !isLimited(tab, id) ? '' : `<div class="gone">${limitedOver() ? 'Gone from the Catalog. You still have it!' : 'gone October 31st!!'}</div>`;
 function renderCatalog() {
-  const list = { hats: HATS, shirts: SHIRTS, pants: PANTS, tshirts: TSHIRTS, faces: FACES }[catTab].filter(i => !i.admin || adminPriv), slot = LOOK_SLOT[catTab];
+  const slot = LOOK_SLOT[catTab];
+  const list = { hats: HATS, shirts: SHIRTS, pants: PANTS, tshirts: TSHIRTS, faces: FACES }[catTab]
+    .filter(i => (!i.admin || adminPriv) && (!isLimited(catTab, i.id) || !limitedOver() || look[slot] === i.id));
   const thumbs = catTab === 'hats' ? hatThumbs : catTab === 'faces' ? faceThumbs : clothThumbs[catTab];
   document.querySelectorAll('[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === catTab));
   $('hatGrid').innerHTML = list.map(h => `<div class="hcard ${look[slot] === h.id ? 'on' : ''}"><img src="${h.id === 'none' ? hatThumbs.none : thumbs[h.id]}" alt="">
     <div class="gt">${h.name}</div>${h.desc ? `<div class="ds">"${h.desc}"</div>` : ''}<div class="pr">${h.price || '&nbsp;'}</div>
-    <button class="s-btn" data-wear="${h.id}">${look[slot] === h.id ? 'Wearing' : (h.id === 'none' ? 'Take Off' : 'Wear')}</button></div>`).join('');
+    <button class="s-btn" data-wear="${h.id}">${look[slot] === h.id ? 'Wearing' : (h.id === 'none' ? 'Take Off' : 'Wear')}</button>${goneNote(catTab, h.id)}</div>`).join('');
   const on = setOfLook({ ...look, colors: normColors(look.colors) });
-  $('setList').innerHTML = SETS.map(s => `<div class="hcard ${on === s ? 'on' : ''}"><img src="${hatThumbs[s.wear.hat]}" alt="">
+  $('setList').innerHTML = SETS.filter(s => !isLimited('sets', s.id) || !limitedOver() || on === s).map(s => `<div class="hcard ${on === s ? 'on' : ''}"><img src="${hatThumbs[s.wear.hat]}" alt="">
     <div class="gt">${s.name}</div><div class="ds">${s.pieces}</div><div class="pr">${pxIcon('sparkle', 12)} ${s.effect}</div>
-    <button class="s-btn" data-wearset="${s.id}">${on === s ? 'Wearing it!' : 'Wear the Set'}</button></div>`).join('');
+    <button class="s-btn" data-wearset="${s.id}">${on === s ? 'Wearing it!' : 'Wear the Set'}</button>${goneNote('sets', s.id)}</div>`).join('');
 }
 $('setList').addEventListener('click', (e) => {
   const b = e.target.closest('[data-wearset]');
@@ -6632,6 +6642,10 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
      - a BUG FIX update (only fixes, nothing new) adds a third number: 3.2 -> 3.2.1
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '10/26/2026', ver: '3.1', top: 'Halloween countdown: the pumpkins leave soon!', text: [
+    'The Pumpkin King set and its pieces (Screaming Pumpkin hat, PUMPKIN face, I Saw The Knife T-shirt, Harvest Hoodie and Pumpkin Patch Overalls) are Halloween-only. They leave the Catalog when October 31st is over, so grab them now! If you are wearing one when they go, you keep it.',
+    'Every update in this log has a build number now, and the newest one is in red. Big updates get a new whole number (3.0), normal updates add a tenth (3.1), and bug fixes add a third number (3.1.1).',
+    'Fresh Blockburg News on the front page.' ] },
   { date: '10/25/2026', ver: '3.0', top: 'ha! we are so back with more updates', text: [
     '3 new hats in the Catalog: the Classic Fedora, a wobbly Stack of Books, and Cat Ears that are the same color as your head, like real ears (change your head color and they change too).',
     'Fixed: the Cat Ears face the front now, instead of being twisted sideways.',
@@ -6739,6 +6753,7 @@ $('updLog').addEventListener('click', (e) => {
   b.textContent = open ? 'HIDE' : 'EXTEND';
 });
 function startUpdates() {
+  if (limitedOver() && $('newsHalloween')) $('newsHalloween').remove();   // the Halloween items are gone, so is their news
   $('newsBody').insertAdjacentHTML('afterbegin', `<p><span class="new">NEW!</span><b>v${escHtml(String(UPDATES[0].ver))}: ${escHtml(UPDATES[0].top)}</b> ${UPDATES[0].date}. See the Update Log below for everything that changed.</p>`);
   renderUpdates();
 }
