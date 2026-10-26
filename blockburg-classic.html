@@ -211,6 +211,8 @@
   .up-newest .up-top{color:#e2231a;font-size:15px}
   .up-newest .up-ver{background:#e2231a;font-size:11px}
   .up-newest .up-date{font-size:11px}
+  .up-bignew .up-top{color:#e2231a}
+  .up-bignew .up-ver{background:#e2231a}
   .up-ext{font:bold 9px Verdana;color:#fff;background:linear-gradient(#5b97e0,#0b4a99);border:1px solid #062f66;padding:1px 5px;cursor:pointer;margin-left:5px;vertical-align:1px;white-space:nowrap}
   .up-ext:hover{background:linear-gradient(#7fb0ee,#2a65b3)}
   .up-text{margin:5px 0 0;padding:6px 8px 6px 22px;background:#f6f9fd;border-left:3px solid #6e99c9}
@@ -6640,6 +6642,7 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
      - a BIG UPDATE (a new game, or a big new system like multiplayer) goes to the next whole number: 3.0 -> 4.0
      - a normal UPDATE with new stuff adds a tenth: 3.0 -> 3.1 -> 3.2
      - a BUG FIX update (only fixes, nothing new) adds a third number: 3.2 -> 3.2.1
+   The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
   { date: '10/26/2026', ver: '3.1', top: 'Halloween countdown: the pumpkins leave soon!', text: [
@@ -6739,7 +6742,9 @@ function updKind(i) {
 }
 function renderUpdates() {
   const list = updAll ? UPDATES : UPDATES.slice(0, UPD_SHOWN);
-  $('updLog').innerHTML = list.map((u, i) => { const [kind, kc] = updKind(i); return `<div class="up-item${i === 0 ? ' up-newest' : ''}">
+  // the newest BIG UPDATE is red too, even when smaller updates came after it
+  const bigNew = UPDATES.findIndex((u, i) => updKind(i)[0] === 'BIG UPDATE');
+  $('updLog').innerHTML = list.map((u, i) => { const [kind, kc] = updKind(i); return `<div class="up-item${i === 0 ? ' up-newest' : ''}${i === bigNew ? ' up-bignew' : ''}">
     <div class="up-date"><span class="up-ver">v${escHtml(String(u.ver))}</span><span class="up-kind ${kc}">${kind}</span>${u.date}</div>
     <span class="up-top">${escHtml(u.top)}</span><span class="up-ext" data-upd="${i}">EXTEND</span>
     <ul class="up-text hidden">${u.text.map(t => `<li>${escHtml(t)}</li>`).join('')}</ul></div>`; }).join('') +
