@@ -202,6 +202,15 @@
   .up-item:last-child{border-bottom:0;padding-bottom:0}
   .up-date{font:bold 10px Verdana;color:#666}
   .up-top{color:#0b4a99;font-weight:bold}
+  /* build number + what kind of update it was; the newest update is red and a bit bigger */
+  .up-ver{display:inline-block;font:bold 10px Verdana;color:#fff;background:#0b4a99;padding:1px 5px;margin-right:5px;border-radius:2px}
+  .up-kind{display:inline-block;font:bold 9px Verdana;padding:1px 4px;margin-right:6px;border:1px solid;border-radius:2px}
+  .up-kind.k-big{color:#8a5a00;border-color:#d9a600;background:#fff4c2}
+  .up-kind.k-upd{color:#1f6b2a;border-color:#4b974b;background:#e6f5e6}
+  .up-kind.k-fix{color:#555;border-color:#aaa;background:#f2f2f2}
+  .up-newest .up-top{color:#e2231a;font-size:15px}
+  .up-newest .up-ver{background:#e2231a;font-size:11px}
+  .up-newest .up-date{font-size:11px}
   .up-ext{font:bold 9px Verdana;color:#fff;background:linear-gradient(#5b97e0,#0b4a99);border:1px solid #062f66;padding:1px 5px;cursor:pointer;margin-left:5px;vertical-align:1px;white-space:nowrap}
   .up-ext:hover{background:linear-gradient(#7fb0ee,#2a65b3)}
   .up-text{margin:5px 0 0;padding:6px 8px 6px 22px;background:#f6f9fd;border-left:3px solid #6e99c9}
@@ -6615,9 +6624,14 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
 
 /* ================= UPDATE LOG =================
    Every update day gets an entry here, newest first: its date, a headline, and what changed (behind EXTEND).
-   The newest headline also shows at the top of Blockburg News. */
+   The newest headline also shows at the top of Blockburg News.
+   Every entry has a build number (ver) that grows with how much the update adds:
+     - a BIG UPDATE (a new game, or a big new system like multiplayer) goes to the next whole number: 3.0 -> 4.0
+     - a normal UPDATE with new stuff adds a tenth: 3.0 -> 3.1 -> 3.2
+     - a BUG FIX update (only fixes, nothing new) adds a third number: 3.2 -> 3.2.1
+   The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
-  { date: '10/25/2026', top: 'ha! we are so back with more updates', text: [
+  { date: '10/25/2026', ver: '3.0', top: 'ha! we are so back with more updates', text: [
     '3 new hats in the Catalog: the Classic Fedora, a wobbly Stack of Books, and Cat Ears that are the same color as your head, like real ears (change your head color and they change too).',
     'Fixed: the Cat Ears face the front now, instead of being twisted sideways.',
     'Another new hat: the Builder Hard Hat (with a ridge over the top, a badge on the front and a peak over your eyes). Safety first on every baseplate!',
@@ -6673,37 +6687,47 @@ const UPDATES = [
     'WAY faster with lots of bricks: big builds no longer make games (or the server) slow forever, and far-away bricks are drawn simpler on your screen. Games can now hold up to 2500 bricks online and 4000 solo.',
     'Games made by players now always show a picture of the build.',
     'Two super rare OUTFIT SETS! Wear every piece and you get an effect everyone can see: the Pumpkin King shimmers, and stars orbit the Galaxy Wizard. Find them at the bottom of the Catalog.',    'Also new: this Update Log! Press EXTEND on any day to see everything that changed.' ] },
-  { date: '10/24/2026', top: 'Sign in is here! Get your own badge!', text: [
+  { date: '10/24/2026', ver: '2.3', top: 'Sign in is here! Get your own badge!', text: [
     'A brand new sign-in screen, with screenshots of BLOCKBURG fading by behind it.',
     'Pick a name (or roll a random one with 🎲) and a look, then hit PLAY!',
     'Add a password to get a badge like #K7Q2. Nobody can copy your badge without your password, so everyone knows it\'s really you.',
     'Badges show up in chat, over your head, on the leaderboard and on the forums.',
     'The admin now signs in just like everybody else. (Yes, the admin is real.)' ] },
-  { date: '10/23/2026', top: 'Build it, save it, show it off!', text: [
+  { date: '10/23/2026', ver: '2.2', top: 'Build it, save it, show it off!', text: [
     'Shift lock! Press Shift (or the 🔒 button on phones) and the camera follows your mouse.',
     'Your baseplate builds save when you leave, and show up as files under My Places on the Build page, each with its own picture.',
     'Bricks now snap to the studs when you insert or drag them. No more wonky walls.',
     'Press 📤 Post to Games to send your build to the admin. You\'ll get the answer in your new Inbox!' ] },
-  { date: '10/22/2026', top: 'PUMPKIN INVASION!!', text: [
+  { date: '10/22/2026', ver: '2.1', top: 'PUMPKIN INVASION!!', text: [
     'A pumpkin got into the Catalog, and then into the game. It is now Guest 31. It will not stop screaming.',
     'New in the Catalog: the Screaming Pumpkin hat, the PUMPKIN face and the I Saw The Knife T-shirt.',
     'Phones and tablets get the cover picture on the loading screen.' ] },
-  { date: '10/21/2026', top: 'BLOCKBURG goes multiplayer!', text: [
+  { date: '10/21/2026', ver: '2.0', top: 'BLOCKBURG goes multiplayer!', text: [
     'Host a game and send your friends the 4-letter room code. Games now run on the BLOCKBURG server, so they work on more networks.',
     'The Forums are open! Say hi (and be nice).',
     'Phones and tablets can play now, with a joystick and a jump button.',
     'The admin got a trailer camera with the BLOCKBURG theme song, a free cam and a very sparkly cape.',
     'Credits at the bottom of the site. Music by wayferr!' ] },
-  { date: '10/20/2026', top: 'BLOCKBURG is born!', text: [
+  { date: '10/20/2026', ver: '1.0', top: 'BLOCKBURG is born!', text: [
     'The very first version of BLOCKBURG went online. Explode things, pwn people, do it all!' ] },
 ];
 const UPD_SHOWN = 5;   // older entries wait behind "Show older updates"
 let updAll = false;
+// what kind of update an entry was, from how its build number changed since the one before it
+function updKind(i) {
+  const older = UPDATES[i + 1];
+  if (!older) return ['FIRST VERSION', 'k-big'];
+  const [a1, b1 = 0] = String(UPDATES[i].ver).split('.').map(Number), [a0, b0 = 0] = String(older.ver).split('.').map(Number);
+  if (a1 !== a0) return ['BIG UPDATE', 'k-big'];
+  if (b1 !== b0) return ['UPDATE', 'k-upd'];
+  return ['BUG FIX', 'k-fix'];
+}
 function renderUpdates() {
   const list = updAll ? UPDATES : UPDATES.slice(0, UPD_SHOWN);
-  $('updLog').innerHTML = list.map((u, i) => `<div class="up-item"><div class="up-date">${u.date}</div>
+  $('updLog').innerHTML = list.map((u, i) => { const [kind, kc] = updKind(i); return `<div class="up-item${i === 0 ? ' up-newest' : ''}">
+    <div class="up-date"><span class="up-ver">v${escHtml(String(u.ver))}</span><span class="up-kind ${kc}">${kind}</span>${u.date}</div>
     <span class="up-top">${escHtml(u.top)}</span><span class="up-ext" data-upd="${i}">EXTEND</span>
-    <ul class="up-text hidden">${u.text.map(t => `<li>${escHtml(t)}</li>`).join('')}</ul></div>`).join('') +
+    <ul class="up-text hidden">${u.text.map(t => `<li>${escHtml(t)}</li>`).join('')}</ul></div>`; }).join('') +
     (UPDATES.length > UPD_SHOWN && !updAll ? `<div class="up-more"><span class="fm-link" data-updall>Show older updates (${UPDATES.length - UPD_SHOWN})</span></div>` : '');
 }
 $('updLog').addEventListener('click', (e) => {
@@ -6714,7 +6738,7 @@ $('updLog').addEventListener('click', (e) => {
   b.textContent = open ? 'HIDE' : 'EXTEND';
 });
 function startUpdates() {
-  $('newsBody').insertAdjacentHTML('afterbegin', `<p><span class="new">NEW!</span><b>${escHtml(UPDATES[0].top)}</b> ${UPDATES[0].date}. See the Update Log below for everything that changed.</p>`);
+  $('newsBody').insertAdjacentHTML('afterbegin', `<p><span class="new">NEW!</span><b>v${escHtml(String(UPDATES[0].ver))}: ${escHtml(UPDATES[0].top)}</b> ${UPDATES[0].date}. See the Update Log below for everything that changed.</p>`);
   renderUpdates();
 }
 
