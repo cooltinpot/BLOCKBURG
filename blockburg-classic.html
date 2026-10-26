@@ -329,6 +329,9 @@
   .ld-tip{font-size:11px;color:#777;margin-top:22px}
   .ld-cover.shot{-webkit-mask-image:none;mask-image:none;border:2px solid #0b4a99;box-sizing:border-box}   /* (a full picture, framed) */
   @media (max-height:520px){.ld-cover{width:min(100%,200px)}}
+  /* the start-up screen: covers the page from the moment it opens until the game engine is ready */
+  #bootScreen{position:fixed;inset:0;z-index:9000;background:#fff;display:grid;place-items:center;font-family:Verdana,Arial,sans-serif;transition:opacity .4s}
+  #bootScreen.out{opacity:0;pointer-events:none}
   /* ---------- sign in: the old website's login box over screenshots of the game ---------- */
   #signin{position:fixed;inset:0;z-index:60;overflow:auto;background:#5a9ee0;font:12px Verdana,Arial,sans-serif;color:#000}
   #signin.hidden{display:none}
@@ -418,6 +421,29 @@
 </style>
 </head>
 <body>
+<!-- start-up screen: shown right away, before the 3D engine and the game have downloaded -->
+<div id="bootScreen"><div class="ld-box">
+  <img class="ld-cover shot" src="boot.jpg" width="580" height="604" alt="A blocky player holding up a sword">
+  <div class="ld-bar"><div class="ld-fill" id="bootFill"></div></div>
+  <div class="ld-msg" id="bootMsg">Loading BLOCKBURG...</div>
+  <div class="ld-tip" id="bootTip"></div>
+</div></div>
+<script>
+// The bar creeps toward 90% while the engine downloads; the game fills it and fades this out when it's ready.
+(() => {
+  const tips = ['Tip: Rockets hurt you too. Aim away from your face!', 'Tip: The Tinpot is the best hat. Obviously.',
+    'Tip: Grab the other team\'s flag in RED VS BLUE!', 'Tip: Cars wait at the Race Track. Mind Guest 31.',
+    'Tip: Host a game in Multiplayer and invite your friends.', 'Tip: Never tell anyone your password.'];
+  document.getElementById('bootTip').textContent = tips[Math.floor(Math.random() * tips.length)];
+  const fill = document.getElementById('bootFill'), msg = document.getElementById('bootMsg');
+  let p = 0, slow = false;
+  window.__boot = setInterval(() => {
+    p += (90 - p) * 0.05; fill.style.width = p + '%';
+    if (!slow) msg.textContent = 'Loading BLOCKBURG... ' + Math.floor(p) + '%';
+  }, 200);
+  window.__bootSlow = setTimeout(() => { slow = true; msg.textContent = 'Still loading... if this takes forever, check your internet and refresh.'; }, 30000);
+})();
+</script>
 <div id="menubar">
   <button data-act="menu">Menu (Esc)</button>
   <button data-act="insert">Insert</button>
@@ -6648,7 +6674,8 @@ const UPDATES = [
   { date: '10/26/2026', ver: '3.1', top: 'Halloween countdown: the pumpkins leave soon!', text: [
     'The Pumpkin King set and its pieces (Screaming Pumpkin hat, PUMPKIN face, I Saw The Knife T-shirt, Harvest Hoodie and Pumpkin Patch Overalls) are Halloween-only. They leave the Catalog when October 31st is over, so grab them now! If you are wearing one when they go, you keep it.',
     'Every update in this log has a build number now, and the newest one is in red. Big updates get a new whole number (3.0), normal updates add a tenth (3.1), and bug fixes add a third number (3.1.1).',
-    'Fresh Blockburg News on the front page.' ] },
+    'Fresh Blockburg News on the front page.',
+    'A new start-up screen with a loading bar, so opening BLOCKBURG never shows an empty page while the game loads. Picture by cooltinpot!' ] },
   { date: '10/25/2026', ver: '3.0', top: 'ha! we are so back with more updates', text: [
     '3 new hats in the Catalog: the Classic Fedora, a wobbly Stack of Books, and Cat Ears that are the same color as your head, like real ears (change your head color and they change too).',
     'Fixed: the Cat Ears face the front now, instead of being twisted sideways.',
@@ -8808,6 +8835,15 @@ refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
 if (!HEADLESS) { pxSwap(); startUpdates(); signinStart(); }
+// start-up is done: fill the bar and fade the start-up screen away
+{
+  const boot = $('bootScreen');
+  if (boot) {
+    clearInterval(window.__boot); clearTimeout(window.__bootSlow);
+    $('bootFill').style.width = '100%'; $('bootMsg').textContent = 'Ready!';
+    setTimeout(() => { boot.classList.add('out'); setTimeout(() => boot.remove(), 450); }, 250);
+  }
+}
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
   keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, pxUrl, BLUEPRINTS, makePart, BC, LOD, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
