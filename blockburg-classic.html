@@ -173,6 +173,9 @@
   .box>.in{padding:8px}
   .s-btn{font:bold 12px Verdana;background:linear-gradient(#fff,#d7e3f2);border:1px solid #6e99c9;padding:4px 10px;cursor:pointer;color:#0b4a99}
   .s-btn:hover{background:linear-gradient(#fff,#b6cff0)}
+  .s-btn.go.online{background:linear-gradient(#7fc4ff,#1f6fd1);border-color:#11498f;text-shadow:1px 1px 0 #11498f}
+  .gcard .s-btn.go{padding:5px 10px;margin:2px 0}
+  .on-n{font-size:10px;color:#2f7a1f;margin-top:3px;min-height:12px}
   .s-btn.go{background:linear-gradient(#8bea6f,#2f9e19);color:#fff;border-color:#1f6e10;text-shadow:1px 1px 0 #1f6e10;font-size:14px;padding:6px 18px}
   .fm-tbl{width:100%;border-collapse:collapse;font-size:12px}
   .fm-tbl th{background:#e8eef7;color:#0b4a99;text-align:left;padding:4px 6px;border-bottom:1px solid #b9cbe4;font:bold 11px Verdana}
@@ -666,13 +669,13 @@
           <img class="thumbClassic" style="width:220px;aspect-ratio:4/3;border:1px solid #888;background:#4b974b" alt="">
           <div style="flex:1;min-width:180px"><div class="gt" style="font:bold 14px Verdana;color:#0b4a99">Blockburg Classic</div>
             <p>Blow up the tower, build with the trowel, sword fight some Guests and beat the obby!</p>
-            <button class="s-btn go" data-play="classic">Play Solo</button></div>
+            <button class="s-btn go" data-play="classic">Play Solo</button> <button class="s-btn go online" data-online="classic">Play Online</button><div class="on-n" data-on-n="classic"></div></div>
         </div>
         <div class="in" style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px dashed #9bb7d8">
           <img class="thumbRedBlue" style="width:220px;aspect-ratio:4/3;border:1px solid #888;background:#4b974b" alt="">
           <div style="flex:1;min-width:180px"><div class="gt" style="font:bold 14px Verdana;color:#0b4a99"><span class="new">NEW!</span> RED VS BLUE!</div>
             <p>Two teams, two flags! Grab the other team's flag and run it back to your base. Trowel walls and paintballs only. Bring friends from the Multiplayer page!</p>
-            <button class="s-btn go" data-play="redblue">Play Solo</button></div>
+            <button class="s-btn go" data-play="redblue">Play Solo</button> <button class="s-btn go online" data-online="redblue">Play Online</button><div class="on-n" data-on-n="redblue"></div></div>
         </div></div>
         <div class="box news"><h3>Blockburg News</h3><div class="in" id="newsBody">
           <p><b>RED VS BLUE is here!</b> Grab the other team's flag and run it back to your base. First to 3 captures wins. Warning: the Guests are scary good at guarding. Play it from the front page!</p>
@@ -687,9 +690,9 @@
     </div></div>
 
     <div class="page hidden" id="p-games"><div class="box"><h3>Games</h3><div class="in"><div class="gamegrid">
-      <div class="gcard"><img class="thumbClassic" alt=""><div class="gt">Blockburg Classic</div><div class="gs">by Player &middot; 4 playing</div><button class="s-btn go" data-play="classic">Play Solo</button></div>
-      <div class="gcard"><img class="thumbRedBlue" alt=""><div class="gt">RED VS BLUE!</div><div class="gs">by Player &middot; capture the flag</div><button class="s-btn go" data-play="redblue">Play Solo</button></div>
-      <div class="gcard"><img id="thumbBase" alt=""><div class="gt">Happy Home Baseplate</div><div class="gs">by Player &middot; empty, build anything</div><button class="s-btn go" data-play="baseplate">Play Solo</button></div>
+      <div class="gcard"><img class="thumbClassic" alt=""><div class="gt">Blockburg Classic</div><div class="gs">by Player</div><button class="s-btn go" data-play="classic">Play Solo</button> <button class="s-btn go online" data-online="classic">Play Online</button><div class="on-n" data-on-n="classic"></div></div>
+      <div class="gcard"><img class="thumbRedBlue" alt=""><div class="gt">RED VS BLUE!</div><div class="gs">by Player &middot; capture the flag</div><button class="s-btn go" data-play="redblue">Play Solo</button> <button class="s-btn go online" data-online="redblue">Play Online</button><div class="on-n" data-on-n="redblue"></div></div>
+      <div class="gcard"><img id="thumbBase" alt=""><div class="gt">Happy Home Baseplate</div><div class="gs">by Player &middot; empty, build anything</div><button class="s-btn go" data-play="baseplate">Play Solo</button> <button class="s-btn go online" data-online="baseplate">Play Online</button><div class="on-n" data-on-n="baseplate"></div></div>
     </div>
     <h4 class="proj-h">Made by players</h4>
     <div class="gamegrid" id="projGames"></div>
@@ -6691,13 +6694,14 @@ function refreshLook() {
   renderCatalog();
 }
 $('site').addEventListener('click', (e) => {
-  const t = e.target.closest('[data-page],[data-goto],[data-play],[data-link],[data-wear],[data-bp],[data-bc],[data-cat],[data-signin]');
+  const t = e.target.closest('[data-page],[data-goto],[data-play],[data-link],[data-online],[data-wear],[data-bp],[data-bc],[data-cat],[data-signin]');
   if (!t) return;
   const d = t.dataset;
   if (d.signin !== undefined) { if (d.signin === 'out') signOut(); else openSignin('change'); return; }
   if (d.page || d.goto) showPage(d.page || d.goto);
   if (d.play) startPlace(d.play, { guests: d.play === 'baseplate' && $('bpGuests').checked });
   if (d.link) location.href = d.link;
+  if (d.online) playOnline(d.online);
   if (d.cat) { catTab = d.cat; renderCatalog(); }
   if (d.wear) { look[LOOK_SLOT[catTab]] = d.wear; if (!adminPriv) look = withoutAdminClothes(look); saveLook(); refreshLook(); }
   if (d.bp) { selBP = d.bp; refreshLook(); }
@@ -6715,6 +6719,10 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '10/29/2026', ver: '4.0', top: 'Play Online is here!', text: [
+    'Every game has a blue Play Online button next to Play Solo. Everyone who presses it lands in the same server for that game, so you can jump in and leave whenever you want. No room code needed!',
+    'Under each Play Online button you can see how many people are playing that game online right now.',
+    'When a game\'s server is full (8 people), the next person gets a second one. Private rooms with a code still work on the Multiplayer page.' ] },
   { date: '10/29/2026', ver: '3.4', top: 'New shirt: Block jacket', text: [
     'New shirt in the Catalog: the Block jacket, drawn by cooltinpot. A sharp black jacket over a white shirt. You are hired!!' ] },
   { date: '10/29/2026', ver: '3.3', top: 'New T-shirt: SQUARES', text: [
@@ -7785,19 +7793,21 @@ function relayConnect(url, opts = {}) {
 }
 /* ---- the Colyseus room ---- */
 // start a new room (how = 'create') or join one by its code; gives back the room, or null after saying why
+// how = 'public': the game's shared room (code is the place), joined or opened with joinOrCreate
 async function openRoom(how, code) {
   let client;
   net.lastTry = { how, code };   // (what the Rejoin / Try again button does)
   if (!navigator.onLine) { netKick('offline', { code }); return null; }
   try { client = await loadColyseus(); } catch { netKick('nolib'); return null; }
   try {
+    if (how === 'public') return await client.joinOrCreate('blockburg', { place: code, pub: true });
     return how === 'create' ? await client.create('blockburg', { place: net.place }) : await client.joinById(code);
   } catch (e) {
     const why = String((e && e.message) || e);
     if (!navigator.onLine) netKick('offline', { code });
     else if (how === 'join' && /not found|invalid/i.test(why)) netKick('notfound', { code });
     else if (how === 'join' && /full|locked/i.test(why)) netKick('full', { code });   // (locked: also while it restarts)
-    else if (how === 'create' && /server is full/i.test(why)) netKick('serverfull');
+    else if (how !== 'join' && /server is full/i.test(why)) netKick('serverfull');
     else netKick('noserver', { url: SERVER_URL });
     return null;
   }
@@ -7824,6 +7834,27 @@ async function hostGame() {
   $('mpCode').value = room.roomId;
   enterRoom(room, room.roomId, true);
 }
+/* ---- Play Online: each game has one shared room on the server that's always open while someone's in it.
+   Anyone can drop in or leave whenever they like; when it's full, the next person gets a second one. ---- */
+async function playOnline(place) {
+  myName();
+  if (net.room || net.joining) netStop(null, true);
+  netStatus(`Joining ${PLACE_NAMES[place] || 'the game'} online...`);
+  loadShow(`Joining ${PLACE_NAMES[place] || 'the game'} online`, false, place === 'baseplate' ? SANDBOX_PIC : undefined);
+  loadStep(5, 'Connecting to the BLOCKBURG server', 35);
+  net.place = place; net.hostFile = null;
+  const room = await openRoom('public', place);
+  if (!room) { loadHide(); return; }
+  $('mpCode').value = room.roomId;
+  enterRoom(room, room.roomId, false);
+}
+// "3 playing online" under each Play Online button (asked of the server every 15 seconds while the website is open)
+async function onlineCounts() {
+  let n = null;
+  try { n = await (await fetch(SERVER_URL + '/api/online', { cache: 'no-store' })).json(); } catch { }
+  document.querySelectorAll('[data-on-n]').forEach(el => { const k = n && n[el.dataset.onN]; el.textContent = !n ? '' : k ? `${k} playing online` : 'No one online yet: start it!'; });
+}
+if (!HEADLESS) { onlineCounts(); setInterval(() => { if (siteOpen && !document.hidden) onlineCounts(); }, 15000); }
 // HEADLESS only: this copy of the game, on the server, becomes the host of one room.
 // `room` is a stand-in made by server/src/BlockburgRoom.js, with the same send / onMessage as a real one.
 function serverHost(room, place) {
@@ -8318,13 +8349,14 @@ function netKick(kind, info = {}) {
   // the green button: back into the same room, or try the same thing again
   const t = net.lastTry, rb = $('ksRejoin');
   const again = kind === 'version' ? 'refresh' : kind === 'admin' || kind === 'notfound' || kind === 'closed' || !t ? null
-    : t.how === 'join' || (code && was) ? 'join' : 'host';
+    : t.how === 'public' ? 'public' : t.how === 'join' || (code && was) ? 'join' : 'host';   // (a game's shared room: back into whichever one is open now)
   rb.classList.toggle('hidden', !again);
-  rb.textContent = again === 'refresh' ? 'Refresh' : again === 'join' ? (was ? `Rejoin ${code}` : 'Try again') : 'Try again';
+  rb.textContent = again === 'refresh' ? 'Refresh' : again === 'join' ? (was ? `Rejoin ${code}` : 'Try again') : again === 'public' && was ? 'Rejoin' : 'Try again';
   rb.onclick = () => {
     $('kickScreen').classList.add('hidden');
     if (again === 'refresh') location.reload();
     else if (again === 'join') { $('mpCode').value = code; joinGame(); }
+    else if (again === 'public') playOnline(t.code);
     else hostGame();
   };
   $('kickScreen').classList.remove('hidden');

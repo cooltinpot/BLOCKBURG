@@ -31,6 +31,8 @@ async function freeCode() {
 }
 
 /* One Blockburg game. The 4-letter room code is the room's id, so friends join with joinById(code).
+   A public room (pub: true) is a game's open server: Play Online joins it with joinOrCreate, so
+   everyone who picks that game lands in the same room (a new one opens only when it's full).
 
    The game itself runs here: each room boots its own copy of blockburg-classic.html with no screen
    (headless.js), and that copy is the host. It runs the people, tools, damage, hats, chat and Guests,
@@ -48,7 +50,8 @@ export class BlockburgRoom extends Room {
     if ((await matchMaker.query({ name: 'blockburg' })).length >= MAX_ROOMS) throw new Error('The server is full right now. Join a friend\'s room with their code, or try again later.');
     this.roomId = await freeCode();
     this.place = PLACES.includes(options.place) ? options.place : 'classic';
-    await this.setMetadata({ place: this.place });
+    this.pub = options.pub === true;
+    await this.setMetadata({ place: this.place, pub: this.pub });
     await this.boot();
 
     this.onMessage('toHost', (client, m) => { if (!this.restarting) this.toHost({ from: client.sessionId, m }); });
