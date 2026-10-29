@@ -337,6 +337,7 @@
   /* the start-up screen: covers the page from the moment it opens until the game engine is ready */
   #bootScreen{position:fixed;inset:0;z-index:9000;background:#fff;display:grid;place-items:center;font-family:Verdana,Arial,sans-serif;transition:opacity .4s}
   #bootScreen.out{opacity:0;pointer-events:none}
+  #bootWhat{position:absolute;left:16px;right:16px;bottom:14px;font-size:11px;color:#555;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* sent out of an online game: what happened (a name for it, like "Your internet went out"), and a way back in */
   #kickScreen{position:fixed;inset:0;z-index:58;background:rgba(10,25,50,.55);display:grid;place-items:center;font:12px Verdana,Arial,sans-serif}
   #kickScreen.hidden{display:none}
@@ -444,22 +445,39 @@
 <body>
 <!-- start-up screen: shown right away, before the 3D engine and the game have downloaded -->
 <div id="bootScreen"><div class="ld-box">
-  <img class="ld-cover shot" src="boot.jpg" width="580" height="604" alt="A blocky player holding up a sword">
+  <img class="ld-cover shot" id="bootPic" alt="BLOCKBURG">
   <div class="ld-bar"><div class="ld-fill" id="bootFill"></div></div>
   <div class="ld-msg" id="bootMsg">Loading BLOCKBURG...</div>
   <div class="ld-tip" id="bootTip"></div>
-</div></div>
+</div><div id="bootWhat">Downloading blockburg-classic.html</div></div>
 <script>
-// The bar creeps toward 90% while the engine downloads; the game fills it and fades this out when it's ready.
+// The bar creeps toward 60% while the game and its 3D engine download; then the game loads everything else (see "start-up is done")
+// and fades this out. The line at the bottom says what's loading.
 (() => {
   const tips = ['Tip: Rockets hurt you too. Aim away from your face!', 'Tip: The Tinpot is the best hat. Obviously.',
     'Tip: Grab the other team\'s flag in RED VS BLUE!', 'Tip: Cars wait at the Race Track. Mind Guest 31.',
     'Tip: Host a game in Multiplayer and invite your friends.', 'Tip: Never tell anyone your password.'];
   document.getElementById('bootTip').textContent = tips[Math.floor(Math.random() * tips.length)];
-  const fill = document.getElementById('bootFill'), msg = document.getElementById('bootMsg');
+  // a random picture: the sword guy, the street, or Guest 31 having a moment
+  const pics = [['boot.jpg', 580, 604], ['loading-street.jpg', 863, 660], ['loading-guest31.jpg', 592, 555]];
+  const [src, w, h] = pics[Math.floor(Math.random() * pics.length)], pic = document.getElementById('bootPic');
+  pic.width = w; pic.height = h; pic.src = src;
+  const fill = document.getElementById('bootFill'), msg = document.getElementById('bootMsg'), what = document.getElementById('bootWhat');
+  // every file that finishes downloading gets named at the bottom
+  try {
+    new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!window.__bootDone) what.textContent = 'Downloaded ' + (decodeURIComponent(e.name.split(/[?#]/)[0].split('/').pop()) || e.name); })
+      .observe({ type: 'resource', buffered: true });
+  } catch { }
+  // every picture the game starts loading gets written down, so start-up can wait for all of them
+  try {
+    const d = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+    window.__bootImgs = []; window.__bootImgSrc = d;
+    Object.defineProperty(HTMLImageElement.prototype, 'src', { configurable: true, enumerable: d.enumerable, get: d.get,
+      set(v) { d.set.call(this, v); if (window.__bootImgs) window.__bootImgs.push(this); } });
+  } catch { }
   let p = 0, slow = false;
   window.__boot = setInterval(() => {
-    p += (90 - p) * 0.05; fill.style.width = p + '%';
+    p += (60 - p) * 0.05; fill.style.width = p + '%';
     if (!slow) msg.textContent = 'Loading BLOCKBURG... ' + Math.floor(p) + '%';
   }, 200);
   window.__bootSlow = setTimeout(() => { slow = true; msg.textContent = 'Still loading... if this takes forever, check your internet and refresh.'; }, 30000);
@@ -6883,6 +6901,9 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '10/29/2026', ver: '4.4', top: 'New loading pictures, and a start-up screen that loads everything', text: [
+    'Two new loading pictures: the street, and Guest 31 having a moment. The start-up screen and the game loading screens pick a picture at random.',
+    'The start-up screen now loads everything before you get in (every picture, the theme song and the online code), and the line at the bottom of the screen says what it is loading right now.' ] },
   { date: '10/29/2026', ver: '4.3', top: 'New command: /time', text: [
     'Admins can now type /time and a number to slow the whole game down or speed it up. /time 0.25 is slow motion, /time 2 is double speed, and /time 1 puts it back to normal.',
     'It works online too: everyone in the server goes slow together, bricks and all.' ] },
@@ -8680,8 +8701,9 @@ function loadDraw() {
 }
 // pic: the picture on top (cooltinpot's builder picture for sandbox games, the cover for the rest)
 const SANDBOX_PIC = 'loading-build.png';
-if (!HEADLESS) new Image().src = SANDBOX_PIC;   // (fetched now, so it's there the moment it's needed)
-function loadShow(label, local = false, pic = 'cover.png') {
+const GAME_PICS = ['cover.png', 'loading-street.jpg', 'loading-guest31.jpg'];   // (one at random for every other game)
+if (!HEADLESS) for (const p of [SANDBOX_PIC, ...GAME_PICS]) new Image().src = p;   // (fetched now, so they're there the moment they're needed)
+function loadShow(label, local = false, pic = rpick(GAME_PICS)) {
   if (HEADLESS) return;
   const cov = document.querySelector('#loadScreen .ld-cover');
   if (!cov.src.endsWith(pic)) cov.src = pic;
@@ -9306,15 +9328,44 @@ refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
 if (!HEADLESS) { pxSwap(); startUpdates(); signinStart(); onlineStart(); }
-// start-up is done: fill the bar and fade the start-up screen away
-{
+// start-up is done: now load EVERYTHING else the site uses (every picture, the fonts, the theme song, the online code),
+// all at once, naming at the bottom whatever is still loading, then fill the bar and fade the start-up screen away
+if (!HEADLESS) (async () => {
   const boot = $('bootScreen');
-  if (boot) {
-    clearInterval(window.__boot); clearTimeout(window.__bootSlow);
-    $('bootFill').style.width = '100%'; $('bootMsg').textContent = 'Ready!';
-    setTimeout(() => { boot.classList.add('out'); setTimeout(() => boot.remove(), 450); }, 250);
-  }
-}
+  if (!boot) return;
+  clearInterval(window.__boot);
+  const fill = $('bootFill'), msg = $('bootMsg'), what = $('bootWhat'), p0 = Math.min(60, parseFloat(fill.style.width) || 0);
+  const imgs = [...new Set([...(window.__bootImgs || []), ...document.images])].filter(i => i.getAttribute('src'));
+  window.__bootImgs = null;   // (done writing pictures down)
+  if (window.__bootImgSrc) Object.defineProperty(HTMLImageElement.prototype, 'src', window.__bootImgSrc);
+  const fileOf = (src) => src.startsWith('data:') ? 'built-in picture' : decodeURIComponent(src.split(/[?#]/)[0].split('/').pop()) || src;
+  const tasks = [
+    ...imgs.map(i => ({ name: 'picture: ' + fileOf(i.src), run: () => imgReady(i) })),
+    { name: 'fonts', run: () => document.fonts && document.fonts.ready },
+    { name: `the theme song: ${THEME_SONG}`, run: () => fetch(THEME_SONG).then(r => r.blob()) },
+    { name: 'the online play code (Colyseus)', run: () => loadColyseus() },
+    { name: 'the friends, chat and forums code (MQTT)', run: () => loadMqtt() },
+  ];
+  // (nothing gets more than 15 seconds: something that won't load mustn't keep you out of the game)
+  const left = new Set(tasks);
+  let done = 0;
+  const show = () => {
+    const pct = p0 + (95 - p0) * done / tasks.length, now = tasks.find(t => left.has(t));
+    fill.style.width = pct + '%'; msg.textContent = `Loading BLOCKBURG... ${Math.floor(pct)}%`;
+    if (now) what.textContent = `Loading ${now.name}  (${done + 1} of ${tasks.length})`;
+  };
+  window.__bootDone = true; show();
+  await Promise.all(tasks.map(t => Promise.race([Promise.resolve().then(t.run).catch(() => { }), new Promise(r => setTimeout(r, 15000))])
+    .then(() => { left.delete(t); done++; show(); })));
+  clearTimeout(window.__bootSlow);
+  // the last two steps use what just loaded: fresh pictures of the games (with the sky in them), then one picture drawn
+  what.textContent = 'Taking pictures of the games'; await nextFrame();
+  try { snapGameThumbs(); } catch { }
+  what.textContent = 'Getting the graphics ready'; fill.style.width = '98%'; await nextFrame();
+  try { pv.render(pvScene, pvCam); } catch { }
+  fill.style.width = '100%'; msg.textContent = 'Ready!'; what.textContent = `Loaded all ${tasks.length} things!`;
+  setTimeout(() => { boot.classList.add('out'); setTimeout(() => boot.remove(), 450); }, 250);
+})();
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
   keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, pxUrl, BLUEPRINTS, makePart, BC, LOD, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
