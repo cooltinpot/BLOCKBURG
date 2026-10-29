@@ -713,7 +713,7 @@
 
     <div class="page hidden" id="p-character"><div class="cols">
       <div class="box"><h3>My Character</h3><div class="in" style="text-align:center"><div class="avatarSlot"></div>
-        <div style="margin-top:6px;line-height:1.6">Hat: <b id="curHat"></b><br>Shirt: <b id="curShirt"></b><br>Pants: <b id="curPants"></b><br>T-Shirt: <b id="curTShirt"></b><br>Face: <b id="curFace"></b><br>Accessory: <b id="curAcc"></b></div>
+        <div style="margin-top:6px;line-height:1.6">Hat: <b id="curHat"></b><br>Shirt: <b id="curShirt"></b><br>Pants: <b id="curPants"></b><br>T-Shirt: <b id="curTShirt"></b><br>Face: <b id="curFace"></b><br>Back: <b id="curBack"></b><br>Accessory: <b id="curAcc"></b></div>
         <div style="margin-top:6px"><button class="s-btn" data-goto="catalog">Get Clothes</button> <button class="s-btn" id="noobBtn">Reset to Noob</button></div></div></div>
       <div class="box"><h3>Body Colors</h3><div class="in" style="text-align:center">
         <p style="margin-top:0">Click a body part, then pick a BrickColor.</p>
@@ -2917,6 +2917,48 @@ function corruptTick(t) {
 }
 // put it on a character's arms: a see-through skin just over the arm, so it swings with it
 // (mesh order: lleg, rleg, larm, rarm, torso, head; the "l" arm sits at -x, the character's right)
+/* ---- back accessories: one thing strapped across your back (look.back) ---- */
+const BACKS = [
+  { id: 'none', name: 'Nothing on your back', price: '' },
+  { id: 'axe', name: "Jonny's little toy", price: 'Free', desc: 'HERES JONNY!' },
+];
+const backName = (id) => (BACKS.find(b => b.id === id) || BACKS[0]).name;
+// the model, standing up: the handle runs along y with the head at the top, blade flat to the back
+function makeBack(id) {
+  const g = new THREE.Group();
+  const M = (hex) => partMats(hex)[0];
+  const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+  const slab = (pts, depth, mat, z = 0) => {   // a flat shape, cut out of a plank
+    const sh = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
+    const geo = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: false }); geo.translate(0, 0, -depth / 2 + z);
+    return add(geo, mat, 0, 0, 0);
+  };
+  if (id === 'axe') {
+    // an old-school blocky woodcutter's axe: a long wooden handle, a taped grip, and a big grey head
+    add(new THREE.BoxGeometry(0.18, 3.3, 0.18), M('#8a5a2b'), 0, 0, 0);            // handle
+    add(new THREE.BoxGeometry(0.24, 0.75, 0.24), M('#3b2a1a'), 0, -1.2, 0);        // grip
+    add(new THREE.BoxGeometry(0.28, 0.16, 0.28), M('#2b1d12'), 0, -1.68, 0);       // end of the handle
+    const head = new THREE.Group(); head.position.y = 1.25; g.add(head);
+    const metal = M('#8f959d'), edge = M('#e4e7eb');
+    const blade = slab([[0.05, 0.32], [0.5, 0.4], [0.9, 0.72], [1.05, 0], [0.9, -0.72], [0.5, -0.4], [0.05, -0.32]], 0.14, metal);
+    const shine = slab([[0.78, 0.6], [0.9, 0.72], [1.05, 0], [0.9, -0.72], [0.78, -0.6], [0.9, 0]], 0.17, edge);   // the sharp edge
+    const poll = add(new THREE.BoxGeometry(0.42, 0.56, 0.26), metal, -0.12, 0, 0);   // the blunt back of the head
+    const band = add(new THREE.BoxGeometry(0.26, 0.2, 0.26), M('#5d6168'), 0, -0.4, 0);
+    for (const m of [blade, shine, poll, band]) { g.remove(m); head.add(m); }
+  }
+  return g;
+}
+// strap it on the back of the torso, across the back from hip to shoulder, head up behind the left shoulder
+// (the character faces +z, so its back is -z)
+function wearBack(ch, id) {
+  const torso = ch.meshes[4];
+  for (const o of torso.children.filter(o => o.userData.back)) torso.remove(o);
+  ch.backId = id = BACKS.some(b => b.id === id) ? id : 'none';
+  if (id === 'none') return;
+  const b = shadowAll(makeBack(id)); b.userData.back = true;
+  b.position.set(0, 0.25, -0.68); b.rotation.set(0, Math.PI, -0.62); b.scale.setScalar(1.2);
+  torso.add(b);
+}
 function wearAcc(ch, id, arm) {
   for (const m of [ch.meshes[2], ch.meshes[3]]) for (const o of m.children.filter(o => o.userData.acc)) m.remove(o);
   ch.accId = id = ACCS.some(a => a.id === id) ? id : 'none';
@@ -3111,6 +3153,10 @@ class Humanoid {
   get pos() { return this.body.position; }
   setHat(id) {
     this.hat = id || 'none'; wearHat(this.char, this.hat);
+    if (this.hid) netEv(['look', this.hid, lookOf(this)]);
+  }
+  setBack(id) {
+    this.back = BACKS.some(b => b.id === id) ? id : 'none'; wearBack(this.char, this.back);
     if (this.hid) netEv(['look', this.hid, lookOf(this)]);
   }
   setAcc(id, arm) {
@@ -3400,14 +3446,14 @@ function knock(h, vx, vy, vz) {
 const NOOB = { skin: '#F5CD30', shirt: '#0D69AC', pants: '#A4BD47' };
 const LOOK_KEY = 'blockburg-classic-look';
 let look = (() => {
-  try { const l = JSON.parse(localStorage.getItem(LOOK_KEY)); if (l && l.colors && l.colors.head) return { shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none', acc: 'none', arm: 'right', ...l }; } catch { }
-  return { colors: normColors(NOOB), hat: 'none', shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none', acc: 'none', arm: 'right' };
+  try { const l = JSON.parse(localStorage.getItem(LOOK_KEY)); if (l && l.colors && l.colors.head) return { shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none', acc: 'none', arm: 'right', back: 'none', ...l }; } catch { }
+  return { colors: normColors(NOOB), hat: 'none', shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none', acc: 'none', arm: 'right', back: 'none' };
 })();
 function saveLook() { try { localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } catch { } }
 const player = new Humanoid({ name: 'Player', colors: look.colors, isPlayer: true, chatColor: '#ffe680', hid: 'H' });
 player.setHat(look.hat);
 player.setOutfit(look.colors, look.shirt, look.pants, look.face, look.tshirt);
-player.setAcc(look.acc, look.arm);
+player.setAcc(look.acc, look.arm); player.setBack(look.back);
 const npcDefs = [
   ['Guest 1337', { skin: '#F5CD30', shirt: '#C4281C', pants: '#1B2A35' }, '#ff9a9a'],
   ['Guest 2006', { skin: '#CC8E69', shirt: '#4B974B', pants: '#694028' }, '#a8ffa8'],
@@ -6646,6 +6692,16 @@ for (const a of ACCS) if (a.id !== 'none') {
   pv.render(pvScene, pvCam); accThumbs[a.id] = pv.domElement.toDataURL();
 }
 wearAcc(pvChar, 'none');
+const backThumbs = {};
+pvChar.root.visible = false;
+for (const b of BACKS) if (b.id !== 'none') {
+  const m = makeBack(b.id); m.rotation.z = -0.62; pvScene.add(m);
+  const box = new THREE.Box3().setFromObject(m), c = box.getCenter(new V3()), sz = box.getSize(new V3()).length();
+  pvCam.position.copy(c).add(new V3(0.3, 0.25, 1).normalize().multiplyScalar(sz * 1.25)); pvCam.lookAt(c);
+  pv.render(pvScene, pvCam); backThumbs[b.id] = pv.domElement.toDataURL();
+  pvScene.remove(m);
+}
+pvChar.root.visible = true;
 pvChar.root.rotation.y = 0;
 pv.setClearColor(0x000000, 0); pv.setSize(220, 260);
 pvCam.aspect = 220 / 260; pvCam.updateProjectionMatrix();
@@ -6753,14 +6809,16 @@ function renderCatalog() {
     .filter(i => (!i.admin || adminPriv) && (!isLimited(catTab, i.id) || !limitedOver() || look[slot] === i.id))
     .map(i => ({ ...i, slot }));
   // the Accessories tab: the hats, then the arm accessories (worn on top of a hat, in their own slot)
-  if (catTab === 'hats') list.push(...ACCS.filter(a => a.id !== 'none').map(a => ({ ...a, slot: 'acc' })));
+  if (catTab === 'hats') list.push(...BACKS.filter(b => b.id !== 'none').map(b => ({ ...b, slot: 'back' })), ...ACCS.filter(a => a.id !== 'none').map(a => ({ ...a, slot: 'acc' })));
   const thumbs = catTab === 'hats' ? hatThumbs : catTab === 'faces' ? faceThumbs : clothThumbs[catTab];
-  // an arm accessory has a button for each arm (the one you're wearing it on is ticked), and Take Off while it's on
+  // whatever you're wearing gets a Take Off button under it (not faces: you always have one).
+  // An arm accessory has a button for each arm instead of Wear (the one you're wearing it on is ticked).
+  const takeOff = (h) => look[h.slot] === h.id && h.id !== 'none' && catTab !== 'faces' ? `<button class="s-btn" data-wear="none" data-slot="${h.slot}">Take Off</button>` : '';
   const wearBtns = (h) => h.slot === 'acc'
-    ? `<div class="arms">${ARMS.map(([a, n]) => { const on = look.acc === h.id && (look.arm || 'right') === a; return `<button class="s-btn${on ? ' on' : ''}" data-wear="${h.id}" data-slot="acc" data-arm="${a}">${on ? '✓ ' : ''}${n}</button>`; }).join('')}${look.acc === h.id ? '<button class="s-btn" data-wear="none" data-slot="acc">Take Off</button>' : ''}</div>`
-    : `<button class="s-btn" data-wear="${h.id}">${look[slot] === h.id ? 'Wearing' : (h.id === 'none' ? 'Take Off' : 'Wear')}</button>`;
+    ? `<div class="arms">${ARMS.map(([a, n]) => { const on = look.acc === h.id && (look.arm || 'right') === a; return `<button class="s-btn${on ? ' on' : ''}" data-wear="${h.id}" data-slot="acc" data-arm="${a}">${on ? '✓ ' : ''}${n}</button>`; }).join('')}${takeOff(h)}</div>`
+    : `<div class="arms"><button class="s-btn" data-wear="${h.id}" data-slot="${h.slot}">${look[h.slot] === h.id ? 'Wearing' : (h.id === 'none' ? 'Take Off' : 'Wear')}</button>${takeOff(h)}</div>`;
   document.querySelectorAll('[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === catTab));
-  $('hatGrid').innerHTML = list.map(h => `<div class="hcard ${look[h.slot] === h.id ? 'on' : ''}"><img src="${h.id === 'none' ? hatThumbs.none : (h.slot === 'acc' ? accThumbs : thumbs)[h.id]}" alt="">
+  $('hatGrid').innerHTML = list.map(h => `<div class="hcard ${look[h.slot] === h.id ? 'on' : ''}"><img src="${h.id === 'none' ? hatThumbs.none : ({ acc: accThumbs, back: backThumbs }[h.slot] || thumbs)[h.id]}" alt="">
     <div class="gt">${h.name}</div>${h.desc ? `<div class="ds">"${h.desc}"</div>` : ''}<div class="pr">${h.price || '&nbsp;'}</div>
     ${wearBtns(h)}${goneNote(catTab, h.id)}</div>`).join('');
   const on = setOfLook({ ...look, colors: normColors(look.colors) });
@@ -6778,8 +6836,9 @@ $('setList').addEventListener('click', (e) => {
 let selBP = 'torso';
 $('bodyPalette').innerHTML = PALETTE.map(([n, h]) => `<div title="${n}" data-bc="${h}" style="background:${h}"></div>`).join('');
 function refreshLook() {
-  dressCharacter(pvChar, look.colors, look.shirt, look.pants, look.face, look.tshirt); wearHat(pvChar, look.hat); wearAcc(pvChar, look.acc, look.arm);
-  player.setOutfit(look.colors, look.shirt, look.pants, look.face, look.tshirt); player.setAcc(look.acc, look.arm);
+  dressCharacter(pvChar, look.colors, look.shirt, look.pants, look.face, look.tshirt); wearHat(pvChar, look.hat); wearAcc(pvChar, look.acc, look.arm); wearBack(pvChar, look.back);
+  player.setOutfit(look.colors, look.shirt, look.pants, look.face, look.tshirt); player.setAcc(look.acc, look.arm); player.setBack(look.back);
+  $('curBack').textContent = backName(look.back);
   $('curAcc').textContent = look.acc && look.acc !== 'none' ? `${accName(look.acc)} (${(ARMS.find(a => a[0] === look.arm) || ARMS[1])[1]})` : accName('none');
   $('curFace').textContent = faceDef(look.face).name;
   $('curTShirt').textContent = clothName(TSHIRTS, look.tshirt);
@@ -6816,6 +6875,10 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '10/29/2026', ver: '4.2', top: "New accessory: Jonny's little toy", text: [
+    "A new kind of accessory that goes on your back! The first one is Jonny's little toy: an old-school axe strapped across your back. HERES JONNY!",
+    'Find it in Catalog, Accessories. You can wear it with a hat and Binary Corruption at the same time.',
+    'Everything you\'re wearing in the Catalog has a Take Off button under it now (hats, shirts, pants, T-shirts and accessories).' ] },
   { date: '10/29/2026', ver: '4.1', top: 'New accessory: Binary Corruption', text: [
     'Hats are now called Accessories in the Catalog, and there\'s a new kind you wear on your arm (with any hat you like): Binary Corruption! Glowing green 1s and 0s that eat up your arm, flickering and glitching the whole time.',
     'Pick where it goes with the buttons under it: Left Arm, Right Arm or Both Arms. Everyone in your online game sees it too.' ] },
@@ -7832,8 +7895,8 @@ async function loadColyseus() {
   return new ColyLib.Client(SERVER_URL);
 }
 const humByHid = (hid) => humanoids.find(h => h.hid === hid);
-function lookOf(h) { return { colors: h.colors, hat: h.hat, shirt: h.shirt || 'none', pants: h.pants || 'none', face: h.face || 'smile', tshirt: h.tshirt || 'none', acc: h.acc || 'none', arm: h.accArm || 'right' }; }
-function applyLook(h, L) { if (!L) return; h.setOutfit(L.colors, L.shirt, L.pants, L.face, L.tshirt || 'none'); h.setHat(L.hat); h.setAcc(L.acc, L.arm); }
+function lookOf(h) { return { colors: h.colors, hat: h.hat, shirt: h.shirt || 'none', pants: h.pants || 'none', face: h.face || 'smile', tshirt: h.tshirt || 'none', acc: h.acc || 'none', arm: h.accArm || 'right', back: h.back || 'none' }; }
+function applyLook(h, L) { if (!L) return; h.setOutfit(L.colors, L.shirt, L.pants, L.face, L.tshirt || 'none'); h.setHat(L.hat); h.setAcc(L.acc, L.arm); h.setBack(L.back); }
 function humanRec(h) { return { hid: h.hid, name: h.name, look: lookOf(h), npc: !!h.ai, cc: h.chatColor, adm: !!h.admin, co: h.capeOff ? 1 : 0, bd: h.badge || '', tm: h.team || null }; }
 function setHumBody(h, kinematic) {
   const b = h.body;
