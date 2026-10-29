@@ -469,8 +469,8 @@
     'Tip: Grab the other team\'s flag in RED VS BLUE!', 'Tip: Cars wait at the Race Track. Mind Guest 31.',
     'Tip: Host a game in Multiplayer and invite your friends.', 'Tip: Never tell anyone your password.'];
   document.getElementById('bootTip').textContent = tips[Math.floor(Math.random() * tips.length)];
-  // a random picture: the sword guy, the street, or Guest 31 having a moment
-  const pics = [['boot.jpg', 580, 604], ['loading-street.jpg', 863, 660], ['loading-guest31.jpg', 592, 555]];
+  // a random picture: the sword guy, the street, Guest 31 having a moment, Guest 2006's new house, or two Guests saying hey
+  const pics = [['boot.jpg', 580, 604], ['loading-street.jpg', 863, 660], ['loading-guest31.jpg', 592, 555], ['loading-house.jpg', 707, 742], ['loading-hey.jpg', 616, 636]];
   const [src, w, h] = pics[Math.floor(Math.random() * pics.length)], pic = document.getElementById('bootPic');
   pic.width = w; pic.height = h; pic.src = src;
   const fill = document.getElementById('bootFill'), msg = document.getElementById('bootMsg'), what = document.getElementById('bootWhat');
@@ -6938,7 +6938,7 @@ const UPDATES = [
     'A red countdown next to the BLOCKBURG logo shows exactly how long is left to get the Halloween set (days, hours, minutes and seconds). Click it to go to the Catalog!',
     'New T-shirt: SQUARES. You are in a square game, might as well match it right? It covers your whole front, and your body color shows through the squares.',
     'New admin command: /time. Type /time and a number to slow the whole game down or speed it up. /time 0.25 is slow motion, /time 2 is double speed, and /time 1 puts it back to normal. Online, everyone in the server goes slow together, bricks and all.',
-    'Two new loading pictures: the street, and Guest 31 having a moment. The start-up screen and the game loading screens pick a picture at random.',
+    'Four new loading pictures: the street, Guest 31 having a moment, Guest 2006 showing off a finished house, and Guest 2006 and Guest 1337 saying hey. The start-up screen and the game loading screens pick a picture at random.',
     'The start-up screen now loads everything before you get in (every picture, the theme song and the online code), and the line at the bottom of the screen says what it is loading right now.' ] },
   { date: '10/26/2026', ver: '3.2', top: 'No more frozen games online', text: [
     'If a server room lags too much, it restarts itself with a fresh world and the same room code. Everyone gets a message saying what happened, with a Rejoin button.',
@@ -8719,7 +8719,7 @@ function loadDraw() {
 }
 // pic: the picture on top (cooltinpot's builder picture for sandbox games, the cover for the rest)
 const SANDBOX_PIC = 'loading-build.png';
-const GAME_PICS = ['cover.png', 'loading-street.jpg', 'loading-guest31.jpg'];   // (one at random for every other game)
+const GAME_PICS = ['cover.png', 'loading-street.jpg', 'loading-guest31.jpg', 'loading-house.jpg', 'loading-hey.jpg'];   // (one at random for every other game)
 if (!HEADLESS) for (const p of [SANDBOX_PIC, ...GAME_PICS]) new Image().src = p;   // (fetched now, so they're there the moment they're needed)
 function loadShow(label, local = false, pic = rpick(GAME_PICS)) {
   if (HEADLESS) return;
