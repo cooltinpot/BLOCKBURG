@@ -157,6 +157,17 @@
   .s-wrap{width:min(900px,100%);margin:0 auto}
   .s-top{display:flex;justify-content:space-between;align-items:flex-end;padding:10px 12px 6px;flex-wrap:wrap;gap:6px}
   .s-logo{font:900 44px Arial;color:#e2231a;letter-spacing:1px;-webkit-text-stroke:2px #000;text-shadow:3px 3px 0 #000;transform:rotate(-2deg);line-height:1}
+  /* the Halloween countdown beside the logo (gone with the Halloween set) */
+  .s-brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .s-top .s-user{margin-left:auto}   /* (stays on the right even when it wraps under the logo) */
+  #hwTimer{display:flex;align-items:center;gap:5px;color:#e2231a;border:2px solid #e2231a;background:#fff3f1;padding:2px 7px 3px 3px;cursor:pointer;font-family:Verdana,Arial,sans-serif;box-shadow:2px 2px 0 #000}
+  #hwTimer:hover{background:#ffe3df}
+  #hwTimer img{width:32px;height:32px;display:block}
+  #hwTimer .hw-t{font:bold 9px Verdana;text-align:center}
+  #hwTimer .hw-n{display:flex;gap:5px;justify-content:center}
+  #hwTimer .hw-n span{display:flex;flex-direction:column;align-items:center;min-width:24px}
+  #hwTimer .hw-n b{font:900 19px Arial;line-height:1.05}
+  #hwTimer .hw-n i{font:bold 8px Verdana;font-style:normal;text-transform:uppercase}
   .s-logo small{display:block;font:bold 11px Verdana;color:#555;-webkit-text-stroke:0;text-shadow:none;letter-spacing:0;transform:rotate(2deg);margin-top:4px}
   .s-user{font-size:11px;text-align:right}
   .s-user b{color:#0b4a99}
@@ -666,7 +677,8 @@
 
 <div id="site"><div class="s-wrap">
   <div class="s-top">
-    <div class="s-logo">BLOCKBURG<small>A Free Online Building Game</small></div>
+    <div class="s-brand"><div class="s-logo">BLOCKBURG<small>A Free Online Building Game</small></div>
+      <div id="hwTimer" title="Get the Pumpkin King set in the Catalog before it's gone!"><img alt=""><div><div class="hw-t">HALLOWEEN SET LEAVES IN</div><div class="hw-n"></div></div></div></div>
     <div class="s-user">Logged in as <b id="meName">Player</b><span class="badge hidden" id="meBadge"></span> <span class="fm-adm hidden" id="adminBadge" style="margin:0">Admin</span> &nbsp;|&nbsp; <i data-px="tix"></i> <b>25</b> Tix &nbsp;|&nbsp; <i data-px="bux"></i> <b>10</b> Bux<br><span id="onlineCount" style="display:none"></span><span class="fm-link" data-signin="out">Logout</span></div>
   </div>
   <div class="s-nav">
@@ -6829,6 +6841,19 @@ const LIMITED = { hats: ['pumpkin'], faces: ['pumpkin'], tshirts: ['pumpkin'], s
 const limitedOver = () => Date.now() >= LIMITED_UNTIL.getTime();
 const isLimited = (tab, id) => (LIMITED[tab] || []).includes(id);
 const goneNote = (tab, id) => !isLimited(tab, id) ? '' : `<div class="gone">${limitedOver() ? 'Gone from the Catalog. You still have it!' : 'gone October 31st!!'}</div>`;
+// the countdown beside the logo: how long until the Halloween set leaves (and when it has, the countdown goes too)
+function hwTick() {
+  const el = $('hwTimer');
+  if (!el) return;
+  const ms = LIMITED_UNTIL.getTime() - Date.now();
+  if (ms <= 0) { el.remove(); clearInterval(hwTick.iv); return; }
+  const img = el.querySelector('img');
+  if (!img.getAttribute('src') && typeof hatThumbs !== 'undefined' && hatThumbs.pumpkin) img.src = hatThumbs.pumpkin;
+  const t = Math.floor(ms / 1000);
+  el.querySelector('.hw-n').innerHTML = [[Math.floor(t / 86400), 'days'], [Math.floor(t / 3600) % 24, 'hours'], [Math.floor(t / 60) % 60, 'mins'], [t % 60, 'secs']]
+    .map(([n, l]) => `<span><b>${String(n).padStart(2, '0')}</b><i>${l}</i></span>`).join('');
+}
+if (!HEADLESS) { $('hwTimer').onclick = () => showPage('catalog'); hwTick(); hwTick.iv = setInterval(hwTick, 1000); }
 function renderCatalog() {
   const slot = LOOK_SLOT[catTab];
   const list = { hats: HATS, shirts: SHIRTS, pants: PANTS, tshirts: TSHIRTS, faces: FACES }[catTab]
@@ -6901,27 +6926,20 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
-  { date: '10/29/2026', ver: '4.4', top: 'New loading pictures, and a start-up screen that loads everything', text: [
+  { date: '10/29/2026', ver: '4.0', top: 'Play Online is here! Plus new accessories, new clothes and /time', text: [
+    'PLAY ONLINE! Every game has a blue Play Online button next to Play Solo. Everyone who presses it lands in the same server for that game, so you can jump in and leave whenever you want. No room code needed!',
+    'Under each Play Online button you can see how many people are playing that game online right now.',
+    'When a game\'s server is full (8 people), the next person gets a second one. Private rooms with a code still work on the Multiplayer page.',
+    'Hats are now called Accessories in the Catalog, and there are two new kinds you wear along with any hat: arm accessories and back accessories.',
+    'New arm accessory: Binary Corruption! Glowing green 1s and 0s that eat up your arm, flickering and glitching the whole time. Pick where it goes with the buttons under it: Left Arm, Right Arm or Both Arms.',
+    "New back accessory: Jonny's little toy, an old-school axe strapped across your back. HERES JONNY!",
+    'Everything you\'re wearing in the Catalog has a Take Off button under it now (hats, shirts, pants, T-shirts and accessories).',
+    'New shirt: the Block jacket, drawn by cooltinpot. A sharp black jacket over a white shirt. You are hired!!',
+    'A red countdown next to the BLOCKBURG logo shows exactly how long is left to get the Halloween set (days, hours, minutes and seconds). Click it to go to the Catalog!',
+    'New T-shirt: SQUARES. You are in a square game, might as well match it right? It covers your whole front, and your body color shows through the squares.',
+    'New admin command: /time. Type /time and a number to slow the whole game down or speed it up. /time 0.25 is slow motion, /time 2 is double speed, and /time 1 puts it back to normal. Online, everyone in the server goes slow together, bricks and all.',
     'Two new loading pictures: the street, and Guest 31 having a moment. The start-up screen and the game loading screens pick a picture at random.',
     'The start-up screen now loads everything before you get in (every picture, the theme song and the online code), and the line at the bottom of the screen says what it is loading right now.' ] },
-  { date: '10/29/2026', ver: '4.3', top: 'New command: /time', text: [
-    'Admins can now type /time and a number to slow the whole game down or speed it up. /time 0.25 is slow motion, /time 2 is double speed, and /time 1 puts it back to normal.',
-    'It works online too: everyone in the server goes slow together, bricks and all.' ] },
-  { date: '10/29/2026', ver: '4.2', top: "New accessory: Jonny's little toy", text: [
-    "A new kind of accessory that goes on your back! The first one is Jonny's little toy: an old-school axe strapped across your back. HERES JONNY!",
-    'Find it in Catalog, Accessories. You can wear it with a hat and Binary Corruption at the same time.',
-    'Everything you\'re wearing in the Catalog has a Take Off button under it now (hats, shirts, pants, T-shirts and accessories).' ] },
-  { date: '10/29/2026', ver: '4.1', top: 'New accessory: Binary Corruption', text: [
-    'Hats are now called Accessories in the Catalog, and there\'s a new kind you wear on your arm (with any hat you like): Binary Corruption! Glowing green 1s and 0s that eat up your arm, flickering and glitching the whole time.',
-    'Pick where it goes with the buttons under it: Left Arm, Right Arm or Both Arms. Everyone in your online game sees it too.' ] },
-  { date: '10/29/2026', ver: '4.0', top: 'Play Online is here!', text: [
-    'Every game has a blue Play Online button next to Play Solo. Everyone who presses it lands in the same server for that game, so you can jump in and leave whenever you want. No room code needed!',
-    'Under each Play Online button you can see how many people are playing that game online right now.',
-    'When a game\'s server is full (8 people), the next person gets a second one. Private rooms with a code still work on the Multiplayer page.' ] },
-  { date: '10/29/2026', ver: '3.4', top: 'New shirt: Block jacket', text: [
-    'New shirt in the Catalog: the Block jacket, drawn by cooltinpot. A sharp black jacket over a white shirt. You are hired!!' ] },
-  { date: '10/29/2026', ver: '3.3', top: 'New T-shirt: SQUARES', text: [
-    'New T-shirt in the Catalog: SQUARES. You are in a square game, might as well match it right? It covers your whole front, and your body color shows through the squares.' ] },
   { date: '10/26/2026', ver: '3.2', top: 'No more frozen games online', text: [
     'If a server room lags too much, it restarts itself with a fresh world and the same room code. Everyone gets a message saying what happened, with a Rejoin button.',
     'You also get sent out (with the reason and an error code) if your internet goes out, your ping stays really high, the server stops answering, your device can\'t keep up, or you leave the game in the background for over 5 minutes. A red warning shows up first, so you know it\'s coming.',
