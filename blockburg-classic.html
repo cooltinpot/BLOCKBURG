@@ -3248,7 +3248,7 @@ class Humanoid {
       if (t) {
         const dx = t.x - b.x, dy = t.y - b.y, dz = t.z - b.z;
         if (dx * dx + dy * dy + dz * dz > 400) { this.body.position.set(t.x, t.y, t.z); v.set(0, 0, 0); }
-        else v.set(dx * 12, dy * 12, dz * 12);
+        else { const g = 12 / timeScale; v.set(dx * g, dy * g, dz * g); }
       }
       this.grounded = hitDist <= 1.6;
       if (this.remote) {
@@ -6419,6 +6419,13 @@ cv.addEventListener('touchend', touchEnd); cv.addEventListener('touchcancel', to
 
 /* ================= main loop ================= */
 let time = 0, last = performance.now(), lbT = 0;
+// /time: how fast the game runs (1 normal, 0.5 half speed, 2 double). The camera, the network and the menus keep real time.
+let timeScale = 1, realDt = 0;
+const TIME_MIN = 0.05, TIME_MAX = 3;
+function setTimeScale(k) {
+  timeScale = Math.min(TIME_MAX, Math.max(TIME_MIN, +k || 1));
+  return timeScale;
+}
 function playerInput(dt) {
   const P = player;
   P.move.set(0, 0, 0); P.jump = false;
@@ -6450,7 +6457,8 @@ function loop(now) {
   frame(now);
 }
 function frame(now) {
-  const dt = Math.min((now - last) / 1000, 1 / 20); last = now; time += dt;
+  realDt = Math.min((now - last) / 1000, 1 / 20); last = now;
+  const dt = realDt * timeScale; time += dt;
   // on the website no game is loaded (see unloadWorld): nothing moves and nothing makes a sound, only the character preview turns
   if (!started && !HEADLESS) {
     pvChar.root.rotation.y = Math.sin(time * 0.7) * 0.7;
@@ -6459,7 +6467,7 @@ function frame(now) {
     return;
   }
 
-  playerInput(dt);
+  playerInput(realDt);
   npcs.forEach(n => npcThink(n, dt));
   humanoids.forEach(h => h.preStep(dt));
   if (player.lungeT > 0) { player.lungeT -= dt; player.body.velocity.x += player.lungeVel.x; player.body.velocity.z += player.lungeVel.z; }
@@ -6483,11 +6491,11 @@ function frame(now) {
   // at most 3 catch-up steps: with lots of bricks a frame can run late, and catching up with even more steps
   // only makes the next frame later still (and everything stays slow until the bricks are gone)
   sitDrive(dt);
-  world.step(1 / 120, dt, 3);
+  world.step(1 / 120 * Math.min(1, timeScale), dt, 3 * Math.ceil(Math.max(1, timeScale)));
   if (!net.mode) weldSnap(weldGroups.values());
   while (afterStep.length) afterStep.shift()();
 
-  if (net.mode) netLerpParts(dt);   // online: glide the mirrored bricks toward where the server says they are
+  if (net.mode) netLerpParts(realDt);   // online: glide the mirrored bricks toward where the server says they are
   for (const p of parts) {
     p.mesh.position.copy(p.body.position); p.mesh.quaternion.copy(p.body.quaternion);
     if (p.body.position.y < -200 && !p.locked && !net.mode) removePart(p);   // (online the server does this)
@@ -6598,9 +6606,9 @@ function frame(now) {
   const firstPerson = camDist < 1.5 && !P.dead;
   P.char.root.visible = !P.dead && !firstPerson;
   if (trailer.on) {   // the trailer camera flies its own shots, and you get a cameo wherever you're standing
-    target = trailerCamera(dt); P.char.root.visible = !P.dead; selBox.visible = false;
+    target = trailerCamera(realDt); P.char.root.visible = !P.dead; selBox.visible = false;
   } else if (freecam.on) {   // the admin's free cam: you stay standing where you were
-    target = freecamCamera(dt); P.char.root.visible = !P.dead; selBox.visible = false;
+    target = freecamCamera(realDt); P.char.root.visible = !P.dead; selBox.visible = false;
   } else if (firstPerson) {
     camera.position.set(P.pos.x, P.pos.y + 2.1, P.pos.z);
     camera.lookAt(camera.position.clone().add(new V3(-Math.sin(camYaw) * Math.cos(camPitch), -Math.sin(camPitch), -Math.cos(camYaw) * Math.cos(camPitch))));
@@ -6619,9 +6627,9 @@ function frame(now) {
   // HUD
   const hp = Math.max(0, P.health);
   $('hpFill').style.width = hp + '%';
-  lbT -= dt; if (lbT <= 0) { lbT = 0.5; renderLB(); }
+  lbT -= realDt; if (lbT <= 0) { lbT = 0.5; renderLB(); }
   cmdPanelShow(!!adminPriv && started && !siteOpen && !trailer.on);   // the admin's command list
-  if (net.mode === 'host' || net.mode === 'client') netTick(dt);
+  if (net.mode === 'host' || net.mode === 'client') netTick(realDt);
 
   if (siteOpen) {
     pvChar.root.rotation.y = Math.sin(time * 0.7) * 0.7;
@@ -6875,6 +6883,9 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '10/29/2026', ver: '4.3', top: 'New command: /time', text: [
+    'Admins can now type /time and a number to slow the whole game down or speed it up. /time 0.25 is slow motion, /time 2 is double speed, and /time 1 puts it back to normal.',
+    'It works online too: everyone in the server goes slow together, bricks and all.' ] },
   { date: '10/29/2026', ver: '4.2', top: "New accessory: Jonny's little toy", text: [
     "A new kind of accessory that goes on your back! The first one is Jonny's little toy: an old-school axe strapped across your back. HERES JONNY!",
     'Find it in Catalog, Accessories. You can wear it with a hat and Binary Corruption at the same time.',
@@ -7677,6 +7688,7 @@ function leaveGame() {
 // back on the website: take the game apart so nothing keeps running (or making noise) behind the page.
 // playPlace builds everything again when you play.
 function unloadWorld() {
+  setTimeScale(1);
   walkSound(false);
   if (ctf.on) ctfStop();
   if (HEADLESS) return;
@@ -8062,7 +8074,7 @@ function hostHello(conn, msg) {
   if (Array.isArray(msg.id)) idVerify(`bb-id|${net.code}|${name}`, msg.id.slice(0, 2), msg.id[2]).then(bd => {
     if (bd && net.conns.get(conn.peer)?.h === h) { h.badge = bd; h.drawTag(); renderLB(); netEv(['bd', h.hid, bd]); }
   });
-  netSendTo(conn, { t: 'welcome', you: h.hid, code: net.code, host: player.name, place: net.place, night,
+  netSendTo(conn, { t: 'welcome', you: h.hid, code: net.code, host: player.name, place: net.place, night, time: timeScale,
     parts: parts.map(p => [p.nid, serialize(p), p.locked]),
     humans: humanoids.filter(x => x.enabled && x !== h).map(humanRec) });
   if (ctf.on) setTeam(h, pickTeam());   // RED VS BLUE!: onto the smaller team
@@ -8308,7 +8320,7 @@ function clientEnter(m) {
   if (ctf.on) ctfStop();   // (flags from a room I was in before)
   net.mode = 'client'; net.myHid = m.you; player.hid = m.you; player.name = myName();
   if (m.place) net.place = m.place;   // (so friends see which place this room is)
-  setNight(!!m.night);
+  setNight(!!m.night); setTimeScale(m.time);
   audioInit(); stopDrag(); if (equipped) equip(TOOLS.indexOf(equipped));
   clearUnlocked(); [...hatPickups].forEach(removeHatPickup);
   mirrorBricks();
@@ -8385,6 +8397,7 @@ function clientEvent(e) {
     case 'pd': { const p = partsByNid.get(e[1]); if (p) { p.open = !!e[2]; p.body.collisionResponse = !p.open; partLook(p); } break; }
     case 'pn': { const p = partsByNid.get(e[1]); if (p) { p.neon = !!e[2]; if (!p.neon) p.mesh.castShadow = true; partLook(p); } break; }
     case 'night': setNight(!!e[1]); break;
+    case 'time': setTimeScale(e[1]); break;
     case 'psc': { const p = partsByNid.get(e[1]); if (p) { p.scripts = cleanScripts(e[2]); if (p.scripts) scripted.add(p); else scripted.delete(p); if (scEd.p === p) scEdSync(); } break; }
     case 'pv': { const p = partsByNid.get(e[1]); if (p) { p.hidden = !!e[2]; p.mesh.visible = !p.hidden; } break; }
     case 'bsay': { const p = partsByNid.get(e[1]); if (p) brickSay(p, String(e[2] || '').slice(0, 60)); break; }
@@ -8973,6 +8986,17 @@ const CMDS = [
     run: ([n]) => { const v = Math.min(200, Math.max(1, +n || WALK)); player.walk = v; return `Walk speed is ${v}.`; } },
   { name: 'jump', use: '<number>', desc: 'your jump power (normal 50)', hint: () => ['50', '100', '150'],
     run: ([n]) => { const v = Math.min(400, Math.max(5, +n || JUMP)); player.jumpPow = v; return `Jump power is ${v}.`; } },
+  { name: 'time', world: true, use: '<number>', desc: 'slow down or speed up everything (normal 1, slow 0.25, fast 2)', hint: () => ['1', '0.5', '0.25', '0.1', '2'],
+    run: ([n]) => {
+      if (n !== undefined && isNaN(+n)) return 'Give it a number, like /time 0.5';
+      const k = setTimeScale(n ?? 1);
+      if (net.mode === 'host') {   // online: everyone's game and the server's bricks change speed together
+        netEv(['time', k]); toServer({ t: 'time', k });
+        const say = k === 1 ? 'Time is back to normal.' : `Time is running at ${k}x speed.`;
+        netEv(['sys', say]); sysChat(say);
+      }
+      return k === 1 ? 'Time is back to normal.' : `Time is running at ${k}x speed.`;
+    } },
   { name: 'gravity', use: '<number>', desc: 'how hard things fall (normal 196)', hint: () => ['196', '60', '20'],
     run: ([n]) => { if (net.mode) return 'Gravity only changes in solo play.'; const v = Math.min(600, Math.max(0, +(n ?? GRAV))); world.gravity.set(0, -v, 0); return `Gravity is ${v}.`; } },
   { name: 'tp', use: '<player|spawn|x y z>', desc: 'teleport yourself', hint: () => ['spawn', ...PLAYER_ARG().slice(3)],

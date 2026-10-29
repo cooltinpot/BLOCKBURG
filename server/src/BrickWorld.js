@@ -300,7 +300,7 @@ export class BrickWorld {
     const b = g.body, dx = x - b.position.x, dy = y - b.position.y, dz = z - b.position.z;
     // glide there by the next snapshot (moving, not teleporting, so bricks it bumps get the right push)
     if (Math.hypot(dx, dy, dz) > 12) { b.position.set(x, y, z); b.velocity.set(0, 0, 0); }
-    else b.velocity.set(dx * 15, dy * 15, dz * 15);
+    else { const v = 15 / (this.timeScale || 1); b.velocity.set(dx * v, dy * v, dz * v); }
     g.seen = now;
   }
 
@@ -313,9 +313,10 @@ export class BrickWorld {
       const p = this.parts.get(nid);
       if (!p || now - d.at > 500) { this.driven.delete(nid); continue; }
       const g = p.d.wd && this.welds.get(p.d.wd);
-      driveBodies(p.body, g ? [...g].map(q => q.body) : [p.body], d.th, d.st, Math.min(dt, 1 / 20));
+      driveBodies(p.body, g ? [...g].map(q => q.body) : [p.body], d.th, d.st, Math.min(dt, 1 / 20) * (this.timeScale || 1));
     }
-    this.world.step(1 / 120, Math.min(dt, 1 / 20), 3);
+    const k = this.timeScale || 1;   // (/time: slow motion or fast forward)
+    this.world.step(1 / 120 * Math.min(1, k), Math.min(dt, 1 / 20) * k, 3 * Math.ceil(Math.max(1, k)));
     weldSnap(this.welds.values());
     for (const p of [...this.parts.values()]) {
       if (!p.locked && p.body.position.y < -200) { this.remove(p.nid); this.fellOut.push(p.nid); }

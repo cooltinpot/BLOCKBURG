@@ -179,6 +179,7 @@ export class BlockburgRoom extends Room {
       case 'blast': B.blast(m.c, m.r); break;                      // an explosion
       case 'door': B.door(m.nid, !!m.on); break;                  // a door opened or closed
       case 'weld': B.weld(m.nid, m.id ?? null); break;              // welded together (or apart)
+      case 'time': B.timeScale = Math.min(3, Math.max(0.05, +m.k || 1)); break;   // /time
       case 'drive': B.drive(m.nid, +m.th, +m.st, this.clock.currentTime); break;   // someone driving a car
     }
   }
