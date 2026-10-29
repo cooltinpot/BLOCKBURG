@@ -250,6 +250,8 @@
   .hcard .gt{font:bold 11px Verdana;color:#0b4a99;margin:4px 0 1px}
   .cat-tabs{display:flex;gap:4px}
   .cat-tabs .on{background:#0b4a99;color:#fff}
+  .hcard .arms{display:flex;flex-direction:column;gap:3px}
+  .hcard .arms .s-btn.on{background:linear-gradient(#5dff85,#17b043);border-color:#0c6b26;color:#03200b}
   .hcard .gone{font:bold 11px Verdana;color:#e2231a;margin-top:5px}
   .hcard .ds{font-size:10px;font-style:italic;color:#555;margin-bottom:3px}
   .hcard .pr{font-size:10px;color:#2f7d16;margin-bottom:4px}
@@ -701,7 +703,7 @@
     <div class="page hidden" id="p-inbox"><div class="box"><h3>Inbox</h3><div class="in" id="inboxBody"></div></div></div>
 
     <div class="page hidden" id="p-catalog"><div class="box"><h3>Catalog</h3><div class="in">
-      <div class="cat-tabs"><button class="s-btn on" data-cat="hats">Hats</button><button class="s-btn" data-cat="shirts">Shirts</button><button class="s-btn" data-cat="pants">Pants</button><button class="s-btn" data-cat="tshirts">T-Shirts</button><button class="s-btn" data-cat="faces">Faces</button></div>
+      <div class="cat-tabs"><button class="s-btn on" data-cat="hats">Accessories</button><button class="s-btn" data-cat="shirts">Shirts</button><button class="s-btn" data-cat="pants">Pants</button><button class="s-btn" data-cat="tshirts">T-Shirts</button><button class="s-btn" data-cat="faces">Faces</button></div>
       <p>It's Play Solo, so everything is free. Click <b>Wear</b>!</p>
       <div class="hatgrid" id="hatGrid"></div>
       <h4 class="proj-h"><i data-px="sparkle" data-size="16"></i> Outfit Sets</h4>
@@ -711,7 +713,7 @@
 
     <div class="page hidden" id="p-character"><div class="cols">
       <div class="box"><h3>My Character</h3><div class="in" style="text-align:center"><div class="avatarSlot"></div>
-        <div style="margin-top:6px;line-height:1.6">Hat: <b id="curHat"></b><br>Shirt: <b id="curShirt"></b><br>Pants: <b id="curPants"></b><br>T-Shirt: <b id="curTShirt"></b><br>Face: <b id="curFace"></b></div>
+        <div style="margin-top:6px;line-height:1.6">Hat: <b id="curHat"></b><br>Shirt: <b id="curShirt"></b><br>Pants: <b id="curPants"></b><br>T-Shirt: <b id="curTShirt"></b><br>Face: <b id="curFace"></b><br>Accessory: <b id="curAcc"></b></div>
         <div style="margin-top:6px"><button class="s-btn" data-goto="catalog">Get Clothes</button> <button class="s-btn" id="noobBtn">Reset to Noob</button></div></div></div>
       <div class="box"><h3>Body Colors</h3><div class="in" style="text-align:center">
         <p style="margin-top:0">Click a body part, then pick a BrickColor.</p>
@@ -2851,6 +2853,78 @@ function colorCharacter(ch, colors) {
   m[4].material = partMats(c.torso)[0]; m[5].material = faceMat(c.head, ch.face);
   skinParts(ch);
 }
+/* ---- arm accessories: worn on the left arm, the right arm, or both (look.acc + look.arm) ---- */
+const ACCS = [
+  { id: 'none', name: 'No Accessory', price: '' },
+  { id: 'corrupt', name: 'Binary Corruption', price: 'Free', desc: '01000101 01010010 01010010 01001111 01010010. Your arm is not okay.' },
+];
+const ARMS = [['left', 'Left Arm'], ['right', 'Right Arm'], ['both', 'Both Arms']];
+const accName = (id) => (ACCS.find(a => a.id === id) || ACCS[0]).name;
+// Binary Corruption: one shared, always-moving picture: green 1s and 0s on black, eating up the arm from the hand.
+// Above its ragged edge the picture is see-through, so the arm (and its sleeve) still shows there.
+const CORRUPT = { W: 16, H: 32, at: -1, off: 0, cols: [] };
+const DIGITS = { 0: ['111', '101', '101', '101', '111'], 1: ['010', '110', '010', '010', '111'] };
+const corruptCanvas = canvas(CORRUPT.W, CORRUPT.H, () => { });
+const corruptTex = new THREE.CanvasTexture(corruptCanvas);
+corruptTex.colorSpace = THREE.SRGBColorSpace; corruptTex.magFilter = corruptTex.minFilter = THREE.NearestFilter; corruptTex.generateMipmaps = false;
+// the end of the arm (the hand) is all corruption: just the 1s and 0s on black, still falling
+const corruptEndCanvas = canvas(CORRUPT.W, CORRUPT.W, () => { });
+const corruptEndTex = new THREE.CanvasTexture(corruptEndCanvas);
+corruptEndTex.colorSpace = THREE.SRGBColorSpace; corruptEndTex.magFilter = corruptEndTex.minFilter = THREE.NearestFilter; corruptEndTex.generateMipmaps = false;
+// box faces: +x, -x, top, bottom, front, back (unlit: it glows the same in the dark). The top (the shoulder) is left bare.
+const corruptSide = new THREE.MeshBasicMaterial({ map: corruptTex, alphaTest: 0.5 });
+const corruptMat = [corruptSide, corruptSide, new THREE.MeshBasicMaterial({ visible: false }), new THREE.MeshBasicMaterial({ map: corruptEndTex }), corruptSide, corruptSide];
+const newDigit = () => ({ d: Math.random() < 0.5 ? 0 : 1, c: Math.random() < 0.35 ? '#5dff85' : '#17b043' });
+for (let c = 0; c < 4; c++) CORRUPT.cols.push({ shift: (Math.random() * 6) | 0, d: Array.from({ length: 7 }, newDigit) });
+function corruptDraw(t) {
+  const { W, H } = CORRUPT, g = corruptCanvas.getContext('2d'), r = Math.random;
+  g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, W, H);
+  // the black corruption, up to a ragged edge that creeps up and down the arm
+  for (let x = 0; x < W; x++) {
+    const edge = Math.round(10 + Math.sin(t * 1.3 + x * 0.9) * 2.5 + Math.sin(t * 3.1 + x * 2.3) * 1.5);
+    g.fillStyle = '#030d06'; g.fillRect(x, edge, 1, H - edge);
+    if (r() < 0.55) { g.fillStyle = r() < 0.5 ? '#030d06' : '#2bea55'; g.fillRect(x, edge - 1 - ((r() * 4) | 0), 1, 1); }   // loose bits
+  }
+  // falling columns of pixel 1s and 0s, only painted onto the black
+  g.globalCompositeOperation = 'source-atop';
+  CORRUPT.off = (CORRUPT.off + 1) % 6;
+  CORRUPT.cols.forEach((col, i) => {
+    const o = (CORRUPT.off + col.shift) % 6;
+    if (o === 0) { col.d.pop(); col.d.unshift(newDigit()); }   // a new digit drops in at the top
+    col.d.forEach((dg, k) => {
+      if (r() < 0.04) Object.assign(dg, newDigit());   // flicker
+      g.fillStyle = dg.c;
+      DIGITS[dg.d].forEach((row, y) => [...row].forEach((p, x) => { if (p === '1') g.fillRect(i * 4 + x, k * 6 - 6 + o + y, 1, 1); }));
+    });
+  });
+  // glitches: a bright line flashing across, or a slice of the arm jumping sideways
+  if (r() < 0.3) { g.fillStyle = r() < 0.5 ? '#9dffb4' : '#000'; g.fillRect(0, 10 + ((r() * (H - 10)) | 0), W, 1); }
+  if (r() < 0.2) { const y = 12 + ((r() * (H - 14)) | 0); g.globalCompositeOperation = 'source-over'; g.drawImage(corruptCanvas, 0, y, W, 2, r() < 0.5 ? -2 : 2, y, W, 2); }
+  corruptTex.needsUpdate = true;
+  // the hand end: the same falling columns, on solid black
+  const e = corruptEndCanvas.getContext('2d');
+  e.fillStyle = '#030d06'; e.fillRect(0, 0, W, W);
+  CORRUPT.cols.forEach((col, i) => {
+    const o = (CORRUPT.off + col.shift) % 6;
+    col.d.forEach((dg, k) => { e.fillStyle = dg.c; DIGITS[dg.d].forEach((row, y) => [...row].forEach((p, x) => { if (p === '1') e.fillRect(i * 4 + x, k * 6 - 6 + o + y, 1, 1); })); });
+  });
+  corruptEndTex.needsUpdate = true;
+}
+// (called while anyone is wearing it; about 11 times a second is plenty for the flicker)
+function corruptTick(t) {
+  if (HEADLESS || (t - CORRUPT.at < 0.09 && t >= CORRUPT.at)) return;
+  CORRUPT.at = t; corruptDraw(t);
+}
+// put it on a character's arms: a see-through skin just over the arm, so it swings with it
+// (mesh order: lleg, rleg, larm, rarm, torso, head; the "l" arm sits at -x, the character's right)
+function wearAcc(ch, id, arm) {
+  for (const m of [ch.meshes[2], ch.meshes[3]]) for (const o of m.children.filter(o => o.userData.acc)) m.remove(o);
+  ch.accId = id = ACCS.some(a => a.id === id) ? id : 'none';
+  if (id === 'none') return;
+  const on = arm === 'left' ? [ch.meshes[3]] : arm === 'both' ? [ch.meshes[2], ch.meshes[3]] : [ch.meshes[2]];
+  for (const m of on) { const o = new THREE.Mesh(m.geometry, corruptMat); o.scale.setScalar(1.03); o.userData.acc = true; m.add(o); }
+  if (!HEADLESS && CORRUPT.at < 0) corruptDraw(0);
+}
 function wearHat(ch, id) {
   ch.hatHolder.clear(); ch.hatId = id || 'none'; ch.hatAnim = [];
   if (id && id !== 'none') {
@@ -2979,6 +3053,7 @@ function setFx(ch) {
 }
 // every frame: moving hat parts (propellers, halos, blinking lights) and the set effect
 function animateFx(ch, dt, t) {
+  if (ch.accId && ch.accId !== 'none') corruptTick(t);
   if (ch.hatAnim) for (const o of ch.hatAnim) {
     const u = o.userData;
     if (u.spin) o.rotation.y += dt * u.spin;
@@ -3036,6 +3111,11 @@ class Humanoid {
   get pos() { return this.body.position; }
   setHat(id) {
     this.hat = id || 'none'; wearHat(this.char, this.hat);
+    if (this.hid) netEv(['look', this.hid, lookOf(this)]);
+  }
+  setAcc(id, arm) {
+    this.acc = ACCS.some(a => a.id === id) ? id : 'none'; this.accArm = ARMS.some(a => a[0] === arm) ? arm : 'right';
+    wearAcc(this.char, this.acc, this.accArm);
     if (this.hid) netEv(['look', this.hid, lookOf(this)]);
   }
   setColors(c) { colorCharacter(this.char, c); }
@@ -3320,13 +3400,14 @@ function knock(h, vx, vy, vz) {
 const NOOB = { skin: '#F5CD30', shirt: '#0D69AC', pants: '#A4BD47' };
 const LOOK_KEY = 'blockburg-classic-look';
 let look = (() => {
-  try { const l = JSON.parse(localStorage.getItem(LOOK_KEY)); if (l && l.colors && l.colors.head) return { shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none', ...l }; } catch { }
-  return { colors: normColors(NOOB), hat: 'none', shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none' };
+  try { const l = JSON.parse(localStorage.getItem(LOOK_KEY)); if (l && l.colors && l.colors.head) return { shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none', acc: 'none', arm: 'right', ...l }; } catch { }
+  return { colors: normColors(NOOB), hat: 'none', shirt: 'none', pants: 'none', face: 'smile', tshirt: 'none', acc: 'none', arm: 'right' };
 })();
 function saveLook() { try { localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } catch { } }
 const player = new Humanoid({ name: 'Player', colors: look.colors, isPlayer: true, chatColor: '#ffe680', hid: 'H' });
 player.setHat(look.hat);
 player.setOutfit(look.colors, look.shirt, look.pants, look.face, look.tshirt);
+player.setAcc(look.acc, look.arm);
 const npcDefs = [
   ['Guest 1337', { skin: '#F5CD30', shirt: '#C4281C', pants: '#1B2A35' }, '#ff9a9a'],
   ['Guest 2006', { skin: '#CC8E69', shirt: '#4B974B', pants: '#694028' }, '#a8ffa8'],
@@ -6557,6 +6638,14 @@ for (const [kind, list, look2, ly] of [['shirts', SHIRTS, 3.1, 3.1], ['pants', P
     pv.render(pvScene, pvCam); clothThumbs[kind][it.id] = pv.domElement.toDataURL();
   }
 }
+const accThumbs = { none: hatThumbs.none };
+dressCharacter(pvChar, NOOB, 'none', 'none', 'smile', 'none');
+for (const a of ACCS) if (a.id !== 'none') {
+  wearAcc(pvChar, a.id, 'both'); corruptDraw(1.7);
+  pvCam.position.set(0, 3.5, 9.5); pvCam.lookAt(0, 2.9, 0);
+  pv.render(pvScene, pvCam); accThumbs[a.id] = pv.domElement.toDataURL();
+}
+wearAcc(pvChar, 'none');
 pvChar.root.rotation.y = 0;
 pv.setClearColor(0x000000, 0); pv.setSize(220, 260);
 pvCam.aspect = 220 / 260; pvCam.updateProjectionMatrix();
@@ -6661,12 +6750,19 @@ const goneNote = (tab, id) => !isLimited(tab, id) ? '' : `<div class="gone">${li
 function renderCatalog() {
   const slot = LOOK_SLOT[catTab];
   const list = { hats: HATS, shirts: SHIRTS, pants: PANTS, tshirts: TSHIRTS, faces: FACES }[catTab]
-    .filter(i => (!i.admin || adminPriv) && (!isLimited(catTab, i.id) || !limitedOver() || look[slot] === i.id));
+    .filter(i => (!i.admin || adminPriv) && (!isLimited(catTab, i.id) || !limitedOver() || look[slot] === i.id))
+    .map(i => ({ ...i, slot }));
+  // the Accessories tab: the hats, then the arm accessories (worn on top of a hat, in their own slot)
+  if (catTab === 'hats') list.push(...ACCS.filter(a => a.id !== 'none').map(a => ({ ...a, slot: 'acc' })));
   const thumbs = catTab === 'hats' ? hatThumbs : catTab === 'faces' ? faceThumbs : clothThumbs[catTab];
+  // an arm accessory has a button for each arm (the one you're wearing it on is ticked), and Take Off while it's on
+  const wearBtns = (h) => h.slot === 'acc'
+    ? `<div class="arms">${ARMS.map(([a, n]) => { const on = look.acc === h.id && (look.arm || 'right') === a; return `<button class="s-btn${on ? ' on' : ''}" data-wear="${h.id}" data-slot="acc" data-arm="${a}">${on ? '✓ ' : ''}${n}</button>`; }).join('')}${look.acc === h.id ? '<button class="s-btn" data-wear="none" data-slot="acc">Take Off</button>' : ''}</div>`
+    : `<button class="s-btn" data-wear="${h.id}">${look[slot] === h.id ? 'Wearing' : (h.id === 'none' ? 'Take Off' : 'Wear')}</button>`;
   document.querySelectorAll('[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === catTab));
-  $('hatGrid').innerHTML = list.map(h => `<div class="hcard ${look[slot] === h.id ? 'on' : ''}"><img src="${h.id === 'none' ? hatThumbs.none : thumbs[h.id]}" alt="">
+  $('hatGrid').innerHTML = list.map(h => `<div class="hcard ${look[h.slot] === h.id ? 'on' : ''}"><img src="${h.id === 'none' ? hatThumbs.none : (h.slot === 'acc' ? accThumbs : thumbs)[h.id]}" alt="">
     <div class="gt">${h.name}</div>${h.desc ? `<div class="ds">"${h.desc}"</div>` : ''}<div class="pr">${h.price || '&nbsp;'}</div>
-    <button class="s-btn" data-wear="${h.id}">${look[slot] === h.id ? 'Wearing' : (h.id === 'none' ? 'Take Off' : 'Wear')}</button>${goneNote(catTab, h.id)}</div>`).join('');
+    ${wearBtns(h)}${goneNote(catTab, h.id)}</div>`).join('');
   const on = setOfLook({ ...look, colors: normColors(look.colors) });
   $('setList').innerHTML = SETS.filter(s => !isLimited('sets', s.id) || !limitedOver() || on === s).map(s => `<div class="hcard ${on === s ? 'on' : ''}"><img src="${hatThumbs[s.wear.hat]}" alt="">
     <div class="gt">${s.name}</div><div class="ds">${s.pieces}</div><div class="pr">${pxIcon('sparkle', 12)} ${s.effect}</div>
@@ -6682,8 +6778,9 @@ $('setList').addEventListener('click', (e) => {
 let selBP = 'torso';
 $('bodyPalette').innerHTML = PALETTE.map(([n, h]) => `<div title="${n}" data-bc="${h}" style="background:${h}"></div>`).join('');
 function refreshLook() {
-  dressCharacter(pvChar, look.colors, look.shirt, look.pants, look.face, look.tshirt); wearHat(pvChar, look.hat);
-  player.setOutfit(look.colors, look.shirt, look.pants, look.face, look.tshirt);
+  dressCharacter(pvChar, look.colors, look.shirt, look.pants, look.face, look.tshirt); wearHat(pvChar, look.hat); wearAcc(pvChar, look.acc, look.arm);
+  player.setOutfit(look.colors, look.shirt, look.pants, look.face, look.tshirt); player.setAcc(look.acc, look.arm);
+  $('curAcc').textContent = look.acc && look.acc !== 'none' ? `${accName(look.acc)} (${(ARMS.find(a => a[0] === look.arm) || ARMS[1])[1]})` : accName('none');
   $('curFace').textContent = faceDef(look.face).name;
   $('curTShirt').textContent = clothName(TSHIRTS, look.tshirt);
   if (!player.dead) player.setHat(look.hat); else player.hat = look.hat;
@@ -6703,7 +6800,7 @@ $('site').addEventListener('click', (e) => {
   if (d.link) location.href = d.link;
   if (d.online) playOnline(d.online);
   if (d.cat) { catTab = d.cat; renderCatalog(); }
-  if (d.wear) { look[LOOK_SLOT[catTab]] = d.wear; if (!adminPriv) look = withoutAdminClothes(look); saveLook(); refreshLook(); }
+  if (d.wear) { look[d.slot || LOOK_SLOT[catTab]] = d.wear; if (d.arm) look.arm = d.arm; if (!adminPriv) look = withoutAdminClothes(look); saveLook(); refreshLook(); }
   if (d.bp) { selBP = d.bp; refreshLook(); }
   if (d.bc) { look.colors[selBP] = d.bc; saveLook(); refreshLook(); }
 });
@@ -6719,6 +6816,9 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '10/29/2026', ver: '4.1', top: 'New accessory: Binary Corruption', text: [
+    'Hats are now called Accessories in the Catalog, and there\'s a new kind you wear on your arm (with any hat you like): Binary Corruption! Glowing green 1s and 0s that eat up your arm, flickering and glitching the whole time.',
+    'Pick where it goes with the buttons under it: Left Arm, Right Arm or Both Arms. Everyone in your online game sees it too.' ] },
   { date: '10/29/2026', ver: '4.0', top: 'Play Online is here!', text: [
     'Every game has a blue Play Online button next to Play Solo. Everyone who presses it lands in the same server for that game, so you can jump in and leave whenever you want. No room code needed!',
     'Under each Play Online button you can see how many people are playing that game online right now.',
@@ -7732,8 +7832,8 @@ async function loadColyseus() {
   return new ColyLib.Client(SERVER_URL);
 }
 const humByHid = (hid) => humanoids.find(h => h.hid === hid);
-function lookOf(h) { return { colors: h.colors, hat: h.hat, shirt: h.shirt || 'none', pants: h.pants || 'none', face: h.face || 'smile', tshirt: h.tshirt || 'none' }; }
-function applyLook(h, L) { if (!L) return; h.setOutfit(L.colors, L.shirt, L.pants, L.face, L.tshirt || 'none'); h.setHat(L.hat); }
+function lookOf(h) { return { colors: h.colors, hat: h.hat, shirt: h.shirt || 'none', pants: h.pants || 'none', face: h.face || 'smile', tshirt: h.tshirt || 'none', acc: h.acc || 'none', arm: h.accArm || 'right' }; }
+function applyLook(h, L) { if (!L) return; h.setOutfit(L.colors, L.shirt, L.pants, L.face, L.tshirt || 'none'); h.setHat(L.hat); h.setAcc(L.acc, L.arm); }
 function humanRec(h) { return { hid: h.hid, name: h.name, look: lookOf(h), npc: !!h.ai, cc: h.chatColor, adm: !!h.admin, co: h.capeOff ? 1 : 0, bd: h.badge || '', tm: h.team || null }; }
 function setHumBody(h, kinematic) {
   const b = h.body;
