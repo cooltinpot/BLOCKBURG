@@ -43,9 +43,7 @@
   /* the shift lock cursor: stuck in the middle of the screen, where your tools aim */
   #shiftIcon{position:fixed;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border:3px solid #fff;border-radius:50%;box-sizing:border-box;
     box-shadow:0 0 0 1px #000,inset 0 0 0 1px #000;pointer-events:none;z-index:4}
-  #shiftIcon::before,#shiftIcon::after{content:'';position:absolute;background:#fff;box-shadow:0 0 0 1px #000}
-  #shiftIcon::before{left:50%;top:-9px;bottom:-9px;width:2px;margin-left:-1px}
-  #shiftIcon::after{top:50%;left:-9px;right:-9px;height:2px;margin-top:-1px}
+  #shiftIcon::before{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px #000}
   #shiftIcon.hidden{display:none}
   /* badges: a round 8-bit picture in a shiny ring, and the "Badge Awarded!" popup that slides in */
   .bdg{display:inline-grid;place-items:center;border-radius:50%;box-sizing:border-box;border:3px solid var(--c);flex:0 0 auto;vertical-align:middle;
@@ -1626,6 +1624,16 @@ const billboardTex = tex(canvas(512, 256, (g) => {
   g.font = 'bold 30px Arial'; g.fillText('Free hats in the Catalog!', 256, 155);
   g.font = 'bold 24px Arial'; g.fillStyle = '#ffe680'; g.fillText('The Tinpot is back!!', 256, 205);
 }));
+// stairs made of bricks, like old-school Roblox stairs: they start at the bottom edge (x, y, z), go `run` studs
+// in direction (dx, dz) and climb `rise` studs. Steps are at most 0.8 tall so you can walk up without jumping.
+// thick: how many steps tall each block is (0 = solid all the way down, for stairs standing on the ground or a terrace)
+function brickStairs(x, y, z, dx, dz, rise, run, width, color, thick = 0) {
+  const n = Math.ceil(rise / 0.8 - 1e-6), sh = rise / n, sd = run / n;
+  for (let i = 0; i < n; i++) {
+    const top = y + (i + 1) * sh, h = (thick ? Math.min(i + 1, thick) : i + 1) * sh, c = (i + 0.5) * sd;
+    makePart({ anchored: true, size: dx ? [sd, h, width] : [width, h, sd], pos: [x + dx * c, top - h / 2, z + dz * c], color });
+  }
+}
 function buildTown() {
   const A = { anchored: true };
   // sidewalks
@@ -1637,19 +1645,19 @@ function buildTown() {
   for (let z = -16; z >= -120; z -= 13) for (const x of [-6.5, 6.5]) if (!blocked(x, z)) tree(x, z);
   for (let x = -116; x <= 116; x += 13) if (Math.abs(x) > 10) for (const z of [17.5, 30.5]) if (!blocked(x, z)) tree(x, z);
 
-  // scaffold tower: black beams, light-blue glass floors, yellow ramps zig-zagging up
+  // scaffold tower: black beams, light-blue glass floors, yellow stairs zig-zagging up
   const T = { x: -75, z: -60 };
   for (const [cx, cz] of [[-7.4, -7.4], [7.4, -7.4], [-7.4, 7.4], [7.4, 7.4], [0, -7.4], [0, 7.4], [7.4, 0], [-7.4, 0]])
     makePart({ ...A, size: [1.2, 33, 1.2], pos: [T.x + cx, 16.5, T.z + cz], color: BC['Black'] });
-  const ta = Math.atan2(8, 12);
   for (let L = 1; L <= 4; L++) {
     const y = 8 * L - 0.3;
     makePart({ ...A, size: [10.8, 0.6, 16], pos: [T.x + 2.6, y, T.z], color: BC['Light blue'], trans: 0.35 });
-    makePart({ ...A, size: [5.2, 0.6, 3], pos: [T.x - 5.4, y, T.z + 6.5], color: BC['Light blue'], trans: 0.35 });   // landing where the next ramp starts
-    makePart({ ...A, size: [4, 0.6, Math.hypot(12, 8)], pos: [T.x - 4.8, 8 * L - 4 - 0.36, T.z], rot: [ta, 0, 0], color: BC['Bright yellow'] });
+    makePart({ ...A, size: [5.2, 0.6, 3], pos: [T.x - 5.4, y, T.z + 6.5], color: BC['Light blue'], trans: 0.35 });   // landing where the next stairs start
+    // (above the ground floor the steps float as a band 2 steps thick, so there's headroom on the stairs below)
+    brickStairs(T.x - 4.8, 8 * (L - 1), T.z + 6, 0, -1, 8, 12, 4, BC['Bright yellow'], L > 1 ? 2 : 0);
   }
 
-  // castle: grey walls with battlements, a gate, a corner tower with a red roof, and a ramp up to the wall walk
+  // castle: grey walls with battlements, a gate, a corner tower with a red roof, and stairs up to the wall walk
   const C = { x: 75, z: -70 }, stone = BC['Medium stone grey'];
   makePart({ ...A, size: [32, 12, 3], pos: [C.x, 6, C.z - 14.5], color: stone });
   makePart({ ...A, size: [32, 12, 3], pos: [C.x, 6, C.z + 14.5], color: stone });
@@ -1664,10 +1672,9 @@ function buildTown() {
   }
   makePart({ ...A, size: [10, 22, 10], pos: [C.x + 13, 11, C.z - 13], color: BC['Dark stone grey'] });
   for (let k = 0; k < 6; k++) makePart({ ...A, size: [12 - 2 * k, 1.2, 12 - 2 * k], pos: [C.x + 13, 22.6 + 1.2 * k, C.z - 13], color: BC['Bright red'] });
-  const ca = Math.atan2(12, 22);
-  makePart({ ...A, size: [Math.hypot(22, 12), 1, 4], pos: [C.x + 1, 6 - 0.57, C.z + 11], rot: [0, 0, ca], color: stone });
+  brickStairs(C.x - 10, 0, C.z + 11, 1, 0, 12, 22, 4, BC['Dark stone grey']);   // (darker so they stand out from the walls)
 
-  // wooden lookout deck on white posts, with railings and a ramp
+  // wooden lookout deck on white posts, with railings and stairs
   const D = { x: 60, z: 40 }, wood = BC['Reddish brown'];
   makePart({ ...A, size: [16, 0.8, 10], pos: [D.x, 6, D.z], color: wood });
   for (const [dx, dz] of [[-7.5, -4.5], [7.5, -4.5], [-7.5, 4.5], [7.5, 4.5]])
@@ -1675,18 +1682,17 @@ function buildTown() {
   const rail = (x, z, w, d) => makePart({ ...A, size: [w, 1.6, d], pos: [x, 7.2, z], color: wood });
   rail(D.x, D.z - 4.7, 16, 0.6); rail(D.x, D.z + 4.7, 16, 0.6); rail(D.x + 7.7, D.z, 0.6, 10);
   rail(D.x - 7.7, D.z - 3.5, 0.6, 3); rail(D.x - 7.7, D.z + 3.5, 0.6, 3);
-  makePart({ ...A, size: [Math.hypot(16, 6.4), 0.6, 4], pos: [D.x - 16, 3.2 - 0.32, D.z], rot: [0, 0, Math.atan2(6.4, 16)], color: wood });
+  brickStairs(D.x - 24, 0, D.z, 1, 0, 6.4, 16, 4, wood);
 
-  // sandy terraced hill with yellow ramps and a tree on top
+  // sandy terraced hill with yellow stairs and a tree on top
   const H = { x: -75, z: 55 }, sand = BC['Brick yellow'], yel = BC['Bright yellow'];
   makePart({ ...A, size: [30, 4, 30], pos: [H.x, 2, H.z], color: sand });
   makePart({ ...A, size: [22, 4, 22], pos: [H.x, 6, H.z], color: sand });
   makePart({ ...A, size: [14, 4, 14], pos: [H.x, 10, H.z], color: sand });
   makePart({ ...A, size: [14, 0.4, 14], pos: [H.x, 12.2, H.z], color: BC['Bright green'] });
-  const ha = Math.atan2(4, 8), hl = Math.hypot(8, 4);
-  makePart({ ...A, size: [hl, 0.6, 3.6], pos: [H.x + 4, 2 - 0.34, H.z + 17], rot: [0, 0, -ha], color: yel });
-  makePart({ ...A, size: [hl, 0.6, 3.6], pos: [H.x - 4, 6 - 0.34, H.z + 13], rot: [0, 0, ha], color: yel });
-  makePart({ ...A, size: [hl, 0.6, 3.6], pos: [H.x + 4, 10 - 0.34, H.z + 9], rot: [0, 0, -ha], color: yel });
+  brickStairs(H.x + 8, 0, H.z + 17, -1, 0, 4, 8, 3.6, yel);
+  brickStairs(H.x - 8, 4, H.z + 13, 1, 0, 4, 8, 3.6, yel);
+  brickStairs(H.x + 8, 8, H.z + 9, -1, 0, 4, 8, 3.6, yel);
   tree(H.x, H.z, 1.1, 12.4);
 
   // billboard beside the sidewalk
@@ -1854,11 +1860,10 @@ function buildTownMore() {
   box(P.x, 0, P.z, 36, 0.3, 22, 'Light blue', { trans: 0.25 });
   box(P.x, 0, P.z - 11.5, 38, 0.6, 1, 'Medium stone grey'); box(P.x, 0, P.z + 11.5, 38, 0.6, 1, 'Medium stone grey');
   box(P.x - 18.5, 0, P.z, 1, 0.6, 22, 'Medium stone grey'); box(P.x + 18.5, 0, P.z, 1, 0.6, 22, 'Medium stone grey');
-  // the bridge: up, across, down
-  const ba = Math.atan2(2.2, 6);
+  // the bridge: steps up, across, steps down
   box(P.x, 2, P.z, 4, 0.4, 14, 'Reddish brown');
-  makePart({ ...A, size: [4, 0.4, Math.hypot(6, 2.2)], pos: [P.x, 0.9, P.z + 10], rot: [ba, 0, 0], color: BC['Reddish brown'] });
-  makePart({ ...A, size: [4, 0.4, Math.hypot(6, 2.2)], pos: [P.x, 0.9, P.z - 10], rot: [-ba, 0, 0], color: BC['Reddish brown'] });
+  brickStairs(P.x, 0, P.z + 13, 0, -1, 2.4, 6, 4, BC['Reddish brown']);
+  brickStairs(P.x, 0, P.z - 13, 0, 1, 2.4, 6, 4, BC['Reddish brown']);
   for (const s of [-1, 1]) box(P.x + s * 1.8, 2.4, P.z, 0.4, 1.2, 14, 'White');   // railings
   // the fountain
   const F = { x: -26, z: 150 };
@@ -1883,7 +1888,7 @@ function buildTownMore() {
   // ---- Sword Arena (south): a raised fighting floor, red side vs blue side ----
   const S = { x: 0, z: -190 };
   box(S.x, 0, S.z, 50, 4, 50, 'Medium stone grey');
-  makePart({ ...A, size: [8, 0.6, Math.hypot(9, 4)], pos: [S.x, 1.85, S.z + 29.5], rot: [Math.atan2(4, 9), 0, 0], color: BC['Medium stone grey'] });
+  brickStairs(S.x, 0, S.z + 34, 0, -1, 4, 9, 8, BC['Medium stone grey']);   // steps up to the fighting floor
   box(S.x - 12, 4, S.z, 22, 0.2, 46, 'Bright red'); box(S.x + 12, 4, S.z, 22, 0.2, 46, 'Bright blue');
   box(S.x, 4, S.z, 10, 1.2, 10, 'Dark stone grey');
   for (const sx of [-1, 1]) {
@@ -1957,7 +1962,8 @@ function headGeometry() {
   const g = new THREE.LatheGeometry(pts, 36, Math.PI, Math.PI * 2);
   const pos = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < pos.count; i++) uv.setY(i, (pos.getY(i) + h) / (2 * h));   // map v by height so the face isn't squished
-  g.computeVertexNormals();
+  // (no computeVertexNormals here: the lathe already makes smooth normals that match across the seam at the back;
+  // recomputing them shades each side of the seam separately and leaves a dent down the back of the head)
   return g;
 }
 const HEAD_GEO = headGeometry();
@@ -6926,6 +6932,11 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '11/1/2026', ver: '4.1', top: 'Real brick stairs all over town, smoother heads and a cleaner shift lock cursor', text: [
+    'Every slanted ramp in Blockburg Classic is now real brick stairs, with studs on every step! The scaffold tower, the castle wall, the lookout deck, the sandy hill, the bridge in Blockburg Park and the Sword Arena. The steps are short enough to walk right up, no jumping needed. (The jump ramp is still a ramp, for jumping!)',
+    'Fixed the dent going down the back of every head. Heads are perfectly smooth all the way around now!',
+    'The shift lock cursor in the middle of the screen is now a white circle with a white dot in the center, with no lines crossing through it. Easier to see what you are aiming at!',
+  ] },
   { date: '10/29/2026', ver: '4.0', top: 'Play Online is here! Plus new accessories, new clothes and /time', text: [
     'PLAY ONLINE! Every game has a blue Play Online button next to Play Solo. Everyone who presses it lands in the same server for that game, so you can jump in and leave whenever you want. No room code needed!',
     'Under each Play Online button you can see how many people are playing that game online right now.',
