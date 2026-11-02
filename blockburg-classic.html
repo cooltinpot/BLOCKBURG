@@ -3195,7 +3195,7 @@ class Humanoid {
     this.rayMask = isPlayer ? (G_PART | G_NPC) : (G_PART | G_PLAYER);
     this.body.addEventListener('collide', (e) => {
       const p = e.body.userData && e.body.userData.part;
-      if (!p) return;
+      if (!p || isHeld(p)) return;   // (a brick in someone's hand can't hurt you)
       if (p.kill) later(() => kill(this, null));
       if (p.scripts) later(() => scriptTouched(p, this));
       if (p.seat && this === player && !this.seat) later(() => trySit(p));
@@ -4678,6 +4678,12 @@ let dragSnap = null;   // where the held brick last snapped onto the studs (a ne
 const selBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0x1a8cff, depthTest: false }));
 selBox.renderOrder = 999; selBox.visible = false; scene.add(selBox);
 const alive = (p) => !!p && partsByNid.get(p.nid) === p;
+// a brick in someone's hand (Grab or Clone: mine, or anyone's in the room) goes right through people and can't hurt
+// them, so nobody can swing a kill brick around like a sword. (It still pushes other bricks.)
+const isHeld = (p) => p === dragging || !!p.netDrag || !!p.netHeld || dragGroup.some(g => g.p === p);
+function heldLook(p) { p.body.collisionFilterMask = isHeld(p) ? ~(G_PLAYER | G_NPC) : -1; }
+// (the host: who's holding it, and everyone hears that it's in someone's hand)
+function setNetDrag(p, h) { p.netDrag = h; heldLook(p); netEv(['held', p.nid, h ? 1 : 0]); }
 const quatOf = (p) => new THREE.Quaternion(p.body.quaternion.x, p.body.quaternion.y, p.body.quaternion.z, p.body.quaternion.w);
 const dragRec = (p) => [p.nid, ...arr3(p.body.position), ...p.body.quaternion.toArray().map(r3)];
 function startDrag(p, group = [p]) {
@@ -4689,6 +4695,7 @@ function startDrag(p, group = [p]) {
   });
   const e = new THREE.Euler().setFromQuaternion(quatOf(p), 'YXZ');
   dragRot = { y: Math.round(e.y / TURN) * TURN, x: Math.round(e.x / TURN) * TURN };
+  [p, ...dragGroup.map(g => g.p)].forEach(heldLook);
   playWavs(['ping'], 0.8); updateDrag();   // (picked up with Grab or Clone: ping!)
 }
 function stopDrag() {
@@ -4696,6 +4703,7 @@ function stopDrag() {
   const held = [dragging, ...dragGroup.map(g => g.p)].filter(alive);
   dragging = null; dragGroup = [];
   if (!held.length) return;
+  held.forEach(heldLook);
   if (net.mode === 'client') {   // the host drops them for real; ours stay mirrors
     netSend({ t: 'drag', g: held.map(dragRec) });
     netSend({ t: 'dragEnd', g: held.map(p => [p.nid, p.anchored]) });
@@ -4709,7 +4717,7 @@ function stopDrag() {
 function dropBricks(list, h) {
   const ops = [];
   for (const p of list) {
-    p.netDrag = null; setMode(p, p.anchored ? 'static' : 'dynamic');
+    setNetDrag(p, null); setMode(p, p.anchored ? 'static' : 'dynamic');
     wakeNear(p.body.position, Math.max(...p.size) + 4);
     const from = p.histFrom; p.histFrom = null;
     if (p.histNew) { p.histNew = false; continue; }   // a fresh copy: undoing its "made it" step takes it away, wherever it is
@@ -7149,7 +7157,8 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
-  { date: '11/2/2026', ver: '4.2', top: 'Airplanes! Plus a new Insert menu with sections and a search bar', text: [
+  { date: '11/2/2026', ver: '4.2', top: 'Airplanes! Plus a new Insert menu with sections and a search bar, and no more kill sticks', text: [
+    'No more kill sticks! A brick that someone is moving with Grab or Clone now goes right through people and cannot hurt anyone, even a kill brick. Once they let go it works like normal again.',
     'NEW: Airplanes! Find them in Insert, under Vehicles. Sit in the front black seat to fly: W = faster, S = slower, A and D = turn, E = up, Q = down. Speed up on the ground, then press E to take off! There is a seat in the back for a friend.',
     'Build your own plane: weld more bricks to an airplane and they fly along with it. Or make one from scratch with the new Pilot Seat, which flies everything welded to it.',
     'The Insert menu has sections now (Blocks, Special Blocks, Vehicles, Tools, BrickColor and Place) and it scrolls. Type in the new search bar to find a part, a tool or even a color, and press Enter to put in the first part it finds.',
@@ -8365,7 +8374,7 @@ function hostDrop(conn) {
   if (!e) return;
   net.conns.delete(conn.peer);
   const h = e.h;
-  for (const p of parts) if (p.netDrag === h) { p.netDrag = null; setMode(p, p.anchored ? 'static' : 'dynamic'); }
+  for (const p of parts) if (p.netDrag === h) { setNetDrag(p, null); setMode(p, p.anchored ? 'static' : 'dynamic'); }
   netEv(['leave', h.hid]); netEv(['sys', `${h.name} left the game.`]); sysChat(`${h.name} left the game.`);
   removeHumanoid(h); updateBadge();
 }
@@ -8402,7 +8411,7 @@ function hostHandle(h, conn, m) {
     case 'paint': { const g = group(); if (g.length && typeof m.c === 'string') paintBricks(g, m.c.slice(0, 9), h); break; }
     case 'clone': {
       const copies = cloneBricks(group(), h); if (!copies) break;
-      for (const c of copies) { setMode(c, 'kinematic'); c.netDrag = h; }
+      for (const c of copies) { setMode(c, 'kinematic'); setNetDrag(c, h); }
       netSendTo(conn, { t: 'cloned', nid: copies[0].nid, g: copies.map(c => c.nid) });
       break;
     }
@@ -8410,7 +8419,7 @@ function hostHandle(h, conn, m) {
       for (const r of Array.isArray(m.g) ? m.g.slice(0, SEL_MAX) : [[m.nid, ...(m.p || []), ...(m.q || [])]]) {
         const p = Array.isArray(r) && partsByNid.get(r[0]);
         if (!p || p.locked || p === dragging || r.length < 8 || !r.slice(1, 8).every(Number.isFinite)) continue;
-        if (p.netDrag !== h) { p.histFrom = xfOf(p); p.netDrag = h; setMode(p, 'kinematic'); }
+        if (p.netDrag !== h) { p.histFrom = xfOf(p); setNetDrag(p, h); setMode(p, 'kinematic'); }
         p.body.position.set(r[1], r[2], r[3]); p.body.quaternion.set(r[4], r[5], r[6], r[7]); p.body.aabbNeedsUpdate = true;
       }
       break;
@@ -8676,6 +8685,7 @@ function clientEvent(e) {
     case 'ctf': ctfApply(e); break;
     case 'pa': { const p = partsByNid.get(e[1]); if (p) p.anchored = !!e[2]; break; }
     case 'pw': { const p = partsByNid.get(e[1]); if (p) weldJoin(p, e[2]); break; }
+    case 'held': { const p = partsByNid.get(e[1]); if (p) { p.netHeld = !!e[2]; heldLook(p); } break; }   // in someone's hand (or let go)
     case 'pd': { const p = partsByNid.get(e[1]); if (p) { p.open = !!e[2]; p.body.collisionResponse = !p.open; partLook(p); } break; }
     case 'pn': { const p = partsByNid.get(e[1]); if (p) { p.neon = !!e[2]; if (!p.neon) p.mesh.castShadow = true; partLook(p); } break; }
     case 'night': setNight(!!e[1]); break;
@@ -8936,6 +8946,7 @@ function netStop(reason, quiet = false) {
   // the brick physics is ours again: loose bricks stop mirroring the server and fall, roll and stack by themselves
   for (const p of parts) {
     if (p.netDrag) { p.netDrag = null; p.mode = p.anchored ? 'static' : 'dynamic'; }
+    if (p.netHeld) { p.netHeld = false; heldLook(p); }
     if (p !== dragging && p.mode === 'dynamic') setBodyMode(p, 'dynamic');
   }
   for (const id of weldGroups.keys()) weldRelink(id);   // (and the welds are ours to hold again)
