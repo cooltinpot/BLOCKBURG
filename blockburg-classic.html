@@ -91,7 +91,14 @@
   .sw{width:24px;height:24px;border:2px solid #555;cursor:pointer;box-sizing:border-box}
   .sw.sel{border:3px solid #000;outline:2px solid #fff}
   #palette{display:grid;grid-template-columns:repeat(9,24px);gap:3px}
-  #insertWin{left:8px;top:240px;width:276px}
+  #insertWin{left:8px;top:240px;width:296px}
+  #insertWin .bd{display:flex;flex-direction:column;max-height:max(170px,calc(100vh - 290px));padding:6px 4px 8px 8px}
+  #insSearch{font:12px Arial;padding:3px 5px;border:2px inset #fff;margin:0 4px 6px 0}
+  .ins-scroll{overflow-y:auto;overflow-x:hidden;flex:1;min-height:0;padding-right:4px}
+  #insertWin .ins-sec h4{margin:8px 0 4px;padding-top:6px;border-top:1px solid #a9a59b}
+  #insertWin .ins-sec:first-child h4{margin-top:0;padding-top:0;border-top:0}
+  #insertWin .hidden{display:none}
+  .ins-none{color:#444;font-style:italic;padding:8px 0}
   /* the Script window: Scratch-colored blocks in an old gray window */
   #scriptWin{right:8px;top:40px;width:min(580px,calc(100vw - 16px))}
   .sc-main{display:flex;height:min(400px,calc(100vh - 150px));border-top:1px solid #808080;border-bottom:1px solid #808080}
@@ -545,19 +552,23 @@
 <div id="insertWin" class="win hidden">
   <div class="tb">Insert / Build<button data-close="insertWin">x</button></div>
   <div class="bd">
-    <h4>Insert part</h4>
-    <div class="grid" id="shapeBtns"></div>
-    <div class="row"><button class="b" id="undoBtn" title="Ctrl+Z">&#8630; Undo</button><button class="b" id="redoBtn" title="Ctrl+Y">&#8631; Redo</button>
+    <input id="insSearch" type="search" placeholder="Search parts, tools and colors..." autocomplete="off" spellcheck="false">
+    <div class="ins-scroll">
+    <div id="shapeBtns"></div>
+    <div class="ins-sec" data-sec="tools build"><h4>Tools</h4>
+    <div class="row ins-item"><button class="b" id="undoBtn" title="Ctrl+Z">&#8630; Undo</button><button class="b" id="redoBtn" title="Ctrl+Y">&#8631; Redo</button>
       <button class="b" id="weldBtn" title="Stick the picked bricks together, so they move as one">&#128279; Weld</button><button class="b" id="unweldBtn" title="Unstick the picked bricks">Unweld</button></div>
-    <div class="row"><button class="b" id="scriptBtn" title="Snap blocks together into little scripts for a brick"><i data-px="script"></i> Script a brick</button></div>
-    <div class="row"><label><input type="checkbox" id="anchorChk" checked> Anchored</label>
+    <div class="row ins-item"><button class="b" id="scriptBtn" title="Snap blocks together into little scripts for a brick"><i data-px="script"></i> Script a brick</button></div>
+    <div class="row ins-item"><label><input type="checkbox" id="anchorChk" checked> Anchored</label>
       <label title="Stays anchored until something explodes next to it, then it gets blown loose"><input type="checkbox" id="destroyChk"> Destroyable</label></div>
-    <div class="row">Custom: <input type="number" id="cx" value="6" min="0.2" max="64" step="0.2">x<input type="number" id="cy" value="1.2" min="0.2" max="64" step="0.2">x<input type="number" id="cz" value="4" min="0.2" max="64" step="0.2"><button class="b" id="customBtn">Add</button></div>
-    <h4>BrickColor: <span id="colorName"></span></h4>
-    <div id="palette"></div>
-    <h4>Place</h4>
-    <div class="row"><button class="b" id="saveBtn">Save</button><button class="b" id="loadBtn">Load</button><button class="b" id="clearBtn">Clear All</button><button class="b" id="defaultBtn">Default</button></div>
-    <div class="row"><button class="b" id="postBtn" title="Send your Baseplate build to the admin, to show up in Games"><i data-px="post"></i> Post to Games</button></div>
+    <div class="row ins-item">Custom size: <input type="number" id="cx" value="6" min="0.2" max="64" step="0.2">x<input type="number" id="cy" value="1.2" min="0.2" max="64" step="0.2">x<input type="number" id="cz" value="4" min="0.2" max="64" step="0.2"><button class="b" id="customBtn">Add</button></div></div>
+    <div class="ins-sec" data-sec="colors brickcolor paint"><h4>BrickColor: <span id="colorName"></span></h4>
+    <div id="palette"></div></div>
+    <div class="ins-sec" data-sec="place save load"><h4>Place</h4>
+    <div class="row ins-item"><button class="b" id="saveBtn">Save</button><button class="b" id="loadBtn">Load</button><button class="b" id="clearBtn">Clear All</button><button class="b" id="defaultBtn">Default</button></div>
+    <div class="row ins-item"><button class="b" id="postBtn" title="Send your Baseplate build to the admin, to show up in Games"><i data-px="post"></i> Post to Games</button></div></div>
+    <div class="ins-none hidden" id="insNone">Nothing found. Try "brick", "seat" or "red"!</div>
+    </div>
   </div>
 </div>
 
@@ -628,6 +639,7 @@
       <tr><td>Left click</td><td>Use the tool</td></tr>
       <tr><td>Grab tool</td><td>While dragging: R turn, T tilt, Q / E / G turn or tilt a little, F anchor</td></tr>
       <tr><td>Seats and cars</td><td>Walk into a seat to sit, Space to get up. In a car's black seat: W / S gas, A / D steer</td></tr>
+      <tr><td>Airplanes</td><td>In the pilot's seat: W faster, S slower, A / D turn, E up, Q down. Speed up on the ground to take off!</td></tr>
       <tr><td>Weld</td><td>Pick bricks, then Insert → Weld: they stick together and move as one</td></tr>
       <tr><td>Resize</td><td>Shift+click ONE brick, then drag the blue balls on its sides</td></tr>
       <tr><td>=</td><td>Drop your hat (touch a hat to wear it)</td></tr>
@@ -1455,7 +1467,7 @@ function makePart(o) {
   // destroy: an anchored destroyable. It stays put until an explosion reaches it, then comes loose (see explode)
   const p = { shape, size: [...size], color, trans, anchored, mass, kill: !!o.kill, win: !!o.win, locked: !!o.locked, bouncy: !!o.bouncy, destroy: !!o.destroy, mesh, body,
     mode: anchored ? 'static' : 'dynamic', startAsleep: !!o.sleep, matte: !!o.matte,
-    spawn: !!o.spawn, btn: !!o.btn, door: !!o.door, neon: !!o.neon, open: !!o.open, seat: o.seat === 2 ? 2 : o.seat ? 1 : 0, wheel: !!o.wheel };   // (the new parts: see partLook)
+    spawn: !!o.spawn, btn: !!o.btn, door: !!o.door, neon: !!o.neon, open: !!o.open, seat: [1, 2, 3].includes(o.seat) ? o.seat : o.seat ? 1 : 0, wheel: !!o.wheel };   // (the new parts: see partLook)
   if (p.open) body.collisionResponse = false;
   if (shape === 'truss') trusses.add(p);
   if (p.spawn) spawns.add(p);
@@ -5057,6 +5069,32 @@ function driveBodies(seat, bodies, th, st, dt) {
     b.velocity.set(f.x * s + w * rz, v.y, f.z * s - w * rx); b.angularVelocity.set(-up.z * k, w, up.x * k); b.wakeUp();
   }
 }
+// a pilot's seat (p.seat = 3) flies everything welded to it: th = faster (1) / slower (-1), st = turn, pt = climb (1) / dive (-1).
+// Slow, it rolls along the ground like a car with wings. Past take-off speed the wings hold it up and it goes where its nose points.
+// (Let go of climb / dive and it levels out. The game and the server's BrickWorld have the same.)
+function flyBodies(seat, bodies, th, st, pt, dt, grav) {
+  const q = seat.quaternion, f = q.vmult(new CANNON.Vec3(0, 0, -1)), r = q.vmult(new CANNON.Vec3(1, 0, 0)), v = seat.velocity;
+  // it keeps its own speed, unless something really is stopping it (a wall, the ground nose first)
+  const real = v.x * f.x + v.y * f.y + v.z * f.z;
+  const s = seat.planeSpeed = Math.max(0, Math.min(90, Math.min(seat.planeSpeed || 0, Math.max(0, real) + 15) + th * (th > 0 ? 25 : 40) * dt));
+  const lift = Math.max(0, Math.min(1, (s - 25) / 20));   // 0 = too slow to fly .. 1 = flying (45 studs a second and up)
+  const pa = Math.asin(Math.max(-1, Math.min(1, f.y))), bank = Math.asin(Math.max(-1, Math.min(1, r.y)));
+  const wy = -st * (0.5 + 0.4 * lift) * Math.min(1, s / 8);   // turning (not on the spot)
+  let pitch = lift * (pt ? pt * 0.6 : -pa * 0.8) - (1 - lift) * pa * 1.5;   // nose up / down (too slow: it settles back flat)
+  if ((pa > 0.7 && pitch > 0) || (pa < -0.7 && pitch < 0)) pitch = 0;   // (no loop-the-loops: it stops at about 40 degrees)
+  const roll = (bank + st * 0.5 * lift) * 3;   // it leans into turns, and back level after
+  const wx = r.x * pitch + f.x * roll, wz = r.z * pitch + f.z * roll, wyy = wy + r.y * pitch + f.y * roll;
+  const fl = Math.hypot(f.x, f.z) || 1;
+  const vx = s * (f.x * lift + f.x / fl * (1 - lift)), vz = s * (f.z * lift + f.z / fl * (1 - lift));
+  const fall = Math.max(v.y, -40);   // (too slow to fly, the wings still make it glide down instead of dropping like a rock)
+  const vy = fall + (f.y * s - fall) * lift + grav * dt * lift;   // (flying: the wings hold it up against gravity)
+  for (const b of bodies) {
+    if (b.type !== CANNON.Body.DYNAMIC) continue;
+    const rx = b.position.x - seat.position.x, ry = b.position.y - seat.position.y, rz = b.position.z - seat.position.z;
+    b.velocity.set(vx + wyy * rz - wz * ry, vy + wz * rx - wx * rz, vz + wx * ry - wyy * rx);
+    b.angularVelocity.set(wx, wyy, wz); b.wakeUp();
+  }
+}
 const SIT_DROP = HY - 2;   // sitting: the hips (2 studs above the feet) rest on the seat
 function seatTop(p) { return new V3(0, p.size[1] / 2 + SIT_DROP, 0).applyQuaternion(p.mesh.quaternion).add(p.mesh.position); }
 let seatCd = 0;
@@ -5067,11 +5105,12 @@ function trySit(p) {
   if (humanoids.some(h => h !== P && h.sitting && h.pos.distanceTo(top) < 1.5)) return;   // (someone's already there)
   P.seat = p; P.body.collisionResponse = false; SFX.click();
   if (p.seat === 2) sysChat('Driving! W / S = gas and reverse, A / D = steer, Space = get out.');
+  if (p.seat === 3) sysChat('Flying! W = faster, S = slower, A / D = turn, E = up, Q = down, Space = get out. Speed up, then press E to take off!');
 }
 function leaveSeat(jump = true) {
   const P = player, p = P.seat; if (!p) return;
   P.seat = null; P.body.collisionResponse = true; seatCd = time + 1;
-  if (net.mode === 'client' && p.seat === 2) netSend({ t: 'drive', nid: p.nid, th: 0, st: 0 });
+  if (net.mode === 'client' && p.seat >= 2) netSend({ t: 'drive', nid: p.nid, th: 0, st: 0, pt: 0 });
   if (jump && alive(p)) {   // hop out to the left side, past the car (or the seat), so you don't land right back on it
     const left = new V3(-1, 0, 0).applyQuaternion(p.mesh.quaternion); left.y = 0; left.normalize();
     let reach = halfOf(p)[0];
@@ -5086,11 +5125,15 @@ function sitDrive(dt) {
   if (!p) return;
   if (!alive(p) || P.dead) { leaveSeat(false); return; }
   if (keys.Space) { leaveSeat(); return; }
-  if (p.seat !== 2 || menuOpen || document.activeElement === chatInput) { P.drive = null; return; }
+  if (p.seat < 2 || menuOpen || document.activeElement === chatInput) { P.drive = null; return; }
   const th = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) + (Math.abs(joy.y) > 0.2 ? -Math.sign(joy.y) : 0);
   const st = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + (Math.abs(joy.x) > 0.2 ? Math.sign(joy.x) : 0);
-  P.drive = { nid: p.nid, th: Math.max(-1, Math.min(1, th)), st: Math.max(-1, Math.min(1, st)) };
-  if (!net.mode && !p.anchored) driveBodies(p.body, (p.weld && weldGroups.has(p.weld) ? [...weldGroups.get(p.weld)] : [p]).map(q => q.body), P.drive.th, P.drive.st, dt);
+  const pt = (keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0);   // (a plane: up and down)
+  P.drive = { nid: p.nid, th: Math.max(-1, Math.min(1, th)), st: Math.max(-1, Math.min(1, st)), pt };
+  if (net.mode || p.anchored) return;
+  const bodies = (p.weld && weldGroups.has(p.weld) ? [...weldGroups.get(p.weld)] : [p]).map(q => q.body);
+  if (p.seat === 3) flyBodies(p.body, bodies, P.drive.th, P.drive.st, pt, dt, -world.gravity.y);
+  else driveBodies(p.body, bodies, P.drive.th, P.drive.st, dt);
 }
 // ...and after it (once the seat has moved): sit right on it, facing where it faces
 function sitPlace() {
@@ -5114,6 +5157,31 @@ function buildCar(at, yaw, color) {
   put(0, 3.6, -1.7, [6, 1.6, 0.4], BC['Light blue'], { trans: 0.4 });
   put(0, 2.55, 0.6, [2, 1, 2], BC['Black'], { seat: 2 });
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) put(sx * 3.6, 1.2, sz * 3.2, [2.4, 1, 2.4], BC['Black'], { wheel: true });
+  return out;
+}
+// a ready-made airplane: a body, wings, a tail, a propeller, three wheels, a pilot's seat and a seat for a friend,
+// all welded, facing yaw. (Weld more bricks to it and they fly along.)
+function buildPlane(at, yaw, color) {
+  const id = newWeldId(), q = new THREE.Quaternion().setFromAxisAngle(new V3(0, 1, 0), yaw), out = [];
+  const put = (x, y, z, size, c, o = {}) => {
+    const pos = new V3(x, y, z).applyQuaternion(q).add(at), rq = q.clone();
+    if (o.wheel) rq.multiply(new THREE.Quaternion().setFromAxisAngle(new V3(0, 0, 1), Math.PI / 2));
+    // (light, with heavy wheels: tiny light wheels under a heavy plane get pushed right through the floor)
+    const mass = o.wheel ? 12 : Math.max(1, size[0] * size[1] * size[2] * 0.25);
+    out.push(makePart({ size, pos: pos.toArray(), quat: [rq.x, rq.y, rq.z, rq.w], color: c, weld: id, shape: o.wheel ? 'cyl' : 'box', seat: o.seat, wheel: o.wheel, trans: o.trans, mass }));
+  };
+  // (a hair of space between the pieces, so they never rub on each other)
+  put(0, 2.8, 0, [3, 2, 14], color);                                      // the body
+  put(0, 2.8, -7.75, [2.4, 1.6, 1.4], BC['White']);                      // the nose
+  put(0, 2.8, -8.75, [0.5, 3, 0.3], BC['Black']);                          // the propeller
+  for (const sx of [-1, 1]) put(sx * 6.3, 2.6, -1, [9.5, 0.4, 4], color);  // the wings
+  for (const sx of [-1, 1]) put(sx * 3.05, 3.2, 6, [3, 0.4, 2], color);    // the tail wings
+  put(0, 5.15, 6, [0.4, 2.6, 2], color);                                   // the tail fin
+  put(0, 4.5, -2.4, [3, 1.2, 0.4], BC['Light blue'], { trans: 0.4 });      // the windshield
+  put(0, 4.4, -0.8, [2, 1, 2], BC['Black'], { seat: 3 });                 // the pilot's seat
+  put(0, 4.4, 2.6, [2, 1, 2], BC['Black'], { seat: 1 });                  // a seat for a friend
+  put(0, 0.8, -5, [1.6, 0.6, 1.6], BC['Black'], { wheel: true });         // three wheels, tall enough that the belly
+  for (const sx of [-1, 1]) put(sx * 1.2, 0.8, 3, [1.6, 0.6, 1.6], BC['Black'], { wheel: true });   // and propeller stay off the ground
   return out;
 }
 
@@ -5631,7 +5699,7 @@ let badgeT = 0, droveFrom = null, drove = 0;
 function badgeTick(dt) {
   if (!started || HEADLESS) return;
   const P = player, s = P.seat;
-  if (s && s.seat === 2 && alive(s)) {   // driving: count how far the car goes
+  if (s && s.seat >= 2 && alive(s)) {   // driving (or flying): count how far it goes
     const at = s.mesh.position;
     if (droveFrom) drove += Math.hypot(at.x - droveFrom.x, at.z - droveFrom.z);
     droveFrom = at.clone();
@@ -5970,17 +6038,42 @@ const SHAPES = [
   ['Spawn', { size: [6, 1, 6], spawn: true, color: BC['Medium stone grey'] }], ['Button', { shape: 'cyl', size: [2, 0.6, 2], btn: true }],
   ['Door', { size: [4, 7, 1], door: true }], ['Neon', { size: [4, 1.2, 2], neon: true }],
   ['Seat', { size: [2, 1, 2], seat: 1 }], ['Drive Seat', { size: [2, 1, 2], seat: 2, color: BC['Black'] }], ['Car', { car: true, size: [6, 4, 10] }],
+  ['Pilot Seat', { size: [2, 1, 2], seat: 3, color: BC['Bright blue'] }], ['Airplane', { plane: true, size: [23, 6, 18] }],
   ['Day/Night', { size: [4, 2, 1], color: BC['Black'], sign: { t: 'DAY / NIGHT', c: '#20204a' }, scripts: [{ on: 'click', do: [['daynight']] }] }],
 ];
 // a tip the first time each new part goes in
 const PART_TIPS = { truss: 'Truss: walk into it to climb!', spawn: 'Spawn: people appear here when they (re)spawn.',
   btn: 'Button: click it with an empty hand (no tool) to open and close the doors that are the same color.',
   door: 'Door: a Button of the same color opens and closes it. Scripts can open it too.', neon: 'Neon: it glows, best at night!',
-  sign: 'Day/Night switch: click it with an empty hand.', seat: 'Seat: walk into it to sit down, Space to get up. A Drive Seat drives everything welded to it!',
-  car: 'Car: walk into its black seat to drive! W / S = gas and reverse, A / D = steer, Space = get out.' };
+  sign: 'Day/Night switch: click it with an empty hand.', seat: 'Seat: walk into it to sit down, Space to get up. A Drive Seat drives everything welded to it, and a Pilot Seat flies it!',
+  car: 'Car: walk into its black seat to drive! W / S = gas and reverse, A / D = steer, Space = get out.',
+  plane: 'Airplane: sit in the front black seat to fly! W = faster, S = slower, A / D = turn, E = up, Q = down. Speed up on the ground, then press E to take off! Weld more bricks to it to make it your own.' };
 const tipped = new Set();
-$('shapeBtns').innerHTML = SHAPES.map(([n], i) => `<button class="b" data-s="${i}">${n}</button>`).join('');
+// the Insert window's sections (each name is one of the SHAPES)
+const SHAPE_SECS = [['Blocks', ['Brick', 'Plate', 'Block', 'Beam', 'Baseplate', 'Wedge', 'Corner', 'Cylinder', 'Ball', 'Truss', 'Glass', 'Neon']],
+  ['Special Blocks', ['Spawn', 'Kill Brick', 'Superball', 'Button', 'Door', 'Day/Night']],
+  ['Vehicles', ['Seat', 'Drive Seat', 'Pilot Seat', 'Car', 'Airplane']]];
+$('shapeBtns').innerHTML = SHAPE_SECS.map(([sec, names]) => `<div class="ins-sec" data-sec="${sec.toLowerCase()}"><h4>${sec}</h4><div class="grid">${names
+  .map(n => `<button class="b ins-item" data-s="${SHAPES.findIndex(s => s[0] === n)}">${n}</button>`).join('')}</div></div>`).join('');
 $('shapeBtns').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) insertPart(SHAPES[+b.dataset.s][1]); });
+// the search bar: only the parts, tools and colors that match stay (a section's own name shows all of it)
+$('insSearch').addEventListener('input', () => {
+  const q = $('insSearch').value.trim().toLowerCase();
+  let any = false;
+  document.querySelectorAll('#insertWin .ins-sec').forEach(sec => {
+    const all = !q || sec.dataset.sec.includes(q) || sec.querySelector('h4').textContent.toLowerCase().startsWith(q);
+    let n = 0;
+    sec.querySelectorAll('.ins-item, .sw').forEach(it => { const hit = all || (it.dataset.n || it.textContent).toLowerCase().includes(q); it.classList.toggle('hidden', !hit); n += hit; });
+    sec.classList.toggle('hidden', !n); any = any || n > 0;
+  });
+  $('insNone').classList.toggle('hidden', any);
+});
+// Enter: put in the first part that matches
+$('insSearch').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  const b = [...document.querySelectorAll('#shapeBtns .ins-item')].find(b => !b.classList.contains('hidden') && !b.closest('.ins-sec').classList.contains('hidden'));
+  if (b) { $('insSearch').blur(); b.click(); }
+});
 $('customBtn').onclick = () => insertPart({ size: ['cx', 'cy', 'cz'].map(id => Math.min(64, Math.max(0.2, +$(id).value || 1))) });
 // line a brick up with the stud grid, like Roblox: its edges land on whole studs, so bricks sit flush side by side.
 // extX / extZ: how far the brick reaches from its middle along x and z (half its size, after turning it)
@@ -6000,14 +6093,19 @@ function insertPart(o) {
   const spec = { ...o, color: o.color || selColor, anchored: $('anchorChk').checked, destroy: $('anchorChk').checked && $('destroyChk').checked,
     pos: at.toArray(), rot: [0, turns * Math.PI / 2, 0] };
   if (o.btn) spec.scripts = [{ on: 'click', do: [['sound', 'click'], ['doors', spec.color]] }];   // (a button opens the doors of its own color)
-  const kind = ['car', 'seat', 'spawn', 'btn', 'door', 'neon', 'sign'].find(k => o[k]) || (o.shape === 'truss' ? 'truss' : null);
+  const kind = ['car', 'plane', 'seat', 'spawn', 'btn', 'door', 'neon', 'sign'].find(k => o[k]) || (o.shape === 'truss' ? 'truss' : null);
   if (kind && !tipped.has(kind)) { tipped.add(kind); sysChat(PART_TIPS[kind]); }
-  countBuilt(o.car ? 9 : 1);
+  countBuilt(o.car ? 9 : o.plane ? 14 : 1);
   SFX.click();
   if (net.mode === 'client') { netSend({ t: 'insert', o: spec }); return; }
   if (o.car) {   // (a whole car, welded together)
     if (!brickRoom(9)) { tellFull(player); return; }
     histPush(player, buildCar(new V3(at.x, at.y - sz[1] / 2, at.z), turns * Math.PI / 2, spec.color).map(p => ({ k: 'add', nid: p.nid })));
+    aiOnBuild(at, player); return;
+  }
+  if (o.plane) {   // (a whole airplane, welded together)
+    if (!brickRoom(14)) { tellFull(player); return; }
+    histPush(player, buildPlane(new V3(at.x, at.y - sz[1] / 2, at.z), turns * Math.PI / 2, spec.color).map(p => ({ k: 'add', nid: p.nid })));
     aiOnBuild(at, player); return;
   }
   histPush(player, [{ k: 'add', nid: makePart(spec).nid }]);
@@ -7051,6 +7149,11 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '11/2/2026', ver: '4.2', top: 'Airplanes! Plus a new Insert menu with sections and a search bar', text: [
+    'NEW: Airplanes! Find them in Insert, under Vehicles. Sit in the front black seat to fly: W = faster, S = slower, A and D = turn, E = up, Q = down. Speed up on the ground, then press E to take off! There is a seat in the back for a friend.',
+    'Build your own plane: weld more bricks to an airplane and they fly along with it. Or make one from scratch with the new Pilot Seat, which flies everything welded to it.',
+    'The Insert menu has sections now (Blocks, Special Blocks, Vehicles, Tools, BrickColor and Place) and it scrolls. Type in the new search bar to find a part, a tool or even a color, and press Enter to put in the first part it finds.',
+  ] },
   { date: '11/1/2026', ver: '4.1', top: 'PWN people for Tix and spend Bux in the Catalog! Plus brick explosions, real brick stairs and more', text: [
     'NEW: Tix and Bux! Every time you PWN someone (knock them out) you get 10 Tix. In the Catalog, trade 10 Tix for 1 Bux, then spend your Bux on hats, clothes, faces and more. Everyone starts fresh, so go earn your outfit! (Things marked Free are still free.)',
     'Hats you pick up off the ground in a game are only borrowed for that game. To keep a hat, buy it in the Catalog!',
@@ -8278,7 +8381,7 @@ function hostHandle(h, conn, m) {
       break;
     case 'drive': {   // driving a car: the server's physics moves it
       const p = partsByNid.get(m.nid), cl = (n) => Math.max(-1, Math.min(1, +n || 0));
-      if (p && p.seat === 2 && h.pos.distanceTo(p.body.position) < 12) toServer({ t: 'drive', nid: p.nid, th: cl(m.th), st: cl(m.st) });
+      if (p && p.seat >= 2 && h.pos.distanceTo(p.body.position) < 12) toServer({ t: 'drive', nid: p.nid, th: cl(m.th), st: cl(m.st), pt: cl(m.pt) });
       break;
     }
     case 'chat': { const text = String(m.text || '').slice(0, 100); if (text) { h.say(text); aiOnChat(h, text); } break; }
@@ -8356,10 +8459,15 @@ function hostHandle(h, conn, m) {
     case 'stest': { const p = part(); if (p) fireScripts(p, null, h); break; }
     case 'insert': {
       const o = m.o; if (!o || !Array.isArray(o.size) || !Array.isArray(o.pos) || !o.pos.every(Number.isFinite)) break;
-      if (!brickRoom(o.car ? 9 : 1)) { tellFull(h); break; }
+      if (!brickRoom(o.car ? 9 : o.plane ? 14 : 1)) { tellFull(h); break; }
       if (o.car) {
         const yaw = Array.isArray(o.rot) ? +o.rot[1] || 0 : 0;
         histPush(h, buildCar(new V3(o.pos[0], o.pos[1] - 2, o.pos[2]), yaw, typeof o.color === 'string' ? o.color : BC['Bright red']).map(p => ({ k: 'add', nid: p.nid })));
+        break;
+      }
+      if (o.plane) {
+        const yaw = Array.isArray(o.rot) ? +o.rot[1] || 0 : 0;
+        histPush(h, buildPlane(new V3(o.pos[0], o.pos[1] - 3, o.pos[2]), yaw, typeof o.color === 'string' ? o.color : BC['Bright red']).map(p => ({ k: 'add', nid: p.nid })));
         break;
       }
       const np = makePart({ shape: o.shape, size: o.size.map(n => Math.min(64, Math.max(0.2, +n || 1))), pos: o.pos, rot: o.rot,

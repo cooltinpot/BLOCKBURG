@@ -29,6 +29,33 @@ function driveBodies(seat, bodies, th, st, dt) {
   }
 }
 
+// a pilot's seat (p.seat = 3) flies everything welded to it: th = faster (1) / slower (-1), st = turn, pt = climb (1) / dive (-1).
+// Slow, it rolls along the ground like a car with wings. Past take-off speed the wings hold it up and it goes where its nose points.
+// (Let go of climb / dive and it levels out. The game and the server's BrickWorld have the same.)
+function flyBodies(seat, bodies, th, st, pt, dt, grav) {
+  const q = seat.quaternion, f = q.vmult(new CANNON.Vec3(0, 0, -1)), r = q.vmult(new CANNON.Vec3(1, 0, 0)), v = seat.velocity;
+  // it keeps its own speed, unless something really is stopping it (a wall, the ground nose first)
+  const real = v.x * f.x + v.y * f.y + v.z * f.z;
+  const s = seat.planeSpeed = Math.max(0, Math.min(90, Math.min(seat.planeSpeed || 0, Math.max(0, real) + 15) + th * (th > 0 ? 25 : 40) * dt));
+  const lift = Math.max(0, Math.min(1, (s - 25) / 20));   // 0 = too slow to fly .. 1 = flying (45 studs a second and up)
+  const pa = Math.asin(Math.max(-1, Math.min(1, f.y))), bank = Math.asin(Math.max(-1, Math.min(1, r.y)));
+  const wy = -st * (0.5 + 0.4 * lift) * Math.min(1, s / 8);   // turning (not on the spot)
+  let pitch = lift * (pt ? pt * 0.6 : -pa * 0.8) - (1 - lift) * pa * 1.5;   // nose up / down (too slow: it settles back flat)
+  if ((pa > 0.7 && pitch > 0) || (pa < -0.7 && pitch < 0)) pitch = 0;   // (no loop-the-loops: it stops at about 40 degrees)
+  const roll = (bank + st * 0.5 * lift) * 3;   // it leans into turns, and back level after
+  const wx = r.x * pitch + f.x * roll, wz = r.z * pitch + f.z * roll, wyy = wy + r.y * pitch + f.y * roll;
+  const fl = Math.hypot(f.x, f.z) || 1;
+  const vx = s * (f.x * lift + f.x / fl * (1 - lift)), vz = s * (f.z * lift + f.z / fl * (1 - lift));
+  const fall = Math.max(v.y, -40);   // (too slow to fly, the wings still make it glide down instead of dropping like a rock)
+  const vy = fall + (f.y * s - fall) * lift + grav * dt * lift;   // (flying: the wings hold it up against gravity)
+  for (const b of bodies) {
+    if (b.type !== CANNON.Body.DYNAMIC) continue;
+    const rx = b.position.x - seat.position.x, ry = b.position.y - seat.position.y, rz = b.position.z - seat.position.z;
+    b.velocity.set(vx + wyy * rz - wz * ry, vy + wz * rx - wx * rz, vz + wx * ry - wyy * rx);
+    b.angularVelocity.set(wx, wyy, wz); b.wakeUp();
+  }
+}
+
 // welds hold exactly: after each physics step every brick of a group goes right back to its spot on the group's
 // first brick. (The lock constraints carry the pushes and pulls, but they're springy and would slowly drift apart.)
 function weldSnap(groups) {
@@ -221,9 +248,9 @@ export class BrickWorld {
       this.world.addConstraint(q.weldC); q.body.wakeUp();
     }
   }
-  drive(nid, th, st, now) {
-    const p = this.parts.get(nid);
-    if (p && p.d.st === 2 && Number.isFinite(th) && Number.isFinite(st)) this.driven.set(nid, { th: Math.max(-1, Math.min(1, th)), st: Math.max(-1, Math.min(1, st)), at: now });
+  drive(nid, th, st, now, pt = 0) {
+    const p = this.parts.get(nid), cl = (n) => Math.max(-1, Math.min(1, n));
+    if (p && (p.d.st === 2 || p.d.st === 3) && Number.isFinite(th) && Number.isFinite(st)) this.driven.set(nid, { th: cl(th), st: cl(st), pt: cl(+pt || 0), at: now });
   }
   weld(nid, id) { const p = this.parts.get(nid); if (p && (id === null || Number.isFinite(id))) this.weldJoin(p, id); }
   // a door (or any brick a script opens): open = things pass through it
@@ -313,7 +340,9 @@ export class BrickWorld {
       const p = this.parts.get(nid);
       if (!p || now - d.at > 500) { this.driven.delete(nid); continue; }
       const g = p.d.wd && this.welds.get(p.d.wd);
-      driveBodies(p.body, g ? [...g].map(q => q.body) : [p.body], d.th, d.st, Math.min(dt, 1 / 20) * (this.timeScale || 1));
+      const bodies = g ? [...g].map(q => q.body) : [p.body], t = Math.min(dt, 1 / 20) * (this.timeScale || 1);
+      if (p.d.st === 3) flyBodies(p.body, bodies, d.th, d.st, d.pt, t, GRAV);   // a pilot's seat: an airplane
+      else driveBodies(p.body, bodies, d.th, d.st, t);
     }
     const k = this.timeScale || 1;   // (/time: slow motion or fast forward)
     this.world.step(1 / 120 * Math.min(1, k), Math.min(dt, 1 / 20) * k, 3 * Math.ceil(Math.max(1, k)));
