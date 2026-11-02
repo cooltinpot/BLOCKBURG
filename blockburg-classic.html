@@ -363,6 +363,8 @@
   /* the start-up screen: covers the page from the moment it opens until the game engine is ready */
   #bootScreen{position:fixed;inset:0;z-index:9000;background:#fff;display:grid;place-items:center;font-family:Verdana,Arial,sans-serif;transition:opacity .4s}
   #bootScreen.out{opacity:0;pointer-events:none}
+  .ld-pkg{display:block;width:min(100%,380px);height:auto;aspect-ratio:380/290;margin:0 auto 14px}   /* a new update's package */
+  @media (max-height:520px){.ld-pkg{width:min(100%,220px)}}
   #bootWhat{position:absolute;left:16px;right:16px;bottom:14px;font-size:11px;color:#555;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* sent out of an online game: what happened (a name for it, like "Your internet went out"), and a way back in */
   #kickScreen{position:fixed;inset:0;z-index:58;background:rgba(10,25,50,.55);display:grid;place-items:center;font:12px Verdana,Arial,sans-serif}
@@ -7158,6 +7160,7 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
   { date: '11/2/2026', ver: '4.2', top: 'Airplanes! Plus a new Insert menu with sections and a search bar, and no more kill sticks', text: [
+    'New updates come in a package now! The first time you open a new update, a brown brick package slides onto the loading screen. Click it to open it and see what is new!',
     'No more kill sticks! A brick that someone is moving with Grab or Clone now goes right through people and cannot hurt anyone, even a kill brick. Once they let go it works like normal again.',
     'NEW: Airplanes! Find them in Insert, under Vehicles. Sit in the front black seat to fly: W = faster, S = slower, A and D = turn, E = up, Q = down. Speed up on the ground, then press E to take off! There is a seat in the back for a friend.',
     'Build your own plane: weld more bricks to an airplane and they fly along with it. Or make one from scratch with the new Pilot Seat, which flies everything welded to it.',
@@ -9603,12 +9606,103 @@ refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
 if (!HEADLESS) { pxSwap(); startUpdates(); signinStart(); onlineStart(); }
+/* ---- a new update: the first time you open it, a brown brick package slides in from the side of the start-up
+   screen (over the loading bar), and once everything has loaded you click it to open the update. (The sounds wait
+   for that click: browsers only let a page make sound after you click something.) ---- */
+const SEEN_UPDATE_KEY = 'blockburg-update-seen';
+function updatePackage() {
+  const ver = String(UPDATES[0].ver);
+  let seen = null; try { seen = localStorage.getItem(SEEN_UPDATE_KEY); } catch { }
+  const pic = $('bootPic');
+  if (seen === ver || !pic) return null;
+  const W = 380, H = 290, cv = document.createElement('canvas');
+  cv.width = W * 2; cv.height = H * 2; cv.className = 'ld-pkg';
+  let r;
+  try { r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); } catch { return null; }
+  pic.style.display = 'none'; pic.after(cv);
+  r.setSize(W * 2, H * 2, false); r.outputColorSpace = THREE.SRGBColorSpace;
+  const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(32, W / H, 0.1, 100);
+  cam.position.set(0, 6, 16); cam.lookAt(0, 3.4, 0);
+  sc.add(new THREE.HemisphereLight(0xffffff, 0x8a8a8a, 1.9));
+  { const s = new THREE.DirectionalLight(0xffffff, 2.3); s.position.set(3, 6, 5); sc.add(s); }
+  // the package: a brown brick box with a studded lid, a yellow ribbon on the lid and a label with the update on the front
+  const brown = '#7C5C46', yel = BC['Bright yellow'];   // (the classic Brown brick color)
+  const pkg = new THREE.Group(), box = new THREE.Group(), lid = new THREE.Group(); sc.add(pkg); pkg.add(box, lid);
+  const put = (g, size, pos, color) => { const m = new THREE.Mesh(boxGeo(...size), partMats(color)); m.position.set(...pos); g.add(m); return m; };
+  put(box, [4, 2.4, 3], [0, 1.2, 0], brown);
+  put(lid, [4, 0.4, 3], [0, 0, 0], brown);
+  put(lid, [0.8, 0.44, 3.04], [0, 0, 0], yel); put(lid, [4.04, 0.44, 0.8], [0, 0, 0], yel);
+  lid.position.y = 2.62;
+  const label = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.2), new THREE.MeshBasicMaterial({ map: tex(canvas(280, 120, (g) => {
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 280, 120); g.strokeStyle = '#1b2a35'; g.lineWidth = 6; g.strokeRect(3, 3, 274, 114);
+    g.fillStyle = '#e2231a'; g.font = '900 40px Arial'; g.textAlign = 'center'; g.fillText('UPDATE', 140, 52);
+    g.fillStyle = '#1b2a35'; g.font = 'bold 36px Arial'; g.fillText('v' + ver, 140, 98);
+  })) }));
+  label.position.set(0, 1.2, 1.51); box.add(label);
+  const bits = [], COLORS = ['Bright red', 'Bright blue', 'Bright yellow', 'Bright green', 'White', 'Bright orange'].map(n => BC[n]);
+  let phase = 'slide', t0 = performance.now(), openAt = 0, ready = false, stopped = false;
+  const backOut = (k) => 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2;   // (a little overshoot, then it settles)
+  let last = performance.now();
+  (function draw(now) {
+    if (stopped) return;
+    const t = (now - t0) / 1000, dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (phase === 'slide') {   // in from the left side, turning to face the front
+      const k = Math.min(1, t / 0.9), e = backOut(k);
+      pkg.position.x = -15 * (1 - e); pkg.rotation.y = 1.1 * (1 - e) - 0.35; pkg.rotation.z = 0.2 * (1 - k) * Math.sin(k * 14);
+      if (k >= 1) phase = 'wait';
+    } else if (phase === 'wait') {   // sitting there; once it's ready to open, it wiggles every so often
+      pkg.rotation.y = -0.35 + Math.sin(t * 0.8) * 0.05;
+      const w = ready ? (t % 1.4) : 9;
+      pkg.rotation.z = w < 0.4 ? Math.sin(w * 40) * 0.07 * (1 - w / 0.4) : 0;
+      pkg.position.y = w < 0.4 ? Math.abs(Math.sin(w * 20)) * 0.15 : 0;
+    } else {   // open! the lid pops off and little bricks burst out
+      const o = (now - openAt) / 1000;
+      box.scale.y = o < 0.12 ? 1 - o * 1.4 : Math.min(1, 0.83 + (o - 0.12) * 2);
+      pkg.rotation.z = 0;
+      lid.userData.v.y -= 30 * dt; lid.position.addScaledVector(lid.userData.v, dt); lid.rotation.x -= 5 * dt; lid.rotation.z += 3 * dt;
+      for (const b of bits) { b.userData.v.y -= 26 * dt; b.position.addScaledVector(b.userData.v, dt); b.rotation.x += b.userData.s * dt; b.rotation.y += b.userData.s * dt * 0.7; }
+    }
+    r.render(sc, cam);
+    requestAnimationFrame(draw);
+  })(t0);
+  return {
+    // everything has loaded: wait for a click (or a key) on the start-up screen, open it, show what's new, then let go
+    open: (boot) => new Promise((done) => {
+      ready = true; boot.style.cursor = 'pointer';
+      $('bootMsg').innerHTML = '<b>A new update is here! Click the package to open it!</b>';
+      const go = () => {
+        removeEventListener('keydown', go); boot.removeEventListener('pointerdown', go);
+        try { localStorage.setItem(SEEN_UPDATE_KEY, ver); } catch { }
+        audioInit(); playWavs(['snap'], 1); SFX.boing(0.7); setTimeout(() => playWavs(['victory'], 0.8), 200);
+        phase = 'open'; openAt = performance.now();
+        lid.userData.v = new V3(2.5, 11, 1);
+        for (let i = 0; i < 26; i++) {
+          const b = new THREE.Mesh(boxGeo(1, i % 3 ? 0.4 : 1.2, 1), partMats(COLORS[i % COLORS.length]));
+          b.scale.setScalar(0.55); b.position.set((Math.random() - 0.5) * 2, 2.4, (Math.random() - 0.5) * 1.5);
+          b.userData = { v: new V3((Math.random() - 0.5) * 9, 9 + Math.random() * 7, (Math.random() - 0.5) * 5), s: (Math.random() - 0.5) * 12 };
+          pkg.add(b); bits.push(b);
+        }
+        setTimeout(() => {
+          const u = UPDATES[0];
+          $('bootMsg').innerHTML = `<span style="color:#e2231a;font-weight:bold">NEW in v${escHtml(ver)}:</span> <b>${escHtml(u.top)}</b>`;
+          $('bootWhat').textContent = 'Click anywhere to play! (The whole list is in the Update Log on the front page.)';
+          const end = () => { clearTimeout(auto); removeEventListener('keydown', end); boot.removeEventListener('pointerdown', end); boot.style.cursor = '';
+            done(); setTimeout(() => { stopped = true; r.dispose(); r.forceContextLoss(); }, 600); };
+          const auto = setTimeout(end, 9000);
+          addEventListener('keydown', end); boot.addEventListener('pointerdown', end);
+        }, 1300);
+      };
+      addEventListener('keydown', go); boot.addEventListener('pointerdown', go);
+    }),
+  };
+}
 // start-up is done: now load EVERYTHING else the site uses (every picture, the fonts, the theme song, the online code),
 // all at once, naming at the bottom whatever is still loading, then fill the bar and fade the start-up screen away
 if (!HEADLESS) (async () => {
   const boot = $('bootScreen');
   if (!boot) return;
   clearInterval(window.__boot);
+  const pkg = updatePackage();   // (a new update: its package slides in while the rest loads)
   const fill = $('bootFill'), msg = $('bootMsg'), what = $('bootWhat'), p0 = Math.min(60, parseFloat(fill.style.width) || 0);
   const imgs = [...new Set([...(window.__bootImgs || []), ...document.images])].filter(i => i.getAttribute('src'));
   window.__bootImgs = null;   // (done writing pictures down)
@@ -9639,6 +9733,7 @@ if (!HEADLESS) (async () => {
   what.textContent = 'Getting the graphics ready'; fill.style.width = '98%'; await nextFrame();
   try { pv.render(pvScene, pvCam); } catch { }
   fill.style.width = '100%'; msg.textContent = 'Ready!'; what.textContent = `Loaded all ${tasks.length} things!`;
+  if (pkg) await pkg.open(boot);   // (waits for you to open it)
   setTimeout(() => { boot.classList.add('out'); setTimeout(() => boot.remove(), 450); }, 250);
 })();
 
