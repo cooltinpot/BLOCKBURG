@@ -134,6 +134,9 @@
   #shopLeave{position:fixed;left:12px;top:12px;z-index:47;font:bold 14px Arial;background:#d4d0c8;border:2px outset #fff;padding:6px 12px;cursor:pointer;
     box-shadow:2px 2px 6px rgba(0,0,0,.4)}
   #shopLeave.hidden{display:none}
+  #giftLine .gift-go{cursor:pointer;color:#2a7a1e;font-weight:bold;animation:giftBob 1s steps(2) infinite}
+  #giftLine .gift-go:hover{text-decoration:underline}
+  @keyframes giftBob{50%{color:#e2231a}}
   .s-btn.shop-big{font-size:13px;font-weight:bold;background:linear-gradient(#ffe680,#f5b81a);color:#3a2400;border-color:#c98a00;padding:5px 12px}
   .ins-none{color:#444;font-style:italic;padding:8px 0}
   /* the Script window: Scratch-colored blocks in an old gray window */
@@ -538,7 +541,7 @@
 (() => {
   const tips = ['Tip: Rockets hurt you too. Aim away from your face!', 'Tip: The Tinpot is the best hat. Obviously.',
     'Tip: Grab the other team\'s flag in RED VS BLUE!', 'Tip: Cars wait at the Race Track. Mind Guest 31.',
-    'Tip: Host a game in Multiplayer and invite your friends.', 'Tip: Never tell anyone your password.'];
+    'Tip: Host a game in Multiplayer and invite your friends.', 'Tip: Type /e dance in chat to bust a move!', 'Tip: Visit Bob every day for a free gift!', 'Tip: Never tell anyone your password.'];
   document.getElementById('bootTip').textContent = tips[Math.floor(Math.random() * tips.length)];
   // a random picture: the sword guy, the street, Guest 31 having a moment, Guest 2006's new house, or two Guests saying hey
   const pics = [['boot.jpg', 580, 604], ['loading-street.jpg', 863, 660], ['loading-guest31.jpg', 592, 555], ['loading-house.jpg', 707, 742], ['loading-hey.jpg', 616, 636]];
@@ -783,6 +786,7 @@
           <div class="avatarSlot"></div>
           <div style="margin-top:6px"><button class="s-btn" data-goto="character">Change Character</button></div>
           <div style="margin-top:6px"><button class="s-btn shop-big" data-shop3d="1">&#128722; Visit Bob's Shop</button></div>
+          <div class="fm-sm" id="giftLine" style="margin-top:4px"></div>
           <div class="fm-sm" id="meIdLine" style="margin-top:6px"></div>
         </div></div>
         <div class="box"><h3 id="friendsHd">My Friends (0)</h3><div class="in" id="friends"></div></div>
@@ -3421,6 +3425,11 @@ class Humanoid {
     t.needsUpdate = true;
   }
   say(text) {
+    if (/^\/e(mote)?\s/i.test(text)) {   // an emote, not words: no bubble, just the moves
+      const id = text.split(/\s+/)[1].toLowerCase();
+      if (EMOTES[id]) { this.emote = id; this.emoteT = 0; if (this.hid) netEv(['chat', this.hid, text]); }
+      return;
+    }
     const who = this.badge ? this.name + ' #' + this.badge : this.name;
     chatLine(this.admin ? '[Admin] ' + who : who, text, this.admin ? '#ffd23f' : this.chatColor);
     if (this.hid) netEv(['chat', this.hid, text]);
@@ -3434,6 +3443,14 @@ class Humanoid {
     g.fillStyle = '#000'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText(text, 256, 44, 480);
     t.needsUpdate = true; this.bubble.visible = true; this.bubbleT = 7;
+  }
+  // the pose for the emote I'm doing, or null. An emote stops as soon as I walk, jump or sit down.
+  emotePose(dt, busy) {
+    const E = this.emote && EMOTES[this.emote];
+    if (!E) return null;
+    const t = (this.emoteT += dt);
+    if (busy || this.dead || (E.dur && t > E.dur)) { this.emote = null; return null; }
+    return E.pose(t);
   }
   spawn(at) {
     const p = at || spawnSpot(this);
@@ -3534,7 +3551,13 @@ class Humanoid {
     // (arms turn forward with a minus: jumping swings them up in front, like a tool held out, not back over the shoulders)
     const tgt = [s, -s, air ? -Math.PI * 0.95 : -s, holding ? -Math.PI / 2 + armOff : (air ? -Math.PI * 0.95 : s)];
     if (this.isPlayer ? this.seat : this.sitting) { tgt[0] = tgt[1] = -Math.PI / 2; if (!holding) tgt[2] = tgt[3] = -0.4; }   // sitting
-    [ch.legL, ch.legR, ch.armL, ch.armR].forEach((p, i) => p.rotation.x += (tgt[i] - p.rotation.x) * (i === 3 && holding ? Math.min(1, dt * 30) : k));
+    const emo = this.emotePose(dt, moving || air || !!(this.isPlayer ? this.seat : this.sitting));
+    if (emo) emo.x.forEach((v, i) => { tgt[i] = v; });
+    [ch.legL, ch.legR, ch.armL, ch.armR].forEach((p, i) => {
+      p.rotation.x += (tgt[i] - p.rotation.x) * (i === 3 && holding && !emo ? Math.min(1, dt * 30) : k);
+      p.rotation.z += ((emo ? emo.z[i] : 0) - p.rotation.z) * k;   // (out to the sides: only emotes do that)
+    });
+    ch.root.position.y += emo ? emo.y : 0; ch.root.rotation.z = emo ? emo.r : 0;
     animateCape(ch, dt, t, moving, air);
     animateFx(ch, dt, t);
     const shielded = this.ff > 0 || !!this.god;
@@ -3547,6 +3570,19 @@ class Humanoid {
     this.bubble.position.set(head.x, head.y + (this.tag ? 3.7 : 2.4), head.z);
   }
 }
+// the emotes: legs and arms ([left leg, right leg, left arm, right arm] forward and up, then out to the sides),
+// how high the body hops (y) and how far it sways (r). dur: how long it lasts (dancing keeps going until you move).
+// (Arms: 0 is down, -1.57 straight out in front, -3.14 straight up. Out to the side is minus for the left arm.)
+const EMOTES = {
+  dance: { pose: (t) => { const s = Math.sin(t * 7);
+    return { x: [s * 0.45, -s * 0.45, -2.7, -2.7], z: [0, 0, -0.45 + s * 0.4, 0.45 + s * 0.4], y: Math.abs(s) * 0.35, r: -s * 0.12 }; } },
+  wave: { dur: 2.6, pose: (t) => ({ x: [0, 0, 0, -2.75], z: [0, 0, 0, 0.35 + Math.sin(t * 12) * 0.45], y: 0, r: 0 }) },
+  cheer: { dur: 2.4, pose: (t) => { const p = Math.sin(t * 14) * 0.15;
+    return { x: [0, 0, -2.95 + p, -2.95 - p], z: [0, 0, -0.3, 0.3], y: Math.abs(Math.sin(t * 8)) * 1.1, r: 0 }; } },
+  point: { dur: 3, pose: () => ({ x: [0, 0, 0, -Math.PI / 2], z: [0, 0, 0, 0], y: 0, r: 0 }) },
+  laugh: { dur: 2.6, pose: (t) => { const sh = Math.sin(t * 28);
+    return { x: [0, 0, -0.45 + sh * 0.08, -0.45 - sh * 0.08], z: [0, 0, 0.4, -0.4], y: Math.abs(Math.sin(t * 14)) * 0.12, r: sh * 0.05 }; } },
+};
 const lerpAngle = (a, b, k) => { const d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; return a + d * k; };
 const randomNpcSpot = () => new V3((Math.random() - 0.5) * 60, 8, (Math.random() - 0.5) * 30 + 10);
 
@@ -6600,6 +6636,12 @@ addEventListener('keyup', (e) => {
 function sendChat(t) {
   t = String(t || '').trim().slice(0, 100);
   if (!t || !started) return;
+  if (/^\/e(mote)?(\s|$)/i.test(t)) {   // an emote
+    const id = (t.split(/\s+/)[1] || '').toLowerCase();
+    if (!EMOTES[id]) { sysChat('Emotes: ' + Object.keys(EMOTES).map(k => '/e ' + k).join(', ')); return; }
+    player.say('/e ' + id); if (net.mode === 'client') netSend({ t: 'chat', text: '/e ' + id });
+    return;
+  }
   player.say(t); countUp('chats', 1, 25, 'chatty');
   if (net.mode === 'client') netSend({ t: 'chat', text: t }); else aiOnChat(player, t);
 }
@@ -7394,6 +7436,7 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    into Bob's wooden shed. Bob leans on his counter, watches your mouse, talks, and sells you hats and clothes
    for Bux. The shop is its own little 3D scene, only on your screen. */
 const BOB_LINES = {
+  gift: ['Hey! I saved something for you!', 'There you are! Got a gift for ya!', 'Ooh, you came back! Here!'],
   hi: ['Watcha looking for?', 'Hey there, pal!', 'Welcome to my shop!', 'Oh hey! A customer!', 'Fresh threads, just in!'],
   idle: ['Those jeans? Classic.', 'Hats, shirts, pants... I got it all!', 'Bux only, pal. No Tix.', 'This flannel smells like pancakes.',
     'Need a new look?', 'Do not touch the mannequins.', "I've been leaning on this counter since 2006.", 'Guest 31 came in here once. Lots of screaming.',
@@ -7570,7 +7613,13 @@ function buildShopScene() {
     }));
     const bill = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.76), phong({ map: t, side: THREE.DoubleSide }, false));
     bill.rotation.x = Math.PI / 2; bill.position.set(0, -0.15, 0.3); bill.visible = false; ch.hand.add(bill);   // (flat across the fist, sticking up)
-    shop.bill = bill;
+    shop.bill = bill; shop.billMat = bill.material;
+    shop.ticketMat = phong({ map: tex(canvas(150, 76, (g) => {
+      g.fillStyle = '#f5cd30'; g.fillRect(0, 0, 150, 76); g.strokeStyle = '#c79b00'; g.lineWidth = 3; g.setLineDash([7, 5]); g.strokeRect(7, 7, 136, 62); g.setLineDash([]);
+      g.fillStyle = '#c79b00'; [0, 150].forEach(x => { g.beginPath(); g.arc(x, 38, 11, 0, 7); g.fill(); });   // (the notches)
+      g.fillStyle = '#9b1b14'; g.font = '900 32px Arial'; g.textAlign = 'center'; g.fillText('TIX', 75, 47);
+      g.font = 'bold 11px Arial'; g.fillText('DAILY GIFT', 75, 63); g.fillText('FROM BOB', 75, 21);
+    })), side: THREE.DoubleSide }, false);
   }
   { // a sack of Bux (for trading all your Tix), tied with a rope, with a Bux on the front
     const pts = [[0, 0], [0.62, 0.05], [0.92, 0.3], [1, 0.7], [0.88, 1.05], [0.5, 1.32], [0.26, 1.42], [0.3, 1.6], [0.42, 1.78], [0.1, 1.82], [0, 1.82]].map(([x, y]) => new THREE.Vector2(x, y));
@@ -7762,7 +7811,7 @@ function enterShop(cx = innerWidth / 2, cy = innerHeight / 2) {
 }
 function leaveShop() {
   if (!shop.open || shop.busy) return;
-  shop.busy = true; SFX.click(); bobSay(bobPick('bye'));
+  shop.busy = true; SFX.click(); payGift(); bobSay(bobPick('bye'));
   $('shopWin').classList.add('hidden'); $('shopLeave').classList.add('hidden');
   $('site').classList.add('shop-back'); $('site').classList.remove('shop-out');   // (the page slides back in from the right)
   setTimeout(() => { shop.open = shop.busy = false; $('shopCv').classList.add('hidden'); $('site').classList.remove('shop-back'); cancelAnimationFrame(shop.raf); }, 800);
@@ -7788,7 +7837,7 @@ function bobPose(st) {
   const b = shop.bob, t = (shop.t += st), dt = st;
   if (shop.ent < BOB_ENT.done) {
     shop.ent = Math.min(BOB_ENT.done, shop.ent + st * BOB_ENT.speed); bobEntrance(shop.ent);
-    if (shop.ent >= BOB_ENT.done) { b.yaw = b.pitch = 0; shop.chatT = 9; bobSay(bobPick('hi')); }
+    if (shop.ent >= BOB_ENT.done) { b.yaw = b.pitch = 0; shop.chatT = 9; if (!startGift()) bobSay(bobPick('hi')); }
     return;
   }
   if (shop.fetch < BOB_FETCH.done) {
@@ -7877,8 +7926,9 @@ function bobFetch(f) {
   shop.fetchPrev = f;
 }
 // the bill goes back in his hand, hidden
-function billBack() {
+function billBack(ticket = false) {
   const bill = shop.bill; if (!bill) return;
+  bill.material = ticket ? shop.ticketMat : shop.billMat;   // (a Tix ticket for the daily gift, a Bux the rest of the time)
   shop.bob.ch.hand.add(bill); bill.rotation.set(Math.PI / 2, 0, 0); bill.position.set(0, -0.15, 0.3); bill.scale.setScalar(1); bill.visible = false;
 }
 // one step of handing you a Bux (see BOB_GIVE): it bosses his right arm around while it plays
@@ -7895,7 +7945,7 @@ function bobGive(st, rest) {
   if (g >= G.out - 0.1 && g < G.let) bill.visible = true;
   // you take it: it zips at you, getting bigger, and it's gone
   if (g >= G.let && bill.parent !== shop.scene) {
-    shop.scene.attach(bill); shop.billFrom = bill.position.clone(); playWavs(['kerplunk'], 0.6);
+    shop.scene.attach(bill); shop.billFrom = bill.position.clone(); playWavs(['kerplunk'], 0.6); payGift();
   }
   if (bill.parent === shop.scene) {
     const u = cl((g - G.let) / (G.gone - G.let)), to = shop.cam.getWorldDirection(new V3()).multiplyScalar(1.6).add(shop.cam.position);
@@ -7969,6 +8019,36 @@ function bobSay(text, more = '') {
   g.fillStyle = '#000'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 44, 480);
   t.needsUpdate = true; shop.bubble.visible = true; shop.bubbleT = 5;
 }
+// Bob's daily gift: come to his shop once a day and he digs a Tix ticket out of his pocket for you. Come back
+// days in a row and it gets bigger (this list is day 1, day 2, ... and day 7 is every day after that).
+const DAILY_GIFT = [10, 15, 20, 25, 30, 40, 50];
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+const giftTix = (day) => DAILY_GIFT[Math.min(day, DAILY_GIFT.length) - 1];
+function giftInfo() {
+  const g = wallet.daily || {}, today = dayKey(), y = new Date(); y.setDate(y.getDate() - 1);
+  if (g.last === today) return { ready: false, streak: g.streak, next: giftTix(g.streak + 1) };
+  const streak = g.last === dayKey(y) ? g.streak + 1 : 1;
+  return { ready: true, streak, tix: giftTix(streak) };
+}
+function startGift() {
+  const g = giftInfo();
+  if (!g.ready || shop.gift) return false;
+  shop.gift = g; billBack(true); shop.give = 0; shop.chatT = 12;
+  bobSay(bobPick('gift'), `(Your daily gift: ${g.tix} Tix! ${g.streak > 1 ? `That is ${g.streak} days in a row! ` : ''}Come back tomorrow and it gets bigger.)`);
+  return true;
+}
+function payGift() {
+  const g = shop.gift; if (!g) return;
+  shop.gift = null; wallet.daily = { last: dayKey(), streak: g.streak }; saveWallet(); earnTix(g.tix); playWavs(['flashbulb'], 0.8); showGift();
+}
+// on the front page, under the Bobs Shop button
+function showGift() {
+  if (HEADLESS || !$('giftLine')) return;
+  const g = giftInfo();
+  $('giftLine').innerHTML = g.ready
+    ? `<span class="gift-go" data-shop3d="1">${pxIcon('box', 14)} Bob has a gift for you: <b>${g.tix} Tix</b>!</span>`
+    : `${pxIcon('box', 12)} Next gift from Bob tomorrow: <b>${g.next} Tix</b>${g.streak > 1 ? ` (${g.streak} days in a row!)` : ''}`;
+}
 function shopWear(slot, id) { look[slot] = id; saveLook(); refreshLook(); }
 function renderShop() {
   const [tab, , slot, list] = SHOP_TABS.find(t => t[0] === shop.tab);
@@ -7998,6 +8078,7 @@ $('shopWin').addEventListener('click', (e) => {
   const d = b.dataset;
   if (d.shoptab) { shop.tab = d.shoptab; SFX.click(); renderShop(); $('shopGrid').scrollTop = 0; return; }
   if (d.shop) {   // Tix for Bux, right at the counter
+    payGift();
     const n = d.shop === 'all' ? Math.floor(wallet.tix / TIX_PER_BUX) : 1;
     if (!n || wallet.tix < n * TIX_PER_BUX) { shop.shake = 0.9; bobSay(bobPick('noTix')); SFX.hurt(); }
     else { wallet.tix -= n * TIX_PER_BUX; wallet.bux += n; saveWallet(); showWallet(); tixBurst(b, n); playWavs(['flashbulb'], 1); award('trader', true); walletBadges();
@@ -8026,8 +8107,10 @@ $('shopWin').addEventListener('click', (e) => {
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
-  { date: '11/2/2026', ver: '4.2', top: 'Bobs Shop, airplanes and 25 NEW BADGES! Plus a new Insert menu with a search bar, and no more kill sticks', text: [
+  { date: '11/2/2026', ver: '4.2', top: 'Bobs Shop, airplanes, emotes, daily gifts and 25 NEW BADGES! Plus a new Insert menu with a search bar', text: [
     'NEW: Bobs Shop! Click the gold Bobs Shop button on the front page and the screen itself smashes into pieces of glass. You land in Bobs wooden shed. Bob bangs open the STAFF ONLY door, runs out flailing his arms and scrambles onto his counter (in choppy stop-motion), then leans there and sells hats, shirts, pants, T-shirts and faces for Bux. Whatever you buy goes right on you!',
+    'NEW: Emotes! Type /e dance in chat to dance. There is also /e wave, /e cheer, /e point and /e laugh. Everyone in the server sees it! Walk or jump to stop.',
+    'NEW: Daily gifts from Bob! Visit Bobs Shop once a day and Bob pulls a Tix ticket out of his pocket for you: 10 Tix on day 1, and more for every day in a row you come back, up to 50 Tix a day. The front page tells you when he has one waiting.',
     '25 NEW BADGES! First PWN, Unstoppable, Survivor, Champion, Rocketeer, Bounce House, Tick Tock, Sky High, Pilot, Finders Keepers, Architect, Painter, Chatterbox, Dedicated, Fashionista, Shopper, Window Shopper, Tix Trader, Tix Collector, Bux Baron, Hat Collector, Smash, Regular Customer, Sky Gazer and Fresh Update. Hover one under My Badges to see how to get it!',
     'NEW: The version number is at the bottom of the screen now, and the update box bursts out in a real brick explosion, just like in the game.',
     'NEW BADGE: Big Spender! Trade all your Tix at Bobs Shop and get a bag of Bux from Bob.',
@@ -9270,7 +9353,7 @@ function hostHandle(h, conn, m) {
       if (p && p.seat >= 2 && h.pos.distanceTo(p.body.position) < 12) toServer({ t: 'drive', nid: p.nid, th: cl(m.th), st: cl(m.st), pt: cl(m.pt) });
       break;
     }
-    case 'chat': { const text = String(m.text || '').slice(0, 100); if (text) { h.say(text); aiOnChat(h, text); } break; }
+    case 'chat': { const text = String(m.text || '').slice(0, 100); if (text) { h.say(text); if (!/^\/e(mote)?\s/i.test(text)) aiOnChat(h, text); } break; }
     case 'die': kill(h, null, false, true); break;   // (they already fell apart on their own screen)
     case 'spawned': if (h.dead) h.spawn(new V3(...m.p)); else h.netPos.set(...m.p); break;
     case 'sword': if (!h.dead) { h.faceYaw = m.y; h.yaw = m.y; swordHit(m.lunge ? 7.5 : 6, m.lunge ? 30 : 10, h); } break;
@@ -10476,7 +10559,7 @@ function cmdPanelShow(on) {
 humanoids.forEach(h => h.postStep(0, 0));
 pageReady = true;
 { let s = 'panorama'; try { s = localStorage.getItem(SKY_KEY) || s; } catch { } applySky(s); }
-if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); unloadWorld(); renderBadges(); setTimeout(walletBadges, 4000); }   // (the server's copy has no screen, friends list or inbox)
+if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); unloadWorld(); renderBadges(); setTimeout(walletBadges, 4000); showGift(); setInterval(showGift, 60000); }   // (the server's copy has no screen, friends list or inbox)
 refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
