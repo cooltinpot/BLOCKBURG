@@ -804,7 +804,7 @@
         <div class="box news"><h3>Blockburg News</h3><div class="in" id="newsBody">
           <p><b>RED VS BLUE is here!</b> Grab the other team's flag and run it back to your base. First to 3 captures wins. Warning: the Guests are scary good at guarding. Play it from the front page!</p>
           <p><b>Start your engines!</b> Three cars are waiting at the Race Track in Blockburg Classic. Please do not run over Guest 31. He has been through enough.</p>
-          <p><b>Badge hunting season!</b> 12 badges to collect, from Obby Champ to Night Owl. Hover a faded one under My Badges to see how to get it.</p>
+          <p><b>Badge hunting season!</b> 39 badges to collect, from Obby Champ to Bux Baron. Hover a faded one under My Badges to see how to get it.</p>
           <p id="newsHalloween"><b>Halloween special!</b> Wear the whole Pumpkin King set from the bottom of the Catalog and you'll shimmer. Guest 31 says AAAAAAAAAAAA. We think that means "nice outfit". <b style="color:#e2231a">Gone October 31st!!</b></p>
           <p><b>Building contest, round 2!</b> Make something with script blocks (a secret door, a trap, a launch pad...) and send it with Post to Games. Prize: still bragging rights.</p>
           <p><b>Remember:</b> never tell anyone your password, even if they say they're a Builder. Real admins never need it.</p>
@@ -1073,6 +1073,25 @@ const PX_ART = {
   moon: ['....kkkk....', '..kkyyyyk...', '.kyyyykk....', '.kyyyk......', 'kyyyk.......', 'kyyyk.......', 'kyyyk.......', 'kyyyyk......', '.kyyyykk....', '.kkyyyyyk...', '...kkkkk....'],
   flag: ['kk..........', 'krrrrrrk....', 'krrwrrrrrk..', 'krrrrrrrrrk.', 'krrrrrrk....', 'kkkkkkk.....', 'kG..........', 'kG..........', 'kG..........', 'kG..........', 'kk..........'],
   trophy: ['kkkkkkkkkk', 'kyyyyyyyyk', 'ykyywyyyky', 'ykyywyyyky', '.kyyyyyyk.', '..kyyyyk..', '...kyyk...', '....kk....', '...kYYk...', '..kkkkkk..'],
+  // (the new badges)
+  pow: ['.....k......', '....kyk..k..', '.k..kyyk.kk.', '.kk.kyyykyk.', '..kkyyoyyyk.', 'kkkyyoooyykk', 'kyyyoorooyyk', '.kkyyoooyyk.', '..kyyyoyyk..', '.kyykyyykk..', '.kk..kyk.k..', '......k.....'],
+  star: ['.....kk.....', '....kyyk....', '....kyyk....', 'kkkkyyyykkkk', 'kyyyywyyyyyk', '.kyyyyyyyyk.', '..kyyyyyyk..', '..kyyyyyyk..', '.kyyykkyyyk.', '.kyyk..kyyk.', 'kyyk....kyyk', 'kkk......kkk'],
+  cloud: ['............', '....kkkk....', '...kwwwwk...', '.kkwwwwwwk..', 'kwwwwwwwwwkk', 'kwwwwwwwwwwk', 'kwwwwwwwwgwk', '.kggwwwwggk.', '..kkkkkkkk..'],
+  plane: ['.....kk.....', '....kwwk....', '....kwwk....', '.kkkkwwkkkk.', 'kbbbbwwbbbbk', 'kkkkkwwkkkkk', '....kwwk....', '....kwwk....', '...kkwwkk...', '..kbbwwbbk..', '...kkkkkk...'],
+  shield: ['.kkkkkkkkkk.', 'kbbbbwwbbbbk', 'kbbbbwwbbbbk', 'kbbbbwwbbbbk', 'kwwwwwwwwwwk', 'kbbbbwwbbbbk', '.kbbbwwbbbk.', '..kbbwwbbk..', '...kbwwbk...', '....kkkk....'],
+  medal: ['kkk......kkk', 'krrk....kbbk', '.krrk..kbbk.', '..krrkkbbk..', '...kkkkkk...', '..kyyyyyyk..', '.kyyyYYyyyk.', '.kyyYwwYyyk.', '.kyyYwwYyyk.', '.kyyyYYyyyk.', '..kyyyyyyk..', '...kkkkkk...'],
+  rocket: ['.....kk.....', '....kwwk....', '...kwwwwk...', '...kwrrwk...', '...kwrrwk...', '...kwwwwk...', '...kwwwwk...', '..krkwwkrk..', '.krrkwwkrrk.', '.kkkkkkkkkk.', '....kyok....', '.....ok.....'],
+  ball: ['....kkkk....', '..kkrrrrkk..', '.krrwwrrrrk.', '.krwwrrrrrk.', 'krrwrrrrrrRk', 'krrrrrrrrrRk', 'krrrrrrrrRRk', 'krrrrrrrRRRk', '.krrrrrRRRk.', '.kRRRRRRRRk.', '..kkRRRRkk..', '....kkkk....'],
+  bomb: ['.........yo.', '........kyy.', '.......k....', '....kkkkk...', '..kkkkkkkkk.', '.kkGwkkkkkkk', '.kGwkkkkkkkk', 'kkGkkkkkkkkk', 'kkkkkkkkkkkk', '.kkkkkkkkkk.', '.kkkkkkkkkk.', '...kkkkkk...'],
+  house: ['.....kk.....', '....krrk....', '...krrrrk...', '..krrrrrrk..', '.krrrrrrrrk.', 'kkkkkkkkkkkk', '.kmmmmmmmmk.', '.kbbmmmkkmk.', '.kbbmmmkymk.', '.kmmmmmkkmk.', '.kmmmmmkkmk.', '.kkkkkkkkkk.'],
+  bag: ['....kkkk....', '...k....k...', '...k....k...', '.kkkkkkkkkk.', '.knnnnnnnnk.', '.knnnwwnnnk.', '.knnwnnnnnk.', '.knnnwwnnnk.', '.knnnnnwnnk.', '.knnnwwnnnk.', '.knnnnnnnnk.', '.kkkkkkkkkk.'],
+  gem: ['..kkkkkkkk..', '.kbwbbbbwbk.', 'kbwbbbbbbwbk', 'kkkkkkkkkkkk', '.kbbbwbbbbk.', '..kbbwbbbk..', '...kbbbbk...', '....kbbk....', '.....kk.....'],
+  hat: ['..kkkkkkkk..', '..kGkkkkkk..', '..kGkkkkkk..', '..kkkkkkkk..', '..krrrrrrk..', 'kkkkkkkkkkkk', 'kGkkkkkkkkkk', '.kkkkkkkkkk.'],
+  shirt: ['..kkkkkkkk..', '.kbbbkkbbbk.', 'kbbbbbbbbbbk', 'kbbbbbbbbbbk', 'kkkbbbbbbkkk', '..kbbbbbbk..', '..kbbwwbbk..', '..kbbwwbbk..', '..kbbbbbbk..', '..kkkkkkkk..'],
+  shatter: ['kkkkkkkkkkkk', 'kbbwbbbkbbbk', 'kbwbbbkbbbbk', 'kwbbbkbbbwbk', 'kbbkkwkkbbbk', 'kkkbwwwbkkkk', 'kbbbkwkbbbbk', 'kbbkbkbkbbbk', 'kbkbbkbbkbwk', 'kkbbbkbbbkbk', 'kbbbbkbbbbkk', 'kkkkkkkkkkkk'],
+  door: ['..kkkkkkkk..', '..kmmmmmmk..', '..kmMmmMmk..', '..kmMmmMmk..', '..kmmmmmmk..', '..kmmmmyyk..', '..kmmmmyyk..', '..kmMmmMmk..', '..kmMmmMmk..', '..kmmmmmmk..', '..kkkkkkkk..'],
+  sun: ['.....yy.....', '.y...yy...y.', '..y.kkkk.y..', '...kyyyyk...', '..kyyyyyyk..', 'yykyyyyyykyy', 'yykyyyyyykyy', '..kyyyyyyk..', '...kyyyyk...', '..y.kkkk.y..', '.y...yy...y.', '.....yy.....'],
+  box: ['kkkkkkkkkkkk', 'kmmmmyymmmmk', 'kmmmmyymmmmk', 'kkkkkyykkkkk', 'kmmmmyymmmmk', 'kyyyyyyyyyyk', 'kmmmmyymmmmk', 'kmmmmyymmmmk', 'kmmmmyymmmmk', 'kkkkkkkkkkkk'],
 };
 const pxCache = {};
 function pxUrl(name) {
@@ -3621,7 +3640,7 @@ function updateHatPickups(dt) {
       const dx = h.pos.x - hp.body.position.x, dz = h.pos.z - hp.body.position.z, dy = hp.body.position.y - h.pos.y;
       if (dx * dx + dz * dz < 2.3 * 2.3 && dy > -HY - 0.8 && dy < HY + 0.8) {
         h.setHat(hp.id); removeHatPickup(hp); sfxAt('click', h.pos);
-        if (h.isPlayer) { look.hat = hp.id; saveLook(); sysChat('You put on the ' + hatName(hp.id) + '.'); }
+        if (h.isPlayer) { look.hat = hp.id; saveLook(); sysChat('You put on the ' + hatName(hp.id) + '.'); award('finders'); }
         else if (Math.random() < 0.5) h.say('free hat!!');
         break;
       }
@@ -3714,6 +3733,7 @@ function tixBurst(el, n) {
 function earnTix(n) {
   if (HEADLESS) return;
   wallet.tix = Math.max(0, wallet.tix + n); saveWallet(); showWallet();
+  if (n > 0) { badgeProg.tixEarned = (badgeProg.tixEarned || 0) + n; saveBadgeProg(); walletBadges(); }
   if (shop.open) renderShop();   // (Bob's window shows it too)
   if (n > 0) { tixPopEl.innerHTML = `${pxIcon('tix', 18)}+${n} Tix`; tixPopEl.classList.remove('go'); void tixPopEl.offsetWidth; tixPopEl.classList.add('go'); }
 }
@@ -3721,8 +3741,9 @@ function earnTix(n) {
 function buyPieces(list, what, sfx = true) {
   if (!list.length) return true;
   const cost = list.reduce((n, [slot, id]) => n + buxPrice(BUYABLE[slot].find(i => i.id === id)), 0);
-  if (wallet.bux < cost) { walletNote = `You need ${cost - wallet.bux} more Bux for ${what}. PWN people in a game to get Tix!`; if (sfx) SFX.hurt(); return false; }
+  if (wallet.bux < cost) { walletNote = `You need ${cost - wallet.bux} more Bux for ${what}. PWN people in a game to get Tix!`; if (sfx) SFX.hurt(); award('windowshop', true); return false; }
   wallet.bux -= cost; list.forEach(([slot, id]) => wallet.owned.push(slot + ':' + id)); saveWallet(); showWallet();
+  award('shopper', true); walletBadges();
   walletNote = `You bought ${what} for ${cost} Bux!`; if (sfx) SFX.spawn(); return true;
 }
 const player = new Humanoid({ name: 'Player', colors: look.colors, isPlayer: true, chatColor: '#ffe680', hid: 'H' });
@@ -4616,10 +4637,10 @@ function useTool(e) {
     const o = new V3(player.pos.x, player.pos.y + 2, player.pos.z);
     const dir = target.clone().sub(o).normalize();
     o.addScaledVector(dir, 3);
-    SFX.rocket();
+    SFX.rocket(); award('rocketeer');
     if (C) netSend({ t: 'shoot', k: 'rk', o: arr3(o), v: arr3(dir) }); else { spawnRocket(o, dir); netSfx('rocket', o); }
   } else if (id === 'superball') {
-    cooldown.superball = now + 1.5;
+    cooldown.superball = now + 1.5; award('bouncy');
     const o = handPos(), v = target.clone().sub(o).normalize().multiplyScalar(130);
     SFX.boing(0.6);
     if (C) netSend({ t: 'shoot', k: 'sb', o: arr3(o), v: arr3(v) }); else spawnSuperball(o, v);
@@ -4634,7 +4655,7 @@ function useTool(e) {
     const wc = player.team ? TEAMS[player.team].color : selColor;   // (a team builds in its own color)
     if (C) netSend({ t: 'trowel', p: arr3(hit.point), c: wc }); else buildWall(hit.point, player, wc);
   } else if (id === 'bomb') {
-    cooldown.bomb = now + 3.5;
+    cooldown.bomb = now + 3.5; award('ticktock');
     const o = handPos(), dir = target.clone().sub(o); dir.y = 0; dir.normalize();
     const v = dir.multiplyScalar(22).add(new V3(0, 18, 0));
     if (C) netSend({ t: 'shoot', k: 'bm', o: arr3(o), v: arr3(v) }); else spawnBomb(o, v);
@@ -5008,7 +5029,7 @@ function hopperAct(id, p, group) {
     if (C) { netSend({ t: 'delete', g: group.map(s => s.nid) }); return; }
     netSfx('hammer', p.body.position); deleteBricks(group, player);
   } else if (id === 'paint') {
-    SFX.paint();
+    SFX.paint(); countUp('painted', group.length, 50, 'painter');
     if (C) { netSend({ t: 'paint', g: group.map(s => s.nid), c: selColor }); return; }
     paintBricks(group, selColor, player);
   }
@@ -5824,6 +5845,35 @@ const BADGES = [
   { id: 'ctf', name: 'Flag Captain', desc: 'Capture the enemy flag in RED VS BLUE!', icon: 'flag', c: '#9b1b14' },
   { id: 'friends', name: 'Better Together', desc: 'Play in a room with someone else.', icon: 'globe', c: '#3d7fd0' },
   { id: 'bigspender', name: 'Big Spender', desc: 'Get a bag of Bux from Bob at Bobs Shop.', icon: 'bux', c: '#2f8f3a' },
+  // fighting and surviving
+  { id: 'firstpwn', name: 'First PWN', desc: 'Knock someone out for the first time.', icon: 'pow', c: '#ff8a1a' },
+  { id: 'unstoppable', name: 'Unstoppable', desc: 'Get 25 KOs in one game.', icon: 'star', c: '#c79b00' },
+  { id: 'survivor', name: 'Survivor', desc: 'Stay alive for 5 minutes straight in a game.', icon: 'shield', c: '#0b4a99' },
+  { id: 'champion', name: 'Champion', desc: 'Win a game of RED VS BLUE!', icon: 'medal', c: '#d4a32b' },
+  { id: 'rocketeer', name: 'Rocketeer', desc: 'Fire a rocket.', icon: 'rocket', c: '#9b1b14' },
+  { id: 'bouncy', name: 'Bounce House', desc: 'Throw a superball.', icon: 'ball', c: '#e2231a' },
+  { id: 'ticktock', name: 'Tick Tock', desc: 'Throw a timebomb.', icon: 'bomb', c: '#3a3a3a' },
+  // getting around
+  { id: 'skyhigh', name: 'Sky High', desc: 'Get 150 studs up in the air.', icon: 'cloud', c: '#5fa8e8' },
+  { id: 'pilot', name: 'Pilot', desc: 'Take off in an airplane.', icon: 'plane', c: '#3d7fd0' },
+  { id: 'finders', name: 'Finders Keepers', desc: 'Pick up a hat someone dropped.', icon: 'grab', c: '#a8723c' },
+  // building and hanging out
+  { id: 'architect', name: 'Architect', desc: 'Build 1,000 bricks.', icon: 'house', c: '#c4281c' },
+  { id: 'painter', name: 'Painter', desc: 'Paint 50 bricks with the paint tool.', icon: 'bucket', c: '#da4ec4' },
+  { id: 'chatty', name: 'Chatterbox', desc: 'Send 25 chat messages.', icon: 'chat', c: '#4b974b' },
+  { id: 'dedicated', name: 'Dedicated', desc: 'Play for 1 hour in all.', icon: 'clock', c: '#635f62' },
+  { id: 'fashion', name: 'Fashionista', desc: 'Wear every piece of an outfit set in a game.', icon: 'shirt', c: '#b54fc9' },
+  // the website, the Catalog and Bobs Shop
+  { id: 'shopper', name: 'Shopper', desc: 'Buy something with Bux.', icon: 'bag', c: '#4bc436' },
+  { id: 'windowshop', name: 'Window Shopper', desc: 'Try to buy something you cannot afford.', icon: 'eye', c: '#7d838b' },
+  { id: 'trader', name: 'Tix Trader', desc: 'Trade Tix for Bux.', icon: 'tix', c: '#c79b00' },
+  { id: 'tixer', name: 'Tix Collector', desc: 'Earn 200 Tix in all.', icon: 'sparkle', c: '#e8b020' },
+  { id: 'baron', name: 'Bux Baron', desc: 'Have 50 Bux at once.', icon: 'gem', c: '#0b4a99' },
+  { id: 'hatcollector', name: 'Hat Collector', desc: 'Own 5 hats.', icon: 'hat', c: '#1b2a35' },
+  { id: 'smash', name: 'Smash!', desc: 'Break into Bobs Shop.', icon: 'shatter', c: '#5fa8e8' },
+  { id: 'customer', name: 'Regular Customer', desc: 'Visit Bobs Shop 10 times.', icon: 'door', c: '#7C5C46' },
+  { id: 'skygazer', name: 'Sky Gazer', desc: 'Change the sky in Settings.', icon: 'sun', c: '#ff8a1a' },
+  { id: 'fresh', name: 'Fresh Update', desc: 'Open a new updates package.', icon: 'box', c: '#7C5C46' },
 ];
 const BADGE_KEY = 'blockburg-badges', BADGE_PROG = 'blockburg-badge-progress';
 let myBadges = {}, badgeProg = { built: 0, seen: [] };
@@ -5869,7 +5919,7 @@ function renderBadges() {
 }
 // a quick look every half second for the badges that are about where you are or how you're doing
 const BADGE_SPOTS = [[-10, 135], [0, -175], [170, 0], [-236, 24], [170, 150]];   // park, arena, Brick Street, Mega Obby, race track
-let badgeT = 0, droveFrom = null, drove = 0;
+let badgeT = 0, droveFrom = null, drove = 0, aliveT = 0, playSaveT = 10;
 function badgeTick(dt) {
   if (!started || HEADLESS) return;
   const P = player, s = P.seat;
@@ -5879,9 +5929,20 @@ function badgeTick(dt) {
     droveFrom = at.clone();
     if (drove >= 1000) award('driver');
   } else droveFrom = null;
+  aliveT = P.dead ? 0 : aliveT + dt;   // (for Survivor)
+  badgeProg.playT = (badgeProg.playT || 0) + dt;   // (for Dedicated)
   if ((badgeT -= dt) > 0) return;
   badgeT = 0.5;
+  if ((playSaveT -= 0.5) <= 0) { playSaveT = 10; saveBadgeProg(); }
   if (P.kos >= 10) award('warrior');
+  if (P.kos >= 1) award('firstpwn');
+  if (P.kos >= 25) award('unstoppable');
+  if (aliveT >= 300) award('survivor');
+  if (badgeProg.playT >= 3600) award('dedicated');
+  if (!P.dead && P.pos.y > 150) award('skyhigh');
+  if (s && s.seat === 3 && !P.dead && P.pos.y > 25) award('pilot');
+  if (teamGame() && P.team && ctf.score[P.team] >= CTF_WIN) award('champion');
+  if (P.char.fx) award('fashion');
   if (net.mode && humanoids.filter(h => h.enabled && !h.ai).length >= 2) award('friends');
   if (inClassic() && !P.dead && !myBadges.explorer) {
     BADGE_SPOTS.forEach(([x, z], i) => { if (!badgeProg.seen.includes(i) && Math.hypot(P.pos.x - x, P.pos.z - z) < 35) { badgeProg.seen.push(i); saveBadgeProg(); } });
@@ -5891,9 +5952,23 @@ function badgeTick(dt) {
 const inClassic = () => (net.mode ? net.place : currentPlace) === 'classic';
 // bricks I build, for the Builder badge
 function countBuilt(n) {
-  if (myBadges.builder) return;
+  if (myBadges.builder && myBadges.architect) return;
   badgeProg.built += n; saveBadgeProg();
   if (badgeProg.built >= 100) award('builder');
+  if (badgeProg.built >= 1000) award('architect');
+}
+// add to one of the saved counts for a badge, and win it at the goal
+function countUp(key, n, goal, id, anywhere = false) {
+  if (HEADLESS || myBadges[id]) return;
+  badgeProg[key] = (badgeProg[key] || 0) + n; saveBadgeProg();
+  if (badgeProg[key] >= goal) award(id, anywhere);
+}
+// the wallet badges (after trading, buying, and when the site opens)
+function walletBadges() {
+  if (HEADLESS) return;
+  if (wallet.bux >= 50) award('baron', true);
+  if (wallet.owned.filter(o => o.startsWith('hat:')).length >= 5) award('hatcollector', true);
+  if ((badgeProg.tixEarned || 0) >= 200) award('tixer', true);
 }
 
 /* ================= RED VS BLUE! =================
@@ -6433,7 +6508,7 @@ function applySky(name) {
   if (night) nightLook();
   try { localStorage.setItem(SKY_KEY, $('skySel').value); } catch { }
 }
-$('skySel').onchange = (e) => applySky(e.target.value);
+$('skySel').onchange = (e) => { applySky(e.target.value); award('skygazer', true); };
 // reflectance, volume, outlines and Guest thoughts remember themselves too (the others above save their own)
 const SETTINGS_KEY = 'blockburg-settings';
 const SIMPLE_SETTINGS = [['reflect', 'input', 'reflect'], ['volume', 'input', 'volume'], ['outlineChk', 'change', 'outline'], ['thoughtChk', 'change', 'thoughts']];
@@ -6525,7 +6600,7 @@ addEventListener('keyup', (e) => {
 function sendChat(t) {
   t = String(t || '').trim().slice(0, 100);
   if (!t || !started) return;
-  player.say(t);
+  player.say(t); countUp('chats', 1, 25, 'chatty');
   if (net.mode === 'client') netSend({ t: 'chat', text: t }); else aiOnChat(player, t);
 }
 const cv = renderer.domElement;
@@ -7242,7 +7317,7 @@ $('walletBox').addEventListener('click', (e) => {
   if (!b) return;
   const n = b.dataset.trade === 'all' ? Math.floor(wallet.tix / TIX_PER_BUX) : 1;
   if (!n || wallet.tix < n * TIX_PER_BUX) { walletNote = `You need ${TIX_PER_BUX} Tix to get 1 Bux. PWN people in a game to get Tix!`; SFX.hurt(); }
-  else { wallet.tix -= n * TIX_PER_BUX; wallet.bux += n; saveWallet(); showWallet(); walletNote = `You traded ${n * TIX_PER_BUX} Tix for ${n} Bux!`; tixBurst(b, n); playWavs(['flashbulb'], 1); }
+  else { wallet.tix -= n * TIX_PER_BUX; wallet.bux += n; saveWallet(); showWallet(); walletNote = `You traded ${n * TIX_PER_BUX} Tix for ${n} Bux!`; tixBurst(b, n); playWavs(['flashbulb'], 1); award('trader', true); walletBadges(); }
   renderWallet();
 });
 function renderCatalog() {
@@ -7662,6 +7737,7 @@ function enterShop(cx = innerWidth / 2, cy = innerHeight / 2) {
   audioInit();
   if (!shop.scene) buildShopScene();
   shop.open = shop.busy = true; shop.camT = 0; shop.mouse = null; shop.tab = 'hats';
+  setTimeout(() => { award('smash', true); countUp('shopVisits', 1, 10, 'customer', true); }, 1500);   // (once the glass is out of the way)
   shop.r.setSize(innerWidth, innerHeight, false); shop.cam.aspect = innerWidth / innerHeight; shop.cam.updateProjectionMatrix();
   $('shopCv').classList.remove('hidden');
   playWavs(['snap'], 1);
@@ -7924,7 +8000,7 @@ $('shopWin').addEventListener('click', (e) => {
   if (d.shop) {   // Tix for Bux, right at the counter
     const n = d.shop === 'all' ? Math.floor(wallet.tix / TIX_PER_BUX) : 1;
     if (!n || wallet.tix < n * TIX_PER_BUX) { shop.shake = 0.9; bobSay(bobPick('noTix')); SFX.hurt(); }
-    else { wallet.tix -= n * TIX_PER_BUX; wallet.bux += n; saveWallet(); showWallet(); tixBurst(b, n); playWavs(['flashbulb'], 1);
+    else { wallet.tix -= n * TIX_PER_BUX; wallet.bux += n; saveWallet(); showWallet(); tixBurst(b, n); playWavs(['flashbulb'], 1); award('trader', true); walletBadges();
       if (d.shop !== 'all') { bobSay(bobPick('trade')); billBack(); shop.give = 0; }
       else if (shop.fetch < BOB_FETCH.done) shop.bagN += n;   // (already getting a bag: it just gets bigger)
       else { bobSay(bobPick('fetch')); billBack(); shop.give = 9; shop.bagN = n; shop.fetch = 0; shop.fetchPrev = -9; shop.entN = 0; }
@@ -7950,8 +8026,9 @@ $('shopWin').addEventListener('click', (e) => {
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
-  { date: '11/2/2026', ver: '4.2', top: 'Bobs Shop and airplanes! Plus a new Insert menu with a search bar, and no more kill sticks', text: [
+  { date: '11/2/2026', ver: '4.2', top: 'Bobs Shop, airplanes and 25 NEW BADGES! Plus a new Insert menu with a search bar, and no more kill sticks', text: [
     'NEW: Bobs Shop! Click the gold Bobs Shop button on the front page and the screen itself smashes into pieces of glass. You land in Bobs wooden shed. Bob bangs open the STAFF ONLY door, runs out flailing his arms and scrambles onto his counter (in choppy stop-motion), then leans there and sells hats, shirts, pants, T-shirts and faces for Bux. Whatever you buy goes right on you!',
+    '25 NEW BADGES! First PWN, Unstoppable, Survivor, Champion, Rocketeer, Bounce House, Tick Tock, Sky High, Pilot, Finders Keepers, Architect, Painter, Chatterbox, Dedicated, Fashionista, Shopper, Window Shopper, Tix Trader, Tix Collector, Bux Baron, Hat Collector, Smash, Regular Customer, Sky Gazer and Fresh Update. Hover one under My Badges to see how to get it!',
     'NEW: The version number is at the bottom of the screen now, and the update box bursts out in a real brick explosion, just like in the game.',
     'NEW BADGE: Big Spender! Trade all your Tix at Bobs Shop and get a bag of Bux from Bob.',
     'NEW: If an update comes out while you have the game open, a little update box squeezes out of the side of the screen, splashing pixels, with cooltinpots own sound. Press CTRL + F5 (or click it) to get the update!',
@@ -10399,7 +10476,7 @@ function cmdPanelShow(on) {
 humanoids.forEach(h => h.postStep(0, 0));
 pageReady = true;
 { let s = 'panorama'; try { s = localStorage.getItem(SKY_KEY) || s; } catch { } applySky(s); }
-if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); unloadWorld(); renderBadges(); }   // (the server's copy has no screen, friends list or inbox)
+if (!HEADLESS) { snapGameThumbs(); friendsInit(); projStart(); unloadWorld(); renderBadges(); setTimeout(walletBadges, 4000); }   // (the server's copy has no screen, friends list or inbox)
 refreshLook();
 showPage('home');
 $('loading').textContent = 'Welcome back, Player! Pick a game from the Games tab, or hit Play Solo.';
@@ -10635,7 +10712,7 @@ function updatePackage() {
           $('bootMsg').innerHTML = `<span style="color:#e2231a;font-weight:bold">NEW in v${escHtml(ver)}:</span> <b>${escHtml(u.top)}</b>`;
           $('bootWhat').textContent = 'Click anywhere to play! (The whole list is in the Update Log on the front page.)';
           const end = () => { clearTimeout(auto); removeEventListener('keydown', end); boot.removeEventListener('pointerdown', end); boot.style.cursor = '';
-            done(); setTimeout(() => { stopped = true; r.dispose(); r.forceContextLoss(); }, 600); };
+            done(); setTimeout(() => { stopped = true; r.dispose(); r.forceContextLoss(); }, 600); setTimeout(() => award('fresh', true), 1200); };
           const auto = setTimeout(end, 9000);
           addEventListener('keydown', end); boot.addEventListener('pointerdown', end);
         }, 1300);
