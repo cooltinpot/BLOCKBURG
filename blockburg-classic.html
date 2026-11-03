@@ -82,6 +82,16 @@
   .win .tb{background:linear-gradient(90deg,#0a246a,#a6caf0);color:#fff;font-weight:bold;padding:3px 4px 3px 7px;display:flex;justify-content:space-between;align-items:center}
   .win .tb button{font:bold 11px Arial;padding:0 5px;background:#d4d0c8;border:2px outset #fff;cursor:pointer}
   .win .bd{padding:8px}
+  /* "Do you want to buy it?" (it grows from teeny tiny to full size while the button sound plays) */
+  #buyAsk{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(0,0,0,.2)}
+  #buyAsk .win{position:relative;width:340px;max-width:calc(100vw - 32px);animation:baGrow .29s cubic-bezier(.3,1.3,.55,1) both}
+  @keyframes baGrow{from{transform:scale(.03)}to{transform:none}}
+  #buyAsk .ba-in{display:flex;gap:10px;align-items:center;padding:12px 12px 6px;font-size:13px}
+  #buyAsk .ba-in img{width:72px;height:72px;object-fit:contain;background:#fff;border:2px inset #fff;flex:0 0 auto}
+  #buyAsk .ba-in small{display:block;margin-top:6px;color:#444;font-size:11px}
+  #buyAsk .ba-btns{display:flex;gap:8px;justify-content:center;padding:6px 12px 12px}
+  #buyAsk .ba-btns .b{font-weight:bold;padding:6px 12px}
+  #buyAsk .ba-btns .yes{color:#1f6a12}
   .win h4{margin:8px 0 4px;font-size:12px}
   .win h4:first-child{margin-top:0}
   .win .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
@@ -3720,8 +3730,13 @@ const isLimited = (tab, id) => (LIMITED[tab] || []).includes(id);
 const WALLET_KEY = 'blockburg-wallet', TIX_PER_PWN = 10, TIX_PER_BUX = 10;
 const BUYABLE = { hat: HATS, shirt: SHIRTS, pants: PANTS, tshirt: TSHIRTS, face: FACES, acc: ACCS, back: BACKS };
 const SLOT_TAB = { hat: 'hats', shirt: 'shirts', pants: 'pants', tshirt: 'tshirts', face: 'faces' };
-// what something costs in Bux: its old Tix price / 15 (a normal hat is 2 to 5 Bux, the Golden Crown 33). 0 = free
-function buxPrice(item) { const m = /was (\d+) Tix/.exec(item.price || ''); return m ? Math.max(1, Math.round(+m[1] / 15)) : 0; }
+// what something costs in Bux: its old Tix price / 15, then 30% more (and always at least 1 Bux more), so a normal
+// hat is 3 to 7 Bux and the Golden Crown 43. 0 = free
+function buxPrice(item) {
+  const m = /was (\d+) Tix/.exec(item.price || ''); if (!m) return 0;
+  const was = Math.max(1, Math.round(+m[1] / 15));
+  return Math.max(was + 1, Math.round(was * 1.3));
+}
 function owns(slot, id) {
   const item = (BUYABLE[slot] || []).find(i => i.id === id);
   return !item || item.admin || !buxPrice(item) || wallet.owned.includes(slot + ':' + id);
@@ -3773,6 +3788,21 @@ function earnTix(n) {
   if (shop.open) renderShop();   // (Bob's window shows it too)
   if (n > 0) { tixPopEl.innerHTML = `${pxIcon('tix', 18)}+${n} Tix`; tixPopEl.classList.remove('go'); void tixPopEl.offsetWidth; tixPopEl.classList.add('go'); }
 }
+// "Do you want to buy it?" before you spend your Bux. The window grows from teeny tiny to full size in time with the
+// button sound. yes / no: what happens after ABSOLUTELY! / Meh, nevermind! (Esc, the x or clicking outside = nevermind)
+function askBuy(what, cost, img, yes, no = () => { }) {
+  $('buyAsk')?.remove();
+  const el = document.body.appendChild(Object.assign(document.createElement('div'), { id: 'buyAsk' }));
+  el.innerHTML = `<div class="win"><div class="tb">Buy Item<button data-ba="no">x</button></div>
+    <div class="ba-in">${img ? `<img src="${img}" alt="">` : ''}<div>Do you want to buy <b>${escHtml(what)}</b> for ${pxIcon('bux', 14)} <b>${cost} Bux</b>?<small>You have ${wallet.bux} Bux.</small></div></div>
+    <div class="ba-btns"><button class="b yes" data-ba="yes">ABSOLUTELY!</button><button class="b" data-ba="no">Meh, nevermind!</button></div></div>`;
+  audioInit(); playWavs(['button'], 1);
+  const key = (e) => { if (e.key === 'Escape') { e.stopImmediatePropagation(); close(false); } };
+  const close = (ok) => { el.remove(); removeEventListener('keydown', key, true); (ok ? yes : no)(); };
+  addEventListener('keydown', key, true);
+  el.addEventListener('click', (e) => { const b = e.target.closest('[data-ba]'); if (b) close(b.dataset.ba === 'yes'); else if (e.target === el) close(false); });
+}
+const cardImg = (b) => b.closest('.hcard,.shop-it')?.querySelector('img')?.src || '';
 // buy a list of [slot, id] all at once (one thing, or the missing pieces of a set). false = not enough Bux
 function buyPieces(list, what, sfx = true) {
   if (!list.length) return true;
@@ -7391,9 +7421,13 @@ $('setList').addEventListener('click', (e) => {
   const b = e.target.closest('[data-wearset]');
   if (!b) return;
   const st = SETS.find(s => s.id === b.dataset.wearset), w = st.wear;
-  if (!buyPieces(setMissing(st), 'the ' + st.name + ' set')) { renderWallet(); return; }
-  look = { ...look, ...w, colors: w.colors ? normColors(w.colors) : look.colors };
-  saveLook(); refreshLook(); SFX.click();
+  const go = () => {
+    if (!buyPieces(setMissing(st), 'the ' + st.name + ' set')) { renderWallet(); return; }
+    look = { ...look, ...w, colors: w.colors ? normColors(w.colors) : look.colors };
+    saveLook(); refreshLook(); SFX.click();
+  };
+  const cost = setCost(st);
+  if (cost && wallet.bux >= cost) askBuy('the ' + st.name + ' set', cost, cardImg(b), go); else go();
 });
 let selBP = 'torso';
 $('bodyPalette').innerHTML = PALETTE.map(([n, h]) => `<div title="${n}" data-bc="${h}" style="background:${h}"></div>`).join('');
@@ -7422,7 +7456,11 @@ $('site').addEventListener('click', (e) => {
   if (d.link) location.href = d.link;
   if (d.online) playOnline(d.online);
   if (d.cat) { catTab = d.cat; renderCatalog(); }
-  if (d.buy) { if (buyPieces([[d.slot, d.buy]], 'the ' + BUYABLE[d.slot].find(i => i.id === d.buy).name)) { look[d.slot] = d.buy; saveLook(); refreshLook(); } else renderWallet(); }
+  if (d.buy) {
+    const slot = d.slot, it = BUYABLE[slot].find(i => i.id === d.buy);
+    const go = () => { if (buyPieces([[slot, it.id]], 'the ' + it.name)) { look[slot] = it.id; saveLook(); refreshLook(); } else renderWallet(); };
+    if (wallet.bux >= buxPrice(it)) askBuy('the ' + it.name, buxPrice(it), cardImg(t), go); else go();   // (not enough Bux: it just tells you)
+  }
   if (d.wear && !owns(d.slot || LOOK_SLOT[catTab], d.wear)) return;
   if (d.wear) { look[d.slot || LOOK_SLOT[catTab]] = d.wear; if (d.arm) look.arm = d.arm; if (!adminPriv) look = withoutAdminClothes(look); saveLook(); refreshLook(); }
   if (d.bp) { selBP = d.bp; refreshLook(); }
@@ -7444,6 +7482,7 @@ const BOB_LINES = {
   bought: ['Pleasure doing business!', 'Lookin sharp!', 'Great pick, pal!', 'Sold! Wear it proud.', 'Ka-ching!', "Good choice. I'd buy it too."],
   broke: ["Hmm... you're a little short, pal.", 'No Bux, no deal!', 'Come back with more Bux!', 'PWN some people and come back!', 'Nice try, pal. That costs more.'],
   own: ['You already got that one on!', 'Looking good in that!'],
+  nevermind: ['Aw, maybe next time!', 'No worries, pal.', 'Take your time!', 'It will be right here!'],
   wear: ['Oh yeah, that is a good look.', 'Now THAT is style.', 'Lookin fresh!'],
   trade: ['Tix for Bux, coming right up!', 'Here ya go, fresh Bux!'],
   noTix: [`You need ${TIX_PER_BUX} Tix for a Bux, pal. Go PWN somebody!`],
@@ -8092,7 +8131,10 @@ $('shopWin').addEventListener('click', (e) => {
   if (!it) return;
   if (look[slot] === it.id) bobSay(bobPick('own'));
   else if (owns(slot, it.id)) { shopWear(slot, it.id); SFX.click(); bobSay(bobPick('wear')); }
-  else if (buyPieces([[slot, it.id]], 'the ' + it.name, false)) { shopWear(slot, it.id); playWavs(['kerplunk'], 1); shop.wave = 1.4; bobSay(bobPick('bought')); }
+  else if (wallet.bux >= buxPrice(it)) askBuy('the ' + it.name, buxPrice(it), cardImg(b), () => {
+    if (buyPieces([[slot, it.id]], 'the ' + it.name, false)) { shopWear(slot, it.id); playWavs(['kerplunk'], 1); shop.wave = 1.4; bobSay(bobPick('bought')); }
+    renderShop();
+  }, () => bobSay(bobPick('nevermind')));
   else { shop.shake = 0.9; SFX.hurt(); bobSay(bobPick('broke'), `(You need ${buxPrice(it) - wallet.bux} more Bux.)`); }
   renderShop();
 });
@@ -8111,6 +8153,8 @@ const UPDATES = [
     'NEW: Bobs Shop! Click the gold Bobs Shop button on the front page and the screen itself smashes into pieces of glass. You land in Bobs wooden shed. Bob bangs open the STAFF ONLY door, runs out flailing his arms and scrambles onto his counter (in choppy stop-motion), then leans there and sells hats, shirts, pants, T-shirts and faces for Bux. Whatever you buy goes right on you!',
     'NEW: Emotes! Type /e dance in chat to dance. There is also /e wave, /e cheer, /e point and /e laugh. Everyone in the server sees it! Walk or jump to stop.',
     'NEW: Daily gifts from Bob! Visit Bobs Shop once a day and Bob pulls a Tix ticket out of his pocket for you: 10 Tix on day 1, and more for every day in a row you come back, up to 50 Tix a day. The front page tells you when he has one waiting.',
+    'Everything in the Catalog and at Bobs Shop costs about 30% more Bux now. Time to PWN some people!',
+    'Before you spend your Bux, a little window pops up (with a click!) asking if you really want it: ABSOLUTELY! or Meh, nevermind!',
     '25 NEW BADGES! First PWN, Unstoppable, Survivor, Champion, Rocketeer, Bounce House, Tick Tock, Sky High, Pilot, Finders Keepers, Architect, Painter, Chatterbox, Dedicated, Fashionista, Shopper, Window Shopper, Tix Trader, Tix Collector, Bux Baron, Hat Collector, Smash, Regular Customer, Sky Gazer and Fresh Update. Hover one under My Badges to see how to get it!',
     'NEW: The version number is at the bottom of the screen now, and the update box bursts out in a real brick explosion, just like in the game.',
     'NEW BADGE: Big Spender! Trade all your Tix at Bobs Shop and get a bag of Bux from Bob.',
