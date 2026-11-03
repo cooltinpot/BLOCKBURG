@@ -409,6 +409,10 @@
     border:2px solid #1b2a35;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);font-family:Verdana,Arial,sans-serif;cursor:pointer;
     transform:translateX(calc(100% + 30px))}
   #updPix{position:fixed;inset:0;width:100%;height:100%;z-index:8001;pointer-events:none}
+  /* the version, at the bottom of the website */
+  #verTag{position:fixed;left:6px;bottom:4px;z-index:2;font:bold 10px Verdana,Arial,sans-serif;color:#6b6b6b;background:rgba(255,255,255,.85);
+    padding:2px 6px;border:1px solid #c9c9c9;border-radius:4px;pointer-events:none}
+  #verTag b{color:#e2231a}
   #updOut canvas{width:132px;height:106px;display:block}
   #updOut b{display:block;color:#e2231a;font-size:18px;font-weight:900}
   #updOut span{display:block;font-weight:bold;font-size:13px;color:#1b2a35;margin-top:2px}
@@ -7948,6 +7952,7 @@ $('shopWin').addEventListener('click', (e) => {
 const UPDATES = [
   { date: '11/2/2026', ver: '4.2', top: 'Bobs Shop and airplanes! Plus a new Insert menu with a search bar, and no more kill sticks', text: [
     'NEW: Bobs Shop! Click the gold Bobs Shop button on the front page and the screen itself smashes into pieces of glass. You land in Bobs wooden shed. Bob bangs open the STAFF ONLY door, runs out flailing his arms and scrambles onto his counter (in choppy stop-motion), then leans there and sells hats, shirts, pants, T-shirts and faces for Bux. Whatever you buy goes right on you!',
+    'NEW: The version number is at the bottom of the screen now, and the update box bursts out in a real brick explosion, just like in the game.',
     'NEW BADGE: Big Spender! Trade all your Tix at Bobs Shop and get a bag of Bux from Bob.',
     'NEW: If an update comes out while you have the game open, a little update box squeezes out of the side of the screen, splashing pixels, with cooltinpots own sound. Press CTRL + F5 (or click it) to get the update!',
     'Bob talks to you, follows your mouse with his eyes, throws a hand up when you buy something, and shakes his head when you are short on Bux. You can trade Tix for Bux right at his counter too, and when you trade (there or in the Catalog) your Tix go flying out with a flash! At the shop, Bob digs a Bux out of his pocket and hands it to you. Trade ALL your Tix and he runs to the back for a whole bag of Bux (bigger bag for more Bux)!',
@@ -10446,18 +10451,28 @@ function watchForUpdates() {
 }
 // the alert, timed to cooltinpot's "Placing spawn" sound: three pops as it tries to squeeze out of the side of the
 // screen (each one splashes pixels), a rumble while it shakes and pushes, then BANG it bursts all the way out in a
-// big splash of pixels that rain down while the sound rings out. (The pixels are stop-motion: 12 hops a second.)
+// big burst of bricks while the sound rings out. The bricks are just like the explosions in the game: little bricks and
+// plates sitting on the stud grid, never tilted, hopping 12 times a second, and the fireball ones cool down to smoke.
 const UPD_POP = { tries: [[0.10, 0.78, 0.24, 0.9, 14], [0.28, 0.62, 0.42, 0.8, 18], [0.46, 0.48, 0.56, 0.6, 24]], rumble: [0.56, 0.97], burst: 0.98, echo: 1.08, end: 2.6 };
 function updateOutAlert(ver) {
   if ($('updOut')) return;
   const el = document.body.appendChild(Object.assign(document.createElement('div'), { id: 'updOut', title: 'Click to get the update' }));
   el.innerHTML = `<canvas width="264" height="212"></canvas><div><b>UPDATE OUT!</b><span>(CTRL + F5)</span><small>${ver ? 'v' + escHtml(ver) + ' is here. ' : ''}Click here to get it!</small></div><button aria-label="Close">x</button>`;
   const pix = document.body.appendChild(Object.assign(document.createElement('canvas'), { id: 'updPix' }));
-  pix.width = innerWidth; pix.height = innerHeight;
+  const SP = 11;   // (one stud is this many pixels on the screen)
+  let pr = null, ps = null, pc = null;
+  try {
+    pr = new THREE.WebGLRenderer({ canvas: pix, antialias: true, alpha: true });
+    pr.setPixelRatio(Math.min(devicePixelRatio, 2)); pr.setSize(innerWidth, innerHeight, false); pr.outputColorSpace = THREE.SRGBColorSpace;
+    ps = new THREE.Scene(); pc = new THREE.OrthographicCamera(0, innerWidth / SP, 0, -innerHeight / SP, -50, 50);   // (studs across, studs down)
+    ps.add(new THREE.HemisphereLight(0xffffff, 0x8a8a8a, 1.9));
+    { const l = new THREE.DirectionalLight(0xffffff, 2.3); l.position.set(3, 6, 5); ps.add(l); }
+  } catch { pr = null; }
+  const pixGone = () => { if (!pix.isConnected) return; pix.remove(); if (pr) { pr.dispose(); pr.forceContextLoss(); } };
   let r = null, stopped = false;
   try { r = new THREE.WebGLRenderer({ canvas: el.querySelector('canvas'), antialias: true, alpha: true }); r.setSize(264, 212, false); r.outputColorSpace = THREE.SRGBColorSpace; } catch { }
   const close = () => {
-    stopped = true; pix.remove();
+    stopped = true; pixGone();
     el.style.transition = 'transform .4s ease-in'; el.style.transform = 'translateX(calc(100% + 30px))';
     setTimeout(() => { el.remove(); if (r) { r.dispose(); r.forceContextLoss(); } }, 450);
   };
@@ -10470,14 +10485,19 @@ function updateOutAlert(ver) {
     { const s = new THREE.DirectionalLight(0xffffff, 2.3); s.position.set(3, 6, 5); sc.add(s); }
     ({ pkg } = packageModel(ver)); sc.add(pkg); pkg.rotation.y = 0.35;
   }
-  // the pixels: little squares in the package's colors, flung out of the side it's squeezing through
+  // the bricks: in the package's colors when it squeezes out, and a real fireball (like a rocket blast) when it bursts.
+  // They all sit turned the same way, so you see their tops and studs, like the game's explosions.
   const COLS = ['#7C5C46', '#7C5C46', '#5e4433', '#F5CD30', '#F5CD30', '#ffffff', '#e2231a', '#1b2a35'], bits = [];
-  const splash = (n, power, all) => {
+  const BRICK_GEO = { plate: boxGeo(1, PLATE, 1), brick: boxGeo(1, 1.2, 1) }, TURN = new THREE.Euler(0.5, -0.6, 0);
+  const splash = (n, power, all, fire = false) => {
+    if (!pr) return;
     const b = el.getBoundingClientRect();
     for (let i = 0; i < n; i++) {
       const a = all ? Math.random() * Math.PI * 2 : Math.PI + (Math.random() - 0.5) * 2.2, sp = power * (0.4 + Math.random() * 0.8);
-      bits.push({ x: all ? b.left + b.width * Math.random() : b.left, y: b.top + b.height * Math.random(), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - power * 0.3,
-        s: [4, 6, 8][(Math.random() * 3) | 0], c: COLS[(Math.random() * COLS.length) | 0], life: 0.5 + Math.random() * (all ? 1.1 : 0.5), age: 0 });
+      const hot = fire && i % 3 !== 2, kind = hot || Math.random() < 0.5 ? 'brick' : 'plate', c = hot ? FIRE[0] : fire ? FIRE[(i % 3) + 1] : COLS[(Math.random() * COLS.length) | 0];
+      const m = new THREE.Mesh(BRICK_GEO[kind], partMats(c)); m.rotation.copy(TURN); ps.add(m);
+      bits.push({ m, hot, x: all ? b.left + b.width * Math.random() : b.left, y: b.top + b.height * Math.random(), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - power * 0.3,
+        life: 0.5 + Math.random() * (all ? 1.1 : 0.5), age: 0 });
     }
   };
   const P = UPD_POP, ease = (k) => 1 - (1 - k) ** 3;
@@ -10494,7 +10514,6 @@ function updateOutAlert(ver) {
     const k = t - P.burst;
     return k < 0.08 ? 0.4 - 0.48 * ease(k / 0.08) : k < 0.3 ? -0.08 + 0.08 * ease((k - 0.08) / 0.22) : 0;   // BANG! (a bit too far, then back)
   };
-  const g = pix.getContext('2d');
   let t0 = null, last = 0, step = -1, prev = -1;
   const go = (start) => requestAnimationFrame(function draw(now) {
     if (stopped) return;
@@ -10508,20 +10527,19 @@ function updateOutAlert(ver) {
     // the splashes, on the sound's hits
     P.tries.forEach(([at, , , , n]) => { if (crossed(at)) splash(n, 420, false); });
     if (shake && Math.random() < dt * 40 * shake) splash(1 + (shake * 3 | 0), 260, false);
-    if (crossed(P.burst)) splash(90, 700, true);
+    if (crossed(P.burst)) splash(90, 700, true, true);
     if (crossed(P.echo)) splash(30, 480, true);
-    for (const p of bits) { p.age += dt; p.vy += 1300 * dt; p.x += p.vx * dt; p.y += p.vy * dt; }
-    for (let i = bits.length - 1; i >= 0; i--) if (bits[i].age > bits[i].life) bits.splice(i, 1);
-    if (Math.floor(t * 12) !== step) {   // the next stop-motion frame
+    for (const p of bits) { p.age += dt; p.vy += (p.hot ? 500 : 1300) * dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+    for (let i = bits.length - 1; i >= 0; i--) if (bits[i].age > bits[i].life) { ps.remove(bits[i].m); bits.splice(i, 1); }
+    if (pr && Math.floor(t * 12) !== step) {   // the next stop-motion frame: every brick hops onto the stud grid where it is now
       step = Math.floor(t * 12);
-      g.clearRect(0, 0, pix.width, pix.height);
       for (const p of bits) {
-        g.globalAlpha = Math.min(1, (p.life - p.age) / 0.25); g.fillStyle = p.c;
-        g.fillRect(Math.round(p.x / 4) * 4, Math.round(p.y / 4) * 4, p.s, p.s);
+        p.m.position.set(Math.floor(p.x / SP) + 0.5, -Math.round(p.y / SP / PLATE) * PLATE, 0);
+        if (p.hot) p.m.material = partMats(FIRE[Math.min(FIRE.length - 1, Math.floor(p.age / p.life * FIRE.length))]);   // (cooling down to smoke)
       }
-      g.globalAlpha = 1;
+      pr.render(ps, pc);
     }
-    if (t > P.end && !bits.length && pix.isConnected) pix.remove();
+    if (t > P.end && !bits.length) pixGone();
     // the box: knocked about by each pop, rattling while it pushes, a big squash and stretch when it bursts out, then a wiggle now and then
     if (r) {
       const hitK = P.tries.reduce((m, [at]) => t >= at && t < at + 0.15 ? 1 - (t - at) / 0.15 : m, 0), k = t - P.burst;
@@ -10551,6 +10569,7 @@ function updateOutAlert(ver) {
   else Promise.race([AC.resume(), new Promise(r => setTimeout(r, 250))]).then(() => AC.state === 'running' ? withSound() : silent(), silent);
 }
 if (!HEADLESS) watchForUpdates();
+if (!HEADLESS) $('site').insertAdjacentHTML('beforeend', `<div id="verTag">BLOCKBURG <b>v${escHtml(String(UPDATES[0].ver))}</b> &middot; ${escHtml(UPDATES[0].date)}</div>`);
 function updatePackage() {
   const ver = String(UPDATES[0].ver);
   let seen = null; try { seen = localStorage.getItem(SEEN_UPDATE_KEY); } catch { }
