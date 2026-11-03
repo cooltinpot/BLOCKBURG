@@ -136,9 +136,11 @@
   #shopCrack{z-index:41;pointer-events:none}
   #shopGlass{z-index:46;pointer-events:none}
   #shopShards{position:fixed;inset:0;z-index:45;pointer-events:none;perspective:1000px;overflow:hidden}
-  #shopShards .shard{position:absolute;inset:0;transform:translateZ(0)}
-  #shopShards svg{position:absolute;left:0;top:0;z-index:41;overflow:visible;filter:drop-shadow(0 0 1.5px rgba(0,40,80,.7))}
+  /* (each piece is only as big as itself, so phones don't run out of memory: 40 screen-sized pieces crashed them) */
+  #shopShards .shard{position:absolute;overflow:hidden;will-change:transform,opacity}
+  #shopShards svg{position:absolute;left:0;top:0;z-index:41;overflow:visible}
   #shopShards polygon{fill:rgba(205,235,255,.16);stroke:#fff;stroke-width:2.5;stroke-linejoin:round}
+  #shopShards polygon.sh{fill:none;stroke:rgba(0,40,80,.45);stroke-width:5}
   #shopShards .hit{position:absolute;width:140px;height:140px;margin:-70px 0 0 -70px;border-radius:50%;background:radial-gradient(rgba(255,255,255,.9),rgba(255,255,255,0) 70%)}
   #shopCv.hidden,#shopCrack.hidden,#shopGlass.hidden{display:none}
   #site.shop-out,#shopCrack.shop-out{transform:translateX(115%) rotate(5deg);opacity:0;pointer-events:none;
@@ -7717,6 +7719,15 @@ function buildShopScene() {
   shop.r = new THREE.WebGLRenderer({ canvas: $('shopCv'), antialias: true });
   shop.r.setPixelRatio(Math.min(devicePixelRatio, 2)); shop.r.outputColorSpace = THREE.SRGBColorSpace;
 }
+// Bob's shed gets built and drawn once, out of sight, a little after the page loads, so the button doesn't freeze the first time
+function warmShop() {
+  if (shop.scene || shop.open) return;
+  try {
+    buildShopScene(); shop.r.setSize(innerWidth, innerHeight, false); shop.r.compile(shop.scene, shop.cam);
+    const C = SHOP_CAM;   // (from where the camera starts and where it ends up, so everything in the shed is ready)
+    for (const [p, at] of [[C.from, C.fromAt], [C.to, C.toAt]]) { shop.cam.position.set(...p); shop.cam.lookAt(new V3(...at)); shop.r.render(shop.scene, shop.cam); }
+  } catch (err) { console.warn('shop', err); }
+}
 /* ---- the glass: bricks of see-through glass (with white edges) that burst out from where you clicked and fly at
    you and off to the right. Like the rocket blasts they're stop-motion: they hop to their next spot 12 times a second. ---- */
 function shatterGlass(cx, cy) {
@@ -7766,7 +7777,7 @@ function glassStep(dt) {
    first. Stop-motion like the rocket blasts: they hop 12 times a second. ---- */
 // the pieces: rings and spokes round the hit, wobbled a bit (the outer ring is split in two, so the big ones break up too)
 function screenTiles(cx, cy) {
-  const NA = 8, R = [0, 65, 180, 400, 3200], a0 = Math.random() * 7, A = [], n = (i) => (i + 1) % NA;
+  const NA = Math.min(innerWidth, innerHeight) < 600 ? 6 : 8, R = [0, 65, 180, 400, 3200], a0 = Math.random() * 7, A = [], n = (i) => (i + 1) % NA;
   for (let i = 0; i < NA; i++) A.push(a0 + (i + (Math.random() - 0.5) * 0.5) / NA * Math.PI * 2);
   const at = (a, r) => [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
   const V = R.map((r, j) => A.map(a => j > 0 && j < 4 ? at(a + (Math.random() - 0.5) * 0.12, r * (0.82 + Math.random() * 0.36)) : at(a, r)));
@@ -7781,13 +7792,20 @@ function screenTiles(cx, cy) {
 }
 function shatterScreen(cx, cy) {
   const site = $('site'), W = innerWidth, H = innerHeight;
-  // one copy of the page just as it looks now: without its hidden parts, and with its drawings (like your avatar) as pictures
-  const tpl = site.cloneNode(true);
+  // one copy of the page just as it looks now: without its hidden parts, and with its drawings (like your avatar) as pictures.
+  // Anything off the screen is emptied out (an empty box the same size keeps everything else where it was), so the copies stay small,
+  // and later each piece empties out everything that isn't inside it too. (Where everything is gets written down now, in one go.)
+  const tpl = site.cloneNode(true), where = new Map();
+  const blank = (el, b) => { el.replaceChildren(); el.style.cssText += `;visibility:hidden;box-sizing:border-box;width:${b.width}px;height:${b.height}px;min-width:0;min-height:0;max-width:none;max-height:none`; };
+  const outside = (b, l, t, r, btm) => b.width && b.height && (b.top >= btm || b.bottom <= t || b.left >= r || b.right <= l);
   const walk = (o, c) => {
     for (let i = o.children.length - 1; i >= 0; i--) {
       const oc = o.children[i], cc = c.children[i];
       if (!cc) continue;
-      if (!oc.getClientRects().length) cc.remove();
+      if (!oc.getClientRects().length) { cc.remove(); continue; }
+      const b = oc.getBoundingClientRect(), inline = getComputedStyle(oc).display === 'inline';
+      if (!inline) where.set(cc, b);
+      if (!inline && outside(b, 0, 0, W, H)) blank(cc, b);
       else if (oc.tagName === 'CANVAS') {
         let src = ''; try { if (oc === pv.domElement) pv.render(pvScene, pvCam); src = oc.toDataURL(); } catch { }
         const img = new Image(); img.src = src; img.className = oc.className; img.style.cssText = oc.style.cssText;
@@ -7796,23 +7814,37 @@ function shatterScreen(cx, cy) {
     }
   };
   walk(site, tpl);
-  const box = document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shopShards' }));
+  // a piece's copy keeps only what's inside the piece (with a little extra round the edge)
+  const trim = (tc, pc, l, t, r, btm) => {
+    for (let i = 0; i < tc.children.length; i++) {
+      const b = where.get(tc.children[i]), el = pc.children[i];
+      if (!b || !el) continue;
+      if (outside(b, l - 8, t - 8, r + 8, btm + 8)) blank(el, b); else trim(tc.children[i], el, l, t, r, btm);
+    }
+  };
+  const box = Object.assign(document.createElement('div'), { id: 'shopShards' });
   const maxD = Math.hypot(W, H), pieces = [], cl = (v, a, b) => Math.max(a, Math.min(b, v));
   for (const poly of screenTiles(cx, cy)) {
     const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]);
     if (Math.max(...xs) < 0 || Math.min(...xs) > W || Math.max(...ys) < 0 || Math.min(...ys) > H) continue;   // (off the screen)
     // it spins round its middle (the part of it that's on the screen)
     const ox = poly.reduce((a, p) => a + cl(p[0], 0, W), 0) / poly.length, oy = poly.reduce((a, p) => a + cl(p[1], 0, H), 0) / poly.length;
+    // the piece is a little box just round its own shape, with the page copy inside slid over so the right part shows
+    const L = Math.max(0, Math.floor(Math.min(...xs))), T = Math.max(0, Math.floor(Math.min(...ys)));
+    const w = Math.min(W, Math.ceil(Math.max(...xs))) - L, h = Math.min(H, Math.ceil(Math.max(...ys))) - T;
+    const pts = poly.map(p => [(p[0] - L).toFixed(1), (p[1] - T).toFixed(1)]);
     const d = box.appendChild(document.createElement('div')); d.className = 'shard';
-    d.style.clipPath = `polygon(${poly.map(p => `${p[0].toFixed(1)}px ${p[1].toFixed(1)}px`).join(',')})`;
-    d.style.transformOrigin = `${ox.toFixed(1)}px ${oy.toFixed(1)}px`;
-    const page = tpl.cloneNode(true); d.append(page);
-    d.insertAdjacentHTML('beforeend', `<svg width="${W}" height="${H}"><polygon points="${poly.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/></svg>`);
-    page.scrollTop = site.scrollTop; page.scrollLeft = site.scrollLeft;
+    d.style.cssText = `left:${L}px;top:${T}px;width:${w}px;height:${h}px;clip-path:polygon(${pts.map(p => p[0] + 'px ' + p[1] + 'px').join(',')});transform-origin:${(ox - L).toFixed(1)}px ${(oy - T).toFixed(1)}px`;
+    const page = tpl.cloneNode(true); trim(tpl, page, L, T, L + w, T + h); d.append(page);
+    page.style.cssText += `;position:absolute;inset:auto;left:0;top:0;width:${W}px;height:${H}px;transform:translate(${-L}px,${-T}px)`;
+    const line = pts.map(p => p.join(',')).join(' ');
+    d.insertAdjacentHTML('beforeend', `<svg width="${w}" height="${h}"><polygon class="sh" points="${line}"/><polygon points="${line}"/></svg>`);
     const dx = ox - cx, dy = oy - cy, dist = Math.hypot(dx, dy) || 1, near = 1 - dist / maxD, sp = (220 + Math.random() * 380) * near;
     pieces.push({ d, delay: dist / maxD * 0.3, vx: dx / dist * sp + 260 + Math.random() * 380, vy: dy / dist * sp - 120 - Math.random() * 260,
       vz: 250 + Math.random() * 550, rx: (Math.random() - 0.5) * 520, ry: (Math.random() - 0.5) * 520, rz: (Math.random() - 0.5) * 360 });
   }
+  document.body.append(box);
+  for (const p of pieces) { const page = p.d.firstChild; page.scrollTop = site.scrollTop; page.scrollLeft = site.scrollLeft; }   // (all at once, after they're all in)
   const hit = box.appendChild(Object.assign(document.createElement('div'), { className: 'hit' })); hit.style.left = cx + 'px'; hit.style.top = cy + 'px';
   shop.screen = { box, pieces, hit, go: false, t: 0, step: -1 };
 }
@@ -8222,6 +8254,10 @@ $('shopWin').addEventListener('click', (e) => {
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '11/3/2026', ver: '4.3', top: 'The update package opens in choppy stop-motion now!', text: [
+    'When a new update is out, the package on the loading screen bursts open in choppy stop-motion, just like Bob and the explosions. The lid and the bricks hop from spot to spot instead of gliding.',
+    'FIXED: Pressing the Bobs Shop button does not crash phones anymore, and computers do not slow down while the glass flies. Each piece of glass is only as big as itself now (before, every piece was a whole copy of the screen), and Bobs shed gets ready in the background after the page loads, so the button does not freeze the first time.',
+  ] },
   { date: '11/2/2026', ver: '4.2', top: 'Bobs Shop, airplanes, emotes, daily gifts and 25 NEW BADGES! Plus a new Insert menu with a search bar', text: [
     'NEW: Bobs Shop! Click the gold Bobs Shop button on the front page and the screen itself smashes into pieces of glass. You land in Bobs wooden shed. Bob bangs open the STAFF ONLY door, runs out flailing his arms and scrambles onto his counter (in choppy stop-motion), then leans there and sells hats, shirts, pants, T-shirts and faces for Bux. Whatever you buy goes right on you!',
     'NEW: Emotes! Type /e dance in chat to dance. There is also /e wave, /e cheer, /e point and /e laugh. Everyone in the server sees it! Walk or jump to stop.',
@@ -10869,7 +10905,7 @@ function updatePackage() {
   const bits = [], COLORS = ['Bright red', 'Bright blue', 'Bright yellow', 'Bright green', 'White', 'Bright orange'].map(n => BC[n]);
   let phase = 'slide', t0 = performance.now(), openAt = 0, ready = false, stopped = false;
   const backOut = (k) => 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2;   // (a little overshoot, then it settles)
-  let last = performance.now();
+  let last = performance.now(), shown = -1;
   (function draw(now) {
     if (stopped) return;
     const t = (now - t0) / 1000, dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -10889,7 +10925,9 @@ function updatePackage() {
       lid.userData.v.y -= 30 * dt; lid.position.addScaledVector(lid.userData.v, dt); lid.rotation.x -= 5 * dt; lid.rotation.z += 3 * dt;
       for (const b of bits) { b.userData.v.y -= 26 * dt; b.position.addScaledVector(b.userData.v, dt); b.rotation.x += b.userData.s * dt; b.rotation.y += b.userData.s * dt * 0.7; }
     }
-    r.render(sc, cam);
+    // (the opening is choppy stop-motion: everything keeps moving, but you only see it 8 times a second, like Bob)
+    const beat = phase === 'open' ? Math.floor((now - openAt) / 125) : -1;
+    if (phase !== 'open' || beat !== shown) { shown = beat; r.render(sc, cam); }
     requestAnimationFrame(draw);
   })(t0);
   return {
@@ -10962,6 +11000,7 @@ if (!HEADLESS) (async () => {
   fill.style.width = '100%'; msg.textContent = 'Ready!'; what.textContent = `Loaded all ${tasks.length} things!`;
   if (pkg) await pkg.open(boot);   // (waits for you to open it)
   setTimeout(() => { boot.classList.add('out'); setTimeout(() => boot.remove(), 450); }, 250);
+  setTimeout(() => (window.requestIdleCallback || setTimeout)(warmShop, { timeout: 4000 }), 2000);   // (once the page is up and quiet)
 })();
 
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
