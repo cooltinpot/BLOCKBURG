@@ -51,7 +51,7 @@
   .bdg img{width:58%;height:58%;image-rendering:pixelated}
   .bdg.off{filter:grayscale(1);opacity:.28}
   #myBadges{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-  #badgePop{right:12px;bottom:84px;width:300px;z-index:8;transform:translateX(340px);transition:transform .35s ease-out}
+  #badgePop{right:12px;bottom:84px;width:300px;z-index:48;transform:translateX(340px);transition:transform .35s ease-out}
   #badgePop.in{transform:none}
   #badgePop .bp-in{display:flex;gap:16px;align-items:center;padding:12px 10px 12px 18px}
   .bdg-wrap{position:relative;display:inline-block;width:52px;height:52px;flex:0 0 auto}
@@ -5819,6 +5819,7 @@ const BADGES = [
   { id: 'nightowl', name: 'Night Owl', desc: 'Be there when it turns to night.', icon: 'moon', c: '#20204a' },
   { id: 'ctf', name: 'Flag Captain', desc: 'Capture the enemy flag in RED VS BLUE!', icon: 'flag', c: '#9b1b14' },
   { id: 'friends', name: 'Better Together', desc: 'Play in a room with someone else.', icon: 'globe', c: '#3d7fd0' },
+  { id: 'bigspender', name: 'Big Spender', desc: 'Get a bag of Bux from Bob at Bobs Shop.', icon: 'bux', c: '#2f8f3a' },
 ];
 const BADGE_KEY = 'blockburg-badges', BADGE_PROG = 'blockburg-badge-progress';
 let myBadges = {}, badgeProg = { built: 0, seen: [] };
@@ -5827,9 +5828,10 @@ try { badgeProg = { ...badgeProg, ...JSON.parse(localStorage.getItem(BADGE_PROG)
 const saveBadgeProg = () => { try { localStorage.setItem(BADGE_PROG, JSON.stringify(badgeProg)); } catch { } };
 // a badge's round icon: the 8-bit picture in a shiny circle with its own color ring
 const badgeIcon = (b, size = 48, got = true) => `<span class="bdg${got ? '' : ' off'}" style="--c:${b.c};width:${size}px;height:${size}px" title="${escHtml(b.name)}: ${escHtml(b.desc)}"><img src="${pxUrl(b.icon)}" alt=""></span>`;
-function award(id) {
+// (anywhere: it can be won on the website too, not just in a game)
+function award(id, anywhere = false) {
   const b = BADGES.find(x => x.id === id);
-  if (!b || myBadges[id] || HEADLESS || !started) return;
+  if (!b || myBadges[id] || HEADLESS || (!started && !anywhere)) return;
   myBadges[id] = Date.now();
   try { localStorage.setItem(BADGE_KEY, JSON.stringify(myBadges)); } catch { }
   badgePopup(b); renderBadges();
@@ -7791,7 +7793,7 @@ function bobFetch(f) {
     bag.position.lerpVectors(onTop, to, u); bag.scale.setScalar(bs * (1 + u * 0.8));
   }
   if (hit(F.plop)) { SFX.land(); SFX.hammer(); bobSay(bobPick(shop.bagN >= 10 ? 'bagBig' : 'bagSmall')); }
-  if (hit(F.gone)) playWavs(['kerplunk'], 0.8);
+  if (hit(F.gone)) { playWavs(['kerplunk'], 0.8); award('bigspender', true); }
   shop.fetchPrev = f;
 }
 // the bill goes back in his hand, hidden
@@ -7946,6 +7948,7 @@ $('shopWin').addEventListener('click', (e) => {
 const UPDATES = [
   { date: '11/2/2026', ver: '4.2', top: 'Bobs Shop and airplanes! Plus a new Insert menu with a search bar, and no more kill sticks', text: [
     'NEW: Bobs Shop! Click the gold Bobs Shop button on the front page and the screen itself smashes into pieces of glass. You land in Bobs wooden shed. Bob bangs open the STAFF ONLY door, runs out flailing his arms and scrambles onto his counter (in choppy stop-motion), then leans there and sells hats, shirts, pants, T-shirts and faces for Bux. Whatever you buy goes right on you!',
+    'NEW BADGE: Big Spender! Trade all your Tix at Bobs Shop and get a bag of Bux from Bob.',
     'NEW: If an update comes out while you have the game open, a little update box squeezes out of the side of the screen, splashing pixels, with cooltinpots own sound. Press CTRL + F5 (or click it) to get the update!',
     'Bob talks to you, follows your mouse with his eyes, throws a hand up when you buy something, and shakes his head when you are short on Bux. You can trade Tix for Bux right at his counter too, and when you trade (there or in the Catalog) your Tix go flying out with a flash! At the shop, Bob digs a Bux out of his pocket and hands it to you. Trade ALL your Tix and he runs to the back for a whole bag of Bux (bigger bag for more Bux)!',
     'NEW: Wood bricks! Tick Wood in the Insert menu to build with wooden planks that have little wooden pegs for studs. Bobs shed is made of them.',
