@@ -98,6 +98,43 @@
   #insertWin .ins-sec h4{margin:8px 0 4px;padding-top:6px;border-top:1px solid #a9a59b}
   #insertWin .ins-sec:first-child h4{margin-top:0;padding-top:0;border-top:0}
   #insertWin .hidden{display:none}
+  /* Bob's Shop */
+  #shopWin{right:12px;top:70px;width:380px}
+  #shopWin .bd{display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 130px)}
+  #shopSay{background:#fff;border:1px solid #888;border-radius:10px;padding:6px 9px;font:bold 13px Arial}
+  #shopSay b{color:#b3261e}
+  #shopWallet{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  #shopWallet img{vertical-align:-3px}
+  #shopTabs{display:flex;gap:2px;flex-wrap:wrap}
+  #shopTabs button.on{border-style:inset;background:#ece9e2;font-weight:bold}
+  #shopGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;overflow-y:auto;min-height:0;padding-right:2px}
+  .shop-it{background:#f4f2ec;border:1px solid #a9a59b;padding:4px;text-align:center;display:flex;flex-direction:column;gap:3px}
+  .shop-it img{width:100%;aspect-ratio:1;background:#fff;border:1px solid #ccc;box-sizing:border-box}
+  .shop-it .nm{font:bold 11px Arial;min-height:26px}
+  .shop-it .pr{font:11px Arial;color:#333}
+  .shop-it .pr img{vertical-align:-2px}
+  .shop-it.on{background:#fff6c8;border-color:#d7a800}
+  .win .shop-it button.b{font:bold 11px Arial;padding:3px 2px}
+  .win .shop-it button.buy{background:#4fae4a;color:#fff;border-color:#9be096 #2c6e29 #2c6e29 #9be096}
+  #shopWin{z-index:47;max-width:calc(100vw - 24px)}
+  /* the shop's 3D view sits under the front page; the cracks sit on it and the flying glass on top of everything */
+  #shopCv,#shopCrack,#shopGlass{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #shopCv{z-index:39}
+  #shopCrack{z-index:41;pointer-events:none}
+  #shopGlass{z-index:46;pointer-events:none}
+  #shopShards{position:fixed;inset:0;z-index:45;pointer-events:none;perspective:1000px;overflow:hidden}
+  #shopShards .shard{position:absolute;inset:0;transform:translateZ(0)}
+  #shopShards svg{position:absolute;left:0;top:0;z-index:41;overflow:visible;filter:drop-shadow(0 0 1.5px rgba(0,40,80,.7))}
+  #shopShards polygon{fill:rgba(205,235,255,.16);stroke:#fff;stroke-width:2.5;stroke-linejoin:round}
+  #shopShards .hit{position:absolute;width:140px;height:140px;margin:-70px 0 0 -70px;border-radius:50%;background:radial-gradient(rgba(255,255,255,.9),rgba(255,255,255,0) 70%)}
+  #shopCv.hidden,#shopCrack.hidden,#shopGlass.hidden{display:none}
+  #site.shop-out,#shopCrack.shop-out{transform:translateX(115%) rotate(5deg);opacity:0;pointer-events:none;
+    transition:transform 1s cubic-bezier(.55,0,.25,1),opacity .8s ease-in .2s}
+  #site.shop-back{transition:transform .75s cubic-bezier(.2,.8,.3,1),opacity .45s}
+  #shopLeave{position:fixed;left:12px;top:12px;z-index:47;font:bold 14px Arial;background:#d4d0c8;border:2px outset #fff;padding:6px 12px;cursor:pointer;
+    box-shadow:2px 2px 6px rgba(0,0,0,.4)}
+  #shopLeave.hidden{display:none}
+  .s-btn.shop-big{font-size:13px;font-weight:bold;background:linear-gradient(#ffe680,#f5b81a);color:#3a2400;border-color:#c98a00;padding:5px 12px}
   .ins-none{color:#444;font-style:italic;padding:8px 0}
   /* the Script window: Scratch-colored blocks in an old gray window */
   #scriptWin{right:8px;top:40px;width:min(580px,calc(100vw - 16px))}
@@ -280,6 +317,8 @@
     text-shadow:2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000}
   #tixPop img{vertical-align:-3px;margin-right:4px}
   #tixPop.go{animation:tixUp 1.6s steps(16) forwards}
+  .tixFly{position:fixed;left:0;top:0;z-index:60;pointer-events:none}
+  .tixFly img{display:block;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.45))}
   @keyframes tixUp{0%{opacity:1;margin-top:10px}15%{margin-top:0}75%{opacity:1}100%{opacity:0;margin-top:-18px}}
   #avatarHolder{display:grid;place-items:center;background:linear-gradient(#fff,#e8eef7);border:1px solid #ccc}
   #avatarHolder canvas{display:block}
@@ -562,7 +601,8 @@
       <button class="b" id="weldBtn" title="Stick the picked bricks together, so they move as one">&#128279; Weld</button><button class="b" id="unweldBtn" title="Unstick the picked bricks">Unweld</button></div>
     <div class="row ins-item"><button class="b" id="scriptBtn" title="Snap blocks together into little scripts for a brick"><i data-px="script"></i> Script a brick</button></div>
     <div class="row ins-item"><label><input type="checkbox" id="anchorChk" checked> Anchored</label>
-      <label title="Stays anchored until something explodes next to it, then it gets blown loose"><input type="checkbox" id="destroyChk"> Destroyable</label></div>
+      <label title="Stays anchored until something explodes next to it, then it gets blown loose"><input type="checkbox" id="destroyChk"> Destroyable</label>
+      <label title="Wooden planks, with wooden pegs for studs"><input type="checkbox" id="woodChk"> Wood</label></div>
     <div class="row ins-item">Custom size: <input type="number" id="cx" value="6" min="0.2" max="64" step="0.2">x<input type="number" id="cy" value="1.2" min="0.2" max="64" step="0.2">x<input type="number" id="cz" value="4" min="0.2" max="64" step="0.2"><button class="b" id="customBtn">Add</button></div></div>
     <div class="ins-sec" data-sec="colors brickcolor paint"><h4>BrickColor: <span id="colorName"></span></h4>
     <div id="palette"></div></div>
@@ -573,6 +613,20 @@
     </div>
   </div>
 </div>
+
+<div id="shopWin" class="win hidden">
+  <div class="tb">Bob's Shop<button id="shopX">x</button></div>
+  <div class="bd">
+    <div id="shopSay"></div>
+    <div id="shopWallet"></div>
+    <div id="shopTabs"></div>
+    <div id="shopGrid"></div>
+  </div>
+</div>
+<canvas id="shopCv" class="hidden"></canvas>
+<canvas id="shopCrack" class="hidden"></canvas>
+<canvas id="shopGlass" class="hidden"></canvas>
+<button id="shopLeave" class="hidden">&#8592; Leave Shop</button>
 
 <!-- script blocks for one brick (Insert -> Script a brick) -->
 <div id="scriptWin" class="win hidden">
@@ -713,6 +767,7 @@
         <div class="box"><h3 id="hiName">Hi, Player!</h3><div class="in" style="text-align:center">
           <div class="avatarSlot"></div>
           <div style="margin-top:6px"><button class="s-btn" data-goto="character">Change Character</button></div>
+          <div style="margin-top:6px"><button class="s-btn shop-big" data-shop3d="1">&#128722; Visit Bob's Shop</button></div>
           <div class="fm-sm" id="meIdLine" style="margin-top:6px"></div>
         </div></div>
         <div class="box"><h3 id="friendsHd">My Friends (0)</h3><div class="in" id="friends"></div></div>
@@ -756,6 +811,7 @@
 
     <div class="page hidden" id="p-catalog"><div class="box"><h3>Catalog</h3><div class="in">
       <div class="cat-tabs"><button class="s-btn on" data-cat="hats">Accessories</button><button class="s-btn" data-cat="shirts">Shirts</button><button class="s-btn" data-cat="pants">Pants</button><button class="s-btn" data-cat="tshirts">T-Shirts</button><button class="s-btn" data-cat="faces">Faces</button></div>
+      <div style="margin:6px 0"><button class="s-btn shop-big" data-shop3d="1">&#128722; Shop in 3D at Bob's Shop</button></div>
       <div class="wallet" id="walletBox"></div>
       <div class="hatgrid" id="hatGrid"></div>
       <h4 class="proj-h"><i data-px="sparkle" data-size="16"></i> Outfit Sets</h4>
@@ -1196,6 +1252,66 @@ function partMats(hex, reflective = true, trans = 0) {
   }
   return matCache[key];
 }
+/* ---- wood bricks: planks with grain on the sides, and their own round wooden pegs for studs on top (whatever
+   stud style is picked). Painted in greys so the brick's color tints them, and one picture covers 4 x 4 studs. ---- */
+function woodPlanks(g, r, plankH, seams) {
+  for (let y0 = 0; y0 < 512; y0 += plankH) {
+    const v = 200 + r() * 34 | 0;
+    g.fillStyle = `rgb(${v},${v - 4},${v - 10})`; g.fillRect(0, y0, 512, plankH);
+    // grain: long wavy lines along the plank (whole waves across the picture, so it repeats without a seam)
+    for (let i = 0; i < plankH / 5; i++) {
+      const y = y0 + 4 + r() * (plankH - 8), a = 1 + r() * 3.5, f = 1 + (r() * 3 | 0), ph = r() * 7;
+      g.strokeStyle = `rgba(70,45,20,${0.07 + r() * 0.15})`; g.lineWidth = 0.8 + r() * 2.2;
+      g.beginPath();
+      for (let x = 0; x <= 512; x += 8) { const yy = y + Math.sin(x / 512 * Math.PI * 2 * f + ph) * a; if (x) g.lineTo(x, yy); else g.moveTo(x, yy); }
+      g.stroke();
+    }
+    // a knot now and then
+    if (r() < 0.6) {
+      const kx = 70 + r() * 370, ky = y0 + plankH * (0.3 + r() * 0.4);
+      for (let j = 0; j < 4; j++) { g.strokeStyle = `rgba(60,35,15,${0.18 + j * 0.06})`; g.lineWidth = 2; g.beginPath(); g.ellipse(kx, ky, 16 - j * 3.5, 6 - j * 1.3, 0, 0, 7); g.stroke(); }
+      g.fillStyle = 'rgba(55,30,12,.45)'; g.beginPath(); g.ellipse(kx, ky, 3, 1.6, 0, 0, 7); g.fill();
+    }
+    if (!seams) continue;
+    // the cracks between planks, and where two planks meet end to end
+    g.fillStyle = 'rgba(40,22,8,.55)'; g.fillRect(0, y0 + plankH - 4, 512, 4);
+    g.fillStyle = 'rgba(255,255,255,.22)'; g.fillRect(0, y0, 512, 2);
+    const jx = 40 + r() * 430 | 0;
+    g.fillStyle = 'rgba(40,22,8,.5)'; g.fillRect(jx, y0, 3, plankH);
+    g.fillStyle = 'rgba(30,18,6,.55)'; for (const nx of [jx - 9, jx + 12]) for (const ny of [y0 + 18, y0 + plankH - 20]) { g.beginPath(); g.arc(nx, ny, 3, 0, 7); g.fill(); }   // nails
+  }
+}
+const woodSideTex = tex(canvas(512, 512, (g) => woodPlanks(g, rng(11), 128, true)), true);
+const woodTopTex = tex(canvas(512, 512, (g) => {
+  woodPlanks(g, rng(23), 256, true);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {   // a wooden peg on every stud: end grain rings on top
+    const x = 64 + i * 128, y = 64 + j * 128;
+    g.fillStyle = 'rgba(35,20,8,.4)'; g.beginPath(); g.arc(x + 5, y + 6, 35, 0, 7); g.fill();
+    const gr = g.createRadialGradient(x - 12, y - 14, 4, x, y, 34); gr.addColorStop(0, '#f2ece2'); gr.addColorStop(1, '#bfae96');
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, 32, 0, 7); g.fill();
+    for (let k = 1; k <= 4; k++) { g.strokeStyle = `rgba(90,55,25,${0.12 + k * 0.03})`; g.lineWidth = 1.6; g.beginPath(); g.arc(x + 2, y + 1, k * 6.5, 0, 7); g.stroke(); }
+    g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, 30, Math.PI * 0.9, Math.PI * 1.6); g.stroke();
+  }
+}), true);
+const woodBotTex = tex(canvas(512, 512, (g) => {
+  woodPlanks(g, rng(37), 256, true);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {   // holes where the pegs of the brick below go in
+    const x = 64 + i * 128, y = 64 + j * 128;
+    g.fillStyle = 'rgba(255,255,255,.3)'; g.beginPath(); g.arc(x + 3, y + 3, 22, 0, 7); g.fill();
+    g.fillStyle = 'rgba(40,22,8,.75)'; g.beginPath(); g.arc(x, y, 20, 0, 7); g.fill();
+  }
+}), true);
+for (const t of [woodSideTex, woodTopTex, woodBotTex]) t.repeat.set(0.25, 0.25);
+const woodCache = {};
+function woodMats(hex, trans = 0) {
+  const key = hex + '|' + trans;
+  if (!woodCache[key]) {
+    const see = trans ? { transparent: true, opacity: 1 - trans, depthWrite: false } : {}, m = (map) => phong({ color: hex, map, shininess: 12, specular: 0x222222, ...see }, false);
+    const side = m(woodSideTex);
+    woodCache[key] = [side, side, m(woodTopTex), m(woodBotTex), side, side];
+  }
+  return woodCache[key];
+}
 const outlineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28 });
 outlineMat.visible = false;   // outlines are off by default (Game Settings can turn them on)
 
@@ -1357,6 +1473,10 @@ const SFX = {
   paint() { noise(0.18, 0.12, { f0: 3500, Q: 0.8 }); },
   spawn() { osc('sine', 300, 900, 0.35, 0.08); osc('sine', 450, 1350, 0.35, 0.05, { delay: 0.05 }); },
   hurt() { osc('square', 300, 180, 0.08, 0.06); },
+  glass() {
+    noise(0.45, 0.4, { type: 'highpass', f0: 2600 }); noise(0.2, 0.3, { f0: 900, Q: 0.7 });
+    for (let i = 0; i < 16; i++) { const f = 2400 + Math.random() * 4500; osc('sine', f, f * 0.97, 0.1 + Math.random() * 0.25, 0.025 + Math.random() * 0.03, { delay: 0.03 + Math.random() * 0.7 }); }
+  },
 };
 // real old sound files from cooltinpot's sound pack, kept inside this file: the badge sounds, the snap, the rocket launcher,
 // a rocket flying past you (the first 2.2 seconds of Rocket whoosh 01.wav, at half its sample rate), explosions (collide.wav),
@@ -1375,6 +1495,8 @@ const WAVS = {
   ping: 'data:audio/wav;base64,UklGRs4OAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZmFjdAQAAABbDgAAZGF0YVsOAACHkHpqYWp7j5qbjHdkX2qAkp2YhXFhYHCGl52TgGpgY3eMmZyOeWZfZ36QnJmJc2FgboSVnJaCbWBic4uYnJB8aF9me46bm4t0Y2FrgZOdl4NxYGJxhpick35qYGN4jZuajnhlX2h/kZyYiHFiYW+ElZ2UgmxfZHWKmJ2QemZfaHuPnJqJdWNfbYGUnZeEbWFhc4iXnZF+aV9leYycm4x4Y19qgJGdmIZxYWFwhZadk4FqYGV0jJqbjnpnX2d8kZyaiXJiYWyEk52Wg29eYnSJmJyRfWdfZnqOnJqLdmRfaoGUnJeFcGFgcYaYnJR/al5mdoyanI15ZV9pfZGcmYdzYmFthZSelIJtYGJ0ipmckHtoXmd7j5uai3VjX2yBlJ2VhXBhYXGHl56Rf2leZXmMmp2LeWRfaX+SnJiGc2Fhb4SWnpOBa2BkdYqZnY56Z2BnfI+cmYp0YmBtgpSdloRtYWFzh5mdkX1pXmZ5jZuci3dkYGmBkZ6WhnFhYXCFlp6TgGtfZHWMmpuPemVeaX2QnZmIdGJfbYSVnZWCbWFic4qXnZF7aV9le4+amot2Y2BrgZOdl4RwYWFxhpick39pYGR4jJqbjXllX2h/kZ2Yh3NiYG6FlJ6UgG1hYnSKmpyPe2dgZnyOnJuIdmNfbIGVnJeEbmBhc4iYnJF/aV5meI2bm4x4ZF9qfpOcl4hxYWBvh5Wdk4JqYGN2i5qbj3lnX2h8kJubiHRiYG2ClZ2Wg21fZHKJmJ2QfWhfZ3iOm5uLdmRfa4GTm5eHcGFhcIaXnZN/al9keIuam456Zl1pfZKbmYd0YmBvg5WclYNtX2J0ipidkXtnX2Z8jZyainZkX2qClJyXhHBgYnGIlp2Sf2lfZXiMmpyNeGZeaX6SnJiIcmFgb4SWnZWAbGBidomanY95aF9mfZCbmYp1YmFrgpSdlYRvYGJxipibkn1pX2Z5jZuajHhkX2l/k52YhXJhYG+FkpeMf3BmZ3mJlZSKemtlbX2NlZKHdWhlcoKPl4+CcWZodoaTlYx+a2ZpfIuWk4h3aWVwgI+WkIRyZ2dzhZKXjX1vZWl6iZSViXpqZWyAjZaRhnVnZXKDkZaPgW9nZ3eIk5WLfGtma3yMlZSGd2lmb4GPl5CBc2dmdoWSlox/bWVqeoqUlYh5aWdtf42XkoR0Z2ZyhJGXjoBvZWh4iZSVintrZWx+i5aThnZoZXGCj5ePgnFnZ3WHk5WMfW1lanqMlZOIeGplboCPlpGDc2hmc4WRl42AbmVpeYmUlYp5a2Vsfo2WkoV2Z2dwhI+Xj4FwZ2d3hpSVjHxsZGx7i5WUiHdpZW+Bj5aQg3NnZnSFkpeMf25kanqJlpSIeWplbX+Nl5KEdWhlcoSQlo+AcGZoeIiTlol8bGVrfI2Wk4R5aGVvgpCXj4JyZWh2hZKXjX5tZWp5ipWViXppZW1/jpeShHVmZ3GEkZiPf3BkaXaJlZWLfGplbHyMl5OHdmdmcIGRl5CDcGZoc4eUlox+bWRreYyUlYh5aGZuf46YkoRzZmdxhpKWj4BtZWl4iZSWintqZmt9jZeThnVnZnGCkJmOgnBlaHaGlJeMfWtmanqMlpSId2hlb4GPl5GEcmZmdIaRmI1/bWZpeIqVlYl7aWVtfo6Wk4V1Zmdxg5KXj39wZWl2iZKYinxqZmt8jJeTh3doZXCAkJiRgnFmZ3SHkpeNfmxlanqKlpWIeWllbX+Pl5KEdWVmcoSSl49/b2VoeImUlot8aGZsfYyXk4Z2Z2ZxgZCYj4NxZGl0hpWWjH1sZWp7i5aVh3loZW6Aj5eRg3RmZ3OEkpePf21laniIlZaKemlmbH6Nl5KGdmZmcYORlpGBb2ZodoeTl4x7bGVre4yWk4h4aGVugo+XkYRyZWdzhpKYjX5tZWl6i5SViXpoZm1/jZeThXRmZnKEkZeOgW9laXeIk5iJfWllbHyOlZSHdmdlcYKPl5CDcGdndYaTmIt+bWRqeouWlIh5aGVvfo+Xk4RzZmdyhJKXjoBuZWl3ipSWintqZW18jZeThXdmZnGCkJiPgnBlaXSIk5iLfGxmanuLlZWHeGllboGOmJCFcmVoc4WSl45/bGZpeYqUlol7aGZsfo6Xk4V1Zmdxg5CYj4FvZWh3iJSVjH1qZmp8jJaTiHdnZ2+Aj5iQhHFmaHOGkpeNf2xlanmKlpWIemlkb36OmJKEdGVocoORmI6Ab2Zod4iUl4t7amVrfY2WlIZ2Z2dvgpCYj4JxZWh1hpOYjH1tZWl6jJWVh3poZW6AjpiRg3RlZ3OGkJiOgG5laHiKlJaKe2hmbH2OlpSGdGhlcYKRmIx/d3J1e4KJiYJ+dHJ2f4WJh4F7c3N4gIaJhoB4c3R7gYiIhH91cnZ8hIqHgXx0dHZ/hYqHgHlzdHiDhomEgHZzdHyEh4mDfHR0dn6FioaAe3N0eICHiYV/eXJ0fIGIiIR+dXN2fIWIiIF8c3R2gIeIhoF5c3N5goiJg392dHR8hIiHhHx1cnZ/hYqGgXpydHiChoqEf3hzdXqDiIiDfXZydn2FiYiAe3Rzd4GGiYaAeHJ0eoOHiYV9dnN1fISIiYF8dXN2f4aJhoJ5c3N5gYeIhYB3cXZ7g4eKgn51cnZ+hIqHgXtydHeChomGfnhzdHuDh4mDfnV0dXyFiYeCfHNzd3+GioWCd3N0eoGIiYR/dnJ1fISHioJ8dHN2f4WJh4F6cnV4gIaLhIB4cnR6g4iJg350c3Z9hYqGgntzdHeAhomFgXlzc3qChomEgHVxdHqFh4uEfHNydX6GiYiDenJydoGHiYh/eHFzeoKIioV+c3NzfYaJh4R7c3J2f4aJiYB4c3J4goiKhX91cXR8hImIhX1ycnV9hoqIg3hyc3eBh4qHgHVyc3qEiImGfXNydH2GiYmCe3JydoCGi4eBdnNzeIKIioV/dHJ0e4aIiIV7c3N0f4aKiIF4c3N3goeJh4B2cHR6g4qJhXx0cXV9h4iJgnlzc3WChouGgXZycnqDiIqEf3Ryc3yGiImEe3JzdYCGiYiBeXJyeIKHioaAdXFze4WIiYV8c3F1f4aIiYN4c3J2goeJiIB2cXJ7g4iKhX10cnR9hYmJg3pyc3WAh4qHgndycnmCiIqFf3RzcnyFiIqEfHJydX6HiYiCeXJyeIGHiod/dnJyeoWHioV9dHF0foWKiIN6c3J2gIeJh4J2cnJ6goiLhH90cnN8hYmJhHtycnZ/hoqIgXhzcXiCh4uGf3VycnyEiYmEfXNydH6FiomCenJxeICHioeBdXJzeoOIioV9dHJzfoSKiIN7c3J2gIWKiIF4cnJ3hIeLhH91c3J9hIiJhHx0cXV+hoqIgXtxc3eBh4mHgHZyc3qDiImGfXNzc32GiYmCe3Jyd3+HioeBeHFyeoKHiod9dXJze4aIioN9cnJ0f4eJiIJ4cnN2g4eKh352cXR6hIiKhX1zcnR+hYmJhHlycneAh4mGgXhxc3mDh4uFfnRxdXyFiYmEenNzdICGiYiCeHFzeIKHiod+dXNye4SJioR8cnN1fYaKiIN4c3J4gIeJh4B3cnN5hIeLhH10c3N9hIqJhHpzcXd/h4mIgXdzcXmCiIqGfnZycnuEiYqEfHJydn6HiIiDeHF0d4KHiYaBdXJze4OIioR+cnN0fYaJiIR5c3J2gIaLhoJ3cXN5g4eKhn51cXR8hYmIhHtzcnSBhYmJgXlyc3eBh4uFgHZycnqEiYqFfHNzdH6EiYqCeXNyd4GGioeBdnFzeoOIiYV/c3NzfYSJiYR7c3J0gIeKh4J3cXR3g4iKhIB1cnN7hIiKhXx1dHZ9hIeFgXl1dHeBhIeFfnh0dHqChoWDfnZ0dX2DhoaBe3V0doCFhYWAeXN0eYODiIN/dnN1fIOGhoJ7dXV2foWFhn97c3R4goSHg4F2c3V7goWHgn11dXV9hIaFgntzdXd/hYeEf3h1dHmChYeCf3V1dXyDhoWCfXN2dX6FhoWAe3J0eYGFhoOAeHN0e4OFh4J9dHV1foOHhYJ6dHN4gYOIhH94dHR5g4WGg390dHV9hIWGgnt1dHWBhIWGgHl0c3qBhIeEf3V1dHuEhYeBfXR0d36EhoWAe3N1d4GEh4R/eHR0eoKGhoN+dHV1fYOGhoF7dXR2gYOHhIF3dXR5gYWHg393cnV8g4WIgXx0dHZ/hIaGgHpzdXiBhIeDgHZ0dXuChoaDfXVzdn6DhoaBenR1d4CFhoSAd3V0eYKFh4N+dXV1e4SHhoF7dHR3f4SHhIB6dHN6gIWHhH52dXR7g4aGgn10dHd+g4aFgnl1c3mAg4eFgHdzdXmEhIaEfXZ0dX2EhYaBe3Vzd3+FhoWAeHR1eYKEhoR+dnR1fYKGhoF9dHV1gIOHg4J6dHR4gYSGhH93dHV7g4SHgn11dXR+hIWGgXt0dXaAhIeFgHhzdXqCg4iDfXZ1dXuEhYaCfHV0dYCDh4WAeXR0eYGFhoV+d3N1fIKEh4N8dXV1foOHhYJ5dHV2gYWGhIB3dHV5g4SHg351dXR9g4aHgXt0dHd/hIaFgXlzdXmBhIeEf3V1dHyDhYaCfXR1dX6EhoaAe3R0d4GDiISAdnV0eoKFh4N9dnN2fYOGhoB8dHZ7f4GEg4B7d3l8gIOGgIF5eHd/gYSDgn53eXmAgYWCgnx4eHqBgoWBgnp4d32AhISCf3l4eH6ChIOCfXh5eYCBhYOAfHd4fIGChoCAenh4fYKDhn9/eHh6f4GGgoF8d3l7gIKGgIF6eHl8goKGgH95eHl/gYWCgX53eHqAg4SBgnt3eHyBg4WBf3p4eX2Cg4SBfXl4eoCBhYOAe3h4fIGChYGBeXh4fYKEg4J+eHl4gIGFgoJ8eHh7gIKEgoF6eHh9goGFgYB5eHeBgIQATElTVDoAAABJTkZPSUNPUBYAAABBMSBGcmVlIFNvdW5kIEVmZmVjdHMASU5BTRAAAABFbGVjdHJvbmljIFBpbmcA',
   snap: 'data:audio/wav;base64,UklGRgwSAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZmFjdAQAAADuCAAAZGF0YdwRAAC6/4L/TP9m/9X/i/8P/zD/Wf9L/0H/Q/9U/1P/Qv9A/zf/P/88/zn/WP9M/zn/Of8u/z7/Tf83/yn/Nv8v/yv/Of8x/yn/Hv8c/yT/Mf8s/wP/D/8W/w3/Ef8J/yH/E/8A/9b+0P4Y/w3/DP/l/iL/X/9Z/lb+Kv8y/yb/Dv/z/sX+x/6u/rz+cf9A/8D+1P7e/tr+0v4F/wL/w/7F/un+1v6n/rz+sP74/iX/kv6t/vr++v4N/8f+2f75/t/+8/7B/gL/B/+3/iX/2/7c/tj+Rf4h/wn/a/5r/kf+zv69/qP+Xf6E/kT/s/6e/pf+3v4P/53+Fv+5/un+/f6R/k3/d/+E/8n+rv5N/wz/Kv+S/k/+yf4p/7H+J/5s/qD+tf86/+z+l/7O/Wz/l/4J/yz/fP2J/y3/A/9G/1T+vf+aABIA1P1m/iD/8P5EAOP9Uv7l/23/CP8i/isAYP/Q/4gA1vyd/mD/3v3h/2T/tP1G/wkAtf5H/8j+Kv+UAAn/0P3u/I7+k/96/j7/av6p/hUAjv7l/VsAJf8G/rEA/vwh/RYAsv3q//3/iP40/zoANQAc/Y3/dgBl/5n/iPyE/dr/LQEd/1j+xwBk/44Bxf7c/McBC/+G////BP19/hL/JAC3AM8AcP+Q/VH/AgAh/6j9nP3N/mP/cf+q/SD9Tf92AkMB4f5C/+H9X/+AAGD/6v4f/on/CP+SAFoBs/7n/4AA5gJ8/8X6H/2r+4kCPQJc+O781/2UAIYBCPnY/Z0AmP7Z/qv60vv4/qUAOwD5/eT+w/9DAPcAQgHd/IX8zQEfAO0ADPyk+IkDRgER/F/6aPf7/9gAZfs3+yz78v6f/yD9jvpT+bb+EwEA/1X+9vo1+0UBJALc/o/7G/33ARUCMQEG/C38IQahBOf+Gf7u/cUAaARGAiv7s/r2/K0AngI6/Gn+7gDY/e8A3f5d+kH+BwI3ADH+dPwQ/vEADQF2BKwAVvxM/9D+fAK7AAf7ZP5D/u//8AP+/dz8+gIIAdEBvQNq/34AOgKaAPr/qAI/APb9gQFA/lAAhP75/Y8CY/rB/un9ZfoxASn/PQEu/Nz8R/7k+80Dtv1P/Rn8fvqyAV//D/9l/GD/Av3c+1r+/vnTAoX6DfxYAYr5IgPG+wf/fABu+Nj9n/lbAM/+9v7f/fj55QHE+3sF0gBU/VgB//dJBSn63wPCBnH4LRrpAWL2Zwx2+6EGZf029QEFcfLr+AAEAPZTA/IBC/o09KzavP7ICejrdwQz9KPuhQat/LoBtPp2+N4Bbfup+PIA0ACN+y4Q1wIC8TP92v1/EeMHBu1o/sYN2/jqA4wlNwVhDTkcnvvP/WT0+Qut/jXZPA+YAWzjMBSdFWbd8t/GCJsCHQOd9gjtafh+/ugWK/If5d0OzgsuBPv1j/oQ/YP3DwXKC7UIP+ITAn0vtf2p65nwfARZFY0DOf0f9mcLjRD/++gEIv0o8g8DnRFOBx396PJ5+sMWgP5Y8FYFUAfj+57uggj3Cdv1ggeR/yLzQf2gBq0CF/7F+oj0+gmbAOnxqAHx+pz/Lfom9/kAZvaT/V7+6/tO/eD4rAF9A6D5GPDNAtUHN/AE+hwGwQCS+tn9XP/W+/X/Af6gBfj6NvOgBv8CQ/0e+cgGRws3+CMFff3z8AD5BPpjALj/NfyL9ZT/UgkPAEr+0fV4+1oBRP/wAt39L//n+pUDuwic+dT/oQMKAUP8N/zPBKkC6wBD/W3/pwD9+8/86f+6Ayn6n/iv/sr/qgEG+8L91wAs/6P9bf0m/2D1qPsXAxcA2v1E9Rf9rPz594v+zPur/UP51Pbi/Pj5D/qQ/Bz8L/q1+kX6kvpO/HH4Yvs9/3b7FPgP/NwAhfpi+lAAQf55+sn8GgKp/mD70Pxj/kAAHv5G/1sBm/2y+3sATgMo/xL/1AFyAlwCigHTARMBNwG7AoIDnARMBMECOQQmB1kENgOKBXMCBQLSBH8EbAQrAxcCzgRrBBoCkAQsBCEC7gOpAysBnwCjA5QDPQBUAdcCngInAcAAhAIvAtYBGQGhAX0DtgG/AR8DpgFBAeACiAN5AUoAaQGKAvICyAAXABMCnADk/zgBw/+8//8AwABBAE//bADbATUAZgD0Ad//DP9fAAj/gf8+ACL+o/8OATP/NP+f/+D+f/7Q/v3+S/6y/c/9Vv6Q/hX+rv3y/T/9CfzA/X3/jv3m++j8vP1P/TL97vx6/Mj82Pz9/AH9Wfzc/KD9r/zA+4b8d/1N/cz8cfxw/Or8mP2L/Sv9NP2l/HL9cP6s/AL9qf6f/Uj94P3f/YL9TP0k/iz+p/3Z/bf9Gf4//kP9cf05/vz9Gf47/lf9aP2J/n7+yf27/fT9Xf7B/h3+if14/gr/bf44/iP+Ef7i/hP/zP1+/YT+qv4n/uL9fv2w/VL+0P0J/V39pf1x/W79GP3P/Gr9q/0H/eD8Wf1d/Tv9g/1p/Ur9sv2a/Xv92f21/Yj90P3f/c/95f26/Xb9xf0X/qP9Rf2E/br9t/17/Q79I/20/bT9Jf3u/Dj9n/23/U79+fxg/ff94/1s/V/9z/01/ir+1P2+/Sn+lf5y/g/+HP5//rD+k/5X/kn+kv7I/pD+Xf5+/pj+k/6Z/nv+Yf6X/qX+c/6J/qT+f/6O/rf+qP6t/sL+qf7F/hH/8P69/vr+Jv8k/zj/Gv8C/2L/kP89/yv/Yv91/43/g/84/1H/s/+b/1b/ZP93/43/rv9//0z/kf/G/5z/j/+f/6T/zv/h/7X/vP/4//z/8f8FAAYAEgA2ADMAIgA+AFEARgBRAF8AWABfAG4AZwBmAHgAcwBsAHsAfQB1AHwAgwB8AIIAiQCBAIMAigCCAIAAiwCJAHsAegB2AHQAeQBxAF4AVwBaAEsAPAA4AC0AKQAhAAoA9//4//r/6//b/8j/vP+7/7D/oP+S/4z/ff9k/1P/TP9H/zX/Jv8X/wb/A//1/uD+3P7b/s/+yf7D/q3+ov6f/pH+hv6B/nn+f/5+/mj+dv6F/m7+dP6E/oD+fv6Q/pL+iP6e/qX+oP6b/qH+of6E/qT+qv6O/p/+mP6l/pv+nP7E/qv+sv7L/sX+z/7g/v7+9/7y/gn/Bv///g7/GP8B/wv/I/8D//7+E/8M///++P75/v/++v7u/vn+Bf8G/xD/D//4/vb+CP/8/u7+9/72/vj+/f7z/uH+5P71/vX+9/4E/wv///7k/uP++v74/u3+7P7Q/s3+3f7Q/tX+0f7U/tf+uP7K/tv+2f7i/tv+1v7D/sH+z/7I/sb+xP62/rL+x/7F/rP+vP63/rT+tP6l/qT+pf6r/qb+of6X/n3+hf6G/nr+gv6B/of+hP5x/nr+if53/nD+f/5v/mX+Y/5N/k7+T/5C/kz+YP5c/lP+Xf5e/mL+Zf5a/mD+YP5d/mb+av5m/mL+b/5z/mr+Y/5c/m3+cf5i/mf+Zf5d/mX+cP5p/lz+X/5V/lP+YP5f/mT+Yv5e/nH+fP59/nf+e/6K/oL+fP6H/pL+k/59/nv+jf6C/nb+f/6G/oH+gP6D/nr+ev6F/oj+fv5z/oT+kP6D/oP+iP6D/n7+fv6D/of+gf53/oD+g/58/n/+gf6A/oH+f/5//n3+ff6B/or+kf6N/o3+kv6b/p/+n/6n/qX+oP6l/qb+qf6w/rL+sP6z/r3+wf7D/s7+0f7R/tb+1P7T/tj+4P7i/t7+4f7l/uL+3/7d/tz+0/7L/s3+0/7X/tP+zP7M/s7+zv7P/tX+1P7V/t/+4v7j/vH+AP8C/wD/BP8G/wf/Cf8O/xD/Dv8P/xH/D/8R/xX/Ev8Q/xL/Ef8S/xX/FP8T/xb/Gf8Z/xn/HP8c/xv/G/8d/x//GP8W/xv/G/8X/xf/GP8X/xr/H/8d/xX/FP8Z/xj/Ff8V/xP/D/8P/wz/BP8C/wf/Bv8C/wL/Af/+/gH/Bf8C///+AP8A///+BP8G/wT/Bv8L/w3/Dv8S/xH/D/8S/xT/Ff8Y/x3/Hf8a/xv/Hf8f/yP/I/8i/yX/Kv8r/yv/MP8y/zH/Mv8y/y3/Lf8y/zH/LP8q/yz/Kv8n/yX/If8d/xr/Gf8X/xX/Ev8S/xP/E/8T/xT/Ff8V/xX/Ff8V/xX/FP8T/xP/Ev8R/xL/Fv8Y/xb/Gv8i/yX/J/8r/y//Mv84/z7/Qf9E/0v/UP9S/1X/WP9a/17/X/9e/13/X/9f/17/X/9g/13/Xf9e/13/XP9e/13/W/9b/13/XP9c/1z/Wf9X/1f/Vv9U/1T/VP9R/1D/UP9P/0z/S/9K/0f/Rf9D/0H/QP9A/z//PP86/zn/OP83/zb/NP8y/zH/MP8v/y7/LP8r/yr/Kf8o/yj/J/8m/yT/JP8j/yL/If8g/x//Hf8c/xv/Gf8Y/xf/Ff8U/xP/Ev8R/xD/D/8O/w3/Df8M/wv/C/8K/wn/Cf8J/wj/CP8H/wX/Bf8F/wT/Av8C/wD/AP///v7+/f78/vz++/76/vr++v76/vn++f74/vf+9/72/vb+9f70/vT+9P70/vT+9P7y/vP+8v7x/vL+8/7x/vL+8v7y/vT+8/7x/vL+8v7x/vH+8v7y/vD+8P7w/u/+7f7s/uv+6/7r/ur+6/7q/un+6f7n/uX+5f7l/uX+5v7k/uT+5f7m/uX+5P7k/uP+4/7m/uf+5v7m/ub+5v7p/uf+5/7p/uj+6P7r/uv+6v7p/uj+6P7n/uf+6P7m/ub+5/7m/ub+5v7m/uX+4/7k/ub+4/7j/uT+5P7k/uT+5P7j/uT+5f7i/uL+4v7i/uL+4/7j/uH+4P7h/uH+4v7g/uD+4v7h/uL+5P7j/uL+4f7h/uP+4v7j/ub+5f7k/ub+5v7m/uf+5v7k/uX+6P7o/uj+5/7m/uj+6P7o/un+6P7n/uj+6f7p/uf+5/7m/uX+5/7p/uf+5/7m/ub+6f7p/ub+5P7m/un+6v7q/uf+5/7q/un+6v7r/un+6v7r/uv+6/7p/ur+6/7o/ur+7P7t/vH+7v7r/u7+8P7v/u/+7/7w/vL+8/7y/vP+8/7z/vT+8/7y/vb+9/71/vT+9f71/vT+9f71/vT+9P71/vX+9P71/vb+9P70/vT+8/70/vT+9P7z/vT+9f72/vX+9v73/vb+9P71/vX+9v74/vb+9v74/vr++f74/vr++f75/vv++v77/vr++P76/vn+9/73/vf+9/74/vr++/75/vj++f76/vf+9v75/vn++P76/vv++/75/vf++P73/vb++P76/vn++P75/vn++v76/vj++f75/vr+/P78/vz++v73/vb++f75/vb+9v72/vb+9/74/vj+9v71/vf+9/73/vf+9v74/vj++P74/vn++f75/vn++P74/vn++v75/vn++f75/vn++f73/vj++f74/vf+9/74/vf+9v73/vX+9f71/vX+9v73/vf++P72/vb+9/73/vb+8/71/vb+9v74/vf+9v73/vb+9v76/vr++P75/vr++v77/vn++f75/vj++f76/vr++v76/vr++f74/vr+/f78/vv++/78/v7+/f77/v3+/P77/v3++/77/vz++P74/vj+9/74/vr++f74/vr+/P76/vr++P75/vr++f76/vr++v76/vn++f76/vj++f76/vr+/P76/vr+/P78/vr++/77/vz+/v79/v3+/f79/v3+/f7+/v3++v77/v7+AP8A//z+/f7//v7+/v7+/v3+/P77/vz+/v79/vz++/78/v3+/P78/v7+/f76/vv+/f78/vn++P76/vr+9/73/vj++f76/vj++v77/vn++f74/vj++v76/vz++/76/vv++/76/vn++v76/vr+/f7+/v3+/f78/vz+/v4B/wH/AP8B/wP/Av8C/wL//v79/v7+/f78/v3+/v7//vz++/79/vz+/f79/vv+/P77/vv+/f79/v3+/f77/vz+/v7+/vz++/77/vv+/P79/v3+/P77/vz+/f79/vz+/v7//vz+/P79/v3+/v78/vv+/v79/v3+//7//v/+//4A///+/v79/vz+/v7//v7+//7+/v7+//79/vz+//7+/v3+AP8A//7+/f79/v7+/v79/v3+/f4=',   // (SWITCH3.wav)
   button: 'data:audio/wav;base64,UklGRoYJAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSgJAAB+e36Gi3lqd5qlcktpoLKJVFaLrZZiVYatmWdPc6undFNmmKuDWWSQq5BdXImpmGpXeqSed1xvm6F+YGeMoYhjYX+bkWxeeJaUdV9ylJmAZmuNnYpuaoWek3VrgJmXe2l3kJaBam+HkoVtZ36Ph3FmdoyLd2pzipGBbnKHlIt2dIaUkH51gpOTg3V6i5CDdHOCi4FybnmGgnRsc4GFeW90gYiCdXaEjol+eoWQj4R9g4+Rh35/iI2Genh/hYF2cnZ8e3NtcHd4dG9xeH17eHp/g4OAg42Ym5eXnaSmn5manZqQh4SEgHhuampqZF1ZW15dWlleZWprbnV+hIaIjpWbnZyepKinpKGgoZ2VjomIg3tzbmxqZF5bW1tZVlZZX2NlaG52fYGEiZKYmpyfpKipqKanp6Odl5OPiYJ6dHFtZ2FdW1pYVVNVWFteYGZtdHl9g4ySlpmcoqepqqqrq6mkn5uXkYqCfHdybGZhXlxZVFJSVFVXWl9la3F2fIOKkJSZn6Soqaqsra2rpqKemZKMhX95c2xmYl9bV1RTUlNUVVhdYmhtc3qBiI6TmZ6jp6qsr7Cwr6yppJ+ZkouEfHZwaWNfW1ZTUE9OTlBTV11iaHB3foaLkpidoqerrbCxsrGvrKeinJWOhoB4cmxlYFtXVFFOTU1OUVRZXmVsc3uCiI+Wm6CkqayvsrKysK6qpaCYkoqEfnNzZ2diUVJeRE9WPV1GWF5ZaXVohod/pYWloqK0ray9rq+/nLufm6CJiIh1eHRVclBYVkZVSkdQTkpjTmtqaIB3iJCQmaeXsqapuKi4r6urpJmfiouIcn5qaWZcWF1MVFFHVUVSVldhZml5e4CSi5+doaqnqa2np6qfpJmWlYyNiYSEgnt+cnBqX11RTEdCPkJCS1NdbXaHkp2pr7K0sa2roZ6Vj4uDgoGBg4aGjIuNjoiGfXRrYFVNQz47OUBEUV5qe4mUoauxuLW1sKmkm5SNhoGAfoCBhIiJjY6NioZ+dmthV0tGPjs7PkZRXGp5hpahq7O2ubeyrKWdlYyGgXx8fH6BhIeKjI2MiIJ4bmRYT0ZAPDs+Rk9caXiHlaOttLm6t7OspJySioJ8eXd3en2BhoqOj4+Mhn50aV9USkM+PD5ETlpod4WToay1ubq5tKykm5GHf3hzcnJ0eH2DiY2RlJKOhnxyZ1xSSEI/PkJLV2RzhJOirri+v764sKWZjYF2bGZjY2Zrc3qCi5GVl5WQiH5zaF1TS0ZFR01WYW59i5mmsLa6urawpp2RhXpwaWVkZWlvdn6FjZOVlZKMhHpvZVxTTUpKTlVfa3mGk6Grsre3ta+mnJGHe3FpZWNjaG11fISMkpaXlY+HfnNoX1VOSklNVVljcoKTnqmwtbi2saielYt8cWtmYmRobXJ7hIuRlpiXkYuDd2xjWVBLSUtPVmFufImWoq20t7e0raSaj4R4bmZhX2JocHiBipOYnJyXjoV5bmNZUU5OUVhgaXJ7gomOlJqfpKmtrq2poJODc2VYUE9VYXCDlqWvs62fjXhiUERAQ01ba3uJkJSSjYeBfX6DjJeiq7CwqJmGcmBRR0ZPX3OJn7C5urKgi3NdS0A9Qk1ccIGOlpiVj4eAe3t/iJOfqrCwqJmGcl5PR0ZOX3SLobS9vbShi3FaRzs5P0tccIWUnJ6bk4mAenh8hJCbpq6vqJqIc15PRkVNX3SLorTAwLWjjHFXQzg0OUhccYeYoaSgmI2BeXV3f4qXo6uvqpyKd2NSSEVMW3GIn7O/wLeljXNZRDczOUdacIeapaeknJCDd3FxdoGOm6asqqGTgG1bT0pOWm2DmKu4urKjj3ZeSj46QE1gdYueqKyon5KEd25sb3eCj5uhopuQgXFhV1JVYHCDl6q0t7CijnZgTUA8QU1edIqdqKypoJOEd25rbXWAjJigop2ThHRlWVNUXm2Ak6aytrGlkXtlUEE8P0pbcIeap6yropaIem5qa3F8iZafop+WiHlpXFRTW2l7jqKwt7SqmIJrVUQ8PkdWa4GVpKyrpZqMfXFqaW13hJGboaKaj4FyZFpWWmRzhZalrq+om4l1YFBHRElVZXiLm6WnpZ2ShHhwbG50fomTm5yZkYR3amBbXGNvfo6dqKyon5B+bFxQS01VY3OEk56jopySh3xybW1xeIGLk5eXkol/dWtkYmVseIWSnKOknpOGdmdbU1JXYGx7iZadn5uUi392b2xudHyFj5aZl5GHfXJpY2NocXyIlZ2gnpeNf3JlW1dYXmh0gY2Wm5qWjoV9dXFxc3mAiI6TlJCJgXhwamhpbneBi5WcnZqTh3tvZV1bXWRueYWPlpmXkoqDe3RwcXR6gomPk5KPh393b2loa3F6hY+XnJyYkIV4bGNdW19mcHyHkZeZl5GJgHlzcXF1fIOKkJKSjYZ+dm9qaWxyfIWPl5ublo2Dd2xjX15haHJ9h5CVlpOOh4B6dXN0d32CiIyOjYmEfnhzcG9ydn2Eio+Sko6IgnpybWppbHB3fYSJjIyLiISAfHl4eHp+goWIiYmHg397d3V0dnl+goeLjY2KhoF7dnBtbW5zeH2Ch4qLioiEgHx5eXh6fYGEhoiHhoN/fHh2dXZ5fYKGiYyMioaBfHdzcG5vcnd8gYWIiomHhIF+e3l5en2Ag4WHh4aEgHx5d3Z2eHyAhIiKi4uIhH55dXFwcHJ2en+Dh4qKiIWDf3x6eXp7foGEhYaGhYF+e3l3d3h6foKGiYqKiIWBfHdzcXFydXl9goaIiYiGhIF+e3p6fH2AgoWGhYSCgH57enl5e32AgoSGhoWDgX57eXd2dnh6fH6Bg4SEhIKBf359fH19foCBg4ODgoB/fXx7e3t9f4GChIWEg4KAfnt6eHd4eXt9f4KDhISDgoB/fX18fX5/gIGCg4KBgH99fHt7fH1/gYOEhISDgX99e3l4d3h6fH6AgoSEhIOBgH59fH19fn+BgYKDgoGAfn18fHx9fn+BgoSEhIKBf317enh4eXt9f4CCg4ODgoF/f318fX5+f4CCgoKBgIB+fXx8fH1+gIGCg4ODgoF/fXx7ent7fH1/gIGCgoGBgH9+fn19fn5/gIGBgoGAf39+fX59fX6AgIGCTElTVDIAAABJTkZPSUNPUBYAAABBMSBGcmVlIFNvdW5kIEVmZmVjdHMASU5BTQcAAABCdXR0b24AAA==',
+  flashbulb: 'data:audio/wav;base64,UklGRmwEAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZmFjdAQAAAD+AwAAZGF0Yf4DAACAgICAgH9/f35/gICIfn55gIOQjoJ+cHBze3p+f4OCh4WMjZCRlJKQjYeIhYWAfnpxamdkYmBgYGBgYGRsdHqAh4yQkpKRjo6QkpKYnqCemJaYmJiUkI2Hg4B8eXNwb2pnZmRiYGBgZ253foGCg4V/enl7fX15d3R3eXp8f4aNlpqenJmOhoOAgoaMkZKQjIeDgH95d3dzb2RgYGdobHN9h5CNiIaFgoB/gISIiYyMioeJjZKUlI2IhYaEgHhsZ2RgYGBiZ2pwcnR5en6Ag4WFhIOCgHx6en2AhY2RlpSUkI2Hg4GAenh7gIWJjIyHg4GAgIB9e3t5eHRzcG5uc3l/gYOFhIOAgH17fH+AgIKAgIB+gIOIj5CQiYaCfnl3c3BwdHl/gYOEhYWDgH9+eXh4d3l6e4CChYaFh4qMiYeFhYSCg4KAf3x5d3h3dHFwcHN0dHd3d3h5eXl6enyAgIOGjJCSlJacnp6alo+IhICAfXp5d3d4e36AgIGDg4OCgH98d3BubG5wcnNzdnd3eHl7f4GDhYeHh4WDg4KAgH19f4CBgoKDg4GAfn1+gICBgYKDgoGAgoSHiYmHhYOAfXt7e3l6e3t7fX6AgICAgH58fX1+fn9/gICAgICBgoODgoGAgICAf39/gICChIWGhYSCgYCAf359fn5+fXt7e31+f39/gIB/f35+fn19fX5/f39+fX18fXx8fH1+gICAg4SEhYWGh4aGhYODgoCAgICAgICBgoOFhYWCgH99e3l4d3d3eHd3d3d2d3d4enx/gIGFhoiJioyMiomIhoSCgIGBgYKCgoODgoGAgH9/fn17e3t6enp6enl5eHh5e36AgICAgYKDg4ODg4KBgICAgICAgH+AgICAgIB/gIB/fn5+f4CAgICAgICAf35+f4CAgICAgICAgICAgICAgYGBgoKDg4KBgICAgICAgICAgICAgICAgIGAgICAf359fHx7e3p7e3t8fX9/gICAgYGBgYGBgYGCgoGBgoKCgoKBgYKCgoGBgICAgH9+fn1+fn59fX18fHx9fX5/gICAgICAgIB/fn5+fn5/f4CAgICAgICAgICAgICBgYKCgoGBgICAgICAgICAgH9/f39+fn5+f39/gICAgICAgYGBgYCAgICAgH9/fn5+fX5+fn5/gICAgIGBgoODgoKCgYGAgICAgICAgICAgICAgH+AgICAgICAgICAgICAgICAgICAgICAgICAgIGBgYGBgYGAgICAgH9+fX18e3t8fX19fn5+f3+AgICAgICAgICAgICAgICAgIB/fn59fX19fn5+fn9/gICAgIGCgoODg4ODg4ODgoKCgoGAgICAgIB/f39+fn5+fkxJU1Q2AAAASU5GT0lDT1AWAAAAQTEgRnJlZSBTb3VuZCBFZmZlY3RzAElOQU0LAAAARmxhc2ggQnVsYgAA',   // (cooltinpot's flashbulb.wav: trading Tix)
+  kerplunk: 'data:audio/wav;base64,UklGRtsHAABXQVZFZm10IBAAAAABAAEAESsAABErAAABAAgAZGF0YbcHAAB/f3+AgH59goyEaGh8gIiCeHBpfJKFd3mAh5WUinmHrrKIdpu4l3SNnJaGgG1COmiEg4B6gJqnm3p9rbF6X4mvooiLlnxWYmxYNyQ9Y3h3eHl3fnttXk5MWGNoa2xocGxWWXiVgltWbHyKoaWCbnd3b3OMh2ZgeYJzeZCalqi4qpyiqqapub2ehYOOmqetln9+jZOIg4marKymoaasp6SfkouQk4uGi42IkZ2SgX+Eg4KUoJGLl6GVjJWLeHyIgnR8h3Vpg5mHam6ChX6EiH10c2hfbXFlX2RiUVFmZE1PaHFgWWFcVGJwaF9oaFRNWV1JP1BgW11vdV9HSFhgV1NfdIGFgnt0dYGAcWNoeYJ9fo6Yjn19io+GhZCfp6ichXaDnKSck5OTjYqMkJaampudm5WUmp6bl5OLgX6Hk5KKhoWEgoKAfn2Bg4GAgoWDgIGDhIF9enl6fH+DhoWDf3l2dnh6dnJycW5vc3VybnF4fHt8fn58fX96dHeBh4F7enVtanB2dnJzfYSDf3t6enp8fHh5gYiJh4mGfHZ5gIaIioyLiYaBgoaLjo6KhIGDiYqKioiFhIiLiYOAhYmIhYSHjI6LhYKEhoaFhoaFhIWFgn57e4KJjIqHhH92bnB5f4B+foGBgIB/fX2AhIWFh4aCfnt2cG92enp5eXl5ent6eHp9gIGDg4F9e31/gIGDgn99e3h3enx8fYCBf4CEh4aFhoWChImLiomIhX98fX9+gISHhoWGh4iJioeCgoWHhYOEgoGBgH17foSIiIaEhISEhYSCgX9/f317e32Af3t5fYKDgH+AgH18fX59fH19fH18e3x/gX58fX59fH1/gYKBf3x8fHt7fX17fICCgH9/f35+f3+AhIWBfnt5eHl8fXt+gX98foKCgoOEgX6AgYB/gIGBg4WEgYKCfXl8g4SEhoeFgoKCgYKGiImKiYeDgYB7eHp/gH+AhIWEg4KAfn+Ag4SEgX9+fnt4eXx+fX1/goF/f357eXp9gIGAf359e3l6fH5+fX5+fn5+fHp5e31/fn19fXx9fn5+fHx9fn+AgYKCgH59fn9/f4CBgYGBf318f4GCg4KDg4KAfn+AgYGDg4KBgYKAf3+BgoKBgH5+fn5/gICAgICAgICBgoGAf39/f39+fn+Af4CBgH99fX5+f4GBgYCAgIB/f3+AgIGBgH5+fXx7e32AgIJ/f4GBf3t/gn18f4F5dn5+fHx9foJ+f4CDgoKDf32BhYuEi4yIhH11dnFwdHJ3eHl5fX14hYOKjI6Hf3RtYltpY3d9io6YlZSck5WOj4eDfXZzbXJreoCKkJ2cn5+WkoN9cW1rcXR9hIiJiYR+e3VxaWJcWFtZWF1pbXyMn6musKudkIZ6cmxsbnJ0fYOEiIuPjY2PjYZ8dm9raWtxeYGMk5eYlIuCdmtlYWBgYWVpcXh9ho2Ul5ygnZmQiYF9foCDipGWlZWWkYuCf3dwbWxta2ttbnR7g4qPkI+KgnhxbmppbXN4gIeLioqKiIWFg4GAfX17fH+Fi5SdoaOhnJWLgXdwa2doa2xvdHd6fX6AgIGBfnl1cm5sbXJ5gomRlZiXlI+Jgn16eHd3eXp8gISHi4+SkpGNiIF8dnNwcXN1eX6BgoGAfnx6eHd2dnR0dHZ5fYGHjZGTkpGOiYWBfnx8foCDhoiIiYiIhoSBfnp2cnBvb3F0eX6ChoiIh4WCfnt4dnV0dXd5fH+DhoiLjIuLiYWCf317e3x+gYSHiYqJiIWCf3x5dnNycHBxdHZ5fH+AgoKCgH58enl6e3x/goSGh4mJioqIh4WEgoB/fn5/gIKDhIWFhIOBf317eXh3d3d3eHp7fH19fX18e3p4eHd4eXt+gIOGiImJiYiHhYSCgYB/fn+AgoOEhISDgoGAfXt5d3d2eHl6fH6AgIGBgH9+fHt6enp6e3x+gIOFhoiIh4aEg4GAf39/f4CBgoKDg4ODgoF/fXt5eHd3eHh6e31/gICAf39+fn18fHx9fX+AgoSFhoeHh4aFg4KAfn19fn5/f4CBgoKCgoF/fnx7enl5eXl6e31+f3+AgH9/f359fX1+fn+AgYKDhIWFhYWEg4GAf39/f39/gIGBgYGAf359fHt6enl5ent8fn+AgYGCgoGAf359fHx9fn+BgoOEhYWFhYSDgoGAgH9/fn9/f4CBgoKCgYB/fXx7enp6e3t8fX5+f4CAgICAgH9/fn5+fn+AgYKCg4SEhIOCgoGAf39/f39/gICAgICBgIB/f359fXx9fX1+fn+AgIGBgIB/f39+fn9/f3+AgICBgYGBgYGAgH9/f39/f4CBgYKCgoKBgYB/f35+fn19fX1+f3+AgICAgIB/f35+fn5+f4CAgYKCgoKBgYGAgICAf39/fn5/f4CAgYGBgYGAf39+fn5+f3+AgICAgIB/f39/f39+fn5+fn5/f4CAgYGBgYGAgICAgICAgYGBgYGBgICAgIB/f39+fn5+fn5/f3+AgICAf39/f39/f39/f4CAgICAgICAgICAgIB/f3+AgICAgICAgICAgICAgICAgH9/f39/f39/f4CAgIB/f39/f39/gICAgICAgICAf3+AgICAgIB/f3+AgICAgICAgICAgICA',
 };
 const wavBufs = {};
 // play several at exactly the same moment (they're decoded first, then all started together)
@@ -1431,25 +1553,25 @@ function makePart(o) {
   const shape = o.shape || 'box', size = o.size || [4, 1.2, 2], color = o.color || BC['Medium stone grey'];
   const anchored = !!o.anchored;
   let mesh, cshape;
-  const trans = o.trans || 0;
+  const trans = o.trans || 0, mats = o.wood ? woodMats(color, trans) : partMats(color, true, trans);
   if (shape === 'ball') {
     const r = size[0] / 2;
-    mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 18), partMats(color, true, trans)[0]);
+    mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 18), mats[0]);
     cshape = new CANNON.Sphere(r);
   } else if (shape === 'cyl') {
     const r = size[0] / 2;
-    mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, size[1], 20), partMats(color, true, trans)[0]);
+    mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, size[1], 20), mats[0]);
     cshape = new CANNON.Cylinder(r, r, size[1], 12);
   } else if (shape === 'wedge' || shape === 'cwedge') {
     const { verts, faces } = polyOf(shape, size);
-    mesh = new THREE.Mesh(polyGeo(verts, faces), partMats(color, true, trans)[0]);
+    mesh = new THREE.Mesh(polyGeo(verts, faces), mats[0]);
     mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), outlineMat));
     cshape = new CANNON.ConvexPolyhedron({ vertices: verts.map(v => new CANNON.Vec3(...v)), faces });
   } else if (shape === 'truss') {
-    mesh = new THREE.Mesh(trussGeo(size), partMats(color, true, trans)[0]);
+    mesh = new THREE.Mesh(trussGeo(size), mats[0]);
     cshape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
   } else {
-    mesh = new THREE.Mesh(boxGeo(...size), partMats(color, !o.matte, trans));
+    mesh = new THREE.Mesh(boxGeo(...size), o.wood ? mats : partMats(color, !o.matte, trans));
     const lines = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), outlineMat);
     mesh.add(lines);
     cshape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
@@ -1468,7 +1590,7 @@ function makePart(o) {
   body.aabbNeedsUpdate = true;   // the bounds were computed at the origin before we moved it; anchored parts never refresh them on their own
   // destroy: an anchored destroyable. It stays put until an explosion reaches it, then comes loose (see explode)
   const p = { shape, size: [...size], color, trans, anchored, mass, kill: !!o.kill, win: !!o.win, locked: !!o.locked, bouncy: !!o.bouncy, destroy: !!o.destroy, mesh, body,
-    mode: anchored ? 'static' : 'dynamic', startAsleep: !!o.sleep, matte: !!o.matte,
+    mode: anchored ? 'static' : 'dynamic', startAsleep: !!o.sleep, matte: !!o.matte, wood: !!o.wood,
     spawn: !!o.spawn, btn: !!o.btn, door: !!o.door, neon: !!o.neon, open: !!o.open, seat: [1, 2, 3].includes(o.seat) ? o.seat : o.seat ? 1 : 0, wheel: !!o.wheel };   // (the new parts: see partLook)
   if (p.open) body.collisionResponse = false;
   if (shape === 'truss') trusses.add(p);
@@ -1569,9 +1691,9 @@ function partSpeedSq(p) {
 const serialize = (p) => ({ s: p.shape, z: p.size, p: p.body.position.toArray().map(n => +n.toFixed(3)),
   q: p.body.quaternion.toArray().map(n => +n.toFixed(4)), c: p.color, t: p.trans, a: p.anchored, k: p.kill, w: p.win, b: p.bouncy, m: p.mass, x: p.destroy,
   sc: p.scripts || undefined, v: p.hidden ? 1 : undefined, sg: p.sign || undefined,
-  wd: p.weld || undefined, st: p.seat || undefined, wh: p.wheel ? 1 : undefined, sp: p.spawn ? 1 : undefined, bt: p.btn ? 1 : undefined, dr: p.door ? 1 : undefined, n: p.neon ? 1 : undefined, op: p.open ? 1 : undefined });
+  wd: p.weld || undefined, st: p.seat || undefined, wh: p.wheel ? 1 : undefined, sp: p.spawn ? 1 : undefined, bt: p.btn ? 1 : undefined, dr: p.door ? 1 : undefined, n: p.neon ? 1 : undefined, op: p.open ? 1 : undefined, wo: p.wood ? 1 : undefined });
 const deserialize = (d, extra = {}) => makePart({ shape: d.s, size: d.z, pos: d.p, quat: d.q, color: d.c, trans: d.t, anchored: d.a, kill: d.k, win: d.w, bouncy: d.b, mass: d.m, destroy: d.x, scripts: d.sc, hidden: d.v, sign: d.sg,
-  weld: d.wd, seat: d.st, wheel: d.wh, spawn: d.sp, btn: d.bt, door: d.dr, neon: d.n, open: d.op, ...extra });
+  weld: d.wd, seat: d.st, wheel: d.wh, spawn: d.sp, btn: d.bt, door: d.dr, neon: d.n, open: d.op, wood: d.wo, ...extra });
 
 /* ---- the place ---- */
 const SPAWN = new V3(0, 1 + HY + 0.1, 0);
@@ -1793,7 +1915,10 @@ function partLook(p) {
     p.mesh.material = neonCache[key] || (neonCache[key] = new THREE.MeshBasicMaterial({ color: new THREE.Color(p.color).lerp(new THREE.Color('#ffffff'), 0.08),
       transparent: !!trans, opacity: 1 - trans }));
     p.mesh.castShadow = false;
-  } else p.mesh.material = p.shape === 'box' ? partMats(p.color, !p.matte, trans) : partMats(p.color, true, trans)[0];
+  } else {
+    const wood = p.wood ? woodMats(p.color, trans) : null;
+    p.mesh.material = p.shape === 'box' ? wood || partMats(p.color, !p.matte, trans) : (wood || partMats(p.color, true, trans))[0];
+  }
   p.fullMat = null;
   if (p.sign && !p.neon) signPart(p);
   if (p.spawn && !p.neon && p.shape === 'box' && !HEADLESS) {
@@ -3550,18 +3675,39 @@ function saveWallet() { try { localStorage.setItem(WALLET_KEY, JSON.stringify(wa
 function showWallet() { if (HEADLESS) return; $('tixN').textContent = wallet.tix; $('buxN').textContent = wallet.bux; }
 showWallet();
 const tixPopEl = HEADLESS ? null : document.body.appendChild(Object.assign(document.createElement('div'), { id: 'tixPop' }));
+// trading: Tix burst out of the button you pressed and tumble away (stop-motion: they hop 8 times a second)
+function tixBurst(el, n) {
+  if (HEADLESS || !el) return;
+  const r = el.getBoundingClientRect(), x0 = r.left + r.width / 2, y0 = r.top + r.height / 2, count = Math.min(30, 4 + n * 2), born = performance.now();
+  const tix = Array.from({ length: count }, () => {
+    const d = document.body.appendChild(Object.assign(document.createElement('div'), { className: 'tixFly', innerHTML: pxIcon('tix', 20 + Math.random() * 10 | 0) }));
+    const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4, sp = 380 + Math.random() * 520;
+    return { d, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: Math.random() * 360, spin: (Math.random() - 0.5) * 1400 };
+  });
+  const step = (now) => {
+    const t = Math.floor((now - born) / 125) * 0.125;   // (snapped to 8 steps a second)
+    if (t > 0.75) { tix.forEach(p => p.d.remove()); return; }
+    for (const p of tix) {
+      p.d.style.transform = `translate(${x0 + p.vx * t}px,${y0 + p.vy * t + 1500 * t * t}px) translate(-50%,-50%) rotate(${p.rot + p.spin * t}deg)`;
+      p.d.style.opacity = t > 0.45 ? 1 - (t - 0.45) / 0.3 : 1;
+    }
+    requestAnimationFrame(step);
+  };
+  step(born);
+}
 function earnTix(n) {
   if (HEADLESS) return;
   wallet.tix = Math.max(0, wallet.tix + n); saveWallet(); showWallet();
+  if (shop.open) renderShop();   // (Bob's window shows it too)
   if (n > 0) { tixPopEl.innerHTML = `${pxIcon('tix', 18)}+${n} Tix`; tixPopEl.classList.remove('go'); void tixPopEl.offsetWidth; tixPopEl.classList.add('go'); }
 }
 // buy a list of [slot, id] all at once (one thing, or the missing pieces of a set). false = not enough Bux
-function buyPieces(list, what) {
+function buyPieces(list, what, sfx = true) {
   if (!list.length) return true;
   const cost = list.reduce((n, [slot, id]) => n + buxPrice(BUYABLE[slot].find(i => i.id === id)), 0);
-  if (wallet.bux < cost) { walletNote = `You need ${cost - wallet.bux} more Bux for ${what}. PWN people in a game to get Tix!`; SFX.hurt(); return false; }
+  if (wallet.bux < cost) { walletNote = `You need ${cost - wallet.bux} more Bux for ${what}. PWN people in a game to get Tix!`; if (sfx) SFX.hurt(); return false; }
   wallet.bux -= cost; list.forEach(([slot, id]) => wallet.owned.push(slot + ':' + id)); saveWallet(); showWallet();
-  walletNote = `You bought ${what} for ${cost} Bux!`; SFX.spawn(); return true;
+  walletNote = `You bought ${what} for ${cost} Bux!`; if (sfx) SFX.spawn(); return true;
 }
 const player = new Humanoid({ name: 'Player', colors: look.colors, isPlayer: true, chatColor: '#ffe680', hid: 'H' });
 player.setHat(look.hat);
@@ -6100,7 +6246,7 @@ function insertPart(o) {
   const at = new V3(player.pos.x, 0, player.pos.z).addScaledVector(f, 10 + sz[2] / 2);
   snapToStuds(at, (sideways ? sz[2] : sz[0]) / 2, (sideways ? sz[0] : sz[2]) / 2);
   at.y = Math.max(player.pos.y - HY, 0) + sz[1] / 2 + (($('anchorChk').checked) ? 0.01 : 3);
-  const spec = { ...o, color: o.color || selColor, anchored: $('anchorChk').checked, destroy: $('anchorChk').checked && $('destroyChk').checked,
+  const spec = { ...o, color: o.color || selColor, anchored: $('anchorChk').checked, destroy: $('anchorChk').checked && $('destroyChk').checked, wood: $('woodChk').checked,
     pos: at.toArray(), rot: [0, turns * Math.PI / 2, 0] };
   if (o.btn) spec.scripts = [{ on: 'click', do: [['sound', 'click'], ['doors', spec.color]] }];   // (a button opens the doors of its own color)
   const kind = ['car', 'plane', 'seat', 'spawn', 'btn', 'door', 'neon', 'sign'].find(k => o[k]) || (o.shape === 'truss' ? 'truss' : null);
@@ -7078,7 +7224,7 @@ $('walletBox').addEventListener('click', (e) => {
   if (!b) return;
   const n = b.dataset.trade === 'all' ? Math.floor(wallet.tix / TIX_PER_BUX) : 1;
   if (!n || wallet.tix < n * TIX_PER_BUX) { walletNote = `You need ${TIX_PER_BUX} Tix to get 1 Bux. PWN people in a game to get Tix!`; SFX.hurt(); }
-  else { wallet.tix -= n * TIX_PER_BUX; wallet.bux += n; saveWallet(); showWallet(); walletNote = `You traded ${n * TIX_PER_BUX} Tix for ${n} Bux!`; SFX.click(); }
+  else { wallet.tix -= n * TIX_PER_BUX; wallet.bux += n; saveWallet(); showWallet(); walletNote = `You traded ${n * TIX_PER_BUX} Tix for ${n} Bux!`; tixBurst(b, n); playWavs(['flashbulb'], 1); }
   renderWallet();
 });
 function renderCatalog() {
@@ -7149,6 +7295,633 @@ $('site').addEventListener('click', (e) => {
 });
 $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'none'; look.pants = 'none'; look.face = 'smile'; look.tshirt = 'none'; saveLook(); refreshLook(); };
 
+/* ================= Bob's Shop =================
+   The Shop button on the front page breaks the page like glass: it cracks where you clicked, glass bricks burst
+   out of it (stop-motion, like the rocket blasts) and the page slides away to the right while the camera slides
+   into Bob's wooden shed. Bob leans on his counter, watches your mouse, talks, and sells you hats and clothes
+   for Bux. The shop is its own little 3D scene, only on your screen. */
+const BOB_LINES = {
+  hi: ['Watcha looking for?', 'Hey there, pal!', 'Welcome to my shop!', 'Oh hey! A customer!', 'Fresh threads, just in!'],
+  idle: ['Those jeans? Classic.', 'Hats, shirts, pants... I got it all!', 'Bux only, pal. No Tix.', 'This flannel smells like pancakes.',
+    'Need a new look?', 'Do not touch the mannequins.', "I've been leaning on this counter since 2006.", 'Guest 31 came in here once. Lots of screaming.',
+    'Shades on. Always.', 'Everything must go! Well... not everything.', 'Best prices in Blockburg!', 'Sorry about the window.'],
+  bought: ['Pleasure doing business!', 'Lookin sharp!', 'Great pick, pal!', 'Sold! Wear it proud.', 'Ka-ching!', "Good choice. I'd buy it too."],
+  broke: ["Hmm... you're a little short, pal.", 'No Bux, no deal!', 'Come back with more Bux!', 'PWN some people and come back!', 'Nice try, pal. That costs more.'],
+  own: ['You already got that one on!', 'Looking good in that!'],
+  wear: ['Oh yeah, that is a good look.', 'Now THAT is style.', 'Lookin fresh!'],
+  trade: ['Tix for Bux, coming right up!', 'Here ya go, fresh Bux!'],
+  noTix: [`You need ${TIX_PER_BUX} Tix for a Bux, pal. Go PWN somebody!`],
+  bye: ['Come back soon!', 'See ya, pal!', 'Stay fresh!', 'Later!'],
+  coming: ['Be right there!', 'Coming, coming!', 'One sec!', 'Hold on!'],
+  fetch: ['Hang on, I got a bag in the back!', 'Big spender! Be right back!', 'One sec, grabbing a bag!'],
+  bagSmall: ['Here ya go, a little bag of Bux!', 'A nice little bag, all yours!'],
+  bagBig: ['Oof! This one is HEAVY!', 'A whole sack of Bux, just for you!', 'Whew! That is a LOT of Bux!'],
+};
+const bobPick = (k) => { const l = BOB_LINES[k]; return l[(Math.random() * l.length) | 0]; };
+const SHOP_TABS = [['hats', 'Hats', 'hat', HATS], ['shirts', 'Shirts', 'shirt', SHIRTS], ['pants', 'Pants', 'pants', PANTS],
+  ['tshirts', 'T-Shirts', 'tshirt', TSHIRTS], ['faces', 'Faces', 'face', FACES]];
+const BOB_LEAN = 0.32;
+// where the camera ends up (looking in over the counter, a little to the side so the shop window doesn't cover Bob),
+// and where it slides in from
+const SHOP_CAM = { from: [15, 8.5, -24], fromAt: [7, 5, -2], to: [-2.6, 6.5, -11.5], toAt: [-2.6, 5, -1] };
+const shop = { scene: null, r: null, cam: null, shards: null, bob: null, bubble: null, door: null, open: false, busy: false, tab: 'hats',
+  chatT: 8, bubbleT: 0, wave: 0, shake: 0, say: '', t: 0, last: 0, camT: 1, mouse: null, raf: 0, ent: 9, entPrev: 9, entN: 0, bobAcc: 0, bill: null, give: 9, billFrom: null, bag: null, bagN: 0, fetch: 9, fetchPrev: 9, bagFrom: null };
+// handing you a Bux (seconds): hand down to his pocket, the bill comes out, he holds it out to you, it zips over to you
+// trading ALL your Tix (seconds, played 1.6x as fast): he hops off his step, runs into the back room, grabs a bag of
+// Bux, runs back out with it, plops it on the counter, and it zips over to you. The more you traded, the bigger the bag.
+const BOB_FETCH = { down: 0.3, inn: 1.3, back: 1.9, out: 2.9, up: 3.2, plop: 3.5, zip: 3.65, gone: 3.95, done: 4.2, speed: 1.6 };
+const bagSize = (n) => Math.min(2, 0.55 + Math.sqrt(n) * 0.22);
+const BOB_GIVE = { pocket: 0.25, out: 0.4, reach: 0.75, let: 1.2, gone: 1.55, done: 1.6 };
+// Bob's entrance (seconds): he waits in the back, bangs the door open, runs out, jumps at the counter, scrambles
+// up onto it with his legs kicking, then slides back down into his lean
+// (speed: how much faster than these times it really plays; the wait is so the door bangs as the camera gets there)
+const BOB_ENT = { wait: -2.15, run: 0.05, jump: 1.05, grab: 1.35, slide: 2.2, done: 2.6, speed: 1.6 };
+const BOB_PATH = [[2.2, 9.4], [2.2, 2.2], [0.3, -0.3]];
+// a head-on-a-stick, a shirt on a hanger or a pair of pants on a peg: a character with only those parts showing
+function shopFigure(colors, { shirt = 'none', pants = 'none', face = 'smile', hat = 'none', back = 'none', show }) {
+  const ch = makeCharacter(colors); dressCharacter(ch, colors, shirt, pants, face, 'none'); wearHat(ch, hat); if (back !== 'none') wearBack(ch, back);
+  const keep = { head: [ch.head, ch.hatHolder], shirt: [ch.torso, ch.armL, ch.armR], pants: [ch.legL, ch.legR] }[show];
+  if (keep) for (const o of [ch.head, ch.hatHolder, ch.torso, ch.armL, ch.armR, ch.legL, ch.legR]) o.visible = keep.includes(o);
+  return ch;
+}
+// the whole shop: grass, sky, the wooden shed (it opens toward -z), everything in it, and Bob
+function buildShopScene() {
+  const sc = new THREE.Scene(); sc.background = sky;
+  sc.add(new THREE.HemisphereLight(0xffffff, 0x8a8a8a, 1.7));
+  { const s = new THREE.DirectionalLight(0xffffff, 2.2); s.position.set(-4, 10, -7); sc.add(s); }
+  const grey = normColors({ skin: '#A3A2A5', shirt: '#A3A2A5', pants: '#A3A2A5' });
+  const yel = normColors({ skin: BC['Bright yellow'], shirt: BC['Bright yellow'], pants: BC['Bright yellow'] });
+  const box = (w, h, d, color, x, y, z, parent = sc, mats = partMats(color)) => {
+    const m = new THREE.Mesh(boxGeo(w, h, d), mats); m.position.set(x, y, z); parent.add(m); return m;
+  };
+  // a wooden brick by its bottom, like the town's buildings
+  const wood = (x, y, z, w, h, d, color) => box(w, h, d, color, x, y + h / 2, z, sc, woodMats(color));
+  const place = (ch, x, y, z, ry, s = 0.8) => { const g = new THREE.Group(); g.add(ch.root); g.position.set(x, y, z); g.rotation.y = ry; g.scale.setScalar(s); sc.add(g); return g; };
+  // outside: the baseplate, a path up to the shop, a few trees and a lamp
+  box(400, 2, 400, BC['Dark green'], 0, -1, 0, sc, partMats(BC['Dark green'], false));
+  box(4, 0.2, 30, BC['Institutional white'], -6, 0.1, -22);
+  for (const [x, z] of [[-24, -14], [22, -18], [-30, 12], [30, 8], [-12, 26], [14, 30]]) {
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 6, 12), partMats(BC['Reddish brown'])[0]); t.position.set(x, 3, z); sc.add(t);
+    const l = new THREE.Mesh(new THREE.SphereGeometry(2.5, 20, 14), partMats(BC['Dark green'])[0]); l.position.set(x, 7.5, z); sc.add(l);
+  }
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 7, 10), partMats(BC['Black'])[0]); post.position.set(12, 3.5, -7.5); sc.add(post);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.65, 16, 12), new THREE.MeshBasicMaterial({ color: BC['Bright yellow'] })); bulb.position.set(12, 7.4, -7.5); sc.add(bulb);
+  // the shed
+  const pine = '#B08050', plank = '#8A5A32', dark = '#6E4626';
+  wood(0, 0, 0, 20, 0.4, 14, plank);   // the floor
+  // the back wall, with a door into the back room (where Bob is when you show up)
+  wood(-4.65, 0.4, 6.5, 10.7, 10, 1, pine); wood(6.85, 0.4, 6.5, 6.3, 10, 1, pine); wood(2.2, 6.6, 6.5, 3, 3.8, 1, pine);
+  for (const x of [0.55, 3.85]) wood(x, 0.4, 6.1, 0.3, 6.5, 0.4, dark); wood(2.2, 6.6, 6.1, 3.6, 0.3, 0.4, dark);   // the door frame
+  const back = '#3b2614';
+  wood(2.2, 0, 9, 4.4, 0.4, 4, back); wood(2.2, 0.4, 10.8, 4.4, 6.4, 0.4, back); wood(2.2, 6.8, 9, 4.4, 0.4, 4, back);
+  for (const x of [0.3, 4.1]) wood(x, 0.4, 9, 0.4, 6.4, 4, back);
+  { // the door: it swings into the shop on its hinge (the left edge, as you look at it)
+    const door = new THREE.Group(); door.position.set(0.7, 0.4, 5.95); sc.add(door);
+    box(3, 6.2, 0.3, '#7a4a26', 1.5, 3.1, 0, door, woodMats('#7a4a26'));
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8), phong({ color: '#d9a520', shininess: 120, specular: 0xffffff }));
+    knob.position.set(2.55, 3, -0.25); door.add(knob);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 0.7), phong({ map: tex(canvas(190, 70, (g) => {
+      g.fillStyle = '#f2f3f3'; g.fillRect(0, 0, 190, 70); g.strokeStyle = '#c4281c'; g.lineWidth = 6; g.strokeRect(3, 3, 184, 64);
+      g.fillStyle = '#c4281c'; g.font = '900 30px Arial'; g.textAlign = 'center'; g.fillText('STAFF ONLY', 95, 46, 176);
+    })) }, false));
+    sign.position.set(1.5, 4.7, -0.17); sign.rotation.y = Math.PI; door.add(sign);
+    shop.door = door;
+  }
+  for (const s of [-1, 1]) wood(s * 9.5, 0.4, 0, 1, 10, 14, pine);   // side walls
+  wood(0, 9.4, -6.5, 20, 1, 1, dark);   // the beam over the front
+  wood(0, 10.4, 0, 22, 0.8, 16, dark); wood(0, 11.2, 0.5, 18, 0.8, 12, dark);   // the roof
+  wood(0, 0.4, -3.5, 17, 3, 2, plank); wood(0, 3.4, -3.6, 17.6, 0.4, 2.8, dark);   // the counter Bob leans on
+  for (const s of [-1, 1]) wood(s * 8.3, 5.6, 1, 1.4, 0.3, 8, dark);   // hat shelves
+  for (let i = 0; i < 11; i++) box(2, 0.3, 3.6, BC[i % 2 ? 'White' : 'Bright red'], -10 + i * 2, 8.7, -8.4).rotation.x = -0.38;   // a striped awning
+  wood(-12.4, 0, -4.5, 2.4, 2.4, 2.4, '#9A6B3C'); wood(-12.4, 0, -1.8, 2.4, 2.4, 2.4, '#9A6B3C'); wood(-12.3, 2.4, -3.1, 2.4, 2.4, 2.4, '#A87A48').rotation.y = 0.3;   // crates
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 3, 20), partMats(BC['Reddish brown'])[0]); barrel.position.set(12, 1.5, -3); sc.add(barrel);
+  { // the sign on the roof
+    const t = tex(canvas(512, 128, (g) => {
+      g.fillStyle = '#8a5a32'; g.fillRect(0, 0, 512, 128); g.strokeStyle = '#fff'; g.lineWidth = 8; g.strokeRect(6, 6, 500, 116);
+      g.fillStyle = '#fff'; g.font = '900 54px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.lineWidth = 5; g.strokeStyle = '#1b1b1b'; g.strokeText("BOB'S SHOP", 256, 68, 470); g.fillText("BOB'S SHOP", 256, 68, 470);
+    }));
+    t.repeat.set(1 / 12, 1 / 2.4);
+    const m = [...partMats(BC['White'])]; m[5] = phong({ map: t }); box(12, 2.4, 0.4, BC['White'], 0, 12, -7.6, sc, m);
+  }
+  // shirts on hangers along the back wall (facing out of the shop)
+  const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 17, 8).rotateZ(Math.PI / 2), partMats(dark)[0]);
+  rail.position.set(0, 8.75, 5.6); sc.add(rail);
+  ['hoodie', 'hawaii', 'tux', 'galaxyshirt'].forEach((id, i) => {
+    const ch = shopFigure(grey, { shirt: id, show: 'shirt' }); ch.root.position.y = -4;
+    ch.armL.rotation.z = -0.14; ch.armR.rotation.z = 0.14;
+    const g = place(ch, -6.6 + i * 4.4, 8.3, 5.2, Math.PI);
+    box(2.6, 0.14, 0.14, '#3a3a3a', 0, 0.05, 0, g); box(0.12, 0.5, 0.12, '#3a3a3a', 0, 0.35, 0, g);   // the hanger
+  });
+  // pants hanging on pegs, low on the back wall
+  ['jeans', 'camo', 'track'].forEach((id, i) => {
+    const ch = shopFigure(grey, { pants: id, show: 'pants' }); ch.root.position.y = -2;
+    const g = place(ch, -7.6 + i * 2.2, 4.7, 5.5, Math.PI);
+    box(0.2, 0.2, 0.6, dark, 0, 0.15, -0.3, g);   // the peg
+  });
+  // hats on heads, on the shelves of both side walls
+  [[-1, [['tophat', 'smile'], ['cowboy', 'troll'], ['viking', 'calm']]], [1, [['crown', 'starstruck'], ['wizard', 'drawn'], ['headphones', 'cool']]]].forEach(([s, list]) =>
+    list.forEach(([hat, face], i) => {
+      const ch = shopFigure(yel, { hat, face, show: 'head' }); ch.root.position.y = -4;
+      const g = place(ch, s * 8.1, 6.3, -1.4 + i * 2.6, s < 0 ? Math.PI / 2 + 0.45 : -Math.PI / 2 - 0.45, 0.85);
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.5, 10), partMats('#3a3a3a')[0]); neck.position.y = -0.25; g.add(neck);
+    }));
+  { // a mannequin in the knight set (with Jonny's little toy on its back), standing on a little round base
+    const ch = shopFigure(grey, { hat: 'knight', shirt: 'chainmail', pants: 'knightgreaves', back: 'axe', face: 'calm' });
+    place(ch, 5.6, 0.7, 3, Math.PI + 0.35, 0.95);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 0.3, 20), partMats('#3a3a3a')[0]); base.position.set(5.6, 0.55, 3); sc.add(base);
+  }
+  // on the counter: a cash register, a bell and a stack of folded shirts
+  const top = 3.8, cz = -3.7;
+  box(2.2, 1.2, 1.5, '#5d5f63', 5, top + 0.6, cz);
+  box(2.4, 0.3, 1.7, '#3c3d40', 5, top + 0.15, cz);   // the drawer
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.6), new THREE.MeshBasicMaterial({ map: tex(canvas(140, 60, (g) => {
+    g.fillStyle = '#0d2a12'; g.fillRect(0, 0, 140, 60); g.fillStyle = '#5dff7a'; g.font = 'bold 34px monospace'; g.textAlign = 'center'; g.fillText('$ BUX', 70, 44);
+  })) }));
+  const scrBack = box(1.6, 0.8, 0.2, '#5d5f63', 5, top + 1.6, cz + 0.5); scrBack.rotation.x = 0.4;
+  scr.position.z = -0.11; scr.rotation.y = Math.PI; scrBack.add(scr);
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) box(0.3, 0.12, 0.3, j ? '#d7d7d7' : '#f5cd30', 4.4 + i * 0.6, top + 1.25, cz - 0.2 - j * 0.45);   // buttons
+  const bell = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), phong({ color: '#d9a520', shininess: 120, specular: 0xffffff }));
+  bell.position.set(-5.2, top + 0.15, cz); sc.add(bell); box(1, 0.15, 1, '#2a2a2a', -5.2, top + 0.08, cz);
+  ['#C4281C', '#0D69AC', '#4B974B', '#F2F3F3'].forEach((c, i) => { const m = box(1.8, 0.3, 1.3, c, -3.3, top + 0.15 + i * 0.3, cz + 0.1); m.rotation.y = (i % 2 - 0.5) * 0.16; });
+  // the boards on the front of the counter
+  const board = (w, h, x, y, draw) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), phong({ map: tex(canvas(w * 64, h * 64, draw)) }, false));
+    m.position.set(x, y, -4.52); m.rotation.y = Math.PI; sc.add(m);
+  };
+  board(5.6, 2.2, 0, 2, (g, W, H) => {
+    g.fillStyle = '#23331f'; g.fillRect(0, 0, W, H); g.strokeStyle = '#8a5a32'; g.lineWidth = 14; g.strokeRect(7, 7, W - 14, H - 14);
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.font = 'bold 34px Comic Sans MS, Arial'; g.fillText('BUX ONLY!', W / 2, 52);
+    g.font = 'bold 22px Comic Sans MS, Arial'; g.fillStyle = '#ffe680'; g.fillText('Hats * Shirts * Pants * Faces', W / 2, 92);
+    g.fillStyle = '#9fd8ff'; g.fillText('No refunds. No Tix.', W / 2, 124);
+  });
+  board(2.4, 1.1, -5.6, 2.3, (g, W, H) => {
+    g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.strokeStyle = '#c4281c'; g.lineWidth = 8; g.strokeRect(4, 4, W - 8, H - 8);
+    g.fillStyle = '#c4281c'; g.font = '900 44px Arial'; g.textAlign = 'center'; g.fillText('OPEN', W / 2, 54);
+  });
+  // Bob: the red cap, the red plaid flannel, blue jeans and cool shades, leaning on the counter with his arms on it.
+  // (His top half turns at the hips and his head at the neck, so he can lean and look around.)
+  const colors = normColors({ skin: BC['Bright yellow'], shirt: BC['Bright red'], pants: BC['Bright blue'] });
+  const ch = makeCharacter(colors); dressCharacter(ch, colors, 'plaid', 'jeans', 'cool', 'none'); wearHat(ch, 'cap');
+  const upper = new THREE.Group(); upper.position.y = 2; ch.root.add(upper);
+  for (const o of [ch.torso, ch.armL, ch.armR]) { o.position.y -= 2; upper.add(o); }
+  const neck = new THREE.Group(); neck.position.y = 2; neck.rotation.order = 'YXZ'; upper.add(neck);
+  ch.head.position.y = 0.6; ch.hatHolder.position.y = 1.15; neck.add(ch.head, ch.hatHolder);
+  ch.root.position.set(0, 1.2, -0.8); ch.root.rotation.y = Math.PI; sc.add(ch.root);   // (on a step behind the counter)
+  { // a Bux bill for handing out (hidden in his hand until he pulls it out of his pocket)
+    const t = tex(canvas(150, 76, (g) => {
+      g.fillStyle = '#2f8f3a'; g.fillRect(0, 0, 150, 76); g.strokeStyle = '#bfeac0'; g.lineWidth = 4; g.strokeRect(5, 5, 140, 66);
+      g.fillStyle = '#bfeac0'; g.beginPath(); g.ellipse(75, 38, 22, 24, 0, 0, 7); g.fill();
+      g.fillStyle = '#1f6a2a'; g.font = '900 30px Arial'; g.textAlign = 'center'; g.fillText('B', 75, 49);
+      g.fillStyle = '#e8ffe8'; g.font = 'bold 17px Arial'; g.fillText('1', 22, 30); g.fillText('1', 128, 62); g.font = 'bold 13px Arial'; g.fillText('BUX', 26, 62); g.fillText('BUX', 124, 24);
+    }));
+    const bill = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.76), phong({ map: t, side: THREE.DoubleSide }, false));
+    bill.rotation.x = Math.PI / 2; bill.position.set(0, -0.15, 0.3); bill.visible = false; ch.hand.add(bill);   // (flat across the fist, sticking up)
+    shop.bill = bill;
+  }
+  { // a sack of Bux (for trading all your Tix), tied with a rope, with a Bux on the front
+    const pts = [[0, 0], [0.62, 0.05], [0.92, 0.3], [1, 0.7], [0.88, 1.05], [0.5, 1.32], [0.26, 1.42], [0.3, 1.6], [0.42, 1.78], [0.1, 1.82], [0, 1.82]].map(([x, y]) => new THREE.Vector2(x, y));
+    const bag = new THREE.Group();
+    const sack = new THREE.Mesh(new THREE.LatheGeometry(pts, 10), phong({ color: '#c29a5b', flatShading: true, shininess: 4 }, false));
+    const rope = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.07, 6, 14), partMats('#6b4a2a')[0]); rope.rotation.x = Math.PI / 2; rope.position.y = 1.44;
+    const label = new THREE.Mesh(new THREE.CircleGeometry(0.42, 20), phong({ map: tex(canvas(96, 96, (g) => {
+      g.fillStyle = '#2f8f3a'; g.beginPath(); g.arc(48, 48, 46, 0, 7); g.fill(); g.strokeStyle = '#bfeac0'; g.lineWidth = 5; g.stroke();
+      g.fillStyle = '#e8ffe8'; g.font = '900 56px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('B', 48, 52);
+    })) }, false));
+    label.position.set(0, 0.72, 1.02); label.rotation.x = -0.1;
+    bag.add(sack, rope, label); bag.visible = false; sc.add(bag); shop.bag = bag;
+  }
+  shop.bob = { ch, upper, neck, yaw: 0, pitch: 0, base: [ch.armL, ch.armR, ch.legL, ch.legR].map(o => o.position.clone()) };
+  shop.bubble = makeSprite(512, 128, 9); shop.bubble.visible = false; sc.add(shop.bubble);
+  shop.bubble.material.depthTest = false; shop.bubble.renderOrder = 5;   // (it shows over the awning)
+  shop.scene = sc;
+  shop.cam = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 1000);
+  shop.r = new THREE.WebGLRenderer({ canvas: $('shopCv'), antialias: true });
+  shop.r.setPixelRatio(Math.min(devicePixelRatio, 2)); shop.r.outputColorSpace = THREE.SRGBColorSpace;
+}
+/* ---- the glass: bricks of see-through glass (with white edges) that burst out from where you clicked and fly at
+   you and off to the right. Like the rocket blasts they're stop-motion: they hop to their next spot 12 times a second. ---- */
+function shatterGlass(cx, cy) {
+  if (!shop.shards) {
+    const r = new THREE.WebGLRenderer({ canvas: $('shopGlass'), antialias: true, alpha: true });
+    r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setClearColor(0x000000, 0);
+    const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    sc.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 2)); { const s = new THREE.DirectionalLight(0xffffff, 2.5); s.position.set(-2, 3, 4); sc.add(s); }
+    const glass = phong({ color: '#cfe9f8', transparent: true, opacity: 0.5, shininess: 140, specular: 0xffffff, depthWrite: false });
+    const edge = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+    const wedge = (shape, size) => { const { verts, faces } = polyOf(shape, size); return polyGeo(verts, faces); };
+    const geos = [boxGeo(1, 0.2, 1), boxGeo(2, 0.2, 1), boxGeo(1, 0.4, 1.4), wedge('wedge', [1.4, 0.25, 1.2]), wedge('cwedge', [1.2, 0.25, 1.2])];
+    shop.shards = { r, sc, cam, glass, edge, geos, list: [], t: 0, step: 0 };
+  }
+  const S = shop.shards;
+  S.r.setSize(innerWidth, innerHeight, false); S.cam.aspect = innerWidth / innerHeight; S.cam.updateProjectionMatrix();
+  S.list.forEach(b => S.sc.remove(b.m)); S.list = []; S.t = 0; S.step = 0; S.glass.opacity = 0.5; S.edge.opacity = 0.9;
+  const hh = Math.tan(25 * Math.PI / 180) * 10, hw = hh * S.cam.aspect;   // (half the screen, 10 studs in front of the camera)
+  const at = new V3((cx / innerWidth * 2 - 1) * hw, -(cy / innerHeight * 2 - 1) * hh, -10);
+  for (let i = 0; i < 110; i++) {
+    const near = i < 70, p = near ? at.clone().add(new V3((Math.random() - 0.5) * 5, (Math.random() - 0.5) * 4, 0)) : new V3((Math.random() * 2 - 1) * hw, (Math.random() * 2 - 1) * hh, -10);
+    const geo = S.geos[(Math.random() * S.geos.length) | 0], m = new THREE.Mesh(geo, S.glass);
+    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), S.edge)); m.scale.setScalar(0.6 + Math.random() * 0.9);
+    const out = p.clone().sub(at); out.z = 0; if (out.lengthSq() < 0.01) out.set(Math.random() - 0.5, Math.random() - 0.5, 0); out.normalize();
+    const v = out.multiplyScalar((near ? 7 : 3) + Math.random() * 8).add(new V3(4 + Math.random() * 6, 2 + Math.random() * 4, 3 + Math.random() * 9));   // (outward, up a bit, to the right, and at you)
+    S.list.push({ m, p, v, rot: new V3(Math.random() * 7, Math.random() * 7, Math.random() * 7), spin: new V3((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 16, (Math.random() - 0.5) * 16) });
+    S.sc.add(m);
+  }
+  $('shopGlass').classList.remove('hidden');
+}
+function glassStep(dt) {
+  const S = shop.shards;
+  if (!S || !S.list.length) return;
+  S.t += dt;
+  for (const b of S.list) { b.v.y -= 22 * dt; b.p.addScaledVector(b.v, dt); b.rot.addScaledVector(b.spin, dt); }
+  const k = Math.max(0, 1 - Math.max(0, S.t - 0.9) / 0.5); S.glass.opacity = 0.5 * k; S.edge.opacity = 0.9 * k;
+  if (Math.floor(S.t * 12) !== S.step) {   // the next stop-motion frame: every piece hops to where it really is now
+    S.step = Math.floor(S.t * 12);
+    const q = Math.PI / 6;
+    for (const b of S.list) { b.m.position.set(Math.round(b.p.x * 5) / 5, Math.round(b.p.y * 5) / 5, Math.round(b.p.z * 5) / 5); b.m.rotation.set(Math.round(b.rot.x / q) * q, Math.round(b.rot.y / q) * q, Math.round(b.rot.z / q) * q); }
+  }
+  S.r.render(S.sc, S.cam);
+  if (S.t > 1.4) { S.list.forEach(b => S.sc.remove(b.m)); S.list = []; $('shopGlass').classList.add('hidden'); }
+}
+/* ---- the screen itself is the glass: the front page cracks into pieces round where you clicked (each piece is a
+   real copy of the page, cut to shape), then they burst out at you and off to the right, the ones near the hit
+   first. Stop-motion like the rocket blasts: they hop 12 times a second. ---- */
+// the pieces: rings and spokes round the hit, wobbled a bit (the outer ring is split in two, so the big ones break up too)
+function screenTiles(cx, cy) {
+  const NA = 8, R = [0, 65, 180, 400, 3200], a0 = Math.random() * 7, A = [], n = (i) => (i + 1) % NA;
+  for (let i = 0; i < NA; i++) A.push(a0 + (i + (Math.random() - 0.5) * 0.5) / NA * Math.PI * 2);
+  const at = (a, r) => [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+  const V = R.map((r, j) => A.map(a => j > 0 && j < 4 ? at(a + (Math.random() - 0.5) * 0.12, r * (0.82 + Math.random() * 0.36)) : at(a, r)));
+  const tiles = [];
+  for (let i = 0; i < NA; i++) {
+    tiles.push([V[0][i], V[1][i], V[1][n(i)]]);
+    for (const j of [1, 2]) tiles.push([V[j][i], V[j][n(i)], V[j + 1][n(i)], V[j + 1][i]]);
+    const m3 = [(V[3][i][0] + V[3][n(i)][0]) / 2, (V[3][i][1] + V[3][n(i)][1]) / 2], m4 = at((A[i] + (n(i) ? A[n(i)] : A[0] + Math.PI * 2)) / 2, R[4]);
+    tiles.push([V[3][i], m3, m4, V[4][i]], [m3, V[3][n(i)], V[4][n(i)], m4]);
+  }
+  return tiles;
+}
+function shatterScreen(cx, cy) {
+  const site = $('site'), W = innerWidth, H = innerHeight;
+  // one copy of the page just as it looks now: without its hidden parts, and with its drawings (like your avatar) as pictures
+  const tpl = site.cloneNode(true);
+  const walk = (o, c) => {
+    for (let i = o.children.length - 1; i >= 0; i--) {
+      const oc = o.children[i], cc = c.children[i];
+      if (!cc) continue;
+      if (!oc.getClientRects().length) cc.remove();
+      else if (oc.tagName === 'CANVAS') {
+        let src = ''; try { if (oc === pv.domElement) pv.render(pvScene, pvCam); src = oc.toDataURL(); } catch { }
+        const img = new Image(); img.src = src; img.className = oc.className; img.style.cssText = oc.style.cssText;
+        img.style.width = oc.clientWidth + 'px'; img.style.height = oc.clientHeight + 'px'; cc.replaceWith(img);
+      } else walk(oc, cc);
+    }
+  };
+  walk(site, tpl);
+  const box = document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shopShards' }));
+  const maxD = Math.hypot(W, H), pieces = [], cl = (v, a, b) => Math.max(a, Math.min(b, v));
+  for (const poly of screenTiles(cx, cy)) {
+    const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]);
+    if (Math.max(...xs) < 0 || Math.min(...xs) > W || Math.max(...ys) < 0 || Math.min(...ys) > H) continue;   // (off the screen)
+    // it spins round its middle (the part of it that's on the screen)
+    const ox = poly.reduce((a, p) => a + cl(p[0], 0, W), 0) / poly.length, oy = poly.reduce((a, p) => a + cl(p[1], 0, H), 0) / poly.length;
+    const d = box.appendChild(document.createElement('div')); d.className = 'shard';
+    d.style.clipPath = `polygon(${poly.map(p => `${p[0].toFixed(1)}px ${p[1].toFixed(1)}px`).join(',')})`;
+    d.style.transformOrigin = `${ox.toFixed(1)}px ${oy.toFixed(1)}px`;
+    const page = tpl.cloneNode(true); d.append(page);
+    d.insertAdjacentHTML('beforeend', `<svg width="${W}" height="${H}"><polygon points="${poly.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/></svg>`);
+    page.scrollTop = site.scrollTop; page.scrollLeft = site.scrollLeft;
+    const dx = ox - cx, dy = oy - cy, dist = Math.hypot(dx, dy) || 1, near = 1 - dist / maxD, sp = (220 + Math.random() * 380) * near;
+    pieces.push({ d, delay: dist / maxD * 0.3, vx: dx / dist * sp + 260 + Math.random() * 380, vy: dy / dist * sp - 120 - Math.random() * 260,
+      vz: 250 + Math.random() * 550, rx: (Math.random() - 0.5) * 520, ry: (Math.random() - 0.5) * 520, rz: (Math.random() - 0.5) * 360 });
+  }
+  const hit = box.appendChild(Object.assign(document.createElement('div'), { className: 'hit' })); hit.style.left = cx + 'px'; hit.style.top = cy + 'px';
+  shop.screen = { box, pieces, hit, go: false, t: 0, step: -1 };
+}
+// one step of the flying pieces (from the shop's frame loop)
+function screenStep(dt) {
+  const S = shop.screen;
+  if (!S || !S.go) return;
+  S.t += dt;
+  const step = Math.floor(S.t * 12);
+  if (step === S.step) return;
+  S.step = step;
+  const st = step / 12;
+  S.hit.style.opacity = Math.max(0, 1 - st * 4);
+  for (const p of S.pieces) {
+    const t = Math.max(0, st - p.delay);
+    if (!t) continue;
+    p.d.style.transform = `translate3d(${(p.vx * t).toFixed(1)}px,${(p.vy * t + 1800 * t * t).toFixed(1)}px,${Math.min(800, p.vz * t).toFixed(1)}px) rotateX(${(p.rx * t).toFixed(1)}deg) rotateY(${(p.ry * t).toFixed(1)}deg) rotateZ(${(p.rz * t).toFixed(1)}deg)`;
+    if (st > 0.75) p.d.style.opacity = Math.max(0, 1 - (st - 0.75) / 0.4);
+  }
+  if (st > 1.2) { S.box.remove(); shop.screen = null; }
+}
+// (the old way, if copying the page ever goes wrong: cracks drawn over the page, which slides away)
+// the cracks in the front page, spreading out from where you clicked (they slide away with it)
+function drawCracks(cx, cy) {
+  const c = $('shopCrack'), g = c.getContext('2d');
+  c.width = innerWidth; c.height = innerHeight; g.clearRect(0, 0, c.width, c.height);
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  const lines = [];
+  for (let i = 0; i < 14; i++) {
+    let a = i / 14 * Math.PI * 2 + Math.random() * 0.3, x = cx, y = cy; const pts = [[x, y]], len = 120 + Math.random() * Math.max(innerWidth, innerHeight) * 0.6;
+    for (let d = 0; d < len; d += 20 + Math.random() * 40) { a += (Math.random() - 0.5) * 0.6; x += Math.cos(a) * 34; y += Math.sin(a) * 34; pts.push([x, y]); }
+    lines.push(pts);
+  }
+  for (const [w, col] of [[5, 'rgba(0,30,60,.35)'], [2, 'rgba(255,255,255,.95)']]) {
+    g.lineWidth = w; g.strokeStyle = col;
+    for (const pts of lines) { g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); }
+    for (let k = 1; k <= 3; k++) { g.beginPath(); for (let i = 0; i <= 14; i++) { const a = i / 14 * Math.PI * 2, r = k * 38 + Math.sin(i * 7) * 9; i ? g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r) : g.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.stroke(); }   // (rings round the hit)
+  }
+  const gr = g.createRadialGradient(cx, cy, 0, cx, cy, 60); gr.addColorStop(0, 'rgba(255,255,255,.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(cx - 60, cy - 60, 120, 120);
+  c.classList.remove('hidden', 'shop-out');
+}
+const easeInOut = (k) => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+// in we go: crack, smash, slide
+function enterShop(cx = innerWidth / 2, cy = innerHeight / 2) {
+  if (shop.open || shop.busy) return;
+  audioInit();
+  if (!shop.scene) buildShopScene();
+  shop.open = shop.busy = true; shop.camT = 0; shop.mouse = null; shop.tab = 'hats';
+  shop.r.setSize(innerWidth, innerHeight, false); shop.cam.aspect = innerWidth / innerHeight; shop.cam.updateProjectionMatrix();
+  $('shopCv').classList.remove('hidden');
+  playWavs(['snap'], 1);
+  if (shop.screen) { shop.screen.box.remove(); shop.screen = null; }
+  try { shatterScreen(cx, cy); } catch (err) { console.warn('glass', err); $('shopShards')?.remove(); shop.screen = null; }
+  if (!shop.screen) drawCracks(cx, cy);
+  setTimeout(() => {   // smash!
+    SFX.glass(); playWavs(['collide'], 0.35);
+    const site = $('site'); site.classList.remove('shop-back');
+    if (shop.screen) {   // the pieces are the page now: the real one goes away at once (it slides back in when you leave)
+      site.style.transition = 'none'; site.classList.add('shop-out'); void site.offsetWidth; site.style.transition = '';
+      shop.screen.go = true;
+    } else { shatterGlass(cx, cy); site.classList.add('shop-out'); $('shopCrack').classList.add('shop-out'); }
+  }, 200);
+  setTimeout(() => {   // the page is gone: here's the shop
+    shop.busy = false; $('shopCrack').classList.add('hidden');
+    $('shopWin').classList.remove('hidden'); $('shopLeave').classList.remove('hidden');
+    shop.chatT = 9; bobSay(bobPick('coming')); renderShop();
+  }, 1250);
+  shop.ent = BOB_ENT.wait; shop.entPrev = -9; shop.entN = 0; shop.bobAcc = 1; billBack(); shop.give = 9; shop.fetch = 9; shop.bag.visible = false;   // (he comes running out of the back)
+  shop.last = performance.now(); cancelAnimationFrame(shop.raf); shop.raf = requestAnimationFrame(shopFrame);
+}
+function leaveShop() {
+  if (!shop.open || shop.busy) return;
+  shop.busy = true; SFX.click(); bobSay(bobPick('bye'));
+  $('shopWin').classList.add('hidden'); $('shopLeave').classList.add('hidden');
+  $('site').classList.add('shop-back'); $('site').classList.remove('shop-out');   // (the page slides back in from the right)
+  setTimeout(() => { shop.open = shop.busy = false; $('shopCv').classList.add('hidden'); $('site').classList.remove('shop-back'); cancelAnimationFrame(shop.raf); }, 800);
+}
+function shopFrame(now) {
+  if (!shop.open) return;
+  shop.raf = requestAnimationFrame(shopFrame);
+  const dt = Math.max(0, Math.min(0.05, (now - shop.last) / 1000)); shop.last = now;
+  glassStep(dt); screenStep(dt);
+  // the camera slides in from the left side of the shed to looking in over the counter (so the view goes right)
+  if (shop.camT < 1) shop.camT = Math.min(1, shop.camT + dt / 1.5);
+  const k = easeInOut(Math.max(0, shop.camT - 0.1) / 0.9), C = SHOP_CAM, lerp = (a, b) => new V3(...a).lerp(new V3(...b), k);
+  shop.cam.position.copy(lerp(C.from, C.to)); shop.cam.lookAt(lerp(C.fromAt, C.toAt));
+  // Bob is stop-motion: he only hops to his next pose 8 times a second
+  if ((shop.bobAcc += dt) >= 1 / 8) { shop.bobAcc = Math.min(shop.bobAcc - 1 / 8, 1 / 8); bobPose(1 / 8); }
+  if (!shop.busy && shop.ent >= BOB_ENT.done && shop.fetch >= BOB_FETCH.done && (shop.chatT -= dt) <= 0) { shop.chatT = 10 + Math.random() * 8; bobSay(bobPick('idle')); }
+  if ((shop.bubbleT -= dt) <= 0) shop.bubble.visible = false;
+  shop.bob.neck.getWorldPosition(shop.bubble.position).y += 3;
+  shop.r.render(shop.scene, shop.cam);
+}
+// one step of Bob (st: how long it's been)
+function bobPose(st) {
+  const b = shop.bob, t = (shop.t += st), dt = st;
+  if (shop.ent < BOB_ENT.done) {
+    shop.ent = Math.min(BOB_ENT.done, shop.ent + st * BOB_ENT.speed); bobEntrance(shop.ent);
+    if (shop.ent >= BOB_ENT.done) { b.yaw = b.pitch = 0; shop.chatT = 9; bobSay(bobPick('hi')); }
+    return;
+  }
+  if (shop.fetch < BOB_FETCH.done) {
+    shop.fetch = Math.min(BOB_FETCH.done, shop.fetch + st * BOB_FETCH.speed); bobFetch(shop.fetch);
+    if (shop.fetch >= BOB_FETCH.done) { b.yaw = b.pitch = 0; shop.chatT = 9; }
+    return;
+  }
+  // talking now and then, looking at your mouse (or at you), breathing, waving, shaking his head
+  let look = shop.cam.position.clone();
+  if (shop.mouse) { const ray = new THREE.Raycaster(); ray.setFromCamera(shop.mouse, shop.cam); look = ray.ray.at(11, new V3()); }
+  const l = b.ch.root.worldToLocal(look);
+  let yaw = Math.max(-1.1, Math.min(1.1, Math.atan2(l.x, l.z))), pitch = Math.max(-0.45, Math.min(0.45, -Math.atan2(l.y - 5, Math.hypot(l.x, l.z))));
+  if (shop.shake > 0) { shop.shake -= dt; yaw += Math.sin(shop.shake * 22) * 0.45; }   // "nope"
+  const kk = Math.min(1, dt * 6);
+  b.yaw += (yaw - b.yaw) * kk; b.pitch += (pitch - b.pitch) * kk;
+  b.upper.rotation.x = BOB_LEAN + Math.sin(t * 1.7) * 0.012 - (shop.wave > 0 ? 0.2 : 0);
+  b.neck.rotation.set(b.pitch - b.upper.rotation.x, b.yaw, 0);
+  // arms on the counter; when you buy something he throws a hand up
+  const rest = -0.86 - BOB_LEAN;
+  b.ch.armL.rotation.x = rest + Math.sin(t * 1.7) * 0.01;
+  if (shop.wave > 0) { shop.wave -= dt; b.ch.armR.rotation.x += (-2.9 - b.ch.armR.rotation.x) * kk * 2; b.ch.armR.rotation.z = 0.25 + Math.sin(t * 14) * 0.3; }
+  else { b.ch.armR.rotation.x += (rest - b.ch.armR.rotation.x) * kk; b.ch.armR.rotation.z *= 1 - kk; }
+  if (shop.give < BOB_GIVE.done) bobGive(st, rest);
+}
+// one step of fetching a bag of Bux from the back room (see BOB_FETCH)
+function bobFetch(f) {
+  const ch = shop.bob.ch, F = BOB_FETCH, bag = shop.bag, cl = (v) => Math.max(0, Math.min(1, v)), hit = (at) => shop.fetchPrev < at && f >= at;
+  const mix = (a, z, u) => a + (z - a) * u, rest = -0.86 - BOB_LEAN, bs = bagSize(shop.bagN);
+  // his path to the door and back (the entrance path, the other way round)
+  const [p0, p1, p2] = BOB_PATH, len1 = p0[1] - p1[1], len2 = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]), L = len1 + len2, faceIn = Math.atan2(p1[0] - p2[0], p1[1] - p2[1]);
+  const along = (s) => s < len2 ? { x: p2[0] + (p1[0] - p2[0]) * s / len2, z: p2[1] + (p1[1] - p2[1]) * s / len2, face: faceIn } : { x: p1[0], z: p1[1] + (s - len2), face: 0 };
+  const run = (s, back, carry) => {
+    const a = along(s), sw = Math.sin(f * 17);
+    return { x: a.x, y: 0.4 + Math.abs(sw) * (carry ? 0.2 : 0.35), z: a.z, face: a.face + (back ? Math.PI : 0), lean: carry ? 0.05 : 0.25,
+      legA: sw * 0.9, legB: -sw * 0.9, armL: carry ? -1.25 : sw * 0.9, armR: carry ? -1.25 : -sw * 0.9, armZ: carry ? 0.15 + bs * 0.1 : 0.1, pop: 0.2, head: 0 };
+  };
+  const hold = { x: 0, y: 1.2, z: -0.8, face: Math.PI, lean: 0.05, legA: 0, legB: 0, armL: -1.25, armR: -1.25, armZ: 0.15 + bs * 0.1, pop: 0.2, head: 0 };
+  let P;
+  if (f < F.down) {   // hop down off his step and turn for the door
+    const u = cl(f / F.down);
+    P = { x: mix(0, p2[0], u), y: mix(1.2, 0.4, u) + Math.sin(u * Math.PI) * 0.4, z: mix(-0.8, p2[1], u), face: mix(Math.PI, faceIn, u), lean: mix(BOB_LEAN, 0.25, u),
+      legA: 0, legB: 0, armL: mix(rest, 0, u), armR: mix(rest, 0, u), armZ: 0, pop: 0.2 * u, head: mix(-BOB_LEAN, 0, u) };
+  } else if (f < F.inn) P = run((f - F.down) / (F.inn - F.down) * L, false, false);
+  else if (f < F.back) {   // in the back room: bend down, grab the bag, turn round
+    const grab = f < 1.6;
+    P = { x: p0[0], y: 0.4, z: p0[1], face: grab ? 0 : Math.PI, lean: grab ? 0.6 : 0.05, legA: 0, legB: 0, armL: grab ? -0.6 : -1.25, armR: grab ? -0.6 : -1.25,
+      armZ: grab ? 0.1 : 0.15 + bs * 0.1, pop: 0.2, head: grab ? -0.3 : 0 };
+  } else if (f < F.out) P = run(L - (f - F.back) / (F.out - F.back) * L, true, true);
+  else if (f < F.up) {   // hop back up onto the step
+    const u = cl((f - F.out) / (F.up - F.out));
+    P = { ...hold, x: mix(p2[0], 0, u), y: mix(0.4, 1.2, u) + Math.sin(u * Math.PI) * 0.4, z: mix(p2[1], -0.8, u), face: mix(faceIn + Math.PI, Math.PI, u) };
+  } else if (f < F.plop) {   // heave it up over the counter
+    const u = cl((f - F.up) / (F.plop - F.up));
+    P = { ...hold, lean: mix(0.05, 0.35, u), armL: u < 0.6 ? mix(-1.25, -2.3, u / 0.6) : mix(-2.3, -1.7, (u - 0.6) / 0.4), head: -0.2 };
+    P.armR = P.armL;
+  } else {   // and back to leaning on it
+    const u = cl((f - F.plop) / (F.done - F.plop));
+    P = { ...hold, lean: mix(0.35, BOB_LEAN, u), armL: mix(-1.7, rest, u), armR: mix(-1.7, rest, u), armZ: mix(hold.armZ, 0, u), pop: mix(0.2, 0, u), head: mix(-0.2, -BOB_LEAN, u) };
+  }
+  bobApply(P);
+  // the door: open on the way in, and again on the way out
+  const swing = (o, c) => f < o ? 0 : f < o + 0.15 ? 1.65 * (f - o) / 0.15 : f < c ? 1.65 : 1.65 * (1 - easeInOut(cl((f - c) / 0.35)));
+  shop.door.rotation.y = Math.max(swing(0.75, 1.35), swing(1.9, 2.5));
+  // sounds
+  if (hit(0.75)) SFX.clack();
+  if (hit(1.45)) SFX.step();
+  if (hit(1.6)) SFX.land();   // (a grunt as he picks it up)
+  if (hit(1.9)) { SFX.hammer(); SFX.clack(); }
+  if (hit(1.7) || hit(2.85)) SFX.clack();   // (the door shutting)
+  const n = Math.floor(f * 7);
+  if (n !== shop.entN && ((f > F.down && f < F.inn) || (f > F.back && f < F.out))) { shop.entN = n; SFX.step(); }
+  // the bag: in his arms, then on the counter, then it zips over to you
+  bag.visible = f >= 1.6 && f < F.gone;
+  bag.scale.setScalar(bs);
+  ch.root.updateMatrixWorld();
+  const carried = ch.root.localToWorld(new V3(0, 2.3 - bs * 0.55, 0.45 + bs * 0.95)), onTop = new V3(0, 3.8, -3.4);
+  if (f < F.up) { bag.position.copy(carried); bag.rotation.y = ch.root.rotation.y; }
+  else if (f < F.plop) { const u = cl((f - F.up) / (F.plop - F.up)); bag.position.lerpVectors(carried, onTop, u).y += Math.sin(u * Math.PI) * 1.2; bag.rotation.y = Math.PI; }
+  else if (f < F.zip) { bag.position.copy(onTop); if (f - F.plop < 0.1) bag.scale.set(bs * 1.12, bs * 0.85, bs * 1.12); }   // (squash!)
+  else if (f < F.gone) {
+    const u = cl((f - F.zip) / (F.gone - F.zip)), to = shop.cam.getWorldDirection(new V3()).multiplyScalar(3).add(shop.cam.position);
+    bag.position.lerpVectors(onTop, to, u); bag.scale.setScalar(bs * (1 + u * 0.8));
+  }
+  if (hit(F.plop)) { SFX.land(); SFX.hammer(); bobSay(bobPick(shop.bagN >= 10 ? 'bagBig' : 'bagSmall')); }
+  if (hit(F.gone)) playWavs(['kerplunk'], 0.8);
+  shop.fetchPrev = f;
+}
+// the bill goes back in his hand, hidden
+function billBack() {
+  const bill = shop.bill; if (!bill) return;
+  shop.bob.ch.hand.add(bill); bill.rotation.set(Math.PI / 2, 0, 0); bill.position.set(0, -0.15, 0.3); bill.scale.setScalar(1); bill.visible = false;
+}
+// one step of handing you a Bux (see BOB_GIVE): it bosses his right arm around while it plays
+function bobGive(st, rest) {
+  const G = BOB_GIVE, arm = shop.bob.ch.armR, bill = shop.bill, g = (shop.give += st), L = BOB_LEAN, cl = (v) => Math.max(0, Math.min(1, v));
+  const pocket = -L + 0.1, reach = -1.75 - L, mix = (a, z, u) => a + (z - a) * u;
+  let ax, az;
+  if (g < G.pocket) { const u = cl(g / G.pocket); ax = mix(rest, pocket, u); az = 0.3 * u; }   // hand down to his pocket
+  else if (g < G.out) { ax = pocket + Math.sin(g * 40) * 0.12; az = 0.3; }   // digging around in there
+  else if (g < G.reach) { const u = cl((g - G.out) / (G.reach - G.out)); ax = mix(pocket, reach, u); az = mix(0.3, 0.1, u); }   // out it comes, over the counter
+  else if (g < G.let) { ax = reach + Math.sin(g * 30) * 0.06; az = 0.1; }   // "here ya go"
+  else { const u = cl((g - G.let) / (G.done - G.let)); ax = mix(reach, rest, u); az = mix(0.1, 0, u); }   // hand back on the counter
+  arm.rotation.x = ax; arm.rotation.z = az;
+  if (g >= G.out - 0.1 && g < G.let) bill.visible = true;
+  // you take it: it zips at you, getting bigger, and it's gone
+  if (g >= G.let && bill.parent !== shop.scene) {
+    shop.scene.attach(bill); shop.billFrom = bill.position.clone(); playWavs(['kerplunk'], 0.6);
+  }
+  if (bill.parent === shop.scene) {
+    const u = cl((g - G.let) / (G.gone - G.let)), to = shop.cam.getWorldDirection(new V3()).multiplyScalar(1.6).add(shop.cam.position);
+    bill.position.lerpVectors(shop.billFrom, to, u); bill.scale.setScalar(1 + u * 0.6);
+    if (u >= 1) billBack();
+  }
+  if (g >= G.done) billBack();
+}
+// Bob's whole entrance, as a pose for time e (see BOB_ENT). His arms and legs pop out from his body a bit while he
+// runs and scrambles, like a cartoon, and snap back on when he settles.
+function bobEntrance(e) {
+  const b = shop.bob, ch = b.ch, E = BOB_ENT, cl = (v) => Math.max(0, Math.min(1, v)), hit = (at) => shop.entPrev < at && e >= at;
+  // the door bangs open, wobbles, then swings shut behind him
+  shop.door.rotation.y = e < 0 ? 0 : e < 0.17 ? 1.95 * e / 0.17
+    : e < 1.3 ? 1.65 + 0.3 * Math.cos((e - 0.17) * 18) * Math.exp(-(e - 0.17) * 5) : 1.65 * (1 - easeInOut(cl((e - 1.3) / 0.6)));
+  if (hit(0)) { SFX.hammer(); SFX.clack(); }
+  if (hit(1.9)) SFX.clack();
+  if (hit(E.jump)) SFX.jump(0.6);
+  if (hit(E.grab)) SFX.land();
+  const n = Math.floor(e * 7);   // footsteps and scuffling
+  if (n !== shop.entN && e > E.run && e < E.slide && !(e > E.jump && e < E.grab)) { shop.entN = n; SFX.step(); }
+  shop.entPrev = e;
+  const [p0, p1, p2] = BOB_PATH, face2 = Math.atan2(p2[0] - p1[0], p2[1] - p1[1]) + Math.PI * 2;
+  // the scramble pose on top of the counter (the slide back down starts from it)
+  const scramble = (e) => {
+    const lean = 1.15 + Math.sin(e * 11) * 0.08, kick = Math.sin(e * 26) * 1, paw = Math.sin(e * 21) * 0.4;
+    return { x: Math.sin(e * 23) * 0.12, y: 1.95 + Math.abs(Math.sin(e * 19)) * 0.1, z: -1.5, face: Math.PI + Math.sin(e * 9) * 0.15, lean, legA: 1.4 + kick, legB: 1.4 - kick,
+      armL: -0.75 - lean + paw, armR: -0.75 - lean - paw, armZ: 0.4, pop: 0.45, head: -lean * 0.8 };
+  };
+  let P;
+  if (e < E.run) P = { x: p0[0], y: 0.4, z: p0[1], face: Math.PI, lean: 0.2, legA: 0, legB: 0, armL: 0, armR: 0, armZ: 0, pop: 0, head: 0 };
+  else if (e < E.jump) {   // running out the door with his arms flailing
+    const len1 = p0[1] - p1[1], len2 = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]), s = (e - E.run) / (E.jump - E.run) * (len1 + len2), ph = e * 17;
+    const u = cl((s - len1) / len2), sw = Math.sin(ph);
+    P = { x: p1[0] + (p2[0] - p1[0]) * u, y: 0.4 + Math.abs(sw) * 0.35, z: s < len1 ? p0[1] - s : p1[1] + (p2[1] - p1[1]) * u,
+      face: s < len1 ? Math.PI : face2, lean: 0.3, legA: sw * 0.9, legB: -sw * 0.9, armL: -1.6 + sw * 1.2, armR: -1.6 - sw * 1.2, armZ: 0.5, pop: 0.3, head: 0 };
+  } else if (e < E.grab) {   // a jump at the counter, reaching for it
+    const u = (e - E.jump) / (E.grab - E.jump);
+    P = { x: p2[0] * (1 - u), y: 0.4 + 1.55 * u + Math.sin(u * Math.PI) * 0.9, z: p2[1] + (-1.5 - p2[1]) * u, face: face2 + (Math.PI - face2) * u,
+      lean: 0.3 + 0.85 * u, legA: 0.8 * u, legB: 0.6 * u, armL: -2.6, armR: -2.4, armZ: 0.2, pop: 0.45, head: -0.5 * u };
+  } else if (e < E.slide) P = scramble(e);   // up on the counter, kicking his legs and pawing at it
+  else {   // sliding back down into his lean
+    const A = scramble(E.slide), u = easeInOut(cl((e - E.slide) / (E.done - E.slide))), mix = (a, z) => a + (z - a) * u;
+    P = { x: mix(A.x, 0), y: mix(A.y, 1.2), z: mix(A.z, -0.8), face: Math.PI, lean: mix(A.lean, BOB_LEAN), legA: mix(A.legA, 0), legB: mix(A.legB, 0),
+      armL: mix(A.armL, -0.86 - BOB_LEAN), armR: mix(A.armR, -0.86 - BOB_LEAN), armZ: mix(A.armZ, 0), pop: mix(A.pop, 0), head: mix(A.head, -BOB_LEAN) };
+  }
+  bobApply(P);
+}
+// put Bob in a pose: where he is, which way he faces, his lean and head, his legs and arms, and how far they pop out
+function bobApply(P) {
+  const b = shop.bob, ch = b.ch;
+  ch.root.position.set(P.x, P.y, P.z); ch.root.rotation.y = P.face;
+  b.upper.rotation.x = P.lean; b.neck.rotation.set(P.head, 0, 0);
+  ch.legL.rotation.set(P.legA, 0, 0); ch.legR.rotation.set(P.legB, 0, 0);
+  ch.armL.rotation.set(P.armL, 0, -P.armZ); ch.armR.rotation.set(P.armR, 0, P.armZ);
+  const [aL, aR, lL, lR] = b.base, q = P.pop;
+  ch.armL.position.set(aL.x - q, aL.y + q * 0.5, aL.z); ch.armR.position.set(aR.x + q, aR.y + q * 0.5, aR.z);
+  ch.legL.position.set(lL.x - q * 0.4, lL.y - q * 0.6, lL.z); ch.legR.position.set(lR.x + q * 0.4, lR.y - q * 0.6, lR.z);
+}
+// (more: extra words for the shop window only, so the bubble stays short)
+function bobSay(text, more = '') {
+  shop.say = more ? text + ' ' + more : text;
+  if (shop.open) $('shopSay').innerHTML = `<b>Bob:</b> ${escHtml(shop.say)}`;
+  if (!shop.bubble) return;
+  const { c, t } = shop.bubble.userData, g = c.getContext('2d');
+  g.clearRect(0, 0, 512, 128); g.font = 'bold 30px Arial';
+  const w = Math.min(500, g.measureText(text).width + 36);
+  g.fillStyle = '#fff'; g.strokeStyle = '#888'; g.lineWidth = 3;
+  g.beginPath(); g.roundRect(256 - w / 2, 8, w, 70, 14); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(240, 76); g.lineTo(256, 104); g.lineTo(272, 76); g.fill();
+  g.fillStyle = '#000'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 44, 480);
+  t.needsUpdate = true; shop.bubble.visible = true; shop.bubbleT = 5;
+}
+function shopWear(slot, id) { look[slot] = id; saveLook(); refreshLook(); }
+function renderShop() {
+  const [tab, , slot, list] = SHOP_TABS.find(t => t[0] === shop.tab);
+  const thumbs = tab === 'hats' ? hatThumbs : tab === 'faces' ? faceThumbs : clothThumbs[tab];
+  $('shopSay').innerHTML = `<b>Bob:</b> ${escHtml(shop.say)}`;
+  $('shopWallet').innerHTML = `<span>${pxIcon('tix', 16)} <b>${wallet.tix}</b> Tix</span><span>${pxIcon('bux', 16)} <b>${wallet.bux}</b> Bux</span>
+    <button class="b" data-shop="1">Trade ${TIX_PER_BUX} Tix for 1 Bux</button><button class="b" data-shop="all">Trade all</button>`;
+  $('shopTabs').innerHTML = SHOP_TABS.map(([id, name]) => `<button class="b${id === tab ? ' on' : ''}" data-shoptab="${id}">${name}</button>`).join('');
+  $('shopGrid').innerHTML = list.filter(i => buxPrice(i) && !i.admin && !isLimited(tab, i.id)).map(i => {
+    const mine = owns(slot, i.id), on = look[slot] === i.id;
+    return `<div class="shop-it${on ? ' on' : ''}"><img src="${thumbs[i.id]}" alt=""><div class="nm">${escHtml(i.name)}</div>
+      <div class="pr">${mine ? '&#10003; Yours' : `${pxIcon('bux', 12)} ${buxPrice(i)} Bux`}</div>
+      <button class="b${mine ? '' : ' buy'}" data-shopbuy="${i.id}">${on ? 'Wearing' : mine ? 'Wear' : 'Buy'}</button></div>`;
+  }).join('');
+}
+if (!HEADLESS) {
+  document.addEventListener('click', (e) => { const b = e.target.closest('[data-shop3d]'); if (b) { e.preventDefault(); enterShop(e.clientX, e.clientY); } });
+  $('shopLeave').onclick = leaveShop; $('shopX').onclick = leaveShop;
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && shop.open) leaveShop(); });
+  $('shopCv').addEventListener('pointermove', (e) => { shop.mouse = new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); });
+  $('shopCv').addEventListener('pointerleave', () => { shop.mouse = null; });
+  addEventListener('resize', () => { if (!shop.open) return; shop.r.setSize(innerWidth, innerHeight, false); shop.cam.aspect = innerWidth / innerHeight; shop.cam.updateProjectionMatrix(); });
+}
+$('shopWin').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-shoptab],[data-shopbuy],[data-shop]');
+  if (!b) return;
+  const d = b.dataset;
+  if (d.shoptab) { shop.tab = d.shoptab; SFX.click(); renderShop(); $('shopGrid').scrollTop = 0; return; }
+  if (d.shop) {   // Tix for Bux, right at the counter
+    const n = d.shop === 'all' ? Math.floor(wallet.tix / TIX_PER_BUX) : 1;
+    if (!n || wallet.tix < n * TIX_PER_BUX) { shop.shake = 0.9; bobSay(bobPick('noTix')); SFX.hurt(); }
+    else { wallet.tix -= n * TIX_PER_BUX; wallet.bux += n; saveWallet(); showWallet(); tixBurst(b, n); playWavs(['flashbulb'], 1);
+      if (d.shop !== 'all') { bobSay(bobPick('trade')); billBack(); shop.give = 0; }
+      else if (shop.fetch < BOB_FETCH.done) shop.bagN += n;   // (already getting a bag: it just gets bigger)
+      else { bobSay(bobPick('fetch')); billBack(); shop.give = 9; shop.bagN = n; shop.fetch = 0; shop.fetchPrev = -9; shop.entN = 0; }
+    }
+    renderShop(); return;
+  }
+  const [, , slot, list] = SHOP_TABS.find(t => t[0] === shop.tab), it = list.find(i => i.id === d.shopbuy);
+  if (!it) return;
+  if (look[slot] === it.id) bobSay(bobPick('own'));
+  else if (owns(slot, it.id)) { shopWear(slot, it.id); SFX.click(); bobSay(bobPick('wear')); }
+  else if (buyPieces([[slot, it.id]], 'the ' + it.name, false)) { shopWear(slot, it.id); playWavs(['kerplunk'], 1); shop.wave = 1.4; bobSay(bobPick('bought')); }
+  else { shop.shake = 0.9; SFX.hurt(); bobSay(bobPick('broke'), `(You need ${buxPrice(it) - wallet.bux} more Bux.)`); }
+  renderShop();
+});
+
 /* ================= UPDATE LOG =================
    Every update day gets an entry here, newest first: its date, a headline, and what changed (behind EXTEND).
    The newest headline also shows at the top of Blockburg News.
@@ -7159,7 +7932,10 @@ $('noobBtn').onclick = () => { look.colors = normColors(NOOB); look.shirt = 'non
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
-  { date: '11/2/2026', ver: '4.2', top: 'Airplanes! Plus a new Insert menu with sections and a search bar, and no more kill sticks', text: [
+  { date: '11/2/2026', ver: '4.2', top: 'Bobs Shop and airplanes! Plus a new Insert menu with a search bar, and no more kill sticks', text: [
+    'NEW: Bobs Shop! Click the gold Bobs Shop button on the front page and the screen itself smashes into pieces of glass. You land in Bobs wooden shed. Bob bangs open the STAFF ONLY door, runs out flailing his arms and scrambles onto his counter (in choppy stop-motion), then leans there and sells hats, shirts, pants, T-shirts and faces for Bux. Whatever you buy goes right on you!',
+    'Bob talks to you, follows your mouse with his eyes, throws a hand up when you buy something, and shakes his head when you are short on Bux. You can trade Tix for Bux right at his counter too, and when you trade (there or in the Catalog) your Tix go flying out with a flash! At the shop, Bob digs a Bux out of his pocket and hands it to you. Trade ALL your Tix and he runs to the back for a whole bag of Bux (bigger bag for more Bux)!',
+    'NEW: Wood bricks! Tick Wood in the Insert menu to build with wooden planks that have little wooden pegs for studs. Bobs shed is made of them.',
     'New updates come in a package now! The first time you open a new update, a brown brick package slides onto the loading screen. Click it to open it and see what is new!',
     'No more kill sticks! A brick that someone is moving with Grab or Clone now goes right through people and cannot hurt anyone, even a kill brick. Once they let go it works like normal again.',
     'NEW: Airplanes! Find them in Insert, under Vehicles. Sit in the front black seat to fly: W = faster, S = slower, A and D = turn, E = up, Q = down. Speed up on the ground, then press E to take off! There is a seat in the back for a friend.',
@@ -8484,7 +9260,7 @@ function hostHandle(h, conn, m) {
       }
       const np = makePart({ shape: o.shape, size: o.size.map(n => Math.min(64, Math.max(0.2, +n || 1))), pos: o.pos, rot: o.rot,
         color: o.color, anchored: !!o.anchored, destroy: !!o.anchored && !!o.destroy, kill: !!o.kill, bouncy: !!o.bouncy, trans: o.trans,
-        spawn: !!o.spawn, btn: !!o.btn, door: !!o.door, neon: !!o.neon, sign: o.sign, scripts: o.scripts, seat: o.seat });
+        spawn: !!o.spawn, btn: !!o.btn, door: !!o.door, neon: !!o.neon, sign: o.sign, scripts: o.scripts, seat: o.seat, wood: !!o.wood });
       histPush(h, [{ k: 'add', nid: np.nid }]);
       aiOnBuild(new V3(...o.pos), h);
       break;
@@ -8967,7 +9743,8 @@ $('mpCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinGame
 const LOAD_TIPS = ['Tip: Press 1-0 to pick your gear.', 'Tip: Hold right-click and drag to turn the camera.', 'Tip: Press Esc for the menu.',
   'Tip: The Tinpot Hat is the best hat. Obviously.', 'Tip: Rockets hurt you too. Aim away from your face!', 'Tip: Press Shift for shift lock.',
   'Tip: Click Join next to a friend to hop into their game.', 'Tip: Tick Bring the Guests on the Build page to build with company.',
-  'Tip: Wear every piece of an outfit set for a secret effect.', 'Tip: Guest 31 saw the knife. Do not mention the knife.'];
+  'Tip: Wear every piece of an outfit set for a secret effect.', 'Tip: Guest 31 saw the knife. Do not mention the knife.',
+  'Tip: Bob sells hats and clothes at Bobs Shop. Find the gold button on the front page!'];
 const loading = { on: false, pct: 0, cap: 0, label: '', t0: 0, creep: 0, local: false };
 const nextFrame = () => new Promise(r => { requestAnimationFrame(() => r()); setTimeout(r, 80); });   // (let the screen draw)
 function loadDraw() {
@@ -9614,7 +10391,8 @@ function updatePackage() {
   const ver = String(UPDATES[0].ver);
   let seen = null; try { seen = localStorage.getItem(SEEN_UPDATE_KEY); } catch { }
   const pic = $('bootPic');
-  if (seen === ver || !pic) return null;
+  const stamp = ver + '|' + UPDATES[0].top;   // (a new headline on the same day's update counts as new too)
+  if (seen === stamp || !pic) return null;
   const W = 380, H = 290, cv = document.createElement('canvas');
   cv.width = W * 2; cv.height = H * 2; cv.className = 'ld-pkg';
   let r;
@@ -9672,7 +10450,7 @@ function updatePackage() {
       $('bootMsg').innerHTML = '<b>A new update is here! Click the package to open it!</b>';
       const go = () => {
         removeEventListener('keydown', go); boot.removeEventListener('pointerdown', go);
-        try { localStorage.setItem(SEEN_UPDATE_KEY, ver); } catch { }
+        try { localStorage.setItem(SEEN_UPDATE_KEY, stamp); } catch { }
         audioInit(); playWavs(['snap'], 1); SFX.boing(0.7); setTimeout(() => playWavs(['victory'], 0.8), 200);
         phase = 'open'; openAt = performance.now();
         lid.userData.v = new V3(2.5, 11, 1);
@@ -9740,7 +10518,7 @@ if (!HEADLESS) (async () => {
 window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
   keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, pxUrl, BLUEPRINTS, makePart, BC, LOD, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
   get currentPlace() { return currentPlace; }, get currentFile() { return currentFile; }, loadPlaces, get dragging() { return dragging; },
-  award, playWavs, badgeTick, spawnRocket, setAdmin, runCmd, get myBadges() { return myBadges; }, get audio() { return AC; },
+  award, playWavs, shop, enterShop, leaveShop, shopFrame, get wallet() { return wallet; }, badgeTick, spawnRocket, setAdmin, runCmd, get myBadges() { return myBadges; }, get audio() { return AC; },
   saveBaseplate, saveRoomPlace, mpPlaceOptions, weldPicked, trySit, get night() { return night; },
   selection, hopperAct, undoRedo, openScriptEditor, closeScriptEditor, scEd, scThreads, fireScripts, setScripts, histOf, startDrag, stopDrag, insertPart, serialize, deserialize, get dragGroup() { return dragGroup; },
   pickAt(x, y) { mouseNDC.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); const h = pick(); return h && (h.object.userData.part ? 'part ' + h.object.userData.part.nid : h.object.userData.hum ? 'hum ' + h.object.userData.hum.name : 'other'); },
