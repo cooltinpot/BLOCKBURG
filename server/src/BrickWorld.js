@@ -58,9 +58,42 @@ function flyBodies(seat, bodies, th, st, pt, dt, grav) {
 
 // welds hold exactly: after each physics step every brick of a group goes right back to its spot on the group's
 // first brick. (The lock constraints carry the pushes and pulls, but they're springy and would slowly drift apart.)
+// rubble settles: a loose brick that has only been jiggling for a moment goes to sleep (a sleeping brick costs nothing,
+// and a pile of rubble would otherwise keep nudging itself awake forever). Anything that really hits it wakes it again.
+// (Welded bricks go by their group's first brick, see weldSnap. The game has the same.)
+function settleBricks(list, dt) {
+  for (const p of list) {
+    const b = p.body;
+    if (b.type !== CANNON.Body.DYNAMIC || b.sleepState === CANNON.Body.SLEEPING || p.weldC) { b.slowT = 0; continue; }
+    if (b.velocity.lengthSquared() + b.angularVelocity.lengthSquared() < 4) { if ((b.slowT = (b.slowT || 0) + dt) > 1.2) { b.sleep(); b.slowT = 0; } }
+    else b.slowT = Math.max(0, (b.slowT || 0) - dt);
+  }
+}
 function weldSnap(groups) {
+  const SLEEPING = CANNON.Body.SLEEPING;
   for (const g of groups) {
     let root = null;
+    // a welded thing (a parked car) sleeps all together: while its first brick sleeps, the rest sleep too and their welds
+    // switch off, so a car sitting still costs nothing. A real bump on any of its bricks wakes the whole thing up again.
+    for (const q of g) { root = q; break; }
+    if (!root) continue;
+    // (the other bricks always jiggle a little, since the snapping below fights the welds, so only the first brick counts)
+    const rb = root.body;
+    if (g.asleep) {
+      let woke = rb.sleepState !== SLEEPING;
+      for (const q of g) if (q.body.sleepState !== SLEEPING) woke = true;   // something woke one of its bricks (a bump, a blast, a driver)
+      if (!woke) continue;
+      g.asleep = false; rb.wakeUp();
+      for (const q of g) { if (q.weldC) q.weldC.enable(); q.body.wakeUp(); }
+    } else if (rb.sleepState === SLEEPING && rb.type === CANNON.Body.DYNAMIC) {
+      g.asleep = true;
+      for (const q of g) {
+        if (q === root) continue;
+        q.body.velocity.set(0, 0, 0); q.body.angularVelocity.set(0, 0, 0); q.body.sleep();
+        if (q.weldC) q.weldC.disable();
+      }
+    }
+    root = null;
     for (const q of g) {
       if (!root) { root = q; continue; }
       const b = q.body, rb = root.body, r = q.weldRel;
@@ -168,9 +201,12 @@ export class BrickWorld {
     world.addContactMaterial(new CANNON.ContactMaterial(this.physWheel, this.physHum, { friction: 0, restitution: 0 }));
     world.addContactMaterial(new CANNON.ContactMaterial(this.physHum, this.physPart, { friction: 0, restitution: 0 }));
     world.addContactMaterial(new CANNON.ContactMaterial(this.physBall, this.physPart, { friction: 0.2, restitution: 0.92 }));
+    this.physSlick = new CANNON.Material('slick');   // (a brick a blast just threw: slippery for a moment)
+    for (const m of [this.physPart, this.physWheel, this.physBall, this.physSlick, this.physHum]) world.addContactMaterial(new CANNON.ContactMaterial(this.physSlick, m, { friction: 0, restitution: 0.05 }));
     this.parts = new Map();    // nid -> { nid, d (the brick's description), locked, mode, body, sent }
     this.ghosts = new Map();   // 'h:<hid>' or 'p:<pid>' -> { body, seen }
     this.fellOut = [];
+    this.blastSlick = [];      // bricks a blast just threw: slippery for a moment
     this.welds = new Map();    // weld number -> the bricks welded together
     this.driven = new Map();   // driver's seat nid -> { th, st, at }: someone is driving that car         // bricks that fell off the world since the last update
   }
@@ -193,7 +229,7 @@ export class BrickWorld {
       collisionFilterGroup: G_PART, collisionFilterMask: -1 });
     body.position.set(...d.p);
     if (Array.isArray(d.q)) body.quaternion.set(...d.q);
-    body.sleepSpeedLimit = 0.4; body.sleepTimeLimit = 0.6;
+    body.sleepSpeedLimit = 2; body.sleepTimeLimit = 0.8;   // (a brick that is only jiggling falls asleep and stops costing anything. Gravity is strong here, so even a resting brick jiggles at about 1.6, and a lower limit would let rubble keep waking itself up forever)
     if (d.op) body.collisionResponse = false;   // an open door
     if (d.wh) body.linearDamping = 0.4;          // a car wheel: a parked car rolls to a stop
     const p = { nid, d: { ...d, z: size }, locked, mass, body, mode: d.a ? 'static' : 'dynamic', sent: null };
@@ -275,15 +311,18 @@ export class BrickWorld {
   // an explosion: throws every loose brick within the radius away from the center
   blast(c, radius) {
     if (!Array.isArray(c) || !c.every(Number.isFinite) || !(radius > 0 && radius < 100)) return;
+    this.wakeNear({ x: c[0], y: c[1], z: c[2] }, radius * 3);   // (rubble asleep nearby wakes up, so nothing is left floating)
     for (const p of this.parts.values()) {
       if (p.mode !== 'dynamic') continue;
       const b = p.body, dx = b.position.x - c[0], dy = b.position.y - c[1], dz = b.position.z - c[2];
-      const dist = Math.hypot(dx, dy, dz);
-      if (dist > radius) continue;
-      const f = 1 - dist / radius, k = dist > 1e-6 ? 1 / dist : 0;
+      const dist = Math.hypot(dx, dy, dz), r = radius + Math.max(...p.d.z) / 2;   // (a big brick gets thrown if its edge is in the blast)
+      if (dist > r) continue;
+      const f = 1 - dist / r, k = dist > 1e-6 ? 1 / dist : 0;
       b.wakeUp();
       b.velocity.x += dx * k * 110 * f; b.velocity.y += dy * k * 110 * f + 35 * f; b.velocity.z += dz * k * 110 * f;
       b.angularVelocity.set(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+      // slippery for a moment, so a wall pinned under a whole building really gets blown out of it (the game has the same)
+      if (b.material !== this.physSlick) { this.blastSlick.push({ p, mat: b.material, left: 0.3 }); b.material = this.physSlick; }
     }
   }
   // a hinge between two bricks (the seesaw): [nidA, nidB, pivotA, axisA, pivotB, axisB]
@@ -347,6 +386,13 @@ export class BrickWorld {
     const k = this.timeScale || 1;   // (/time: slow motion or fast forward)
     this.world.step(1 / 120 * Math.min(1, k), Math.min(dt, 1 / 20) * k, 3 * Math.ceil(Math.max(1, k)));
     weldSnap(this.welds.values());
+    settleBricks(this.parts.values(), Math.min(dt, 1 / 20) * k);
+    for (let i = this.blastSlick.length - 1; i >= 0; i--) {   // blasted bricks: back to normal after their moment
+      const s = this.blastSlick[i];
+      if ((s.left -= Math.min(dt, 1 / 20) * k) > 0) continue;
+      s.p.body.material = s.mat;
+      this.blastSlick.splice(i, 1);
+    }
     for (const p of [...this.parts.values()]) {
       if (!p.locked && p.body.position.y < -200) { this.remove(p.nid); this.fellOut.push(p.nid); }
     }

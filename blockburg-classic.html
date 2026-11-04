@@ -815,12 +815,19 @@
             <button class="s-btn go" data-play="classic">Play Solo</button> <button class="s-btn go online" data-online="classic">Play Online</button><div class="on-n" data-on-n="classic"></div></div>
         </div>
         <div class="in" style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px dashed #9bb7d8">
+          <img class="thumbCity" style="width:220px;aspect-ratio:4/3;border:1px solid #888;background:#4b974b" alt="">
+          <div style="flex:1;min-width:180px"><div class="gt" style="font:bold 14px Verdana;color:#0b4a99"><span class="new">NEW!</span> BLOCKBURG CITY</div>
+            <p>A whole city made of every kind of brick, and almost all of it blows up! Topple the tower, click the TNT crates, drive the cars and fly the plane.</p>
+            <button class="s-btn go" data-play="city">Play Solo</button> <button class="s-btn go online" data-online="city">Play Online</button><div class="on-n" data-on-n="city"></div></div>
+        </div>
+        <div class="in" style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px dashed #9bb7d8">
           <img class="thumbRedBlue" style="width:220px;aspect-ratio:4/3;border:1px solid #888;background:#4b974b" alt="">
-          <div style="flex:1;min-width:180px"><div class="gt" style="font:bold 14px Verdana;color:#0b4a99"><span class="new">NEW!</span> RED VS BLUE!</div>
+          <div style="flex:1;min-width:180px"><div class="gt" style="font:bold 14px Verdana;color:#0b4a99">RED VS BLUE!</div>
             <p>Two teams, two flags! Grab the other team's flag and run it back to your base. Trowel walls and paintballs only. Bring friends from the Multiplayer page!</p>
             <button class="s-btn go" data-play="redblue">Play Solo</button> <button class="s-btn go online" data-online="redblue">Play Online</button><div class="on-n" data-on-n="redblue"></div></div>
         </div></div>
         <div class="box news"><h3>Blockburg News</h3><div class="in" id="newsBody">
+          <p><b>BLOCKBURG CITY is open!</b> Shops, a bank, a power plant, an airport and a 10-floor tower, and almost every brick of it can be blown up. Blast the bottom of Blockburg Tower and watch it fall. Grab a rocket and go wild!</p>
           <p><b>RED VS BLUE is here!</b> Grab the other team's flag and run it back to your base. First to 3 captures wins. Warning: the Guests are scary good at guarding. Play it from the front page!</p>
           <p><b>Start your engines!</b> Three cars are waiting at the Race Track in Blockburg Classic. Please do not run over Guest 31. He has been through enough.</p>
           <p><b>Badge hunting season!</b> 39 badges to collect, from Obby Champ to Bux Baron. Hover a faded one under My Badges to see how to get it.</p>
@@ -834,6 +841,7 @@
 
     <div class="page hidden" id="p-games"><div class="box"><h3>Games</h3><div class="in"><div class="gamegrid">
       <div class="gcard"><img class="thumbClassic" alt=""><div class="gt">Blockburg Classic</div><div class="gs">by Player</div><button class="s-btn go" data-play="classic">Play Solo</button> <button class="s-btn go online" data-online="classic">Play Online</button><div class="on-n" data-on-n="classic"></div></div>
+      <div class="gcard"><img class="thumbCity" alt=""><div class="gt">BLOCKBURG CITY</div><div class="gs">by Player &middot; blow up the city</div><button class="s-btn go" data-play="city">Play Solo</button> <button class="s-btn go online" data-online="city">Play Online</button><div class="on-n" data-on-n="city"></div></div>
       <div class="gcard"><img class="thumbRedBlue" alt=""><div class="gt">RED VS BLUE!</div><div class="gs">by Player &middot; capture the flag</div><button class="s-btn go" data-play="redblue">Play Solo</button> <button class="s-btn go online" data-online="redblue">Play Online</button><div class="on-n" data-on-n="redblue"></div></div>
       <div class="gcard"><img id="thumbBase" alt=""><div class="gt">Happy Home Baseplate</div><div class="gs">by Player &middot; empty, build anything</div><button class="s-btn go" data-play="baseplate">Play Solo</button> <button class="s-btn go online" data-online="baseplate">Play Online</button><div class="on-n" data-on-n="baseplate"></div></div>
     </div>
@@ -892,7 +900,7 @@
       <div>
         <div class="box"><h3>Host a Game</h3><div class="in">
           <p style="margin-top:0">Start a game your friends can join. You'll get a <b>4-letter room code</b> to send them.</p>
-          Place: <select id="mpPlace"><option value="classic">Blockburg Classic</option><option value="baseplate">Happy Home Baseplate</option><option value="redblue">RED VS BLUE!</option></select>
+          Place: <select id="mpPlace"><option value="classic">Blockburg Classic</option><option value="baseplate">Happy Home Baseplate</option><option value="redblue">RED VS BLUE!</option><option value="city">BLOCKBURG CITY</option></select>
           <button class="s-btn go" id="hostBtn">Host Game</button>
         </div></div>
         <div class="box"><h3>Join a Game</h3><div class="in">
@@ -1457,6 +1465,10 @@ world.addContactMaterial(new CANNON.ContactMaterial(physHum, physPart, { frictio
 world.addContactMaterial(new CANNON.ContactMaterial(physHum, physHum, { friction: 0, restitution: 0 }));
 world.addContactMaterial(new CANNON.ContactMaterial(physBall, physPart, { friction: 0.2, restitution: 0.92 }));
 world.addContactMaterial(new CANNON.ContactMaterial(physBall, physHum, { friction: 0.2, restitution: 0.9 }));
+// a brick an explosion just threw is slippery for a moment, so a wall pinned under a whole building slides right out
+// (but it still lands on the ground). BrickWorld has the same.
+const physSlick = new CANNON.Material('slick');
+for (const m of [physPart, physWheel, physBall, physSlick, physHum]) world.addContactMaterial(new CANNON.ContactMaterial(physSlick, m, { friction: 0, restitution: 0.05 }));
 const afterStep = [];
 const later = (fn) => afterStep.push(fn);
 
@@ -1639,7 +1651,7 @@ function makePart(o) {
   body.position.set(...o.pos);
   if (o.quat) body.quaternion.set(...o.quat);
   else if (o.rot) body.quaternion.setFromEuler(...o.rot);
-  body.sleepSpeedLimit = 0.4; body.sleepTimeLimit = 0.6;
+  body.sleepSpeedLimit = 2; body.sleepTimeLimit = 0.8;   // (a brick that is only jiggling falls asleep and stops costing anything. Gravity is strong here, so even a resting brick jiggles at about 1.6, and a lower limit would let rubble keep waking itself up forever)
   if (o.wheel) body.linearDamping = 0.4;   // (a parked car rolls to a stop)
   body.aabbNeedsUpdate = true;   // the bounds were computed at the origin before we moved it; anchored parts never refresh them on their own
   // destroy: an anchored destroyable. It stays put until an explosion reaches it, then comes loose (see explode)
@@ -1702,7 +1714,7 @@ function lodBricks() {
     const d = p.mesh.position.distanceTo(c) - Math.max(p.size[0], p.size[1], p.size[2]) / 2;
     p.mesh.visible = !p.hidden && d < LOD.hide;
     p.mesh.castShadow = d < LOD.shadow;
-    if (p.shape !== 'box' || p.neon) continue;
+    if (p.shape !== 'box' || p.neon || p.sign) continue;   // (signs keep their words, so you can read them from far off)
     if (!p.fullMat) p.fullMat = p.mesh.material;
     const want = d < LOD.simple ? p.fullMat : p.fullMat[0];
     if (p.mesh.material !== want) p.mesh.material = want;
@@ -1941,13 +1953,17 @@ const trusses = new Set(), spawns = new Set();
 function trussNear(h) {
   if (!trusses.size) return null;
   const b = h.body.position, l = new THREE.Vector3(), iq = new THREE.Quaternion();
+  let near = null;
   for (const p of trusses) {
     const c = p.body.position;
     if (Math.abs(c.x - b.x) > 40 || Math.abs(c.z - b.z) > 40) continue;
     l.set(b.x - c.x, b.y - c.y, b.z - c.z).applyQuaternion(iq.copy(quatOf(p)).invert());
-    if (Math.abs(l.x) < p.size[0] / 2 + 1.4 && Math.abs(l.z) < p.size[2] / 2 + 1.4 && l.y > -p.size[1] / 2 - 2.6 && l.y < p.size[1] / 2 + 2.4) return p;
+    if (Math.abs(l.x) < p.size[0] / 2 + 1.4 && Math.abs(l.z) < p.size[2] / 2 + 1.4 && l.y > -p.size[1] / 2 - 2.6 && l.y < p.size[1] / 2 + 2.4) {
+      if (Math.abs(l.y) <= p.size[1] / 2) return p;   // (trusses stacked up: the one you're really beside, not the one under it)
+      near = near || p;
+    }
   }
-  return null;
+  return near;
 }
 // where people (re)appear: on a spawn point if the place has any
 function spawnSpot(h) {
@@ -2301,6 +2317,7 @@ const HATS = [
   { id: 'books', name: 'Stack of Books', price: 'Free (was 40 Tix)', desc: 'Balance them on your head. Smart people do this. Probably.' },
   { id: 'catears', name: 'Cat Ears', price: 'Free (was 50 Tix)', desc: 'They match your head color, like real ears. Meow.' },
   { id: 'builder', name: 'Builder Hard Hat', price: 'Free (was 100 Tix)', desc: 'Safety first! Required on every baseplate. Does not protect against rockets.' },
+  { id: 'trooper', name: 'THE TROOPER', price: 'Free (was 1 Tix)', desc: 'You fought through countless Blockburg wars, all for 1 tix' },
 ];
 const hatName = (id) => (HATS.find(h => h.id === id) || HATS[0]).name;
 const partyTex = tex(canvas(128, 64, (g) => {
@@ -2338,6 +2355,25 @@ function makeHat(id) {
       add(Sph(0.55, true), M('#2b2b2b'), 0, 0.773, 0).scale.set(0.2, 0.3, O * 0.97);   // the dent: a dark crease down the middle
       add(Cyl(0.656, 0.678, 0.14, 24), black, 0, 0.12, 0).scale.set(1, 1, O);   // the band, hugging the crown
       add(new THREE.BoxGeometry(0.05, 0.12, 0.2), black, 0.67, 0.12, 0.1);   // the band's little bow, on the left side
+      break;
+    }
+    case 'trooper': {
+      // an army-green soldier helmet: a round dome with a little lip all round the bottom, and two brown chin straps
+      // hanging down loose past your cheeks, bent like old leather (drawn by cooltinpot)
+      const green = M('#1E3B27'), lip = M('#152C1C'), strap = M('#45261A');
+      const dome = new THREE.Group(); dome.rotation.x = -0.06; g.add(dome);   // (tipped back a touch: the back comes down lower than the front)
+      const part = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); dome.add(m); return m; };
+      part(Sph(0.78, true), green, 0, -0.3, 0).scale.set(1, 0.92, 1.04);
+      part(Cyl(0.8, 0.9, 0.1, 28), lip, 0, -0.32, 0).scale.set(1, 1, 1.04);
+      // each strap: a flat leather strip bending through these points (x out from the head, y down), a bit in front of the ears
+      const bend = (s, pts) => {
+        for (let i = 0; i < pts.length - 1; i++) {
+          const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) + 0.035;
+          add(new THREE.BoxGeometry(0.1, L, 0.15), strap, s * (x0 + x1) / 2, (y0 + y1) / 2, 0.08, 0, 0, Math.atan2(-s * dx, dy));
+        }
+      };
+      bend(-1, [[0.74, -0.34], [0.76, -0.64], [0.72, -0.94], [0.73, -1.24], [0.84, -1.3]]);
+      bend(1, [[0.74, -0.34], [0.73, -0.6], [0.8, -0.9], [0.76, -1.16], [0.86, -1.26]]);
       break;
     }
     case 'builder': {
@@ -3536,15 +3572,24 @@ class Humanoid {
     const v = this.body.velocity;
     const walk = this.walk || WALK;   // (the admin's /speed and /jump change these)
     v.x = this.move.x * walk; v.z = this.move.z * walk;
+    // a truss: walking into it climbs (hugging it, straight up, so you don't slide off round the side). Let go of the
+    // keys once you're climbing and you hang right where you are. Walking away or jumping lets go. Just touching
+    // one doesn't grab you.
     const tr = !this.flying && trussNear(this);
-    if (tr) {   // on a truss: walking into it climbs, letting go of the keys hangs on, jumping lets go
-      const c = tr.body.position, into = this.move.x * (c.x - b.x) + this.move.z * (c.z - b.z) > 0;
-      if (this.jump && !into) { /* jump off */ }
-      else if (into) {
+    if (!tr) this.onTruss = false;
+    else {
+      const c = tr.body.position, tx = c.x - b.x, tz = c.z - b.z, tl = Math.hypot(tx, tz) || 1;
+      const moving = Math.hypot(this.move.x, this.move.z) > 0.1, into = moving && this.move.x * tx + this.move.z * tz > 0;
+      const top = c.y + tr.size[1] / 2;
+      if (into) {
+        if (b.y < top) { v.x = tx / tl * 4; v.z = tz / tl * 4; }   // (over the top you walk on normally, to step off onto it)
         v.y = 13 - world.gravity.y * dt; this.grounded = false; this.fallPeak = 0;
-        if (this === player && b.y > c.y + tr.size[1] / 2) award('climber');   // (made it to the top)
-      }
-      else if (!this.grounded) { v.y = -world.gravity.y * dt; this.fallPeak = 0; }
+        this.onTruss = true; this.trussY = b.y;
+        if (this === player && b.y > top) award('climber');   // (made it to the top)
+      } else if (this.onTruss && !moving && !this.jump && !this.grounded) {
+        // hanging on: held at the height you stopped at (a spring, so it never creeps up or down)
+        v.x = 0; v.z = 0; v.y = (this.trussY - b.y) * 10 - world.gravity.y * dt; this.fallPeak = 0;
+      } else this.onTruss = false;
     }
     if (this.grounded && this.jump && this.jumpCd <= 0) {
       v.y = this.jumpPow || JUMP; this.jumpCd = 0.25; this.grounded = false;
@@ -4887,6 +4932,15 @@ function explodeFx(center, radius) {
     fxBrick(center, FIRE[(i % 3) + 1], { kind: i % 2 ? 'brick' : 'plate', life: 0.8 + Math.random() * 0.5, vel: fxDir(0.8).multiplyScalar(28 + Math.random() * 30), grav: true, floor });
   for (const d of debris) blastBody(d.body, center, radius);
 }
+const blastSlick = [];   // bricks an explosion just threw: slippery until "until", then back to their own material
+function unslickBlasts() {
+  for (let i = blastSlick.length - 1; i >= 0; i--) {
+    const s = blastSlick[i];
+    if (time < s.until) continue;
+    s.p.body.material = s.mat;
+    blastSlick.splice(i, 1);
+  }
+}
 function explode(center, radius, attacker) {
   aiOnExplosion(center, radius, attacker);
   // kill first so the falling-apart pieces get blown away too (the kill events also reach clients before the boom)
@@ -4897,28 +4951,42 @@ function explode(center, radius, attacker) {
   netEv(['boom', arr3(center), radius]);
   const blast = (b) => blastBody(b, center, radius);
   const wreckedOwners = new Set();
-  // anchored destroyables in reach break loose first, so the blast throws them too
+  // anchored destroyables in reach break loose first, so the blast throws them too (a big one, even if its middle is a bit past the reach)
   const loose = [];
   for (const p of parts) {
     if (!p.destroy || p.locked || p.mode !== 'static' || p.body.position.distanceTo(center) > radius + Math.max(...p.size) / 2) continue;
     p.anchored = false; setMode(p, 'dynamic'); loose.push(p);
   }
-  // ...and so does every destroyable stacked on top of them (no floating towers)
+  // ...and so does every destroyable stacked on top of them (no floating towers). "On top" means its bottom is at the
+  // other one's top and the two really overlap seen from above (their boxes, so the corner posts of a floor count too)
+  const still = parts.filter(p => p.destroy && !p.locked && p.mode === 'static');
+  for (const p of still) p.body.updateAABB();
+  const over = (a, b, k) => Math.min(a.upperBound[k], b.upperBound[k]) - Math.max(a.lowerBound[k], b.lowerBound[k]) > 0.1;
+  for (const q of loose) q.body.updateAABB();
   while (loose.length) {
-    const q = loose.pop(), qp = q.body.position, qTop = qp.y + q.size[1] / 2, qr = Math.max(q.size[0], q.size[2]) / 2;
-    for (const p of parts) {
-      if (!p.destroy || p.locked || p.mode !== 'static') continue;
-      const pp = p.body.position;
-      if (Math.abs(pp.y - p.size[1] / 2 - qTop) > 0.2) continue;   // not sitting right on top of it
-      if (Math.hypot(pp.x - qp.x, pp.z - qp.z) >= (Math.max(p.size[0], p.size[2]) / 2 + qr) * 0.9) continue;
+    const a = loose.pop().body.aabb;
+    for (const p of still) {
+      if (p.mode !== 'static') continue;
+      const b = p.body.aabb;
+      if (Math.abs(b.lowerBound.y - a.upperBound.y) > 0.2 || !over(a, b, 'x') || !over(a, b, 'z')) continue;
       p.anchored = false; setMode(p, 'dynamic'); loose.push(p);
+      // a shove and a spin each way, more the higher it is, so a neat stack crumbles instead of standing there balanced
+      const k = 3 + Math.max(0, p.body.position.y - center.y) / 6;
+      kickPart(p, (Math.random() - 0.5) * 2 * k, 0, (Math.random() - 0.5) * 2 * k);
+      if (!net.mode) p.body.angularVelocity.set(Math.random() * 3 - 1.5, Math.random() * 3 - 1.5, Math.random() * 3 - 1.5);
     }
   }
+  // rubble asleep nearby wakes up, so nothing is left floating where the blast took away what held it up
+  for (const p of parts) if (p.mode === 'dynamic' && p.body.sleepState === CANNON.Body.SLEEPING && p.body.position.distanceTo(center) < radius * 3 + Math.max(...p.size) / 2) p.body.wakeUp();
   toServer({ t: 'blast', c: arr3(center), r: radius });   // online, the server throws the bricks
   for (const p of parts) {
     if (p.mode !== 'dynamic') continue;
     if (p.owner && p.body.position.distanceTo(center) < radius) wreckedOwners.add(p.owner);
-    if (!net.mode) blast(p.body);
+    const r = radius + Math.max(...p.size) / 2;   // (a big brick gets thrown if its edge is in the blast)
+    if (net.mode || p.body.position.distanceTo(center) > r) continue;
+    blastBody(p.body, center, r);
+    // slippery for a moment, so a wall pinned under a whole building really gets blown out of it
+    if (p.body.material !== physSlick) { blastSlick.push({ p, mat: p.body.material, until: time + 0.3 }); p.body.material = physSlick; }
   }
   wreckedOwners.forEach(o => aiOnBuildWrecked(o, attacker));
   for (const s of superballs) blast(s.body);
@@ -5276,9 +5344,42 @@ function weldJoin(p, id) {
 }
 // welds hold exactly: after each physics step every brick of a group goes right back to its spot on the group's
 // first brick. (The lock constraints carry the pushes and pulls, but they're springy and would slowly drift apart.)
+// rubble settles: a loose brick that has only been jiggling for a moment goes to sleep (a sleeping brick costs nothing,
+// and a pile of rubble would otherwise keep nudging itself awake forever). Anything that really hits it wakes it again.
+// (Welded bricks go by their group's first brick, see weldSnap. BrickWorld has the same.)
+function settleBricks(list, dt) {
+  for (const p of list) {
+    const b = p.body;
+    if (b.type !== CANNON.Body.DYNAMIC || b.sleepState === CANNON.Body.SLEEPING || p.weldC) { b.slowT = 0; continue; }
+    if (b.velocity.lengthSquared() + b.angularVelocity.lengthSquared() < 4) { if ((b.slowT = (b.slowT || 0) + dt) > 1.2) { b.sleep(); b.slowT = 0; } }
+    else b.slowT = Math.max(0, (b.slowT || 0) - dt);
+  }
+}
 function weldSnap(groups) {
+  const SLEEPING = CANNON.Body.SLEEPING;
   for (const g of groups) {
     let root = null;
+    // a welded thing (a parked car) sleeps all together: while its first brick sleeps, the rest sleep too and their welds
+    // switch off, so a car sitting still costs nothing. A real bump on any of its bricks wakes the whole thing up again.
+    for (const q of g) { root = q; break; }
+    if (!root) continue;
+    // (the other bricks always jiggle a little, since the snapping below fights the welds, so only the first brick counts)
+    const rb = root.body;
+    if (g.asleep) {
+      let woke = rb.sleepState !== SLEEPING;
+      for (const q of g) if (q.body.sleepState !== SLEEPING) woke = true;   // something woke one of its bricks (a bump, a blast, a driver)
+      if (!woke) continue;
+      g.asleep = false; rb.wakeUp();
+      for (const q of g) { if (q.weldC) q.weldC.enable(); q.body.wakeUp(); }
+    } else if (rb.sleepState === SLEEPING && rb.type === CANNON.Body.DYNAMIC) {
+      g.asleep = true;
+      for (const q of g) {
+        if (q === root) continue;
+        q.body.velocity.set(0, 0, 0); q.body.angularVelocity.set(0, 0, 0); q.body.sleep();
+        if (q.weldC) q.weldC.disable();
+      }
+    }
+    root = null;
     for (const q of g) {
       if (!root) { root = q; continue; }
       const b = q.body, rb = root.body, r = q.weldRel;
@@ -6109,6 +6210,317 @@ function buildRedBlue() {
   }
   makePart({ ...A, size: [4, 1.2, 12], pos: [0, 0.6, -90], color: BC['Institutional white'] });
   makePart({ ...A, size: [4, 1.2, 12], pos: [0, 0.6, 90], color: BC['Institutional white'] });
+}
+
+/* ---- BLOCKBURG CITY: a grid of streets and nine blocks of buildings, made of every kind of brick there is. Nearly all of
+   it is anchored destroyable: it stands still until something explodes next to it, and then everything sitting on it comes
+   down too, so a rocket at the bottom of a tower brings the whole tower down. Only the streets, sidewalks and spawns stay.
+   The streets run 55 and 165 studs out each way; the blocks are the 9 squares between them (90 studs across inside the
+   sidewalks). The middle one is the City Square, where you spawn. ---- */
+function buildCity() {
+  const D = { anchored: true, destroy: true };
+  const C = (c) => BC[c] || c;
+  // bricks by where they sit: x, y (their bottom), z
+  const box = (x, y, z, w, h, d, c, o = {}) => makePart({ ...D, size: [w, h, d], pos: [x, y + h / 2, z], color: C(c), ...o });
+  const flat = (x, y, z, w, h, d, c, o = {}) => box(x, y, z, w, h, d, c, { destroy: false, matte: true, ...o });   // (streets and such: they stay)
+  const cyl = (x, y, z, r, h, c, o = {}) => makePart({ ...D, shape: 'cyl', size: [r * 2, h, r * 2], pos: [x, y + h / 2, z], color: C(c), ...o });
+  const ball = (x, y, z, s, c, o = {}) => makePart({ ...D, shape: 'ball', size: [s, s, s], pos: [x, y + s / 2, z], color: C(c), ...o });
+  // a wedge's slope faces +z and rises toward -z; ry turns it (pi/2: rises toward -x, -pi/2: toward +x, pi: toward +z)
+  const wedge = (x, y, z, w, h, d, c, ry = 0) => makePart({ ...D, shape: 'wedge', size: [w, h, d], pos: [x, y + h / 2, z], rot: [0, ry, 0], color: C(c) });
+  const truss = (x, y, z, h, c = 'Dark stone grey') => makePart({ ...D, shape: 'truss', size: [2, h, 2], pos: [x, y + h / 2, z], color: C(c) });
+  const glass = (x, y, z, w, h, d) => box(x, y, z, w, h, d, 'Light blue', { trans: 0.45 });
+  const neon = (x, y, z, w, h, d, c) => box(x, y, z, w, h, d, c, { neon: true });
+  // a sign: its words face +z, and ry turns it (pi: -z, pi/2: +x, -pi/2: -x)
+  const sign = (x, y, z, w, h, text, bg, ry = 0) => makePart({ ...D, size: [w, h, 0.5], pos: [x, y + h / 2, z], rot: [0, ry, 0], color: BC['White'], sign: { t: text, c: bg } });
+  const signPosts = (x, z, w, h, text, bg, ry = 0, tall = 4) => {   // a sign up on two posts
+    const ox = Math.cos(ry) * (w / 2 - 1), oz = -Math.sin(ry) * (w / 2 - 1);
+    for (const s of [-1, 1]) box(x + s * ox, 0, z + s * oz, 0.6, tall, 0.6, 'Dark stone grey');
+    sign(x, tall, z, w, h, text, bg, ry);
+  };
+  const tree = (x, z, s = 1, y = 0) => { cyl(x, y, z, 0.55 * s, 4.5 * s, 'Reddish brown'); ball(x, y + 4.5 * s, z, 5 * s, 'Dark green'); };
+  const lamp = (x, z, y = 0.4) => { cyl(x, y, z, 0.3, 7, 'Black'); ball(x, y + 7, z, 1.3, 'Bright yellow', { neon: true }); };   // (they glow at night)
+  const bench = (x, z, ry = 0, y = 0) => {   // a bench you can sit on
+    for (const s of [-1.8, 1.8]) box(x + Math.cos(ry) * s, y, z - Math.sin(ry) * s, 0.4, 1, 0.4, 'Black');
+    makePart({ ...D, size: [5, 0.5, 1.6], pos: [x, y + 1.25, z], rot: [0, ry, 0], color: BC['Reddish brown'], wood: true, seat: 1 });
+    makePart({ ...D, size: [5, 1.4, 0.3], pos: [x - 0.65 * Math.sin(ry), y + 2.2, z - 0.65 * Math.cos(ry)], rot: [0, ry, 0], color: BC['Reddish brown'], wood: true });
+  };
+  const table = (x, z) => {   // a picnic table with a seat on each side
+    for (const s of [-1, 1]) box(x + s * 2.2, 0, z, 0.6, 2.4, 2.4, 'Reddish brown', { wood: true });
+    box(x, 2.4, z, 6, 0.4, 3, 'Reddish brown', { wood: true });
+    for (const s of [-1, 1]) box(x, 0, z + s * 2.6, 6, 1.4, 1.2, 'Reddish brown', { wood: true, seat: 1 });
+  };
+  // a button on a little post: it opens and closes the doors of its own color
+  const button = (x, z, c) => {
+    box(x, 0, z, 0.6, 3, 0.6, 'Dark stone grey');
+    makePart({ ...D, shape: 'cyl', size: [1.4, 0.4, 1.4], pos: [x, 3.2, z], color: C(c), btn: true, scripts: [{ on: 'click', do: [['sound', 'click'], ['doors', C(c)]] }] });
+  };
+  const door = (x, y, z, w, h, d, c) => box(x, y, z, w, h, d, c, { door: true });
+  // TNT: click it (with an empty hand) and it blows up
+  const tnt = (x, y, z) => box(x, y, z, 4, 2, 2.4, 'Bright red', { sign: { t: 'TNT', c: '#c4281c' }, scripts: [{ on: 'click', do: [['boom']] }] });
+  const car = (x, z, yaw, c, y = 0.22) => buildCar(new V3(x, y, z), yaw, BC[c]);
+  // a shop with its front at x = fx (looking -x, at the street), 16 deep and 20 wide: a window, a doorway,
+  // an awning on two posts, a sign with a neon strip on the roof, and a counter inside
+  const shop = (fx, cz, name, bg, wall, awn, nc) => {
+    const cx = fx + 8;
+    box(cx, 0, cz, 16, 0.4, 20, 'Medium stone grey');
+    box(fx + 15.5, 0.4, cz, 1, 9, 20, wall);
+    for (const s of [-1, 1]) box(cx, 0.4, cz + s * 9.5, 14, 9, 1, wall);
+    box(fx + 0.5, 0.4, cz - 3, 1, 2, 12, wall); glass(fx + 0.5, 2.4, cz - 3, 0.6, 5, 12);   // the window
+    box(fx + 0.5, 0.4, cz + 8, 1, 7, 2, wall);   // (the doorway is between the window and this)
+    box(fx + 0.5, 7.4, cz, 1, 2, 18, wall);
+    box(cx, 9.4, cz, 16, 0.6, 20, 'Dark stone grey');   // the roof (its top is at 10)
+    for (const s of [-1, 1]) cyl(fx - 4, 0, cz + s * 8, 0.25, 6.4, 'White');
+    wedge(fx - 2.5, 6.4, cz, 18, 1.2, 5, awn, -Math.PI / 2);   // the awning, sloping down toward the street
+    sign(fx + 1, 10, cz, 16, 4, name, bg, -Math.PI / 2);
+    neon(fx + 1, 14, cz, 0.6, 0.4, 16, nc);
+    box(fx + 11, 0.4, cz, 2, 3, 12, 'Reddish brown', { wood: true });   // the counter
+  };
+  // an office building: n floors, each a band of wall with a band of windows on it, and a roof with an air conditioner
+  const office = (x, z, w, d, n, wall, win = 'Sand blue') => {
+    let y = 0;
+    for (let f = 0; f < n; f++) { box(x, y, z, w, 1.6, d, wall); box(x, y + 1.6, z, w - 0.4, 3, d - 0.4, win); y += 4.6; }
+    box(x, y, z, w, 1, d, wall); box(x + w / 4, y + 1, z, 3, 2, 3, 'Medium stone grey');
+  };
+
+  /* -- the streets: four each way, 12 wide, with double yellow lines; crosswalks round the square; sidewalks and lamps round every block -- */
+  const RD = [-165, -55, 55, 165], MID = [-110, 0, 110];
+  for (const r of RD) {
+    flat(0, 0, r, 342, 0.2, 12, 'Dark stone grey');   // east-west, all the way across
+    for (const m of MID) {
+      flat(r, 0, m, 12, 0.2, 98, 'Dark stone grey');   // north-south, between the crossings
+      for (const k of [-0.35, 0.35]) { flat(m, 0.2, r + k, 76, 0.04, 0.3, 'Bright yellow'); flat(r + k, 0.2, m, 0.3, 0.04, 76, 'Bright yellow'); }
+    }
+  }
+  for (const ix of [-55, 55]) for (const iz of [-55, 55]) for (let k = -2; k <= 2; k++) {
+    flat(ix + k * 2.2, 0.2, iz - Math.sign(iz) * 8.5, 1.2, 0.04, 3, 'White');
+    flat(ix - Math.sign(ix) * 8.5, 0.2, iz + k * 2.2, 3, 0.04, 1.2, 'White');
+  }
+  for (const bx of MID) for (const bz of MID) {
+    for (const s of [-1, 1]) { flat(bx, 0, bz + s * 47, 98, 0.4, 4, 'Institutional white', { matte: false }); flat(bx + s * 47, 0, bz, 4, 0.4, 90, 'Institutional white', { matte: false }); }
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) lamp(bx + sx * 47, bz + sz * 47);
+  }
+
+  /* -- City Square (the middle): the spawns, a giant Noob statue, a fountain, a gazebo, benches, the Day/Night switch, a playground by the seesaw -- */
+  flat(0, 0, 0, 90, 0.4, 90, 'Brick yellow', { matte: false });
+  for (const s of [-1, 1]) box(s * 1.5, 1, 0, 3, 6, 3, 'Br. yellowish green');   // the statue, on the middle pad
+  box(0, 7, 0, 6, 6, 3, 'Bright blue');
+  for (const s of [-1, 1]) box(s * 4.5, 7, 0, 3, 6, 3, 'Bright yellow');
+  box(0, 13, 0, 3.6, 3.6, 3.6, 'Bright yellow');
+  for (const s of [-1, 1]) box(s * 0.7, 15, 1.85, 0.5, 0.9, 0.1, 'Black');
+  box(0, 13.8, 1.85, 1.6, 0.3, 0.1, 'Black');
+  for (const x of [-12, 0, 12]) makePart({ anchored: true, size: [6, 1, 6], pos: [x, 0.9, 22], color: BC['Medium stone grey'], spawn: true });
+  { const x = -24, z = -22;   // the fountain
+    cyl(x, 0.4, z, 5, 1.2, 'Medium stone grey'); cyl(x, 1.6, z, 4.2, 0.2, 'Light blue', { trans: 0.3 });
+    cyl(x, 1.6, z, 0.7, 4, 'Medium stone grey'); cyl(x, 5.6, z, 2.2, 0.6, 'Medium stone grey'); ball(x, 6.2, z, 1.6, 'Light blue', { trans: 0.3 }); }
+  { const x = 24, z = -22;   // the gazebo: four posts and a pointy roof of corner wedges (each one's tip turned to the middle)
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) cyl(x + sx * 4, 0.4, z + sz * 4, 0.4, 6, 'White');
+    box(x, 6.4, z, 10, 0.6, 10, 'White');
+    for (const sx of [-1, 1]) for (const sz of [-1, 1])
+      makePart({ ...D, shape: 'cwedge', size: [5, 3, 5], pos: [x + sx * 2.5, 8.5, z + sz * 2.5], rot: [0, Math.atan2((sx + sz) / 2, (sz - sx) / 2), 0], color: BC['Bright red'] }); }
+  bench(-24, -11, 0, 0.4); bench(24, -11, 0, 0.4); bench(-40, -22, Math.PI / 2, 0.4); bench(40, -22, -Math.PI / 2, 0.4);
+  box(22, 0.4, 14, 1, 3, 1, 'Dark stone grey');
+  makePart({ ...D, size: [4, 2, 1], pos: [22, 4.4, 14], color: BC['Black'], sign: { t: 'DAY / NIGHT', c: '#20204a' }, scripts: [{ on: 'click', do: [['daynight']] }] });
+  signPosts(-24, -40, 24, 6, 'BLOCKBURG CITY', '#c4281c', 0, 6); neon(-24, 12, -40, 24, 0.5, 0.6, 'Bright orange');
+  for (const [x, z] of [[38, 38], [38, -38], [-38, -38], [-42, 8], [42, 8]]) tree(x, z, 1, 0.4);
+  ['Bright red', 'Bright blue', 'Bright yellow'].forEach((c, i) => makePart({ shape: 'ball', size: [3, 3, 3], pos: [-36 + i * 4, 2, 30], color: BC[c], bouncy: true }));
+  box(-10, 0.4, 34, 1, 6, 1, 'Dark stone grey'); box(-10, 6.4, 34, 4, 0.4, 4, 'Bright blue');   // the slide: climb the truss, slide down the wedge
+  truss(-13, 0.4, 34, 6.8, 'Bright yellow'); wedge(-4, 0.4, 34, 4, 6.4, 8, 'Bright red', Math.PI / 2);
+
+  /* -- the Tower block (south of the square): Blockburg Tower (10 floors, a truss up the side, a helipad on top), the Bank and its vault, a parking lot -- */
+  { const x = 0, z = -115, W = 20, FH = 5.4;
+    box(x, 0, z, W + 2, 0.6, W + 2, 'Dark stone grey');
+    let y = 0.6;
+    for (let f = 0; f < 10; f++) {
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(x + sx * (W / 2 - 1), y, z + sz * (W / 2 - 1), 2, FH, 2, 'Dark stone grey');
+      for (const s of [-1, 1]) {
+        if (f || s < 0) glass(x, y, z + s * (W / 2 - 0.4), W - 4, FH, 0.6);
+        glass(x + s * (W / 2 - 0.4), y, z, 0.6, FH, W - 4);
+      }
+      if (!f) { for (const s of [-1, 1]) glass(x + s * 5, y, z + W / 2 - 0.4, 6, FH, 0.6); door(x, y, z + W / 2 - 0.4, 4, FH, 0.6, 'Bright blue'); }
+      box(x, y + FH, z, W, 0.6, W, f === 9 ? 'Dark stone grey' : 'Medium stone grey');   // the floor above
+      y += FH + 0.6;
+    }
+    button(x + 4, z + 13, 'Bright blue');
+    for (let k = 0; k < 10; k++) truss(x + 12, k * y / 10, z, y / 10);   // (all the way up to the roof)
+    box(x, y, z, 12, 0.2, 12, 'White');   // the helipad
+    for (const s of [-1, 1]) box(x + s * 1.6, y + 0.2, z, 0.8, 0.1, 5, 'Bright yellow');
+    box(x, y + 0.2, z, 2.4, 0.1, 0.8, 'Bright yellow');
+    cyl(x - 7, y, z - 7, 0.3, 10, 'Medium stone grey'); ball(x - 7, y + 10, z - 7, 1, 'Bright red', { neon: true });
+    sign(x, y, z + 9.5, 16, 4, 'BLOCKBURG TOWER', '#0b4a99');
+    neon(x, y, z - 9.8, 20, 0.6, 0.4, 'Bright blue'); for (const s of [-1, 1]) neon(x + s * 9.8, y, z, 0.4, 0.6, 19.2, 'Bright blue'); }
+  { const x = -30, z = -92;   // the Bank
+    box(x, 0, z, 24, 0.6, 20, 'Medium stone grey');
+    box(x, 0.6, z - 8.5, 22, 8, 1, 'White');
+    for (const s of [-1, 1]) box(x + s * 10.5, 0.6, z, 1, 8, 16, 'White');
+    for (const s of [-1, 1]) box(x + s * 6.5, 0.6, z + 8.5, 9, 8, 1, 'White');
+    door(x, 0.6, z + 8.5, 4, 7, 0.8, 'Bright yellow'); box(x, 7.6, z + 8.5, 4, 1, 1, 'White');
+    box(x, 8.6, z, 24, 0.8, 20, 'Medium stone grey');
+    wedge(x, 9.4, z + 5, 24, 3, 10, 'White'); wedge(x, 9.4, z - 5, 24, 3, 10, 'White', Math.PI);   // a pointy roof
+    for (const dx of [-9, -3, 3, 9]) cyl(x + dx, 0, z + 12, 0.7, 8.6, 'White');   // the porch
+    box(x, 8.6, z + 12, 24, 0.6, 4, 'White');
+    sign(x, 9.2, z + 13.5, 16, 4, 'BLOCKBURG BANK', '#287f47');
+    button(x + 4, z + 16, 'Bright yellow');
+    box(x, 0.6, z - 5, 8, 6, 4, 'Dark stone grey');   // the vault, with its round door and a pile of gold
+    makePart({ ...D, shape: 'cyl', size: [4, 0.4, 4], pos: [x, 3.6, z - 2.8], rot: [Math.PI / 2, 0, 0], color: BC['Medium stone grey'] });
+    [[-2.2, 0], [0, 0], [2.2, 0], [-1.1, 1], [1.1, 1], [0, 2]].forEach(([dx, k]) => neon(x + dx, 0.6 + k * 0.8, z, 2, 0.8, 1, 'Bright yellow')); }
+  flat(28, 0, -88, 26, 0.2, 18, 'Dark stone grey');   // the parking lot
+  for (const x of [20, 28, 36]) flat(x, 0.2, -88, 0.3, 0.04, 10, 'White');
+  car(24, -88, 0, 'Bright green'); car(32, -88, 0, 'Bright orange');
+  for (const [x, z] of [[-42, -70], [42, -70], [-42, -150], [42, -150]]) tree(x, z);
+  office(-30, -130, 20, 20, 7, 'Brick yellow'); office(30, -130, 18, 18, 5, 'White', 'Light blue');
+
+  /* -- the Shops (east of the square), with a parking lot behind them and a giant Bloxy Cola can -- */
+  shop(70, -33, 'PIZZA PLACE', '#c4281c', 'Brick yellow', 'Bright red', 'Bright orange');
+  shop(70, -11, 'TOY STORE', '#0d69ac', 'Light blue', 'Bright blue', 'Bright yellow');
+  shop(70, 11, 'ARCADE', '#6b327c', 'Dark stone grey', 'Bright violet', 'Light reddish violet');
+  shop(70, 33, 'ICE CREAM', '#e05a8a', 'Light reddish violet', 'White', 'Light reddish violet');
+  cyl(79, 10, -33, 4, 0.5, 'Bright yellow');   // a giant pizza on the Pizza Place
+  for (const [dx, dz] of [[-1.8, -1], [1.5, -1.6], [0.2, 1.8]]) cyl(79 + dx, 10.5, -33 + dz, 0.8, 0.3, 'Bright red');
+  flat(122, 0, 0, 40, 0.2, 40, 'Dark stone grey');
+  for (const z of [-8, 0, 8]) flat(112, 0.2, z, 10, 0.04, 0.3, 'White');
+  car(112, -4, Math.PI / 2, 'Bright red'); car(112, 4, Math.PI / 2, 'White');
+  cyl(150, 0, 0, 4, 10, 'Bright red'); cyl(150, 10, 0, 3.6, 0.6, 'Medium stone grey');
+  office(130, -32, 20, 16, 6, 'Nougat'); office(130, 34, 22, 16, 8, 'Bright red', 'Light blue');   // an office, and Hotel Blox
+  sign(119.6, 37.8, 34, 12, 3, 'HOTEL BLOX', '#694028', -Math.PI / 2);
+
+  /* -- the Construction Site (south-east): a crane, a half-built building, wood, a dirt jump, cones and TNT -- */
+  flat(110, 0, -110, 88, 0.2, 88, 'Nougat');   // dirt
+  for (const z of [-146, -128, -92, -74]) box(67, 0.2, z, 0.4, 4, 16, 'Reddish brown', { wood: true });   // the fence (with a way in on each street)
+  for (const x of [76, 94, 126, 144]) box(x, 0.2, -67, 16, 4, 0.4, 'Reddish brown', { wood: true });
+  signPosts(66, -110, 14, 3.5, 'UNDER CONSTRUCTION', '#da8541', -Math.PI / 2, 6);
+  box(95, 0.2, -135, 6, 2, 6, 'Dark stone grey');   // the crane
+  for (let k = 0; k < 5; k++) truss(95, 2.2 + k * 8, -135, 8, 'Bright yellow');
+  box(95, 42.2, -135, 4, 3, 4, 'Bright yellow'); box(105, 45.2, -135, 34, 1.2, 2, 'Bright yellow');
+  box(91, 46.4, -135, 4, 2.4, 3, 'Dark stone grey'); ball(121, 46.4, -135, 1, 'Bright red', { neon: true });
+  { const x = 125, z = -95;   // the half-built building: black beams, two floors in, the top one only beams so far
+    box(x, 0.2, z, 20, 1, 20, 'Medium stone grey');
+    let y = 1.2;
+    for (let L = 0; L < 3; L++) {
+      for (const i of [-8, 0, 8]) for (const j of [-8, 0, 8]) box(x + i, y, z + j, 1.2, 7, 1.2, 'Black');
+      if (L < 2) box(x, y + 7, z, 18, 0.6, 18, 'Medium stone grey');
+      else for (const j of [-8, 8]) box(x, y + 7, z + j, 18, 1.2, 1.2, 'Black');
+      y += 7.6;
+    }
+    truss(x - 11, 0.2, z, 8.6, 'Bright yellow'); truss(x - 11, 8.8, z, 7.6, 'Bright yellow'); }
+  for (const [x, z] of [[82, -78], [82, -88], [145, -145]]) for (let k = 0; k < 3; k++) box(x, 0.2 + k * 0.6, z, 8, 0.6, 1.4, 'Nougat', { wood: true });
+  for (const [x, z] of [[70, -118], [70, -102], [104, -70], [116, -70]]) cyl(x, 0.2, z, 0.6, 1.6, 'Bright orange');
+  wedge(82, 0.2, -133, 8, 3, 10, 'Brick yellow'); box(82, 0.2, -141, 8, 3, 6, 'Brick yellow'); wedge(82, 0.2, -149, 8, 3, 10, 'Brick yellow', Math.PI);   // a dirt jump
+  car(85, -112, 0, 'Bright yellow');
+  tnt(100, 0.2, -122); tnt(104.5, 0.2, -122); tnt(102.2, 2.2, -122);
+  box(140, 0.2, -75, 3, 6, 3, 'Bright blue', { sign: { t: 'WC', c: '#0d69ac' } });
+
+  /* -- the Park (north of the square): a pond and a bridge, trees, benches, picnic tables, a jungle gym, a basketball court -- */
+  flat(-10, 0, 120, 30, 0.3, 20, 'Light blue', { trans: 0.3 });
+  box(-10, 1.2, 120, 4, 0.4, 22, 'Reddish brown', { wood: true });   // the bridge
+  for (const z of [110, 130]) box(-10, 0, z, 4, 1.2, 2, 'Reddish brown', { wood: true });
+  for (const z of [107.5, 132.5]) box(-10, 0, z, 4, 0.8, 3, 'Reddish brown', { wood: true });
+  for (const s of [-1, 1]) box(-10 + s * 1.8, 1.6, 120, 0.3, 1, 22, 'White');
+  for (const [x, z] of [[-38, 75], [-20, 75], [20, 75], [38, 75], [-38, 145], [-20, 148], [20, 148], [38, 145], [40, 110], [-38, 110]]) tree(x, z, 1.1);
+  bench(10, 112, Math.PI / 2); bench(10, 128, Math.PI / 2); bench(-10, 140);
+  table(-30, 85); table(-30, 97);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) truss(28 + sx * 3, 0, 118 + sz * 3, 8, 'Bright blue');   // the jungle gym
+  box(28, 8, 118, 8, 0.4, 8, 'Bright red');
+  for (const z of [95, 146]) { box(-10, 0, z, 14, 0.4, 3, 'Reddish brown'); ['Bright red', 'Bright yellow', 'Bright violet', 'Light reddish violet', 'Bright orange', 'White'].forEach((c, i) => box(-15 + i * 2, 0.4, z, 1, 0.8, 1, c)); }
+  signPosts(0, 68, 14, 3.5, 'BLOCKBURG PARK', '#287f47', Math.PI);
+  flat(28, 0, 88, 18, 0.2, 12, 'Bright orange');   // the basketball court
+  box(37.5, 0.2, 88, 0.6, 9, 0.6, 'Dark stone grey'); box(37.5, 9.2, 88, 0.3, 3, 5, 'White');
+  makePart({ shape: 'ball', size: [2, 2, 2], pos: [28, 2, 88], color: BC['Bright orange'], bouncy: true });
+
+  /* -- Gas N Go and Bloxy Burger (north-west) -- */
+  flat(-145, 0, 100, 20, 0.2, 40, 'Dark stone grey');
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) cyl(-146 + sx * 4, 0.2, 100 + sz * 10, 0.6, 7, 'White');
+  box(-146, 7.2, 100, 12, 1, 24, 'Bright red');   // the canopy over the pumps
+  for (const s of [-1, 1]) neon(-146 + s * 5.8, 8.2, 100, 0.4, 0.4, 24, 'Bright yellow');
+  for (const z of [92, 108]) { box(-146, 0.2, z, 1.6, 3, 1, 'White'); neon(-146, 3.2, z, 1.6, 0.6, 1, 'Bright green'); }
+  car(-146, 100, 0, 'Bright blue');
+  shop(-135, 100, 'GAS N GO', '#c4281c', 'White', 'Bright red', 'Bright yellow');
+  box(-153, 0, 74, 1, 10, 1, 'Dark stone grey'); sign(-153, 10, 74, 8, 3, 'GAS 99 BUX', '#c4281c', -Math.PI / 2);
+  tnt(-128, 0, 116); tnt(-123, 0, 116);
+  shop(-100, 130, 'BLOXY BURGER', '#da8541', 'Brick yellow', 'Bright orange', 'Bright yellow');
+  cyl(-92, 10, 130, 4.5, 1.2, 'Nougat'); cyl(-92, 11.2, 130, 4.8, 1, 'Reddish brown'); box(-92, 12.2, 130, 9.4, 0.3, 9.4, 'Bright yellow');   // a giant burger on the roof
+  cyl(-92, 12.5, 130, 4.9, 0.4, 'Bright green'); cyl(-92, 12.9, 130, 4.5, 2, 'Nougat');
+  table(-75, 124); table(-75, 136);
+  for (const [x, z] of [[-150, 70], [-70, 70], [-70, 150]]) tree(x, z);
+  office(-135, 142, 20, 20, 4, 'White'); office(-88, 86, 18, 18, 6, 'Medium stone grey', 'Light blue');
+
+  /* -- Brick Apartments (west): two five-floor buildings (a truss fire escape up one), a pool, a dumpster -- */
+  const apt = (x, z, wall, dc, ladder) => {
+    box(x, 0, z, 24, 0.4, 16, 'Medium stone grey');
+    let y = 0.4;
+    for (let f = 0; f < 5; f++) {
+      for (const s of [-1, 1]) { box(x, y, z + s * 7.5, 24, 2.4, 1, wall); glass(x, y + 2.4, z + s * 7.5, 22, 3, 0.6); box(x, y + 5.4, z + s * 7.5, 24, 1.6, 1, wall); }
+      box(x - 11.5, y, z, 1, 7, 14, wall);
+      if (f) box(x + 11.5, y, z, 1, 7, 14, wall);
+      else { for (const s of [-1, 1]) box(x + 11.5, y, z + s * 4.5, 1, 7, 5, wall); door(x + 11.5, y, z, 0.8, 7, 4, dc); }   // (the front door)
+      box(x, y + 7, z, 24, 0.6, 16, 'Medium stone grey');
+      y += 7.6;
+    }
+    cyl(x - 6, y, z, 2.2, 3.5, 'Reddish brown', { wood: true }); box(x + 6, y, z - 3, 3, 2, 3, 'Medium stone grey');   // a water tank and an air conditioner
+    button(x + 14, z + 4, dc);
+    if (ladder) for (let f = 0; f < 5; f++) truss(x - 13, 0.4 + f * 7.6, z, 7.6);
+  };
+  apt(-128, -20, 'Bright red', 'Bright yellow', true); apt(-128, 22, 'Brick yellow', 'Bright blue', false);
+  signPosts(-100, 0, 14, 3.5, 'BRICK APARTMENTS', '#694028', Math.PI / 2);
+  flat(-80, 0, 0, 16, 0.3, 24, 'Light blue', { trans: 0.3 });   // the pool, a diving board and two lounge chairs
+  box(-80, 0, -14, 2, 2.4, 2, 'White'); box(-80, 2.4, -11.5, 1.4, 0.3, 5, 'White');
+  for (const z of [-6, 6]) box(-69, 0, z, 2, 0.8, 5, 'White', { seat: 1 });
+  box(-112, 0, -42, 5, 3, 3, 'Dark green');   // (a dumpster)
+  for (const [x, z] of [[-75, -38], [-75, 38], [-110, 44]]) tree(x, z);
+  office(-92, -32, 20, 14, 4, 'Nougat'); office(-92, 32, 20, 14, 3, 'White');
+
+  /* -- the Power Plant (south-west): two cooling towers, a smokestack, and a fenced yard of glowing coils (don't touch!) -- */
+  for (const z of [-140, -98]) {
+    [9, 8.2, 7.4, 7.4, 8].forEach((r, k) => cyl(-133, k * 5, z, r, 5, 'Medium stone grey'));
+    ball(-133, 25, z, 10, 'White', { trans: 0.45 });   // (steam)
+  }
+  { const x = -95, z = -120;
+    for (const s of [-1, 1]) { box(x, 0, z + s * 9.5, 26, 12, 1, 'Dark stone grey'); box(x + s * 12.5, 0, z, 1, 12, 18, 'Dark stone grey'); }
+    box(x, 12, z, 26, 0.8, 20, 'Sand blue');
+    ['Bright red', 'White', 'Bright red'].forEach((c, k) => cyl(x - 6, 12.8 + k * 6, z, 1.6, 6, c));   // the smokestack
+    sign(x + 12.75, 12.8, z, 16, 4, 'BLOCKBURG POWER', '#c99a06', Math.PI / 2); }
+  { const x = -90, z = -82;   // the yard: walk in the gap at the front if you dare
+    for (const s of [-1, 1]) { box(x, 0, z + s * 8, 16, 3, 0.3, 'Medium stone grey'); box(x + 8, 0, z + s * 5.5, 0.3, 3, 5, 'Medium stone grey'); }
+    box(x - 8, 0, z, 0.3, 3, 16, 'Medium stone grey');
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { cyl(x + sx * 4, 0, z + sz * 4, 0.8, 4, 'Dark stone grey'); ball(x + sx * 4, 4, z + sz * 4, 1.8, 'Bright blue', { neon: true, kill: true }); }
+    box(x, 0, z, 4, 4, 3, 'Sand blue');
+    signPosts(x, z + 11, 12, 3, 'DANGER: HIGH VOLTAGE', '#c4281c', 0, 3); }
+  tnt(-75, 0, -140); tnt(-75, 0, -135);
+
+  /* -- the Fire Station and the Police Station (north-east), and a water tower -- */
+  box(82, 0, 90, 24, 0.4, 22, 'Medium stone grey');   // the fire station: a big white garage door (its button is out front)
+  box(93.5, 0.4, 90, 1, 8, 22, 'Bright red'); for (const s of [-1, 1]) box(82, 0.4, 90 + s * 10.5, 22, 8, 1, 'Bright red');
+  box(70.5, 0.4, 80.5, 1, 8, 1, 'Bright red'); door(70.5, 0.4, 86, 0.8, 7, 10, 'White'); box(70.5, 7.4, 86, 1, 1, 10, 'Bright red');
+  box(70.5, 0.4, 95.5, 1, 8, 9, 'Bright red');
+  box(82, 8.4, 90, 24, 0.6, 22, 'Medium stone grey');
+  box(93.5, 9, 90, 1, 8, 22, 'Bright red'); for (const s of [-1, 1]) box(82, 9, 90 + s * 10.5, 22, 8, 1, 'Bright red');
+  box(70.5, 9, 90, 1, 2.5, 20, 'Bright red'); glass(70.5, 11.5, 90, 0.6, 3, 20); box(70.5, 14.5, 90, 1, 2.5, 20, 'Bright red');
+  box(82, 17, 90, 24, 0.6, 22, 'Dark stone grey');
+  sign(71, 17.6, 90, 16, 4, 'FIRE STATION', '#c4281c', -Math.PI / 2); ball(88, 17.6, 84, 1.2, 'Bright red', { neon: true });
+  button(68, 79, 'White');
+  car(79, 86, Math.PI / 2, 'Bright red', 0.42);   // the fire truck, parked inside
+  for (const z of [76, 104]) { cyl(66, 0, z, 0.5, 1.6, 'Bright red'); ball(66, 1.6, z, 0.9, 'Bright red'); }   // hydrants
+  box(80, 0, 135, 20, 0.4, 18, 'Medium stone grey');   // the police station
+  box(89.5, 0.4, 135, 1, 9, 18, 'White'); for (const s of [-1, 1]) box(80, 0.4, 135 + s * 8.5, 18, 9, 1, 'White');
+  box(70.5, 0.4, 130, 1, 9, 6, 'White'); door(70.5, 0.4, 135, 0.8, 7, 4, 'Bright blue'); box(70.5, 7.4, 135, 1, 2, 4, 'White'); box(70.5, 0.4, 140.5, 1, 9, 7, 'White');
+  box(80, 9.4, 135, 20, 0.6, 18, 'Bright blue');
+  sign(71, 10, 135, 12, 3, 'POLICE', '#0d69ac', -Math.PI / 2);
+  ball(80, 10, 131, 1.2, 'Bright red', { neon: true }); ball(80, 10, 139, 1.2, 'Bright blue', { neon: true });
+  button(68, 128, 'Bright blue');
+  for (let k = 0; k < 5; k++) cyl(84, 0.4, 128 + k * 1.2, 0.15, 9, 'Dark stone grey');   // the jail bars
+  car(56.5, 135, 0, 'Bright blue');   // the police car, out on the street
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) truss(130 + sx * 4, 0, 120 + sz * 4, 14, 'Medium stone grey');   // the water tower
+  cyl(130, 14, 120, 6, 6, 'Light blue'); ball(130, 20, 120, 5, 'Light blue');
+  for (const [x, z] of [[140, 75], [148, 100], [145, 145]]) tree(x, z);
+  office(125, 85, 20, 20, 5, 'Sand blue', 'Light blue'); office(128, 145, 20, 18, 7, 'Brick yellow');
+
+  /* -- the Airport (past the south edge): a runway with an airplane ready to go, and a control tower -- */
+  flat(0, 0, -210, 220, 0.2, 18, 'Dark stone grey');
+  for (let x = -100; x <= 100; x += 20) flat(x, 0.2, -210, 8, 0.04, 0.8, 'White');
+  buildPlane(new V3(-90, 0.22, -210), -Math.PI / 2, BC['White']);
+  cyl(40, 0, -228, 2.5, 14, 'White'); glass(40, 14, -228, 7, 3, 7); box(40, 17, -228, 8, 0.6, 8, 'Dark stone grey'); ball(40, 17.6, -228, 1.2, 'Bright red', { neon: true });
+  signPosts(0, -186, 16, 4, 'BLOCKBURG AIRPORT', '#0b4a99');
+
+  car(-56.5, -20, 0, 'Bright green'); car(20, 53.5, Math.PI / 2, 'Bright yellow');   // and two cars parked on the streets
 }
 
 /* ---- teams ---- */
@@ -7027,7 +7439,7 @@ function loop(now) {
   frame(now);
 }
 function frame(now) {
-  realDt = Math.min((now - last) / 1000, 1 / 20); last = now;
+  realDt = Math.max(0, Math.min((now - last) / 1000, 1 / 20)); last = Math.max(last, now);   // (time never runs backwards)
   const dt = realDt * timeScale; time += dt;
   // on the website no game is loaded (see unloadWorld): nothing moves and nothing makes a sound, only the character preview turns
   if (!started && !HEADLESS) {
@@ -7063,6 +7475,8 @@ function frame(now) {
   sitDrive(dt);
   world.step(1 / 120 * Math.min(1, timeScale), dt, 3 * Math.ceil(Math.max(1, timeScale)));
   if (!net.mode) weldSnap(weldGroups.values());
+  if (blastSlick.length) unslickBlasts();
+  if (!net.mode) settleBricks(parts, dt);
   while (afterStep.length) afterStep.shift()();
 
   if (net.mode) netLerpParts(realDt);   // online: glide the mirrored bricks toward where the server says they are
@@ -7349,6 +7763,13 @@ function snapGameThumbs() {
     const had = new Set(parts), hide = parts.filter(p => !p.locked && p.mesh.visible).map(p => p.mesh);
     hide.forEach(m => m.visible = false); buildRedBlue();
     document.querySelectorAll('.thumbRedBlue').forEach(i => i.src = snapThumb(new V3(55, 45, -185), new V3(0, 0, -60)));
+    for (const p of [...parts]) if (!had.has(p)) removePart(p);
+    hide.forEach(m => m.visible = true);
+  }
+  {   // BLOCKBURG CITY: over the City Square, toward Blockburg Tower
+    const had = new Set(parts), hide = parts.filter(p => !p.locked && p.mesh.visible).map(p => p.mesh);
+    hide.forEach(m => m.visible = false); buildCity();
+    document.querySelectorAll('.thumbCity').forEach(i => i.src = snapThumb(new V3(46, 42, 30), new V3(-6, 14, -80)));
     for (const p of [...parts]) if (!had.has(p)) removePart(p);
     hide.forEach(m => m.visible = true);
   }
@@ -8254,7 +8675,14 @@ $('shopWin').addEventListener('click', (e) => {
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
-  { date: '11/3/2026', ver: '4.3', top: 'The update package opens in choppy stop-motion now!', text: [
+  { date: '11/3/2026', ver: '4.3', top: 'BLOCKBURG CITY! A whole new city you can blow up! Plus a choppy stop-motion update package', text: [
+    'NEW GAME: BLOCKBURG CITY! A huge city built from every kind of brick: balls, cylinders, wedges, trusses, glass, neon, signs, doors, buttons, seats, cars and even a plane. There is a City Square with a fountain, a 10-floor Blockburg Tower with a helipad, a bank with a gold vault, shops, Hotel Blox, a park with a pond, a gas station, Bloxy Burger, apartments with a pool, a construction site, a power plant (do not touch the blue coils), a fire station, a police station and an airport. Play it from the front page or the Games page, solo or online!',
+    'Almost everything in BLOCKBURG CITY blows up! Grab a rocket, or click one of the red TNT crates hidden around town to set it off. Blow up the bottom of a building and everything stacked on it comes crashing down. Try toppling Blockburg Tower!',
+    'Explosions are better everywhere: big bricks get thrown if their edge is in the blast, bricks thrown by a blast slide right out of walls instead of getting stuck, and stacks crumble and tip over instead of standing there balanced.',
+    'Signs stay readable from far away now (before, faraway signs went blank).',
+    'NEW HAT: THE TROOPER, drawn by cooltinpot! An army-green soldier helmet with its brown chin straps hanging loose. You fought through countless Blockburg wars, all for 1 tix. Get it in the Catalog or at Bobs Shop.',
+    'FIXED: Trusses! Just touching a truss does not slowly lift you up anymore. Walk into it to climb, and you go straight up hugging it instead of sliding off round the side. Let go of the keys while climbing and you hang right where you are. Walk away or jump to let go.',
+    'FASTER! Blowing up lots of buildings does not leave the game slow anymore. Rubble that has landed goes to sleep (a sleeping brick costs almost nothing) instead of jiggling forever, and parked cars and planes sleep too until someone drives them or hits them.',
     'When a new update is out, the package on the loading screen bursts open in choppy stop-motion, just like Bob and the explosions. The lid and the bricks hop from spot to spot instead of gliding.',
     'FIXED: Pressing the Bobs Shop button does not crash phones anymore, and computers do not slow down while the glass flies. Each piece of glass is only as big as itself now (before, every piece was a whole copy of the screen), and Bobs shed gets ready in the background after the page loads, so the button does not freeze the first time.',
   ] },
@@ -8845,7 +9273,7 @@ function frAction(d) {
   if (d.frinv) { closeEsc(); frInvite(d.frinv); }
 }
 $('escFriendList').addEventListener('click', (e) => { const t = e.target.closest('[data-frjoin],[data-frinv]'); if (t) { SFX.click(); frAction(t.dataset); } });
-const PLACE_NAMES = { classic: 'Blockburg Classic', baseplate: 'Happy Home Baseplate', redblue: 'RED VS BLUE!' };
+const PLACE_NAMES = { classic: 'Blockburg Classic', baseplate: 'Happy Home Baseplate', redblue: 'RED VS BLUE!', city: 'BLOCKBURG CITY' };
 function frState(id) {
   const s = FR.status[id], now = Date.now();
   if (!s || !s.on || now - s.got > 150000 || now - s.ts > 600000) return { on: false, text: 'Offline' };
@@ -8965,7 +9393,7 @@ function storePlaces(list) { try { localStorage.setItem(PLACES_KEY, JSON.stringi
    room's host (a bit at a time), everyone builds, and I can save it back into my place. ---- */
 function mpPlaceOptions() {
   const sel = $('mpPlace'), was = sel.value;
-  sel.innerHTML = '<option value="classic">Blockburg Classic</option><option value="baseplate">Happy Home Baseplate</option><option value="redblue">RED VS BLUE!</option>' +
+  sel.innerHTML = '<option value="classic">Blockburg Classic</option><option value="baseplate">Happy Home Baseplate</option><option value="redblue">RED VS BLUE!</option><option value="city">BLOCKBURG CITY</option>' +
     loadPlaces().sort((a, b) => b.ts - a.ts).map(f => `<option value="file:${f.id}">My place: ${escHtml(f.name)}</option>`).join('');
   if ([...sel.options].some(o => o.value === was)) sel.value = was;
 }
@@ -9035,11 +9463,12 @@ function playPlace(id, { file = null, guests = false } = {}) {
   audioInit();
   currentPlace = id; currentFile = file ? file.id : null;
   if (ctf.on) ctfStop();
-  currentGuests = id === 'classic' || id === 'redblue' || (id === 'baseplate' && (file ? !!file.guests : guests));
+  currentGuests = id === 'classic' || id === 'redblue' || id === 'city' || (id === 'baseplate' && (file ? !!file.guests : guests));
   stopDrag(); clearUnlocked();
   [...hatPickups].forEach(removeHatPickup);
   if (id === 'classic') buildDefault();
   if (id === 'redblue') buildRedBlue();
+  if (id === 'city') buildCity();
   npcs.forEach(n => {
     if (currentGuests) { if (!n.enabled) n.setEnabled(true); else if (!n.dead) n.spawn(randomNpcSpot()); }
     else if (n.enabled) n.setEnabled(false);
@@ -9066,7 +9495,8 @@ function playPlace(id, { file = null, guests = false } = {}) {
     if (file && Array.isArray(file.bricks)) {
       file.bricks.forEach(d => deserialize(d, { sleep: true }));
       sysChat(`Welcome back to "${file.name}" (${file.bricks.length} bricks)! It saves when you leave.`);
-    } else if (id === 'baseplate') sysChat('Happy building! Open Insert for bricks. Save it when you leave and it shows up on the Build page.');
+    } else if (id === 'city') sysChat('Welcome to BLOCKBURG CITY! Almost everything here blows up, so grab a rocket and go wild. Click a TNT crate to set it off!');
+    else if (id === 'baseplate') sysChat('Happy building! Open Insert for bricks. Save it when you leave and it shows up on the Build page.');
   }
   scriptsStart();
   if (id === 'redblue') { ctfStart(); player.spawn(); sysChat(`RED VS BLUE! Grab the other team's flag and bring it to your own flag stand. First to ${CTF_WIN} wins!`); }
