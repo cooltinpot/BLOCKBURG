@@ -127,6 +127,56 @@
   .win .shop-it button.b{font:bold 11px Arial;padding:3px 2px}
   .win .shop-it button.buy{background:#4fae4a;color:#fff;border-color:#9be096 #2c6e29 #2c6e29 #9be096}
   #shopWin{z-index:47;max-width:calc(100vw - 24px)}
+  /* Locked Boxes */
+  .rar{font-weight:bold}
+  .rar.r0{color:#77776f}.rar.r1{color:#2c962c}.rar.r2{color:#1f6fe0}.rar.r3{color:#9a30e0;text-shadow:0 0 3px #e3c4ff}
+  .rar.r4{color:#c98a00;text-shadow:0 0 4px #ffe27a}
+  .rar.r5,.rar.gl{background:linear-gradient(90deg,#ff3b3b,#ffa21a,#f5e22a,#3fd44a,#2fc8ff,#5a5cff,#e04cff,#ff3b3b);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rarRun 2s steps(16) infinite}
+  .rar.gl{background-image:linear-gradient(90deg,#a87a10,#a87a10,#ffd84a,#a87a10,#a87a10);background-size:300% 100%}
+  @keyframes rarRun{to{background-position:-200% 0}}
+  #shopTabs button.bxtab{color:#7a3d00}
+  .shop-it,.hcard{position:relative}
+  .gleam-dec{position:absolute;top:1px;right:1px;width:32%;max-width:46px;aspect-ratio:1;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAMsUlEQVR4AeydAZbjphJFVVlLbytrmZO1ZFveS0fPadyWBRJIUFTBy5ka2wgBdauu1Wf+5Oevhf+QAAkkCVCQJBpeIIFloSDsAhI4IEBBDuDwEglQEPYACRwQaCjIwa685J3At/cEcs9PQXJJcd6UBCjIlGWvkvQUTxEKUqVXuMioBCjIqJXVyWv4p4hPQXSKz13yCAwtCQXJawLOOiYwrCQU5LjwvJpPYEhJKEh+A3DmOYHhJKEg50XnjDICQ0lCQT6Kz49VCAwjCQWp0g9TLbJp/u/vzcfhQFCQ4Uqqn1BCkiHMoSD6/TTkjgeSuBaFggzZrn2SSkiCw7iVhIKgfDoxxS6jSUJBpmhb3SRPJHH1NKEgur0zzW4HkoABJEHgvemgIKbL4/twJ5IgOUiCwHuTQUFMlmWcQ0ESxElGkARxMk3/MgXRZ95gR/tLZkiCJCAJAu9NBAUxUQY3h7jVvJAEkZHtrX0y1s+eQkGyUXFiLQKQJMTBmpAEcTCl/SUK0p7xsDugye8mhzUQB+tAEsTBlHaXKEg7tly5gAAkCZG4DZKESEypP0xB6jMda8XfbNCcv58avguihNfIVjhLiMjlekMUpB5LrtSIQBAFr5Etgih4jVy+N0RB7vGb9u5EszbngX0/421TSFIrnstSkCcG/nZCAE13MqXf5U9h8PniaWS9L8T6duF/H+RJgb8NRwCSnMVH0vLx+fmRT5AnBv5WQgCNVzI/NbfXuIgsIhK2xxtE+Lx5pSAbHPwQIWD6x6vIeQ+HRDYubD7EbqQgMSocSxLw/PQQ2fiw+ZBKmIKkyHAcBIZ5eohsfNh8QKKpoCApMhzfEfD69BDZ+LD5sEvyY4CCfADhxxcBz0+PVxIiGx82H16TDt5QkAM4E1/ayeHx6SGy8WHzIbe2FCSXFOe5IiCy8WHzoSQRClJCa4657p8eIpd92FWYguyQTD0wohy3bKEgU/swVvIiOxd2A6UZ7wUpXYHzRyHg+ukhctuFaB0pSBTLdIMjylHFGAoynQu7hF3Lscvm/4EqcmApCgIK88ZODm8oRKq5EE2dgkSxDD8IMRC7RD39D4IiUTmig7tEMwdUBck8E6e1JRAVA1t6kgPn1QgKokHZzh7DyCESfVBEB+/gpyB36Pm6NyoHnhoIX6lET1tdDuxCQUBh/EjK4TF1kSYuRFFQkCiWoQaHkkO7MqMIos3Nw34QA7E7q+cfqUSiT4/o4C7xCwMU5AI047dACsTumBADsbvAgSQBk4I8Ho/v2rESQNPMEGuqv78gRIjfUZ/vRKIPiuhgrQzNCQIxaiU36zpBCLzOyqBW3uYEqZXY5zqreJ9Dw34Wkef/MZrItVdHYKT1WacRBCCvSYI75woR2Qk2F4HfbKcSBGnPJgnyTQV45IbIrzS599ScJyI1l8teazpBQAYNg9cZ4uvrK5kmOBxF6kaRPs36cR6VQ0wpCECjMfA6QxxJcpQ/GCFic0Tk+WNY7NpIY9YEwR/DqvFNFV/tAE42AidE7Lgi7UURkdjWKmPWBFmufttdpZUq/NX1iu5TnFyD6xErEdF8oogWOnOCaCU+4z6tJQFTEbXexXbNw6QgNQpZQu7om7FkHQ9za7A94yVSTxKRemtdqY9JQa4kcvees6LfXX+0+894ifRt7Fq8zQpS45uuFNJZ0UvXszq/FtszXiJNJGmyaKpWZgXBgWsVEmvlxlnRc9fpPe9s/1psz3iJXO9nkev3nuWfe920ILlJcJ5tAiJS60+4RDtTa4LsANT6pisBe/atWLKW5bm12ObyEtmV1zKe59msCfI8lIXfcotu4ax3zmBVEhEbMrkQpFYRSxuJkpQRa8yrizEuBCkrE2c3JnC4fI4kIl16/fDcqYtuBOFTJFXCOuM1+Y4kiRtB0AY1i4j1ciOn4LlrzTIvh5lI9pMke2Jtvq4EqZ0819sSqP0FlJCkW7Nvs8375E6Q2kXMw7QsiWLn3u5mXm2+Z9xEbPviTpCenXZW7J5nq7m3giQbK0TCx5pZ1FnLpSC1C1iCchZJSphcnGvXireEXAqC8/eUBPuPHrX5Jr5YXpKIvN6aQutWkJ4UE8XueaQmeytJ0uTstRZ1LUjtApZAnUWSEiYX574eHSKvtxeXqn+ba0Hq4yhbcQZJen4JlVXjZPbFy+4Fmb2AF+tedJsC49ejQ+T1tuiMrSa7FwRgFAqIbaIxw1Mkmvgkg0MIglpRElBoFwp8X48OkdfbdgllrjyMIJn5ctoNApqS3Dhm1VuHEkShgEn4s/yopcDYzuNjrXaOIOs0P78UCpiEQUmSaNxeGE6Q3pWgJFUqYOYpMqQgPZ8iaA9KAgpjxJCCoDSUBBTaR0POJp4iwwrSvjXOd+CT5JyR9RmdBWmLp+G3W/bBKUk2qtjE7k+RoQUBcQuS4BwMnwSGFwRl6S0JnyKogs+YQhALpaEkl6vQ9ccsi4I0AdL7KYL2oCSg4CssClKHYGQVC5JEjsUhwwSmEsRCHfgUsVCF/DNMJ4iFp8gskuS3od2Z0wmCUliQBOcYPUbgPKUgaMzexZvlKdKbM2p9J6YVBNCuFg/31ghKUoNi2zWmFgRoKQkotI/enK9mOL0gV8HxvnICHiWhIGudexdulh+1VtT49Y3fvAQF+akUJfkBwZcNAQryhsOAJG+n4VsLBCjIRxUoyQeQyT9SkEgDUJIIlEmHKEii8JQkAWayYQpyUHBKcgBnkksU5KTQ40hykigvRwlQkCiW7SAl2fKY6RMFyaw2JckENdg0ClJQUEpSAGuQqRTEWSEn+2sp3atDQQpL0PspguOakwSHGjQoyIXCWpGEolwoXuEtFKQQWJhuQRKchZKAQrugIDfYUpIb8JzcSkFuFoqS3ARo/HYzgvxZlu8/yyuWPys4a7EeKfoLkiCiFxUHR/xxSxFfdCsTgqwiuPi3zNZzHor779fX0jvOznj1erR7Jhg0IcgEnN2neFWs2H2eYFAQT9Ua5KyrNC5+YgBuCgIKDBJIEKAgCTAcbkvAwFMkK0ETgvyzLE3+myAL/yGBmwRMCHIzB95OAs0IUJBmaLnwCATMCMIfs0Zop/FyaC0I/jgvO/5+PBbEeJiZ0SeB9QsRQ0e9gevd45ogecdG8nkzf2aFv64BSTQDxdIOzfw+99LONbbfT8mPXor752ixq9daCnLpTEGSSzdfvKnH32HqkWfA0yPfsHfha3dJzAkCgGgeBN5rRY+m0c7xnWWPfN/39/LepCABnnYD9Wga7RwDW7z2yBf7egrTggCkdgP1aBrtHME1RI98w94eXs0JEoOGBkLErrUYQ9MgWqydWhP5IVLXW45r59oyl9pruxAkJK3dQD0aRzvHwLZHrmFvy6+uBAFINBAC7zWiR+MgP4RGfu979Mj1fX+L790JEiBqNlCvxtHMMXDtlWvY39qrW0EAUrOBejWOZo5giuiVK/a2Fq4FAcyCBsL0W9GrcZAj4tbhC2/ulWvhMZtPdy8ICKF5EHjfOno2jlaOgWHPXH/O0P3fExpCkB+Yi1YD9WwcrRwD0565hjP0fG0pSBf70UCI1lB7No5Gfu/8OuXapX/e88b7loJg/W6h0URoHESPJJEfQmvvXnlq5Zfap7UgXb8F0ECIVPK1xh+PR62litfRyC8cSlGSrn0T8sVra0GwR/fQaCLF5tnx1MgvbNozz3AGzVcNQUx8G6CJEC3honkQLfdIrd06t/d9kSPifaziexP9EvLREAR7mUkajYTAoVpFw+Y5PHLrvD43b5CnmT4JuWoJgv1MJY9mQuBgLQLNg2ix9tGaLXOK7VsxR1P9EXLVFAR7AoKpWBtKrgYSOovbDXS2QeT6mk9k1OxQ6AeTB9QWxCSEq4daGzFLrnX90ARqr7lnqzHvZn7r7XZ/URC7teHJDBCgIAaKwCPYJUBB7NaGJzNAgIIYKEKvI3DfcwIU5JwRZ0xMgIJMXHymfk6Agpwz4oyJCVCQiYvP1M8JUJBzRpxRTmCYOyjIMKVkIi0IUJAWVLnmMAQoyDClZCItCFCQFlS55jAEKMgwpZwlEd08KYgub+7mjAAFcVYwHleXAAXR5c3dnBGgIM4KxuPqEqAgury5m2UCkbNRkAgUDpFAIEBBAgm+kkCEAAWJQOEQCQQCFCSQ4CsJRAhQkAgUDpFAIFBLkLAeX0lgKAIUZKhyMpnaBChIbaJcbygCFGSocjKZ2gQoSG2iXG8oAg4EGYo3k3FGgII4KxiPq0uAgujy5m7OCFAQZwXjcXUJUBBd3tzNGYG5BXFWLB5XnwAF0WfOHR0RoCCOisWj6hOgIPrMuaMjAhTEUbF4VH0CFKQRcy47BoH/AAAA//9rleynAAAABklEQVQDAOlAd83oJLkgAAAAAElFTkSuQmCC) center/contain no-repeat;pointer-events:none;z-index:1;
+    filter:drop-shadow(0 1px 0 #fff) drop-shadow(0 0 1px #fff);transform-origin:50% 60%;animation:gdWob 1s steps(1) infinite}
+  @keyframes gdWob{0%{transform:rotate(-8deg)}50%{transform:rotate(7deg) scale(1.06)}}
+  #unbox .gleam-dec{top:4px;right:4px;width:24%;max-width:110px;display:none}
+  #unbox.show .gleam-dec{display:block;animation:gdStamp .375s steps(3),gdWob 1s .375s steps(1) infinite}
+  @keyframes gdStamp{from{transform:scale(2.6) rotate(-30deg);opacity:0}to{transform:rotate(-8deg);opacity:1}}
+  @media (prefers-reduced-motion:reduce){.gleam-dec,#unbox.show .gleam-dec{animation:none}}
+  .bx-card,.bx-leg,.bx-h,.bx-none{grid-column:1/-1}
+  .bx-card{display:flex;gap:8px;align-items:center;background:#fff3d6;border:2px solid #c98a3a;padding:6px}
+  .bx-card img{width:84px;height:84px;background:#fff;border:1px solid #ccc;flex:0 0 auto}
+  .bx-card b{font:bold 14px Arial}.bx-card small{display:block;font:11px Arial;color:#444;margin:3px 0 6px}
+  .win .bx-card button.buy{background:#4fae4a;color:#fff;font:bold 12px Arial;padding:5px 8px;border-color:#9be096 #2c6e29 #2c6e29 #9be096}
+  .bx-leg{display:grid;grid-template-columns:1fr 1fr;gap:1px 10px;font:11px Arial;background:#f4f2ec;border:1px solid #a9a59b;padding:5px}
+  .bx-leg div{display:flex;justify-content:space-between;gap:4px}.bx-leg i{color:#666}
+  .bx-leg small{grid-column:1/-1;margin-top:3px;color:#444}
+  .bx-h{font:bold 12px Arial;margin-top:4px;border-bottom:1px solid #a9a59b}
+  .bx-none{font:italic 11px Arial;color:#666;padding:4px 0}
+  .shop-it.bx-in .nm{min-height:0;font-weight:normal}
+  .shop-it.bxr2{border-color:#6fa3f0}.shop-it.bxr3{border-color:#b77af0;background:#f8f0ff}.shop-it.bxr4{border-color:#e0a400;background:#fff6d8}.shop-it.bxr5{border-color:#e04cff;background:linear-gradient(135deg,#ffe8e8,#fff8d8,#e4ffe4,#e4f4ff,#f4e4ff)}
+  #unbox{position:fixed;inset:0;z-index:65;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(10,8,20,.78);font-family:Arial;color:#fff;overflow:hidden}
+  #unbox .ub-cv{position:relative;z-index:1}#unbox canvas{display:block}
+  #unbox .ub-rays{position:absolute;left:50%;top:42%;width:1400px;height:1400px;margin:-700px 0 0 -700px;opacity:0;pointer-events:none;border-radius:50%;
+    background:repeating-conic-gradient(var(--rc,#fff) 0 10deg,transparent 10deg 20deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 60%);mask:radial-gradient(circle,#000 0,transparent 60%);animation:ubSpin 12s steps(96) infinite}
+  #unbox.pop .ub-rays{opacity:.35}
+  #unbox.r0{--rc:#9a9a92}#unbox.r1{--rc:#3fbf3f}#unbox.r2{--rc:#2f8cff}#unbox.r3{--rc:#b14cff}#unbox.r4{--rc:#ffc21a}
+  #unbox.r4.pop .ub-rays{opacity:.6}
+  #unbox.r5 .ub-rays{background:repeating-conic-gradient(#ff3b3b 0 10deg,#ffa21a 10deg 20deg,#f5e22a 20deg 30deg,#3fd44a 30deg 40deg,#2fc8ff 40deg 50deg,#e04cff 50deg 60deg)}
+  #unbox.r5.pop .ub-rays{opacity:.7}
+  @keyframes ubSpin{to{transform:rotate(360deg)}}
+  #unbox .ub-txt{text-align:center;z-index:1;opacity:0;transform:scale(.2);max-width:calc(100vw - 32px)}
+  #unbox.show .ub-txt{opacity:1;transform:none;animation:ubPop .375s steps(3)}
+  @keyframes ubPop{from{transform:scale(.2)}to{transform:scale(1)}}
+  #unbox .ub-rar{font:900 30px 'Arial Black',Arial;text-shadow:0 2px 0 #000}
+  #unbox .ub-rar.r0{color:#c8c8c0}#unbox .ub-rar.r1{color:#5fe05f}#unbox .ub-rar.r2{color:#5aa8ff}#unbox .ub-rar.r3{color:#d08cff}#unbox .ub-rar.r4{color:#ffd23a}
+  #unbox .ub-rar.r5{font-size:26px;text-shadow:none;filter:drop-shadow(0 2px 0 #000)}
+  #unbox .ub-rar .gl{font-size:22px;text-shadow:none}
+  #unbox .ub-nm{font:bold 20px Arial;margin-top:2px}#unbox .ub-ds{font:italic 13px Arial;color:#ccc;margin-top:3px}
+  #unbox .ub-say{font:bold 14px Arial;color:#ffe680;margin-top:6px}
+  #unbox .ub-btns{display:flex;gap:8px;z-index:1;visibility:hidden;margin-top:6px;flex-wrap:wrap;justify-content:center}
+  #unbox.btns .ub-btns{visibility:visible}
+  #unbox .ub-btns .b{font:bold 14px Arial;padding:7px 14px}#unbox .ub-btns .yes{color:#1f6a12}
   /* the shop's 3D view sits under the front page; the cracks sit on it and the flying glass on top of everything */
   #shopCv,#shopCrack,#shopGlass{position:fixed;inset:0;width:100%;height:100%;display:block}
   #shopCv{z-index:39}
@@ -2319,11 +2369,12 @@ const HATS = [
   { id: 'builder', name: 'Builder Hard Hat', price: 'Free (was 100 Tix)', desc: 'Safety first! Required on every baseplate. Does not protect against rockets.' },
   { id: 'trooper', name: 'THE TROOPER', price: 'Free (was 1 Tix)', desc: 'You fought through countless Blockburg wars, all for 1 tix' },
 ];
-const hatName = (id) => (HATS.find(h => h.id === id) || HATS[0]).name;
+const hatName = (id) => parseBoxHat(id) ? boxHatName(id) : (HATS.find(h => h.id === id) || HATS[0]).name;
 const partyTex = tex(canvas(128, 64, (g) => {
   ['#e8bac8', '#0d69ac', '#8a4fc4', '#4b974b'].forEach((c, i) => { g.fillStyle = c; g.fillRect(i * 32, 0, 32, 64); });   // (purple, not yellow: a yellow stripe vanished into a yellow head)
 }));
 function makeHat(id) {
+  if (typeof id === 'string' && id.startsWith('bx:')) return makeBoxHat(id);   // (a hat from a Locked Box)
   const g = new THREE.Group();
   const M = (hex) => partMats(hex)[0];
   const add = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => {
@@ -2599,6 +2650,770 @@ function makeHat(id) {
       break;
     }
   }
+  return g;
+}
+
+/* ================= LOCKED BOXES: the box-only hats (cooltinpot's idea) =================
+   Buy a Locked Box at Bob's Shop (40 Bux) and open it: out comes one of these hats, in a random rarity.
+   The rarity changes how it looks: Stale is dull and faded, Fresh is its real colors, Shiny is glossy,
+   Sparkly twinkles, LEGENDARY turns gold with rising sparks, and ULTRACOMPLEX UNIQE QUERLY- cycles through the
+   rainbow with flames and stars. Only SOME hats (shine: true) can also come out Gleaming: a shine sweeps across
+   them, and it bumps them up one rarity.
+   A box hat's id says everything about it, so it works everywhere a hat id does (your look, online, pickups):
+   'bx:<hat>:<rarity 0-5>:<gleaming 0/1>'. You own one when wallet.owned has 'hat:' + that id. */
+const BOX_PRICE = 40;
+const RARITIES = [
+  { name: 'Stale', color: '#8b8b86', odds: 38, say: 'Smells a little old. Still a hat though!' },
+  { name: 'Fresh', color: '#3fae3f', odds: 30, say: 'Fresh out of the box!' },
+  { name: 'Shiny', color: '#2f80f0', odds: 17, say: 'Ooh, shiny!' },
+  { name: 'Sparkly', color: '#a63ff0', odds: 10, say: 'It SPARKLES!!' },
+  { name: 'LEGENDARY', color: '#e0a400', odds: 4, say: 'LEGENDARY!!! Everyone is going to be so jealous.' },
+  { name: 'ULTRACOMPLEX UNIQE QUERLY-', color: 'rainbow', odds: 1, say: '!!!!!! THE RAREST THING IN ALL OF BLOCKBURG !!!!!!' },
+];
+/* each hat is a list of simple parts: [shape, sizes, color, [x, y, z], [rx, ry, rz], [sx, sy, sz], extra]
+   shapes: box [w, h, d], cyl [top r, bottom r, h, sides], sph [r], dome [r] (the top half of a ball),
+   cone [r, h, sides], tor [ring r, tube r, how much of the ring (2π = all)]
+   colors: 'A' is the hat's main color (main), which the rarity changes. A '*' on the end glows, a '~' is see-through.
+   extra: { spin } turns it round and round (studs a second, in turns).
+   Positions: y = 0 is about the top of your head, +z is the front (your face). */
+const T = Math.PI * 2, H = Math.PI / 2;
+const BOX_HATS = (() => {
+  // ---- little helpers for building the hats ----
+  const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };   // the same "random" number every time
+  const P = (n, f) => Array.from({ length: n }, (_, i) => f(i, i / n * T));   // n things spread around a circle
+  const at = (r, a, y) => [Math.sin(a) * r, y, Math.cos(a) * r];               // a spot around the hat (a = 0 is the front)
+  // a spot on a ball (center c, radius r) at height angle e and around angle a, and the turn that faces it outward
+  const surf = (c, r, e, a) => [[c[0] + Math.cos(e) * Math.sin(a) * r, c[1] + Math.sin(e) * r, c[2] + Math.cos(e) * Math.cos(a) * r], [H - e, a, 0, 'YXZ']];
+  const tubeC = (pts, r, c, seg = 8) => [['tube', [pts, r, seg], c], ['sph', [r, 10, 8], c, pts[0]], ['sph', [r, 10, 8], c, pts[pts.length - 1]]];   // a bent tube with round ends
+  const hornC = (pts, r0, r1, c) => [['horn', [pts, r0, r1], c], ['sph', [r0, 14, 10], c, pts[0]]];   // a tube that gets thinner, like a horn
+  const star = (n, r1, r2) => Array.from({ length: n * 2 }, (_, i) => { const a = i / (n * 2) * T, r = i % 2 ? r2 : r1; return [Math.sin(a) * r, Math.cos(a) * r]; });
+  const inG = (parts, grp) => parts.map(p => { const q = p.slice(0, 6); q.length = 6; q[6] = { ...(p[6] || {}), grp }; return q; });   // put parts in a moving group
+  // a coil (spring or stripe) wound around a line: from c along d, len long, radius r0 to r1
+  const coil = (c, d, len, r0, r1, turns, tr, col, n = 70) => {
+    const D = new V3(...d).normalize(), U = new V3().crossVectors(D, Math.abs(D.x) < 0.9 ? new V3(1, 0, 0) : new V3(0, 1, 0)).normalize(), W = new V3().crossVectors(D, U);
+    const pts = Array.from({ length: n }, (_, i) => { const k = i / (n - 1), a = k * turns * T, r = r0 + (r1 - r0) * k;
+      const p = new V3(...c).addScaledVector(D, len * k).addScaledVector(U, Math.cos(a) * r).addScaledVector(W, Math.sin(a) * r); return [p.x, p.y, p.z]; });
+    return ['tube', [pts, tr, 5], col];
+  };
+  // rings around a curve (for horn ridges): at the spots k (0 to 1) along it
+  const ringsOn = (pts, r0, r1, ks, tr, col) => { const cv = new THREE.CatmullRomCurve3(pts.map(p => new V3(...p)));
+    return ks.map(k => { const p = cv.getPointAt(k), e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new V3(0, 0, 1), cv.getTangentAt(k)));
+      return ['tor', [r0 + (r1 - r0) * k + tr * 0.3, tr, T, 6, 20], col, [p.x, p.y, p.z], [e.x, e.y, e.z]]; }); };
+  const rxp = (p, a) => [p[0], p[1] * Math.cos(a) - p[2] * Math.sin(a), p[1] * Math.sin(a) + p[2] * Math.cos(a)];   // turn a point forward around x
+  const lift = (dy, parts) => parts.map(p => { const q = p.slice(); q[3] = [p[3][0], p[3][1] + dy, p[3][2]]; return q; });
+  const RB = ['#ff3b3b', '#ffa21a', '#f5e22a', '#3fd44a', '#2fc8ff', '#5a5cff', '#e04cff'];
+  const SPR = ['#0D69AC', '#F5CD30', '#4B974B', '#C4281C', '#F2F3F3'];
+
+  // ---- a few hats need a bit of working out first ----
+  const fish = (s, y, c) => inG([
+    ['sph', [0.13, 16, 12], c, [s * 0.74, y, 0], 0, [0.6, 1, 1.6]],
+    ['cone', [0.11, 0.16, 6], c, [s * 0.74, y, s * 0.26], [-s * H, 0, 0], [0.35, 1, 1]],
+    ['cone', [0.06, 0.12, 4], c, [s * 0.74, y + 0.12, s * 0.03], [-s * 0.5, 0, 0], [0.3, 1, 1]],
+    ['tor', [0.132, 0.022, T, 6, 20], '#F2F3F3', [s * 0.74, y, -s * 0.05], 0, [0.62, 1, 1]], ['tor', [0.12, 0.02, T, 6, 20], '#F2F3F3', [s * 0.74, y, s * 0.1], 0, [0.62, 1, 1]],
+    ...[1, -1].flatMap(e => [['sph', [0.028, 8, 6], '#151515', [s * 0.74 + e * 0.07, y + 0.03, -s * 0.13]], ['sph', [0.011, 6, 4], '#FFFFFF', [s * 0.74 + e * 0.088, y + 0.045, -s * 0.15]]]),
+    ['sph', [0.03, 8, 6], '#E8505B', [s * 0.74, y - 0.02, -s * 0.2]]], 'fish');
+  const dishC = [0, 0.66, 0.05], dishA = 0.8, dw = (p) => { const q = rxp(p, dishA); return [q[0] + dishC[0], q[1] + dishC[1], q[2] + dishC[2]]; };
+  const dishProf = [[0, 0], [0.15, 0.012], [0.3, 0.045], [0.45, 0.1], [0.6, 0.18], [0.72, 0.26]];
+  const vp = [[0.86, -0.22], [0.8, -0.12], [0.64, 0.08], [0.47, 0.32], [0.33, 0.5], [0.3, 0.56], [0.25, 0.54], [0.2, 0.46]];
+  const rAt = (y) => { for (let i = 0; i < 5; i++) { const [r0, y0] = vp[i], [r1, y1] = vp[i + 1]; if (y >= y0 && y <= y1) return r0 + (r1 - r0) * (y - y0) / (y1 - y0); } return y < vp[0][1] ? vp[0][0] : 0.3; };
+  const witchCrown = (() => { const out = []; let x = 0, y = -0.12; const N = 8, h = 0.16;
+    for (let i = 0; i < N; i++) { const th = i >= 3 ? (i - 2) * 0.17 : 0, r0 = 0.58 * (1 - i / N) + 0.035, r1 = 0.58 * (1 - (i + 1) / N) + 0.035, ux = Math.sin(th), uy = Math.cos(th);
+      out.push(['cyl', [r1, r0, h, 24], 'A', [x + ux * h / 2, y + uy * h / 2, 0], [0, 0, -th]]);
+      if (i >= 3) out.push(['sph', [r0, 20, 14], 'A', [x, y, 0]]);
+      x += ux * h; y += uy * h; }
+    out.push(['cone', [0.035, 0.12, 12], 'A', [x + 0.06, y + 0.03, 0], [0, 0, -1.4]]); return out; })();
+  const topHat = (k, s, band) => inG([
+    ['lathe', [[[0.55 * s, -0.12], [0.8 * s, -0.135], [0.9 * s, -0.1], [0.94 * s, -0.05]], 32], 'A'],
+    ['tor', [0.92 * s, 0.022, T, 6, 40], 'A', [0, -0.065, 0], [H, 0, 0]],
+    ['cyl', [0.6 * s, 0.56 * s, 0.62 * s, 32], 'A', [0, -0.13 + 0.31 * s, 0]],
+    ['tor', [0.6 * s, 0.014, T, 6, 32], 'A', [0, -0.13 + 0.62 * s, 0], [H, 0, 0]],
+    ['cyl', [0.574 * s, 0.566 * s, 0.13 * s, 32], band, [0, -0.13 + 0.08 * s, 0]],
+    ...[[0, 0.055], [0, -0.055]].map(([x, y]) => ['box', [0.15 * s, 0.022, 0.014], '#E0B020', [x, -0.13 + 0.08 * s + y * s, 0.572 * s + 0.008]]),
+    ...[0.065, -0.065].map(x => ['box', [0.022, 0.13 * s, 0.014], '#E0B020', [x * s, -0.13 + 0.08 * s, 0.572 * s + 0.008]]),
+  ], 'h' + k);
+  const pz = (y) => 0.522 * (1 - (y + 0.175) / 0.95) + 0.012, pw = (y) => 1.27 * (1 - (y + 0.175) / 0.95), pTilt = Math.atan2(0.522, 0.95);
+  const paperFace = (side) => [   // side 1 = the front of the paper hat, -1 = the back
+    ['box', [pw(0.6) * 0.75, 0.07, 0.008], '#2A2A2A', [0, 0.6, side * pz(0.6)], [-side * pTilt, 0, 0]],
+    ...[0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5].flatMap((y, i) => {
+      const w = pw(y) * 0.8, cw = (w - 0.06) / 2;
+      if (side < 0 && i >= 3 && i <= 6) return [['box', [cw, 0.022, 0.008], '#6E6E6E', [cw / 2 + 0.03, y, side * pz(y)], [-side * pTilt, 0, 0]]];
+      return [-1, 1].map(c => ['box', [cw * (0.7 + rnd(i * 2 + c) * 0.3), 0.022, 0.008], '#6E6E6E', [c * (cw / 2 + 0.03), y, side * pz(y)], [-side * pTilt, 0, 0]]);
+    }),
+    ...(side < 0 ? [['box', [0.17, 0.19, 0.01], '#9A9A92', [-0.13, 0.38, side * pz(0.38)], [-side * pTilt, 0, 0]], ['sph', [0.045, 8, 6], '#5A5A52', [-0.13, 0.39, side * (pz(0.39) + 0.004)], [-side * pTilt, 0, 0], [1, 1, 0.1]]] : []),
+    ...[-0.12, -0.04, 0.04].map((y, i) => ['box', [1.1 - rnd(i + 40) * 0.3, 0.02, 0.008], '#6E6E6E', [0, y, side * 0.665]]),
+  ];
+  const cheeseTri = [[-0.63, -0.9], [1.27, 0], [-0.63, 0.9]], cheeseA = Math.atan2(0.9, 1.9);   // (how the slanted sides of the wedge face)
+  const cheeseSide = (s) => [[0.28, 0.02, 0.07], [0.55, 0.16, 0.05], [0.18, 0.2, 0.045], [0.72, -0.02, 0.04]].map(([u, y, r]) => {
+    const nx = Math.sin(cheeseA), nz = Math.cos(cheeseA);
+    return ['cyl', [r, r, 0.01, 14], '#C98A1E', [-0.63 + 1.9 * u + nx * 0.035, y, s * (0.9 - 0.9 * u + nz * 0.035)], [H, s > 0 ? cheeseA : Math.PI - cheeseA, 0, 'YXZ']];
+  });
+  const shroomC = [0, -0.4, 0], bug = surf(shroomC, 0.92, 0.75, 0.9), bugN = [Math.cos(0.75) * Math.sin(0.9), Math.sin(0.75), Math.cos(0.75) * Math.cos(0.9)], bugT = [Math.cos(0.9), 0, -Math.sin(0.9)];
+  const bugAt = (u, v, out) => [bug[0][0] + bugT[0] * u + bugN[0] * out, bug[0][1] + v + bugN[1] * out, bug[0][2] + bugT[2] * u + bugN[2] * out];
+
+  return [
+  { id: 'duck', name: 'Rubber Duck', shine: true, main: '#F5CD30', desc: 'Squeak squeak. It floats, but you do not.', parts: [
+    ['sph', [0.5, 28, 20], 'A', [0, 0.2, -0.05], 0, [1.15, 0.72, 1.3]], ['sph', [0.34, 20, 14], 'A', [0, 0.26, 0.3], 0, [1, 0.85, 0.8]],
+    ...[1, -1].flatMap(s => [['sph', [0.27, 16, 12], 'A', [s * 0.5, 0.27, -0.1], [0.25, 0, s * 0.35], [0.32, 0.65, 1.05]], ['sph', [0.08, 10, 8], 'A', [s * 0.53, 0.3, -0.38], [0.6, 0, 0], [0.4, 0.5, 1]]]),
+    ['cone', [0.2, 0.38, 12], 'A', [0, 0.42, -0.68], [-1.05, 0, 0]],
+    ['cone', [0.09, 0.22, 8], 'A', [0.1, 0.48, -0.74], [-1.2, 0, 0.3]], ['cone', [0.09, 0.22, 8], 'A', [-0.1, 0.48, -0.74], [-1.2, 0, -0.3]],
+    ['cyl', [0.22, 0.27, 0.22, 16], 'A', [0, 0.5, 0.27]], ['sph', [0.31, 24, 18], 'A', [0, 0.72, 0.3]],
+    ['sph', [0.17, 16, 10], '#E8781E', [0, 0.66, 0.6], 0, [1.3, 0.38, 1.15]], ['sph', [0.13, 16, 10], '#CF6516', [0, 0.6, 0.56], 0, [1.1, 0.32, 1]],
+    ['sph', [0.018, 6, 4], '#7A3A10', [0.05, 0.69, 0.77]], ['sph', [0.018, 6, 4], '#7A3A10', [-0.05, 0.69, 0.77]],
+    ...[1, -1].flatMap(s => [['sph', [0.07, 12, 10], '#151515', [s * 0.15, 0.79, 0.54]], ['sph', [0.024, 8, 6], '#FFFFFF', [s * 0.15 + 0.025, 0.82, 0.6]],
+      ['sph', [0.065, 10, 8], '#FF8FA8', [s * 0.22, 0.67, 0.5], [0, s * 0.5, 0], [1, 0.55, 0.35]], ['box', [0.1, 0.022, 0.02], '#C98A00', [s * 0.15, 0.89, 0.53], [0, 0, -s * 0.25]]]),
+    ['tor', [0.07, 0.022, 4.4, 6, 16], 'A', [0, 1.05, 0.28], [0, H, 0]],
+    ['tor', [0.66, 0.05, T, 8, 40], '#7FC8FF~', [0, -0.06, -0.02], [H, 0, 0], [1.05, 1.15, 1]],
+    ...P(12, (i, a) => ['sph', [0.035 + rnd(i) * 0.03, 8, 6], '#BFE6FF~', at(0.74 + rnd(i + 9) * 0.1, a + 0.3, -0.02 + rnd(i + 3) * 0.16)]),
+  ] },
+  { id: 'toaster', name: 'Toaster Hat', shine: true, main: '#B9BDC4', desc: 'Breakfast is served. On your head.', parts: [
+    ['box', [1.16, 0.62, 0.8], 'A', [0, 0.12, 0]],
+    ...[0.4, -0.4].flatMap(z => [0.43, -0.19].map(y => ['cyl', [0.06, 0.06, 1.16, 12], 'A', [0, y, z], [0, 0, H]])),
+    ...[0.58, -0.58].flatMap(x => [0.4, -0.4].map(z => ['cyl', [0.06, 0.06, 0.62, 12], 'A', [x, 0.12, z]])),
+    ...[0.58, -0.58].flatMap(x => [0.43, -0.19].map(y => ['cyl', [0.06, 0.06, 0.8, 12], 'A', [x, y, 0], [H, 0, 0]])),
+    ...[0.58, -0.58].flatMap(x => [0.4, -0.4].flatMap(z => [0.43, -0.19].map(y => ['sph', [0.06, 12, 10], 'A', [x, y, z]]))),
+    ['box', [1.2, 0.08, 0.84], '#4D4D4D', [0, -0.22, 0]],
+    ...[0.17, -0.17].flatMap(z => [['box', [0.86, 0.03, 0.16], '#151515', [0, 0.44, z]], ['box', [0.92, 0.035, 0.025], '#8E9299', [0, 0.445, z + 0.095]], ['box', [0.92, 0.035, 0.025], '#8E9299', [0, 0.445, z - 0.095]],
+      ['box', [0.025, 0.035, 0.21], '#8E9299', [0.46, 0.445, z]], ['box', [0.025, 0.035, 0.21], '#8E9299', [-0.46, 0.445, z]]]),
+    ...[[0.17, 0.62], [-0.17, 0.55]].flatMap(([z, y]) => [
+      ['box', [0.74, 0.42, 0.1], '#B5652F', [0, y, z]], ['box', [0.68, 0.38, 0.112], '#EBC98A', [0, y + 0.01, z]],
+      ...[0.18, -0.18].flatMap(x => [['cyl', [0.19, 0.19, 0.1, 18], '#B5652F', [x, y + 0.21, z], [H, 0, 0]], ['cyl', [0.16, 0.16, 0.112, 18], '#EBC98A', [x, y + 0.2, z], [H, 0, 0]]]),
+      ['box', [0.14, 0.08, 0.116], '#C8904A', [0.15, y + 0.06, z]], ['box', [0.1, 0.06, 0.116], '#C8904A', [-0.2, y - 0.07, z]], ['box', [0.06, 0.05, 0.116], '#C8904A', [-0.05, y + 0.15, z]]]),
+    ['box', [0.02, 0.42, 0.07], '#151515', [0.585, 0.14, 0.2]], ['box', [0.18, 0.07, 0.1], '#151515', [0.67, 0.3, 0.2]], ['sph', [0.05, 10, 8], '#C4281C', [0.77, 0.3, 0.2]],
+    ['cyl', [0.09, 0.09, 0.04, 20], '#4D4D4D', [-0.32, 0.18, 0.42], [H, 0, 0]], ['box', [0.02, 0.07, 0.02], '#F2F3F3', [-0.32, 0.2, 0.445], [0, 0, -0.6]],
+    ...P(6, (i) => { const a = -1.2 + i * 0.48; return ['box', [0.014, 0.035, 0.01], '#151515', [-0.32 + Math.sin(a) * 0.13, 0.18 + Math.cos(a) * 0.13, 0.405], [0, 0, -a]]; }),
+    ['cyl', [0.04, 0.04, 0.03, 12], '#C4281C', [0.3, 0.25, 0.415], [H, 0, 0]], ['cyl', [0.04, 0.04, 0.03, 12], '#4B974B', [0.3, 0.12, 0.415], [H, 0, 0]],
+    ...[0, 1, 2, 3].map(i => ['box', [0.34, 0.015, 0.01], '#8E9299', [0, -0.03 + i * 0.05, 0.405]]),
+    ['box', [0.32, 0.08, 0.012], '#F5CD30', [0, 0.32, 0.405]], ['box', [0.24, 0.02, 0.014], '#C4281C', [0, 0.32, 0.406]],
+    ...tubeC([[0.3, -0.12, -0.42], [0.45, -0.25, -0.6], [0.3, -0.45, -0.72], [0.55, -0.62, -0.68], [0.5, -0.85, -0.75]], 0.03, '#151515'),
+    ['box', [0.12, 0.1, 0.08], '#151515', [0.5, -0.92, -0.76]], ['box', [0.02, 0.06, 0.02], '#A3A2A5', [0.53, -0.99, -0.76]], ['box', [0.02, 0.06, 0.02], '#A3A2A5', [0.47, -0.99, -0.76]],
+  ] },
+  { id: 'fishbowl', name: 'Fishbowl Helmet', main: '#DA8541', desc: 'Your new roommate is a fish named Bubbles.', groups: { fish: { spin: 0.12 } }, parts: [
+    ['sph', [0.92, 32, 24], '#BFE6FF~', [0, -0.45, 0]],
+    ['sphp', [0.9, 1.02, 1.54], '#3F9AE0~', [0, -0.45, 0]], ['tor', [0.62, 0.15, T, 4, 36], '#3F9AE0~', [0, 0.02, 0], [H, 0, 0], [1, 1, 0.04]],
+    ['tor', [0.86, 0.025, 1.0, 6, 16], '#FFFFFF~', [0, -0.45, 0], [0.3, -0.5, 1.9]], ['tor', [0.8, 0.02, 0.5, 6, 10], '#FFFFFF~', [0, -0.45, 0], [0.2, -0.7, 2.2]],
+    ['tor', [0.62, 0.09, T, 10, 36], '#A3A2A5', [0, -1.2, 0], [H, 0, 0]], ['tor', [0.64, 0.03, T, 6, 36], '#6E7A8A', [0, -1.1, 0], [H, 0, 0]],
+    ...P(8, (i, a) => ['sph', [0.035, 8, 6], '#E5E4DF', at(0.71, a, -1.2)]),
+    ['cyl', [0.2, 0.24, 0.08, 20], '#A3A2A5', [0, 0.47, 0]], ['tor', [0.2, 0.025, T, 6, 20], '#6E7A8A', [0, 0.51, 0], [H, 0, 0]], ['sph', [0.06, 10, 8], '#C4281C', [0, 0.55, 0]],
+    ...tubeC([[0.6, -0.95, 0.33], [0.66, -0.8, 0.35], [0.6, -0.62, 0.32], [0.67, -0.45, 0.3]], 0.03, '#4B974B', 6),
+    ...tubeC([[0.48, -0.95, 0.5], [0.52, -0.82, 0.52], [0.47, -0.7, 0.5]], 0.025, '#3E7E3E', 6),
+    ...tubeC([[-0.6, -0.95, -0.38], [-0.66, -0.8, -0.38], [-0.6, -0.64, -0.4], [-0.66, -0.5, -0.36]], 0.03, '#3E7E3E', 6),
+    ...P(5, (i) => ['sph', [0.03 + i * 0.008, 8, 6], '#E8F7FF~', [0.45 + Math.sin(i * 2) * 0.03, -0.55 + i * 0.17, 0.52 + i * 0.02]]),
+    ...fish(1, -0.5, 'A'), ...fish(-1, -0.2, '#F5CD30'),
+  ] },
+  { id: 'traffic', name: 'Traffic Light Hat', main: '#F5CD30', desc: 'Red means stop. Green means jump on the noob.', parts: [
+    ['box', [0.62, 0.12, 0.56], '#4D4D4D', [0, -0.04, 0]],
+    ...P(8, (i) => ['box', [0.08, 0.122, 0.02], i % 2 ? '#151515' : '#F5CD30', [-0.28 + i * 0.08, -0.04, 0.28]]),
+    ['box', [0.56, 1.42, 0.46], 'A', [0, 0.73, 0]], ['cyl', [0.28, 0.28, 0.46, 20, false, H, Math.PI], 'A', [0, 1.44, 0], [H, 0, 0]],
+    ['box', [0.7, 1.62, 0.04], '#151515', [0, 0.78, -0.25]], ['cyl', [0.35, 0.35, 0.04, 20, false, H, Math.PI], '#151515', [0, 1.59, -0.25], [H, 0, 0]],
+    ['box', [0.66, 0.05, 0.012], '#F5CD30', [0, 0.02, -0.272]], ['box', [0.05, 1.56, 0.012], '#F5CD30', [0.31, 0.78, -0.272]], ['box', [0.05, 1.56, 0.012], '#F5CD30', [-0.31, 0.78, -0.272]],
+    ['tor', [0.33, 0.025, Math.PI, 6, 20], '#F5CD30', [0, 1.57, -0.272]],
+    ['box', [0.36, 0.6, 0.02], '#2A2A2A', [0, 0.72, -0.278]], ['box', [0.04, 0.1, 0.03], '#A3A2A5', [0.14, 0.72, -0.29]], ['box', [0.3, 0.06, 0.012], '#FFFFFF', [0, 0.9, -0.29]],
+    ...[[0.2, 0.36], [-0.2, 0.36], [0.2, 1.1], [-0.2, 1.1], [0.2, 1.4], [-0.2, 1.4]].map(([x, y]) => ['sph', [0.03, 8, 6], '#A3A2A5', [x, y, -0.275]]),
+    ...[['#3fd44a*', 0.28, 0], ['#FFB01A*', 0.74, 1], ['#FF3B30*', 1.2, 2]].flatMap(([c, y, k]) => [
+      ['sph', [0.16, 20, 14], c, [0, y, 0.18], 0, [1, 1, 0.6], { flash: [1.1, k, 3] }],
+      ['tor', [0.18, 0.035, T, 8, 24], '#151515', [0, y, 0.24]],
+      ['cyl', [0.21, 0.21, 0.24, 16, true, H, Math.PI], 'A', [0, y, 0.35], [H, 0, 0]],
+      ['cyl', [0.195, 0.195, 0.245, 16, true, H, Math.PI], '#151515', [0, y, 0.35], [H, 0, 0]]]),
+    ...[[0.22, 1.38], [-0.22, 1.38], [0.22, 0.06], [-0.22, 0.06], [0.22, 0.51], [-0.22, 0.51], [0.22, 0.97], [-0.22, 0.97]].map(([x, y]) => ['sph', [0.025, 8, 6], '#A3A2A5', [x, y, 0.235]]),
+    ['cyl', [0.05, 0.05, 0.25, 10], '#4D4D4D', [0, 1.84, 0]], ['box', [0.2, 0.08, 0.2], '#4D4D4D', [0, 1.96, 0]], ['cyl', [0.09, 0.09, 0.03, 12], '#A3A2A5', [0, 1.73, 0]],
+    ...[1, -1].map(s => ['box', [0.06, 0.5, 0.1], '#4D4D4D', [s * 0.31, 0.73, -0.1]]),
+  ] },
+  { id: 'cake', name: 'Birthday Cake', shine: true, main: '#E8BAC8', desc: 'Make a wish! (Do not blow out your hat.)', parts: [
+    ['cyl', [0.88, 0.88, 0.04, 36], '#F2F3F3', [0, -0.24, 0]], ['tor', [0.88, 0.02, T, 6, 40], '#E0B020', [0, -0.24, 0], [H, 0, 0]],
+    ['cyl', [0.72, 0.72, 0.4, 36], 'A', [0, -0.02, 0]], ...P(28, (i, a) => ['sph', [0.045, 8, 6], '#F2F3F3', at(0.72, a, -0.2)]),
+    ['cyl', [0.735, 0.735, 0.05, 36], '#F2F3F3', [0, 0.19, 0]],
+    ...P(14, (i, a) => { const L = 0.05 + rnd(i) * 0.12; return ['cap', [0.035, L, 6], '#F2F3F3', at(0.74, a + 0.2, 0.17 - L / 2)]; }),
+    ...P(18, (i, a) => ['box', [0.07, 0.02, 0.02], SPR[i % 4], at(0.55 + rnd(i) * 0.12, a + rnd(i + 1), 0.225), [0, rnd(i + 7) * 3, 0]]),
+    ['cyl', [0.46, 0.46, 0.32, 32], 'A', [0, 0.38, 0]], ...P(20, (i, a) => ['sph', [0.04, 8, 6], '#F2F3F3', at(0.46, a, 0.23)]),
+    ['cyl', [0.475, 0.475, 0.045, 32], '#F2F3F3', [0, 0.555, 0]],
+    ...P(10, (i, a) => { const L = 0.04 + rnd(i + 20) * 0.09; return ['cap', [0.03, L, 6], '#F2F3F3', at(0.475, a, 0.53 - L / 2)]; }),
+    ...P(16, (i, a) => ['sph', [0.035, 8, 6], '#F2F3F3', at(0.43, a, 0.585)]),
+    ...P(3, (i, a) => { const [x, , z] = at(0.2, a + 0.5, 0), c = ['#0D69AC', '#F5CD30', '#4B974B'][i]; return [
+      ['cyl', [0.035, 0.035, 0.3, 10], c, [x, 0.73, z]], ...[0, 1, 2].map(k => ['tor', [0.037, 0.012, T, 4, 12], '#F2F3F3', [x, 0.63 + k * 0.09, z], [H, 0, 0.3]]),
+      ['cyl', [0.006, 0.006, 0.05, 4], '#151515', [x, 0.9, z]], ['cone', [0.04, 0.13, 10], '#FFB01A*', [x, 0.97, z]], ['sph', [0.022, 8, 6], '#FFF6C8*', [x, 0.94, z]]]; }).flat(),
+    ...P(4, (i, a) => { const [x, , z] = at(0.34, a + 1.3, 0); return [['sph', [0.075, 12, 10], '#D3302A', [x, 0.63, z], 0, [1, 1.2, 1]],
+      ...P(4, (k, b) => ['cone', [0.03, 0.07, 4], '#4B974B', [x + Math.sin(b) * 0.03, 0.71, z + Math.cos(b) * 0.03], [Math.cos(b) * 1.2, 0, -Math.sin(b) * 1.2]]),
+      ...P(5, (k, b) => ['sph', [0.008, 4, 4], '#F5E6A0', [x + Math.sin(b + i) * 0.077, 0.6 + (k % 2) * 0.05, z + Math.cos(b + i) * 0.077]])]; }).flat(),
+    ['tor', [0.06, 0.03, T, 6, 14], '#D7739A', [0, 0.0, 0.74]], ['sph', [0.04, 8, 6], '#D7739A', [0, 0.0, 0.75]],
+    ['cone', [0.03, 0.08, 4], '#4B974B', [0.09, -0.03, 0.74], [0, 0, -2]], ['cone', [0.03, 0.08, 4], '#4B974B', [-0.09, -0.03, 0.74], [0, 0, 2]],
+  ] },
+  { id: 'bucket', name: 'Bucket Head', main: '#0D69AC', desc: 'Found it in the sandbox. It still has sand in it.', parts: [
+    ['lathe', [[[0.75, -0.32], [0.74, -0.28], [0.57, 0.62], [0.5, 0.64], [0, 0.65]], 32], 'A'], ['tor', [0.75, 0.045, T, 8, 40], 'A', [0, -0.3, 0], [H, 0, 0]],
+    ...[0.02, 0.3, 0.52].map(y => ['tor', [0.74 - (y + 0.28) / 0.9 * 0.17 + 0.006, 0.02, T, 6, 40], '#0A5590', [0, y, 0], [H, 0, 0]]),
+    ['tor', [0.74, 0.025, Math.PI, 6, 30], '#A3A2A5', [0, -0.1, 0], [-2.0, 0, 0]], ...[1, -1].map(s => ['cyl', [0.05, 0.05, 0.06, 12], '#A3A2A5', [s * 0.73, -0.1, 0], [0, 0, H]]),
+    ['ext', [star(5, 0.12, 0.05), 0.02, 0.008], '#FF8A3D', [0, 0.15, 0.675], [-0.19, 0, 0]], ...P(5, (i, a) => ['sph', [0.012, 4, 4], '#FFD0A0', [Math.sin(a) * 0.06, 0.15 + Math.cos(a) * 0.06, 0.7]]),
+    ['box', [0.5, 0.14, 0.5], '#E6C88A', [0, 0.72, 0]], ['box', [0.08, 0.08, 0.01], '#8a6a42', [0, 0.71, 0.255]],
+    ...[[0.22, 0.22], [-0.22, 0.22], [0.22, -0.22], [-0.22, -0.22]].flatMap(([x, z]) => [['cyl', [0.08, 0.09, 0.26, 10], '#E6C88A', [x, 0.78, z]],
+      ...P(4, (k, b) => ['box', [0.035, 0.04, 0.035], '#E6C88A', [x + Math.sin(b) * 0.06, 0.93, z + Math.cos(b) * 0.06]])]),
+    ['cyl', [0.11, 0.12, 0.2, 12], '#D9B877', [0, 0.88, 0]], ...P(5, (k, b) => ['box', [0.04, 0.04, 0.04], '#D9B877', [Math.sin(b) * 0.09, 1.0, Math.cos(b) * 0.09]]),
+    ['cyl', [0.006, 0.006, 0.24, 4], '#E5D3A1', [0, 1.1, 0]], ['ext', [[[0, 0], [0.13, 0.04], [0, 0.08]], 0.005, 0], '#C4281C', [0, 1.14, 0]],
+    ...P(12, (i, a) => ['sph', [0.03 + rnd(i + 4) * 0.03, 6, 5], '#D9B877', at(0.76, a + 0.4, -0.33)]),
+  ] },
+  { id: 'sombrero', name: 'Super Sombrero', main: '#C4281C', desc: 'So wide you can hide three noobs under it.', parts: [
+    ['lathe', [[[1.64, 0.08], [1.6, 0.0], [1.42, -0.1], [1.05, -0.15], [0.66, -0.13], [0.5, -0.08], [0.44, 0.2], [0.4, 0.48], [0.33, 0.66], [0.18, 0.75], [0, 0.77]], 40], 'A'],
+    ['tor', [1.62, 0.065, T, 8, 56], '#F5CD30', [0, 0.05, 0], [H, 0, 0]], ['tor', [1.25, 0.022, T, 6, 48], '#F5CD30', [0, -0.115, 0], [H, 0, 0]], ['tor', [0.9, 0.022, T, 6, 40], '#4B974B', [0, -0.145, 0], [H, 0, 0]],
+    ...P(20, (i, a) => ['box', [0.09, 0.014, 0.09], i % 2 ? '#4B974B' : '#F5CD30', at(1.07, a, -0.138), [0, a + Math.PI / 4, 0]]),
+    ['cyl', [0.46, 0.5, 0.16, 32], '#F5CD30', [0, 0.02, 0]], ...P(10, (i, a) => ['box', [0.08, 0.08, 0.02], ['#C4281C', '#4B974B', '#0D69AC'][i % 3], at(0.5, a, 0.02), [0, a, Math.PI / 4, 'YXZ']]),
+    ['tor', [0.41, 0.018, T, 6, 32], '#4B974B', [0, 0.45, 0], [H, 0, 0]], ['tor', [0.36, 0.015, T, 6, 32], '#F5CD30', [0, 0.6, 0], [H, 0, 0]],
+    ...P(18, (i, a) => [['cyl', [0.006, 0.006, 0.1, 4], '#F5CD30', at(1.6, a, -0.02)], ['sph', [0.06, 8, 6], RB[i % 7], at(1.6, a, -0.1)]]).flat(),
+    ...tubeC([[0.55, -0.13, 0.1], [0.62, -0.7, 0.25], [0.3, -1.2, 0.45], [0, -1.25, 0.5], [-0.3, -1.2, 0.45], [-0.62, -0.7, 0.25], [-0.55, -0.13, 0.1]], 0.015, '#F5CD30', 5),
+    ['sph', [0.04, 8, 6], '#C4281C', [0, -1.25, 0.5]],
+  ] },
+  { id: 'pompom', name: 'Pom-Pom Beanie', main: '#4B974B', desc: 'Knitted with love and a little bit of static.', parts: [
+    ['dome', [0.7], 'A', [0, -0.3, 0], 0, [1, 1.08, 1]],
+    ['tor', [0.63, 0.045, T, 8, 40], '#F2F3F3', [0, 0.03, 0], [H, 0, 0]], ['tor', [0.47, 0.04, T, 8, 32], '#F2F3F3', [0, 0.27, 0], [H, 0, 0]],
+    ...[0.18, 0.62, 1.05].flatMap((e, j) => P(24 - j * 6, (i, a) => ['sph', [0.032, 6, 5], '#3E7E3E', [Math.cos(e) * Math.sin(a + j * 0.1) * 0.705, -0.3 + Math.sin(e) * 0.76, Math.cos(e) * Math.cos(a + j * 0.1) * 0.705]])),
+    ['cyl', [0.73, 0.73, 0.26, 36], '#F2F3F3', [0, -0.22, 0]], ...P(40, (i, a) => ['cap', [0.022, 0.2, 4], '#DCDAD3', at(0.735, a, -0.22)]),
+    ['tor', [0.735, 0.03, T, 6, 40], '#E5E4DF', [0, -0.09, 0], [H, 0, 0]], ['tor', [0.735, 0.03, T, 6, 40], '#E5E4DF', [0, -0.35, 0], [H, 0, 0]],
+    ['sph', [0.2, 16, 12], '#F2F3F3', [0, 0.55, 0]], ...P(12, (i, a) => ['sph', [0.1, 10, 8], '#F2F3F3', [Math.sin(a) * 0.15, 0.55 + (i % 3 - 1) * 0.09, Math.cos(a) * 0.15]]), ['sph', [0.11, 10, 8], '#F2F3F3', [0, 0.72, 0]],
+    ['box', [0.16, 0.09, 0.012], '#C4281C', [0, -0.22, 0.745]], ['box', [0.1, 0.02, 0.014], '#F2F3F3', [0, -0.22, 0.746]],
+  ] },
+  { id: 'flapcap', name: 'Frosty Flap Cap', main: '#694028', desc: 'Keeps your ears warm in the coldest Blockburg winter.', parts: [
+    ['dome', [0.67], 'A', [0, -0.28, 0], 0, [1, 1.02, 1]], ...P(4, (i, a) => ['tor', [0.675, 0.012, H, 6, 20], '#4A2C1A', [0, -0.28, 0], [0, a + Math.PI / 4, 0], [1, 1.02, 1]]),
+    ['sph', [0.06, 8, 6], '#4A2C1A', [0, 0.41, 0]],
+    ['cyl', [0.71, 0.71, 0.22, 36], '#E5E4DF', [0, -0.24, 0]], ...P(30, (i, a) => ['sph', [0.085 + rnd(i) * 0.03, 8, 6], '#E5E4DF', at(0.71, a, -0.24 + (i % 2 ? 0.06 : -0.05))]),
+    ...[1, -1].flatMap(s => [['box', [0.1, 0.5, 0.46], 'A', [s * 0.69, -0.62, 0], [0, 0, s * 0.06]], ['box', [0.06, 0.5, 0.46], '#E5E4DF', [s * 0.64, -0.62, 0], [0, 0, s * 0.06]],
+      ['cap', [0.06, 0.42, 6], '#E5E4DF', [s * 0.705, -0.87, 0], [H, 0, 0]], ['cap', [0.06, 0.4, 6], '#E5E4DF', [s * 0.705, -0.64, 0.23]], ['cap', [0.06, 0.4, 6], '#E5E4DF', [s * 0.705, -0.64, -0.23]],
+      ...P(3, (k) => ['box', [0.012, 0.36, 0.012], '#4A2C1A', [s * 0.745, -0.6, -0.12 + k * 0.12], [0, 0, s * 0.06]]),
+      ...tubeC([[s * 0.71, -0.9, 0.05], [s * 0.68, -1.05, 0.15], [s * 0.6, -1.2, 0.2]], 0.015, '#4A2C1A', 6), ['sph', [0.05, 8, 6], '#E5E4DF', [s * 0.6, -1.24, 0.2]]]),
+    ['box', [0.74, 0.32, 0.09], '#E5E4DF', [0, 0.04, 0.63], [-0.45, 0, 0]], ...P(7, (i) => ['sph', [0.05, 8, 6], '#E5E4DF', [-0.33 + i * 0.11, 0.18, 0.565]]),
+    ['tor', [0.08, 0.018, T, 6, 20], '#E0B020', [0, 0.06, 0.68], [-0.45, 0, 0]], ['ext', [star(5, 0.07, 0.03), 0.02, 0.005], '#C4281C', [0, 0.06, 0.68], [-0.45, 0, 0]],
+  ] },
+  { id: 'brickcrown', name: 'Crown of Bricks', shine: true, main: '#C4281C', desc: 'Built one stud at a time by the Brick King himself.', parts: [
+    ['cyl', [0.62, 0.62, 0.32, 32], '#8E9299', [0, -0.08, 0]],
+    ...[0, 1].flatMap(row => P(12, (i, a) => ['box', [0.3, 0.14, 0.13], 'A', at(0.66, a + row * Math.PI / 12, -0.16 + row * 0.15), [0, a + row * Math.PI / 12, 0]])),
+    ['tor', [0.73, 0.028, T, 6, 44], '#E0B020', [0, -0.245, 0], [H, 0, 0]], ['tor', [0.73, 0.028, T, 6, 44], '#E0B020', [0, 0.075, 0], [H, 0, 0]],
+    ...P(6, (i, a) => [['box', [0.27, 0.32, 0.17], 'A', at(0.64, a, 0.24), [0, a, 0]],
+      ...[-0.065, 0.065].map(dx => ['cyl', [0.05, 0.05, 0.06, 12], 'A', [Math.sin(a) * 0.64 + Math.cos(a) * dx, 0.43, Math.cos(a) * 0.64 - Math.sin(a) * dx]]),
+      ['sph', [0.055, 12, 10], ['#0D69AC', '#4B974B', '#F5CD30', '#E8505B', '#6B327C', '#2fc8ff'][i], at(0.735, a, 0.24)], ['tor', [0.062, 0.013, T, 4, 16], '#E0B020', at(0.73, a, 0.24), [0, a, 0]]]).flat(),
+    ['dome', [0.6], '#6B1414', [0, 0.0, 0], 0, [1, 0.45, 1]],
+    ['tor', [0.58, 0.03, Math.PI, 6, 28], '#E0B020', [0, 0.06, 0]], ['tor', [0.58, 0.03, Math.PI, 6, 28], '#E0B020', [0, 0.06, 0], [0, H, 0]],
+    ...P(8, (i) => { const b = (i + 0.5) / 8 * Math.PI; return ['sph', [0.035, 8, 6], '#F2F3F3', [Math.cos(b) * 0.58, 0.06 + Math.sin(b) * 0.58, 0]]; }),
+    ['box', [0.14, 0.12, 0.14], '#E0B020', [0, 0.7, 0]], ['cyl', [0.05, 0.05, 0.05, 12], '#E0B020', [0, 0.785, 0]],
+    ['sph', [0.08, 14, 10], '#0D69AC', [0, -0.085, 0.72], 0, [1, 1, 0.6]], ['tor', [0.085, 0.02, T, 6, 20], '#E0B020', [0, -0.085, 0.73]],
+  ] },
+  { id: 'burger', name: 'Big Burger Hat', shine: true, main: '#D9A35A', desc: 'Extra cheese. Hold the pickles. Hold the hat.', parts: [
+    ['cyl', [0.7, 0.64, 0.18, 32], 'A', [0, -0.17, 0]], ['tor', [0.67, 0.05, T, 8, 40], 'A', [0, -0.09, 0], [H, 0, 0]],
+    ['cyl', [0.76, 0.76, 0.17, 32], '#5A3A22', [0, 0.01, 0]], ...P(22, (i, a) => ['sph', [0.06 + rnd(i) * 0.025, 8, 6], '#4E321D', at(0.75, a, 0.01 + (rnd(i + 3) - 0.5) * 0.08)]),
+    ['box', [1.32, 0.035, 1.32], '#F5CD30', [0, 0.11, 0], [0, 0.78, 0]], ...P(4, (i, a) => ['cap', [0.05, 0.1, 6], '#F5CD30', at(0.9, a + 0.78 + Math.PI / 4, 0.05)]),
+    ['cyl', [0.77, 0.77, 0.04, 32], '#4B974B', [0, 0.15, 0]], ...P(24, (i, a) => ['sph', [0.12, 10, 8], i % 2 ? '#4B974B' : '#5FB050', at(0.76, a, 0.14 + (i % 2) * 0.03), [0, a, 0], [1, 0.28, 0.7]]),
+    ...[[0.42, 0.32], [-0.5, -0.1], [0.08, -0.52]].flatMap(([x, z]) => [['cyl', [0.3, 0.3, 0.05, 20], '#D3302A', [x, 0.19, z]], ['cyl', [0.25, 0.25, 0.052, 20], '#F06050', [x, 0.19, z]],
+      ...P(4, (k, b) => ['sph', [0.025, 6, 4], '#F5E6A0', [x + Math.sin(b) * 0.13, 0.215, z + Math.cos(b) * 0.13]])]),
+    ...[[-0.3, 0.45], [0.5, -0.35]].flatMap(([x, z]) => [['cyl', [0.15, 0.15, 0.03, 16], '#7BA03A', [x, 0.225, z]], ['tor', [0.15, 0.012, T, 4, 16], '#4E6E22', [x, 0.225, z], [H, 0, 0]]]),
+    ['dome', [0.7], 'A', [0, 0.22, 0], 0, [1, 0.62, 1]], ['tor', [0.69, 0.04, T, 8, 40], 'A', [0, 0.235, 0], [H, 0, 0]],
+    ...P(28, (i) => { const a = rnd(i) * T, e = 0.35 + rnd(i + 30) * 1.0; return ['sph', [0.03, 6, 4], '#F5EBCF', [Math.cos(e) * Math.sin(a) * 0.705, 0.225 + Math.sin(e) * 0.7 * 0.62, Math.cos(e) * Math.cos(a) * 0.705], [H - e, a, 0, 'YXZ'], [1.3, 0.45, 0.75]]; }),
+    ['cyl', [0.015, 0.015, 0.6, 6], '#E5D3A1', [0, 0.6, 0]], ['sph', [0.07, 10, 8], '#6B8E23', [0, 0.66, 0]], ['sph', [0.025, 6, 4], '#C4281C', [0, 0.66, 0.06]],
+    ['ext', [[[0, 0], [0.24, 0.07], [0, 0.14]], 0.01, 0], '#C4281C', [0.005, 0.75, 0]],
+  ] },
+  { id: 'donut', name: 'Frosted Donut', shine: true, main: '#E8BAC8', desc: 'The hole is where your head goes. Obviously.', parts: [
+    ['tor', [0.46, 0.27, T, 16, 40], '#D9A35A', [0, -0.06, 0], [H, 0, 0]], ['tor', [0.465, 0.24, T, 16, 40], '#C98E4A', [0, -0.09, 0], [H, 0, 0], [1, 1, 0.9]],
+    ['tor', [0.46, 0.258, T, 16, 40], 'A', [0, 0.03, 0], [H, 0, 0], [1, 1, 0.8]],
+    ...P(16, (i, a) => { const L = 0.04 + rnd(i) * 0.1; return ['cap', [0.045, L, 6], 'A', at(0.69, a, -0.01 - L / 2)]; }),
+    ...P(8, (i, a) => { const L = 0.03 + rnd(i + 70) * 0.06; return ['cap', [0.035, L, 6], 'A', at(0.235, a + 0.3, 0.0 - L / 2)]; }),
+    ['tube', [P(28, (i, a) => { const d = 0.46 + Math.sin(i * 1.9) * 0.13; return at(d, a, 0.03 + Math.sqrt(Math.max(0, 0.0666 - (d - 0.46) ** 2)) * 0.8 + 0.012); }), 0.016, 6, true], '#5A3A22'],
+    ...P(36, (i) => { const a = rnd(i) * T, d = 0.3 + rnd(i + 50) * 0.32, h = Math.sqrt(Math.max(0, 0.0666 - (d - 0.46) ** 2)) * 0.8;
+      return ['box', [0.09, 0.022, 0.022], SPR[i % 5], at(d, a, 0.03 + h + 0.008), [0, rnd(i + 9) * 3, (rnd(i + 4) - 0.5) * 0.4]]; }),
+  ] },
+  { id: 'mushroom', name: 'Mushroom Cap', main: '#C4281C', desc: 'Do NOT eat this hat. Seriously.', parts: [
+    ['lathe', [[[0, 0.5], [0.3, 0.46], [0.58, 0.32], [0.8, 0.1], [0.9, -0.06], [0.88, -0.14], [0.8, -0.16]], 36], 'A'],
+    ['lathe', [[[0.8, -0.16], [0.6, -0.19], [0.35, -0.18]], 36], '#E8DCC0'], ...P(40, (i, a) => ['box', [0.42, 0.06, 0.006], '#CFC2A0', at(0.58, a, -0.2), [0, a - H, 0]]),
+    ['tor', [0.86, 0.04, T, 8, 44], 'A', [0, -0.1, 0], [H, 0, 0]],
+    ...[[0.4, 0, 0.14], [1.4, 0.5, 0.1], [0.5, 1.2, 0.12], [0.55, 2.4, 0.15], [0.9, 3.3, 0.1], [0.35, 4.2, 0.13], [0.6, 5.2, 0.12], [1.0, 1.9, 0.09], [0.25, 5.9, 0.09], [0.95, 4.8, 0.08], [0.3, 2.9, 0.1], [0.8, 0.4, 0.07], [0.7, 6.0, 0.06]]
+      .map(([e, a, r]) => { const [p, q] = surf(shroomC, 0.9, e, a); return ['sph', [r, 12, 8], '#F2F3F3', p, q, [1, 0.3, 1]]; }),
+    ['sph', [0.07, 14, 10], '#D3302A', bug[0], bug[1], [1, 0.5, 1.25]], ['box', [0.004, 0.012, 0.15], '#151515', bugAt(0, 0, 0.034), bug[1]],
+    ['sph', [0.035, 8, 6], '#151515', bugAt(0, 0.075, 0.01)], ...[[0.03, 0.02], [-0.03, 0.02], [0.035, -0.03], [-0.035, -0.03]].map(([u, v]) => ['sph', [0.014, 6, 4], '#151515', bugAt(u, v, 0.032)]),
+    ...(() => { const [p] = surf(shroomC, 0.9, 0.55, 3.8); return [['cyl', [0.03, 0.04, 0.12, 8], '#E8DCC0', [p[0], p[1] + 0.05, p[2]]], ['dome', [0.08], 'A', [p[0], p[1] + 0.1, p[2]], 0, [1, 0.7, 1]], ['sph', [0.015, 6, 4], '#F2F3F3', [p[0] + 0.03, p[1] + 0.15, p[2] + 0.02]], ['sph', [0.012, 6, 4], '#F2F3F3', [p[0] - 0.03, p[1] + 0.14, p[2] - 0.03]]]; })(),
+  ] },
+  { id: 'antennae', name: 'Alien Antennae', shine: true, main: '#A4BD47', desc: 'Take me to your leader. Or the obby. Either is fine.', parts: [
+    ['cyl', [0.655, 0.665, 0.14, 40], 'A', [0, -0.18, 0]], ['tor', [0.66, 0.022, T, 6, 40], '#6E7A8A', [0, -0.11, 0], [H, 0, 0]], ['tor', [0.668, 0.022, T, 6, 40], '#6E7A8A', [0, -0.25, 0], [H, 0, 0]],
+    ...P(10, (i, a) => ['sph', [0.035, 8, 6], RB[i % 7] + '*', at(0.675, a + 0.31, -0.18), 0, 0, { flash: [0.35, i % 2, 2] }]),
+    ['sph', [0.13, 16, 12], '#7BD44A', [0, -0.15, 0.7], 0, [1, 1.15, 0.5]], ['cone', [0.07, 0.12, 12], '#7BD44A', [0, -0.27, 0.7], [Math.PI, 0, 0], [1, 1, 0.5]],
+    ...[1, -1].flatMap(s => [['sph', [0.045, 10, 8], '#151515', [s * 0.05, -0.13, 0.755], [0, 0, s * 0.5], [1, 0.6, 0.4]], ['sph', [0.012, 4, 4], '#FFFFFF', [s * 0.05 + 0.01, -0.12, 0.775]]]),
+    ['tor', [0.15, 0.015, T, 6, 24], '#A3A2A5', [0, -0.16, 0.7], 0, [1, 1.15, 1]],
+    ...[1, -1].flatMap(s => [['sph', [0.12, 14, 10], 'A', [s * 0.3, 0.04, 0], 0, [1, 0.55, 1]], ['cyl', [0.05, 0.07, 0.08, 12], '#6E7A8A', [s * 0.3, 0.1, 0]],
+      coil([s * 0.3, 0.12, 0], [s * 0.35, 1, 0], 0.7, 0.05, 0.035, 7, 0.016, '#A3A2A5'),
+      ['sph', [0.13, 18, 14], '#C9F25A*', [s * 0.57, 0.9, 0]], ['sph', [0.05, 10, 8], '#FFFFFF*', [s * 0.6, 0.94, 0.08]],
+      ['tor', [0.2, 0.014, T, 6, 28], '#A3A2A5', [s * 0.57, 0.9, 0], [H + 0.4, 0, s * 0.3]], ['sph', [0.025, 6, 4], '#FF3B30*', [s * 0.77, 0.9, 0.0], 0, 0, { flash: [0.5, s > 0 ? 0 : 1, 2] }]]),
+  ] },
+  { id: 'dish', name: 'Satellite Dish', main: '#C2C7CE', desc: 'Picks up 600 channels. All of them are the obby.', parts: [
+    ['cyl', [0.42, 0.5, 0.14, 24], '#A3A2A5', [0, 0.02, 0]], ...P(8, (i, a) => ['sph', [0.03, 8, 6], '#6E7A8A', at(0.45, a, 0.095)]),
+    ['box', [0.3, 0.16, 0.22], '#4D4D4D', [0, 0.17, -0.22]], ['sph', [0.025, 6, 4], '#3fd44a*', [0.08, 0.2, -0.105], 0, 0, { flash: [0.5, 0, 2] }], ['sph', [0.025, 6, 4], '#FF3B30*', [-0.08, 0.2, -0.105], 0, 0, { flash: [0.5, 1, 2] }],
+    ['box', [0.12, 0.04, 0.01], '#2fc8ff*', [0, 0.13, -0.108]],
+    ['cyl', [0.06, 0.07, 0.5, 12], '#A3A2A5', [0, 0.34, 0]], ['sph', [0.09, 12, 10], '#6E7A8A', [0, 0.6, 0]], ['box', [0.22, 0.08, 0.1], '#6E7A8A', [0, 0.63, 0.02], [dishA, 0, 0]],
+    ['lathe', [dishProf, 36], 'A', dishC, [dishA, 0, 0]], ['tor', [0.72, 0.025, T, 6, 40], '#A3A2A5', dw([0, 0.26, 0]), [dishA + H, 0, 0]],
+    ...P(8, (i, a) => ['tube', [dishProf.map(([r, y]) => dw([Math.sin(a) * r, y + 0.006, Math.cos(a) * r])), 0.008, 4], '#9AA0A8']),
+    ['tor', [0.4, 0.008, T, 4, 32], '#9AA0A8', dw([0, 0.075, 0]), [dishA + H, 0, 0]],
+    ...[0, 2.09, 4.19].map(a => ['tube', [[dw([Math.sin(a) * 0.66, 0.22, Math.cos(a) * 0.66]), dw([0, 0.5, 0])], 0.012, 4], '#6E7A8A']),
+    ['cyl', [0.05, 0.07, 0.12, 12], '#4D4D4D', dw([0, 0.5, 0]), [dishA, 0, 0]], ['sph', [0.035, 8, 6], '#FF3B30*', dw([0, 0.58, 0]), 0, 0, { flash: [0.6, 0, 2] }],
+  ] },
+  { id: 'rocket', name: 'Rocket Ride', shine: true, main: '#F2F3F3', desc: '3... 2... 1... still on your head.', parts: [
+    ['cyl', [0.5, 0.55, 0.08, 28], '#6E6E6E', [0, 0.03, 0]], ...P(16, (i, a) => ['box', [0.18, 0.082, 0.03], i % 2 ? '#151515' : '#F5CD30', at(0.525, a, 0.03), [0, a, 0]]),
+    ...P(4, (i, a) => ['sph', [0.025, 6, 4], '#FF3B30*', at(0.42, a + 0.4, 0.08), 0, 0, { flash: [0.4, i % 2, 2] }]),
+    ...P(3, (i, a) => ['tube', [[at(0.42, a, 0.07), at(0.26, a, 0.45)], 0.025, 6], '#A3A2A5']),
+    ...P(7, (i, a) => ['sph', [0.09 + rnd(i) * 0.05, 10, 8], '#E5E4DF', at(0.45 + rnd(i + 1) * 0.1, a + 0.4, 0.1 + rnd(i + 2) * 0.05)]),
+    ['cone', [0.11, 0.26, 12], '#FFB01A*', [0, 0.27, 0], [Math.PI, 0, 0]], ['cone', [0.06, 0.18, 10], '#FFF6C8*', [0, 0.3, 0], [Math.PI, 0, 0]],
+    ['lathe', [[[0.1, 0.44], [0.11, 0.4], [0.15, 0.32], [0.18, 0.29]], 20], '#4D4D4D'],
+    ['lathe', [[[0, 0.44], [0.2, 0.44], [0.29, 0.54], [0.32, 0.77], [0.31, 1.07], [0.27, 1.27]], 32], 'A'],
+    ['lathe', [[[0.27, 1.27], [0.22, 1.44], [0.13, 1.58], [0.04, 1.66], [0, 1.67]], 32], '#C4281C'],
+    ['tor', [0.322, 0.02, T, 6, 36], '#C4281C', [0, 0.72, 0], [H, 0, 0]], ['tor', [0.3, 0.02, T, 6, 36], '#C4281C', [0, 1.12, 0], [H, 0, 0]],
+    ['tor', [0.09, 0.025, T, 6, 20], '#A3A2A5', [0, 0.94, 0.31]], ['sph', [0.08, 14, 10], '#6BA4DC', [0, 0.94, 0.295], 0, [1, 1, 0.45]], ['sph', [0.02, 6, 4], '#FFFFFF', [0.03, 0.97, 0.33]],
+    ['ext', [star(5, 0.07, 0.03), 0.01, 0], '#0D69AC', [0, 0.62, 0.325]],
+    ...P(3, (i, a) => ['ext', [[[0, 0], [0.26, -0.12], [0.3, -0.3], [0, -0.18]], 0.04, 0.012], '#C4281C', at(0.28, a + Math.PI / 3, 0.72), [0, a + Math.PI / 3 - H, 0]]),
+    ...[0.62, 1.02].flatMap(y => P(12, (i, a) => ['sph', [0.012, 4, 4], '#A3A2A5', at(0.322, a + 0.13, y)])),
+    ['cyl', [0.01, 0.01, 0.12, 4], '#A3A2A5', [0, 1.72, 0]], ['sph', [0.022, 6, 4], '#FF3B30*', [0, 1.79, 0], 0, 0, { flash: [0.5, 0, 2] }],
+  ] },
+  { id: 'cactus', name: 'Potted Cactus', main: '#4B974B', desc: 'Low maintenance. High poke.', parts: [
+    ['lathe', [[[0, -0.2], [0.38, -0.2], [0.44, 0.12], [0.5, 0.14], [0.52, 0.28], [0.47, 0.3], [0.45, 0.24]], 28], '#B5652F'], ['cyl', [0.45, 0.42, 0.05, 28], '#9E5428', [0, -0.21, 0]],
+    ...P(14, (i, a) => ['box', [0.07, 0.07, 0.012], i % 2 ? '#F2F3F3' : '#F5CD30', at(0.425, a, -0.03), [-0.19, a, Math.PI / 4, 'YXZ']]),
+    ['tor', [0.51, 0.018, T, 6, 32], '#F2F3F3', [0, 0.21, 0], [H, 0, 0]],
+    ['cyl', [0.46, 0.46, 0.04, 28], '#4A2C1A', [0, 0.24, 0]], ...P(8, (i, a) => ['sph', [0.03 + rnd(i) * 0.02, 6, 5], '#A3A2A5', at(0.25 + rnd(i + 1) * 0.17, a, 0.26)]),
+    ['cap', [0.2, 0.7, 12], 'A', [0, 0.66, 0]], ...P(8, (i, a) => ['cap', [0.025, 0.7, 4], '#3E7E3E', at(0.185, a + 0.2, 0.66)]),
+    ...[0.45, 0.65, 0.85, 1.05].flatMap((y, j) => P(8, (i, a) => ['cone', [0.008, 0.07, 4], '#F2F3F3', at(0.23, a + j * 0.4, y), [H, a + j * 0.4, 0, 'YXZ']])),
+    ...tubeC([[0.12, 0.6, 0], [0.32, 0.62, 0], [0.42, 0.72, 0], [0.42, 0.95, 0]], 0.1, 'A', 10),
+    ...tubeC([[-0.12, 0.45, 0.02], [-0.3, 0.46, 0.02], [-0.38, 0.56, 0.02], [-0.38, 0.74, 0.02]], 0.09, 'A', 10),
+    ...[[0.42, 0.85], [0.42, 1.0], [-0.38, 0.65], [-0.38, 0.8]].flatMap(([x, y]) => P(5, (i, a) => ['cone', [0.007, 0.06, 4], '#F2F3F3', [x + Math.sin(a) * 0.12, y, 0.01 + Math.cos(a) * 0.12], [H, a, 0, 'YXZ']])),
+    ...P(6, (i, a) => ['sph', [0.075, 10, 8], '#FF66CC', [Math.sin(a) * 0.08, 1.24, Math.cos(a) * 0.08], [0.4, a, 0, 'YXZ'], [0.6, 0.3, 1]]), ['sph', [0.05, 8, 6], '#F5CD30', [0, 1.26, 0]],
+    ['sph', [0.05, 8, 6], '#FF9ECF', [0.42, 1.07, 0]],
+  ] },
+  { id: 'teapot', name: 'Tea Time Teapot', main: '#F2F3F3', desc: 'I am a little teapot, short and stout. This is my hat.', parts: [
+    ['lathe', [[[0, -0.13], [0.5, -0.13], [0.72, -0.05], [0.78, -0.02]], 32], '#F2F3F3'], ['tor', [0.77, 0.02, T, 6, 40], '#0D69AC', [0, -0.025, 0], [H, 0, 0]],
+    ['lathe', [[[0, -0.1], [0.36, -0.1], [0.5, -0.02], [0.58, 0.15], [0.56, 0.32], [0.45, 0.47], [0.31, 0.53]], 36], 'A'],
+    ['lathe', [[[0.33, 0.52], [0.32, 0.57], [0.24, 0.64], [0.1, 0.68], [0.05, 0.7], [0, 0.7]], 28], 'A'], ['sph', [0.07, 12, 10], '#0D69AC', [0, 0.76, 0]], ['cyl', [0.03, 0.05, 0.04, 10], '#0D69AC', [0, 0.71, 0]],
+    ['tor', [0.335, 0.015, T, 6, 32], '#E0B020', [0, 0.525, 0], [H, 0, 0]], ['tor', [0.505, 0.02, T, 6, 40], '#0D69AC', [0, -0.01, 0], [H, 0, 0]], ['tor', [0.46, 0.015, T, 6, 40], '#E0B020', [0, 0.45, 0], [H, 0, 0]],
+    ...hornC([[0.5, 0.12, 0], [0.68, 0.2, 0], [0.8, 0.38, 0], [0.9, 0.55, 0]], 0.11, 0.045, 'A'), ['tor', [0.045, 0.012, T, 4, 12], '#E0B020', [0.9, 0.55, 0], [H, 0, -0.5]],
+    ...tubeC([[-0.45, 0.4, 0], [-0.72, 0.44, 0], [-0.82, 0.24, 0], [-0.72, 0.06, 0], [-0.5, 0.04, 0]], 0.045, 'A', 8),
+    ...[0, Math.PI, 2.3, 5.3].flatMap((aa) => { const t = [Math.cos(aa), 0, -Math.sin(aa)], c = at(0.585, aa, 0.2);
+      return [['sph', [0.03, 8, 6], '#F5CD30', c], ...P(5, (k, b) => ['sph', [0.036, 8, 6], '#5A8FE0', [c[0] + t[0] * Math.cos(b) * 0.06, c[1] + Math.sin(b) * 0.06, c[2] + t[2] * Math.cos(b) * 0.06], [0, aa, 0], [1, 1, 0.4]]),
+        ['cone', [0.02, 0.08, 4], '#4B974B', [c[0] + t[0] * 0.1, c[1] - 0.06, c[2] + t[2] * 0.1], [0, aa, 2.3, 'YXZ'], [1, 1, 0.4]]]; }),
+    ...P(4, (i) => ['sph', [0.05 + i * 0.02, 10, 8], '#E8F2FF~', [0.95 + Math.sin(i * 1.5) * 0.05, 0.66 + i * 0.13, 0]]),
+    ...tubeC([[0.15, 0.62, 0.25], [0.25, 0.5, 0.45], [0.35, 0.2, 0.62]], 0.006, '#F2F3F3', 4), ['box', [0.12, 0.14, 0.01], '#E8781E', [0.36, 0.12, 0.64], [0, 0.5, 0]], ['box', [0.07, 0.02, 0.012], '#F2F3F3', [0.36, 0.14, 0.645], [0, 0.5, 0]],
+  ] },
+  { id: 'icecream', name: 'Upside-Down Ice Cream', shine: true, main: '#E8BAC8', desc: 'You dropped it. Five second rule!', parts: [
+    ['sph', [0.7, 28, 20], 'A', [0, -0.06, 0], 0, [1, 0.72, 1]],
+    ...P(10, (i) => { const a = rnd(i + 3) * T, e = 0.25 + rnd(i + 13) * 0.9; return ['sph', [0.12, 10, 8], 'A', [Math.cos(e) * Math.sin(a) * 0.66, -0.06 + Math.sin(e) * 0.7 * 0.68, Math.cos(e) * Math.cos(a) * 0.66]]; }),
+    ...[[0.62, 0.3], [-0.55, 0.4], [0.2, 0.66], [-0.3, -0.6], [0.6, -0.35], [-0.68, -0.1], [0.66, 0.0], [-0.05, -0.68]].map(([x, z], i) => ['sph', [0.11 + rnd(i) * 0.04, 10, 8], 'A', [x * 1.02, -0.26 - rnd(i + 5) * 0.06, z * 1.02], 0, [1, 1.7, 1]]),
+    ['tube', [P(24, (i, a) => { const d = 0.6 + Math.sin(i * 2.1) * 0.06; return [Math.sin(a) * d, -0.06 + 0.72 * Math.sqrt(Math.max(0, 0.49 - d * d)) + 0.012, Math.cos(a) * d]; }), 0.022, 6, true], '#5A3A22'],
+    ...P(18, (i) => { const a = rnd(i + 60) * T, d = 0.15 + rnd(i + 80) * 0.45; return ['box', [0.1, 0.025, 0.025], SPR[i % 5], [Math.sin(a) * d, -0.06 + 0.72 * Math.sqrt(Math.max(0, 0.49 - d * d)) + 0.012, Math.cos(a) * d], [rnd(i) - 0.5, a, 0]]; }),
+    ['cone', [0.42, 1.2, 28], '#D9A35A', [0, 0.98, 0]], ['tor', [0.41, 0.05, T, 8, 32], '#C98E4A', [0, 0.42, 0], [H, 0, 0]],
+    ...[1, -1].flatMap(dir => P(7, (i, a0) => ['tube', [Array.from({ length: 14 }, (_, k) => { const q = k / 13 * 0.72, r = 0.42 * (1 - q) + 0.012, ang = a0 + dir * q * 3.2; return [Math.sin(ang) * r, 0.38 + 1.2 * q, Math.cos(ang) * r]; }), 0.012, 4], '#B07A3A'])),
+    ['cone', [0.122, 0.34, 20], '#5A3A22', [0, 1.42, 0]], ...P(6, (i, a) => ['box', [0.05, 0.015, 0.015], SPR[i % 5], at(0.08, a, 1.32 + rnd(i) * 0.1), [0, a, 0.9]]),
+  ] },
+  { id: 'nest', name: 'Birds Nest', main: '#A0D0F0', desc: 'Mama bird says hi. Mama bird also says GET OUT.', parts: [
+    ['cyl', [0.5, 0.36, 0.14, 16], '#694028', [0, -0.1, 0]], ['tor', [0.48, 0.14, T, 10, 32], '#7A5232', [0, 0.0, 0], [H, 0, 0]],
+    ...P(44, (i, a) => ['cyl', [0.02, 0.02, 0.36 + rnd(i) * 0.24, 5], ['#7A5232', '#8a6a42', '#5A3A22'][i % 3], at(0.6 + rnd(i + 1) * 0.06, a, -0.1 + rnd(i + 2) * 0.2), [0, a, H + (rnd(i + 3) - 0.5) * 0.9, 'YXZ']]),
+    ...P(26, (i, a) => ['cyl', [0.018, 0.018, 0.3 + rnd(i + 50) * 0.2, 5], ['#8a6a42', '#5A3A22', '#7A5232'][i % 3], at(0.46 + rnd(i + 51) * 0.08, a + 0.12, 0.13 + rnd(i + 52) * 0.03), [0, a + 0.12, H + (rnd(i + 53) - 0.5) * 0.4, 'YXZ']]),
+    ...P(6, (i, a) => ['cyl', [0.012, 0.012, 0.3, 4], '#C9A878', at(0.62, a + 0.5, 0.05), [0, a + 0.5, H + 0.5, 'YXZ']]),
+    ...[[0.14, 0.05], [-0.14, 0.1], [0, -0.16]].flatMap(([x, z], j) => [['sph', [0.16, 16, 12], 'A', [x, 0.12, z], 0, [1, 1.25, 1]],
+      ...P(7, (i) => { const a = rnd(i + j * 10) * T, e = (rnd(i + j * 10 + 5) - 0.3) * 1.2; return ['sph', [0.018, 4, 4], '#5A7A90', [x + Math.cos(e) * Math.sin(a) * 0.162, 0.12 + Math.sin(e) * 0.2, z + Math.cos(e) * Math.cos(a) * 0.162]]; })]),
+    ['sph', [0.2, 14, 12], '#8B5A2B', [0, 0.24, -0.5], 0, [1, 0.9, 1.3]], ['sph', [0.15, 12, 10], '#E8781E', [0, 0.22, -0.34], 0, [1, 1, 0.7]], ['sph', [0.13, 14, 10], '#8B5A2B', [0, 0.42, -0.32]],
+    ['cone', [0.04, 0.12, 8], '#F5A623', [0, 0.41, -0.17], [H, 0, 0]],
+    ...[1, -1].flatMap(s => [['sph', [0.025, 6, 4], '#151515', [s * 0.07, 0.46, -0.22]], ['sph', [0.008, 4, 4], '#FFFFFF', [s * 0.075, 0.47, -0.2]], ['sph', [0.15, 12, 8], '#6E4520', [s * 0.17, 0.25, -0.52], [0, 0, s * 0.3], [0.35, 0.7, 1.1]]]),
+    ['box', [0.16, 0.03, 0.25], '#6E4520', [0, 0.3, -0.78], [0.5, 0, 0]], ...tubeC([[0.03, 0.4, -0.13], [0.08, 0.33, -0.1], [0.05, 0.26, -0.12], [0.09, 0.2, -0.1]], 0.018, '#FF8FA8', 5),
+    ['cap', [0.02, 0.15, 4], '#F2F3F3', [0.55, 0.15, 0.3], [0.5, 0, -0.8], [1, 1, 0.4]],
+  ] },
+  { id: 'sharkfin', name: 'Shark Fin', main: '#6E7A8A', desc: 'Dun dun... dun dun... dun dun dun dun...', parts: [
+    ['ext', [[[-0.42, 0], [0.45, 0], [0.38, 0.14], [0.3, 0.42], [0.3, 0.72], [0.36, 1.0], [0.12, 0.74], [-0.08, 0.44], [-0.3, 0.16]], 0.15, 0.05], 'A', [0, -0.08, 0], [0, H, 0]],
+    ['sph', [0.5, 20, 12], 'A', [0, -0.02, -0.05], 0, [0.6, 0.18, 1.2]], ['sph', [0.4, 16, 10], '#F2F3F3', [0, -0.05, -0.05], 0, [0.62, 0.12, 1.25]],
+    ...[1, -1].flatMap(s => [['box', [0.01, 0.02, 0.16], '#9AA6B4', [s * 0.115, 0.38, -0.02], [0.5, 0, 0]], ['box', [0.01, 0.02, 0.12], '#9AA6B4', [s * 0.115, 0.5, 0.02], [0.4, 0, 0]], ['box', [0.01, 0.015, 0.09], '#9AA6B4', [s * 0.115, 0.26, 0.12], [0.7, 0, 0]]]),
+    ['tor', [0.5, 0.06, T, 8, 36], '#7FC8FF~', [0, 0.06, 0], [H, 0, 0], [1, 1.5, 1]],
+    ...P(16, (i, a) => ['sph', [0.04 + rnd(i) * 0.04, 8, 6], '#F2F3F3', at(0.5 + (rnd(i + 1) - 0.5) * 0.15, a, 0.08)]),
+    ...P(9, (i, a) => ['sph', [0.03 + rnd(i + 3) * 0.02, 8, 6], '#BFE6FF~', at(0.3 + rnd(i) * 0.3, a, 0.25 + rnd(i + 6) * 0.35)]),
+  ] },
+  { id: 'unihorn', name: 'Unicorn Horn', shine: true, main: '#F2F3F3', desc: 'Magical! Makes everything 10% more sparkly.', parts: [
+    ['tor', [0.66, 0.05, T, 8, 40], '#E8BAC8', [0, -0.2, 0], [H, 0, 0]],
+    ['cone', [0.15, 0.95, 24], 'A', [0, 0.44, 0.34], [0.35, 0, 0]], coil([0, -0.006, 0.177], [0, 0.939, 0.343], 0.95, 0.155, 0.012, 3.5, 0.018, '#F5CD30'),
+    ['tor', [0.16, 0.03, T, 6, 24], '#F5CD30', [0, -0.006, 0.177], [0.35 - H, 0, 0]], ['sph', [0.06, 12, 10], '#FF66CC', [0, 0.02, 0.34]],
+    ...[1, -1].flatMap(s => [['cone', [0.11, 0.26, 10], '#F2F3F3', [s * 0.42, 0.12, -0.02], [0, 0, -s * 0.35], [1, 1, 0.5]], ['cone', [0.06, 0.17, 8], '#FF9ECF', [s * 0.41, 0.11, 0.015], [0, 0, -s * 0.35], [1, 1, 0.4]]]),
+    ...P(7, (i) => { const a = Math.PI + (i - 3) * 0.3; return ['cap', [0.07, 0.22, 6], RB[i], at(0.6, a, 0.0), [0.6, a, 0, 'YXZ']]; }),
+    ...P(7, (i) => { const a = Math.PI + (i - 3) * 0.26; return ['cap', [0.06, 0.3, 6], RB[6 - i], at(0.7, a, -0.4), [Math.PI - 0.35, a, 0, 'YXZ']]; }),
+    ...[0.75, -0.75, 0.0].flatMap((a, j) => { if (j === 2) return []; const t = [Math.cos(a), 0, -Math.sin(a)], c = at(0.7, a, -0.16);
+      return [['sph', [0.035, 8, 6], '#F5CD30', c], ...P(5, (k, b) => ['sph', [0.04, 8, 6], j ? '#9ED4FF' : '#FF9ECF', [c[0] + t[0] * Math.cos(b) * 0.06, c[1] + Math.sin(b) * 0.06, c[2] + t[2] * Math.cos(b) * 0.06], [0, a, 0], [1, 1, 0.4]])]; }),
+  ] },
+  { id: 'devilhorns', name: 'Devil Horns', main: '#C4281C', desc: 'Only for the most mischievous noobs. So, everyone.', parts: [
+    ['tor', [0.66, 0.04, T, 8, 40], '#151515', [0, -0.2, 0], [H, 0, 0]],
+    ...[1, -1].flatMap(s => { const pts = [[s * 0.3, -0.04, 0.12], [s * 0.42, 0.16, 0.12], [s * 0.52, 0.38, 0.08], [s * 0.5, 0.58, 0.0], [s * 0.4, 0.7, -0.06]];
+      return [...hornC(pts, 0.14, 0.008, 'A'), ...ringsOn(pts, 0.14, 0.008, [0.1, 0.22, 0.34, 0.46, 0.58], 0.018, '#8A1A12')]; }),
+    ...P(5, (i) => { const a = (i - 2) * 0.3; return [['cone', [0.05, 0.16, 8], '#FF6A1A*', at(0.68, a, -0.12)], ['cone', [0.025, 0.09, 6], '#FFD23A*', at(0.69, a, -0.14)]]; }).flat(),
+    ['cyl', [0.02, 0.02, 1.0, 6], '#4D4D4D', [-0.75, 0.1, -0.15], [0, 0, 0.25]], ['box', [0.22, 0.03, 0.03], '#4D4D4D', [-0.874, 0.59, -0.15], [0, 0, 0.25]],
+    ...[-1, 0, 1].map(k => ['cone', [0.022, 0.16, 6], '#4D4D4D', [-0.874 + k * 0.1 * Math.cos(0.25) - 0.02, 0.59 + k * 0.1 * Math.sin(0.25) + 0.08, -0.15], [0, 0, 0.25]]),
+  ] },
+  { id: 'wings', name: 'Winged Headband', main: '#F2F3F3', desc: 'Flap them as hard as you want. You will not fly.', parts: [
+    ['tor', [0.66, 0.05, T, 8, 40], '#F5CD30', [0, -0.16, 0], [H, 0, 0]], ...[-0.35, 0, 0.35].map(a => ['sph', [0.045, 10, 8], '#2fc8ff', at(0.7, a, -0.16)]),
+    ...[1, -1].flatMap(s => [['sph', [0.075, 10, 8], '#F5CD30', [s * 0.68, -0.1, -0.12]],
+      ...[[6, 0.62, 'A'], [5, 0.46, 'A'], [4, 0.3, '#E5E4DF']].flatMap(([n, L, c], j) => P(n, (i) => {
+        const ph = 0.25 + i * (1.25 / (n - 1)), d = [s * Math.sin(ph), Math.cos(ph) * Math.cos(0.25), -Math.cos(ph) * 0.247], m = [s * 0.68, -0.1, -0.12 + j * 0.035], k = L / 2 + 0.05;
+        return ['cap', [0.06 - j * 0.008, L, 6], c, [m[0] + d[0] * k, m[1] + d[1] * k, m[2] + d[2] * k], [-0.25, 0, -s * ph], [1, 1, 0.32]]; }))]),
+  ] },
+  { id: 'tophats', name: 'Tower of Top Hats', shine: true, main: '#151515', desc: 'One fancy hat is not enough. Three is just right.',
+    groups: { h0: { at: [0, 0, 0] }, h1: { at: [0.03, 0.62, 0], tilt: [0, 0.4, -0.08] }, h2: { at: [-0.02, 1.12, 0.02], tilt: [0.05, -0.3, 0.1] } }, parts: [
+    ...topHat(0, 1, '#C4281C'), ...topHat(1, 0.8, '#6B327C'), ...topHat(2, 0.62, '#0D69AC'),
+    ...inG([...P(6, (i, a) => ['sph', [0.05, 8, 6], '#F2F3F3', [0.44 + Math.sin(a) * 0.05, -0.06 + Math.cos(a) * 0.05, 0.2], 0, [0.5, 1, 1]]), ['sph', [0.035, 8, 6], '#F5CD30', [0.46, -0.06, 0.2]]], 'h1'),
+    ...inG([...hornC([[0.25, 0.08, -0.1], [0.38, 0.3, -0.15], [0.42, 0.55, -0.28]], 0.05, 0.006, '#F2F3F3'), ...P(8, (i) => ['cyl', [0.006, 0.006, 0.12, 3], '#E5E4DF', [0.3 + i * 0.016, 0.15 + i * 0.05, -0.12 - i * 0.02], [0, 0, 1.1]])], 'h2'),
+  ] },
+  { id: 'paperhat', name: 'Paper Boat Hat', main: '#ECEAE0', desc: 'Folded from yesterday\'s Blockburg News.', parts: [
+    ['cone', [0.9, 0.95, 4], 'A', [0, 0.3, 0], [0, Math.PI / 4, 0], [1, 1, 0.82]], ['box', [1.36, 0.32, 1.32], 'A', [0, -0.04, 0]],
+    ...paperFace(1), ...paperFace(-1),
+    ['box', [1.37, 0.012, 1.33], '#C9C6B8', [0, 0.12, 0]],
+    ['cyl', [0.008, 0.008, 0.25, 4], '#8a6a42', [0, 0.85, 0]], ['ext', [[[0, 0], [0.18, 0.05], [0, 0.1]], 0.01, 0], '#C4281C', [0, 0.87, 0]],
+  ] },
+  { id: 'gradcap', name: 'Graduation Cap', shine: true, main: '#1B2A35', desc: 'You graduated from Noob University. With honors!', parts: [
+    ['lathe', [[[0.645, -0.26], [0.645, -0.04], [0.6, 0.06], [0.45, 0.08]], 32], 'A'],
+    ['box', [1.5, 0.06, 1.5], 'A', [0, 0.1, 0], [0, Math.PI / 4, 0]], ...P(4, (i, a) => ['box', [1.53, 0.075, 0.03], '#2A3E4E', at(0.75, a + Math.PI / 4, 0.1), [0, a + Math.PI / 4, 0]]),
+    ['cyl', [0.07, 0.07, 0.04, 12], '#F5CD30', [0, 0.15, 0]],
+    ...tubeC([[0, 0.145, 0], [0.5, 0.145, 0.0], [1.0, 0.14, 0], [1.06, 0.08, 0], [1.07, -0.15, 0]], 0.015, '#F5CD30', 5),
+    ['cyl', [0.035, 0.035, 0.06, 10], '#F5CD30', [1.07, -0.18, 0]], ...P(12, (i, a) => ['cyl', [0.008, 0.008, 0.28, 4], '#F5CD30', [1.07 + Math.sin(a) * 0.03, -0.34, Math.cos(a) * 0.03], [Math.cos(a) * 0.08, 0, -Math.sin(a) * 0.08]]),
+    ['box', [0.09, 0.055, 0.012], '#E0B020', [1.07, -0.24, 0.045]],
+    ['box', [0.3, 0.06, 0.02], '#F2F3F3', [0, -0.12, 0.65]], ['box', [0.06, 0.06, 0.022], '#C4281C', [0, -0.12, 0.652]],
+  ] },
+  { id: 'lampshade', name: 'Lampshade', main: '#E5D3A1', desc: 'For when you want to be the life of the party.', parts: [
+    ['cyl', [0.42, 0.82, 0.78, 40, true], 'A', [0, 0.18, 0]], ...P(40, (i, a) => ['box', [0.03, 0.86, 0.012], '#D9C48E', at(0.632, a, 0.18), [-0.474, a, 0, 'YXZ']]),
+    ['tor', [0.82, 0.03, T, 6, 48], '#C98E4A', [0, -0.21, 0], [H, 0, 0]], ['tor', [0.42, 0.03, T, 6, 36], '#C98E4A', [0, 0.57, 0], [H, 0, 0]], ['tor', [0.62, 0.015, T, 6, 40], '#C98E4A', [0, 0.18, 0], [H, 0, 0]],
+    ...P(36, (i, a) => [['cyl', [0.012, 0.008, 0.12, 4], '#C98E4A', at(0.83, a, -0.28)], ['sph', [0.02, 6, 4], '#E0B020', at(0.83, a, -0.35)]]).flat(),
+    ...P(4, (i, a) => ['cyl', [0.01, 0.01, 0.42, 4], '#8E9299', at(0.21, a, 0.57), [H, a, 0, 'YXZ']]),
+    ['tor', [0.2, 0.012, Math.PI, 6, 20], '#8E9299', [0, 0.57, 0]], ['sph', [0.06, 10, 8], '#E0B020', [0, 0.8, 0]], ['cyl', [0.02, 0.03, 0.05, 8], '#E0B020', [0, 0.76, 0]],
+    ['cyl', [0.07, 0.07, 0.14, 12], '#C98E4A', [0, 0.5, 0]], ['sph', [0.13, 14, 10], '#FFF6C8*', [0, 0.33, 0], 0, [1, 1.2, 1]],
+    ...P(8, (i) => ['sph', [0.014, 6, 4], '#A3A2A5', [0.06, 0.44 - i * 0.045, 0.04]]), ['cyl', [0.025, 0.02, 0.06, 8], '#E0B020', [0.06, 0.08, 0.04]],
+  ] },
+  { id: 'pineapple', name: 'Pineapple Hat', main: '#D9A35A', desc: 'Spiky, juicy and 100% not a real pineapple.', parts: [
+    ['sph', [0.5, 24, 18], 'A', [0, 0.28, 0], 0, [1, 1.15, 1]],
+    ...[0, 1, 2, 3, 4, 5].map(i => ['tor', [0.505 * Math.sin((i + 1) / 7 * Math.PI), 0.03, T, 6, 32], '#7A5020', [0, 0.28 + 0.575 * Math.cos((i + 1) / 7 * Math.PI), 0], [H, 0, 0]]),
+    ...[0, 1, 2, 3, 4, 5].map(i => ['tor', [0.505, 0.03, T, 6, 40], '#7A5020', [0, 0.28, 0], [0, i / 6 * Math.PI, 0], [1, 1.15, 1]]),
+    ...[-0.75, -0.3, 0.15, 0.6].flatMap((e, j) => P(12, (i, a) => { const aa = a + Math.PI / 12; return ['sph', [0.045, 6, 5], '#B5822F', [Math.cos(e) * Math.sin(aa) * 0.5, 0.28 + Math.sin(e) * 0.575, Math.cos(e) * Math.cos(aa) * 0.5], [H - e, aa, 0, 'YXZ'], [1, 0.5, 1]]; })),
+    ...[[9, 0.95, 0.6, '#3E7E3E'], [7, 0.55, 0.7, '#4B974B'], [5, 0.25, 0.75, '#5FB050']].flatMap(([n, t, L, c], j) => P(n, (i, a) => {
+      const aa = a + j * 0.3, d = [Math.sin(aa) * Math.sin(t), Math.cos(t), Math.cos(aa) * Math.sin(t)];
+      return ['cone', [0.09, L, 6], c, [d[0] * L / 2, 0.92 + d[1] * L / 2, d[2] * L / 2], [t, aa, 0, 'YXZ'], [1, 1, 0.35]]; })),
+    ['cone', [0.08, 0.85, 6], '#4B974B', [0, 1.3, 0], 0, [1, 1, 0.4]],
+    ...[1, -1].flatMap(s => [['cyl', [0.11, 0.11, 0.03, 20], '#151515', [s * 0.14, 0.42, 0.5], [H - 0.25, 0, 0]], ['tor', [0.11, 0.015, T, 6, 20], '#E0B020', [s * 0.14, 0.42, 0.515], [-0.25, 0, 0]],
+      ['box', [0.015, 0.02, 0.49], '#151515', [s * 0.375, 0.44, 0.265], [0, -s * 0.52, 0]]]),
+    ['box', [0.08, 0.02, 0.02], '#E0B020', [0, 0.45, 0.52]], ['box', [0.04, 0.012, 0.005], '#FFFFFF', [0.1, 0.46, 0.523], [0, 0, 0.5]], ['box', [0.04, 0.012, 0.005], '#FFFFFF', [-0.18, 0.46, 0.523], [0, 0, 0.5]],
+  ] },
+  { id: 'snowman', name: 'Snowman Buddy', main: '#F2F3F3', desc: 'He is a little cold. Be nice to him.', parts: [
+    ['sph', [0.5, 24, 18], 'A', [0, 0.25, 0]], ...P(7, (i) => { const [p] = surf([0, 0.25, 0], 0.48, (rnd(i) - 0.3) * 1.2, rnd(i + 5) * T); return ['sph', [0.07, 8, 6], 'A', p]; }),
+    ...hornC([[0, 0.27, 0.46], [0.01, 0.25, 0.65], [0.03, 0.22, 0.85]], 0.075, 0.008, '#E8781E'), ...ringsOn([[0, 0.27, 0.46], [0.01, 0.25, 0.65], [0.03, 0.22, 0.85]], 0.075, 0.008, [0.2, 0.4, 0.6], 0.008, '#C45F14'),
+    ...[1, -1].flatMap(s => [['sph', [0.055, 10, 8], '#151515', [s * 0.17, 0.42, 0.44]], ['sph', [0.016, 6, 4], '#FFFFFF', [s * 0.17 + 0.02, 0.44, 0.49]],
+      ['box', [0.1, 0.025, 0.03], '#151515', [s * 0.17, 0.52, 0.42], [-0.3, 0, -s * 0.2]], (() => { const [p, q] = surf([0, 0.25, 0], 0.49, 0.0, s * 0.55); return ['sph', [0.08, 10, 8], '#FF9EB0', p, q, [1, 0.25, 1]]; })()]),
+    ...[-3, -2, -1, 0, 1, 2, 3].map(k => { const [p] = surf([0, 0.25, 0], 0.5, -0.12 - (3 - Math.abs(k)) * 0.035, k * 0.17); return ['sph', [0.03, 6, 5], '#151515', p]; }),
+    ['cyl', [0.48, 0.48, 0.04, 28], '#151515', [0, 0.7, 0]], ['cyl', [0.3, 0.3, 0.4, 24], '#151515', [0, 0.9, 0]], ['cyl', [0.31, 0.31, 0.07, 24], '#C4281C', [0, 0.75, 0]],
+    ['ext', [[[0, 0], [0.08, 0.04], [0.18, 0.0], [0.08, -0.04]], 0.01, 0.004], '#2C6B2E', [0.2, 0.77, 0.24], [0, 0.7, 0.4]], ['ext', [[[0, 0], [0.08, 0.04], [0.18, 0.0], [0.08, -0.04]], 0.01, 0.004], '#2C6B2E', [0.25, 0.77, 0.17], [0, 0.7, -0.5]],
+    ...[[0.21, 0.8, 0.24], [0.24, 0.79, 0.2], [0.19, 0.77, 0.21]].map(p => ['sph', [0.025, 8, 6], '#C4281C', p]),
+    ['tor', [0.44, 0.09, T, 10, 32], '#C4281C', [0, -0.04, 0], [H, 0, 0]], ...P(8, (i, a) => ['tor', [0.44, 0.094, 0.2, 8, 4], '#F2F3F3', [0, -0.04, 0], [H, 0, a]]),
+    ['box', [0.16, 0.5, 0.05], '#C4281C', [0.62, -0.3, 0.25], [0.1, 0.4, 0.1]], ...[-0.2, -0.38].map(y => ['box', [0.165, 0.05, 0.055], '#F2F3F3', [0.62 + (y + 0.3) * 0.1, y, 0.25], [0.1, 0.4, 0.1]]),
+    ...P(5, (i) => ['cyl', [0.008, 0.008, 0.07, 3], '#C4281C', [0.56 + i * 0.03, -0.58, 0.25 + i * 0.015], [0.1, 0.4, 0.1]]),
+    ...[1, -1].flatMap(s => [...tubeC([[s * 0.45, 0.2, 0], [s * 0.75, 0.32, 0.05], [s * 1.0, 0.45, 0]], 0.025, '#5A3A22', 5), ...tubeC([[s * 0.8, 0.34, 0.04], [s * 0.9, 0.5, 0.1]], 0.018, '#5A3A22', 5), ...tubeC([[s * 0.95, 0.43, 0], [s * 1.08, 0.44, -0.08]], 0.015, '#5A3A22', 5)]),
+  ] },
+  { id: 'planet', name: 'Tiny Planet', shine: true, main: '#DA8541', desc: 'Population: one very small alien.',
+    groups: { rings: { at: [0, 0.62, 0], tilt: [0.45, 0, 0.3], spin: 0.05 }, moon: { at: [0, 0.62, 0], tilt: [0.25, 0, -0.15], spin: 0.22 }, moon2: { at: [0, 0.62, 0], tilt: [-0.2, 0, 0.2], spin: -0.35 } }, parts: [
+    ['cyl', [0.18, 0.22, 0.05, 20], '#E0B020', [0, 0.06, 0]], ['cyl', [0.03, 0.04, 0.25, 8], '#A3A2A5', [0, 0.2, 0]],
+    ['tor', [0.47, 0.02, Math.PI, 6, 24], '#A3A2A5', [0, 0.62, 0], [0, 0, Math.PI]], ...[1, -1].map(s => ['sph', [0.035, 8, 6], '#E0B020', [s * 0.47, 0.62, 0]]),
+    ['sph', [0.42, 28, 20], 'A', [0, 0.62, 0]],
+    ...[[-0.5, '#B5652F'], [-0.2, '#E5D3A1'], [0.15, '#B5652F'], [0.45, '#E5D3A1'], [0.8, '#B5652F']].map(([e, c]) => ['tor', [0.42 * Math.cos(e), 0.035, T, 6, 36], c, [0, 0.62 + 0.42 * Math.sin(e), 0], [H, 0, 0]]),
+    (() => { const [p, q] = surf([0, 0.62, 0], 0.42, -0.3, 0.8); return ['sph', [0.09, 12, 8], '#C4281C', p, q, [1.4, 0.3, 1]]; })(),
+    ...[[0.4, 2.2, 0.05], [-0.1, 3.6, 0.04], [0.6, 4.5, 0.035]].map(([e, a, r]) => { const [p, q] = surf([0, 0.62, 0], 0.42, e, a); return ['sph', [r, 8, 6], '#9A5A2A', p, q, [1, 0.3, 1]]; }),
+    ...inG([['tor', [0.66, 0.05, T, 6, 48], '#E5D3A1', [0, 0, 0], [H, 0, 0], [1, 1, 0.2]], ['tor', [0.76, 0.04, T, 6, 48], '#C9A878', [0, 0, 0], [H, 0, 0], [1, 1, 0.2]], ['tor', [0.84, 0.025, T, 6, 48], '#E5D3A1', [0, 0, 0], [H, 0, 0], [1, 1, 0.2]]], 'rings'),
+    ...inG([['sph', [0.08, 12, 10], '#A3A2A5', [0.98, 0, 0]], ['sph', [0.025, 6, 4], '#6E7A8A', [1.0, 0.04, 0.05]], ['sph', [0.02, 6, 4], '#6E7A8A', [0.97, -0.03, 0.06]]], 'moon'),
+    ...inG([['sph', [0.05, 10, 8], '#E8505B', [0, 0, -0.58]]], 'moon2'),
+    ['cap', [0.035, 0.05, 6], '#7BD44A', [0, 1.1, 0]], ['sph', [0.05, 10, 8], '#7BD44A', [0, 1.18, 0]], ...[1, -1].flatMap(s => [['sph', [0.014, 6, 4], '#151515', [s * 0.02, 1.19, 0.045]], ['cyl', [0.004, 0.004, 0.06, 3], '#7BD44A', [s * 0.025, 1.25, 0], [0, 0, -s * 0.3]], ['sph', [0.01, 4, 4], '#F5CD30', [s * 0.035, 1.28, 0]]]),
+    ['cyl', [0.005, 0.005, 0.2, 4], '#A3A2A5', [0.09, 1.12, 0]], ['box', [0.08, 0.05, 0.004], '#F2F3F3', [0.13, 1.19, 0]], ['sph', [0.012, 6, 4], '#7BD44A', [0.13, 1.19, 0.004], 0, [1, 1, 0.3]],
+  ] },
+  { id: 'brick', name: 'Classic Brick Hat', shine: true, main: '#C4281C', desc: 'The brick that started it all. 2 by 4. Perfect.', parts: lift(0.28, [
+    ['box', [1.4, 0.56, 0.9], 'A', [0, 0.06, 0]], ['box', [1.42, 0.03, 0.92], '#9A1F16', [0, -0.21, 0]],
+    ...[-0.525, -0.175, 0.175, 0.525].flatMap(x => [-0.225, 0.225].flatMap(z => [['cyl', [0.15, 0.15, 0.12, 20], 'A', [x, 0.4, z]], ['cyl', [0.13, 0.15, 0.025, 20], 'A', [x, 0.472, z]], ['cyl', [0.06, 0.06, 0.008, 12], 'A', [x, 0.488, z]]])),
+    ['box', [0.7, 0.2, 0.45], '#0D69AC', [0.35, 0.44, -0.225]],
+    ...[0.175, 0.525].flatMap(x => [['cyl', [0.15, 0.15, 0.12, 20], '#0D69AC', [x, 0.6, -0.225]], ['cyl', [0.13, 0.15, 0.025, 20], '#0D69AC', [x, 0.672, -0.225]]]),
+    ['cyl', [0.17, 0.17, 0.3, 20], '#F5CD30', [-0.525, 0.49, 0.225]], ['cyl', [0.15, 0.15, 0.12, 20], '#F5CD30', [-0.525, 0.7, 0.225]], ['cyl', [0.13, 0.15, 0.025, 20], '#F5CD30', [-0.525, 0.772, 0.225]],
+  ]) },
+  { id: 'bulb', name: 'Bright Idea Bulb', shine: true, main: '#FFF2A8', desc: 'You just had the BEST idea. It was this hat.', parts: [
+    ['sph', [0.44, 28, 20], 'A~', [0, 0.72, 0]], ['lathe', [[[0.22, 0.3], [0.23, 0.4], [0.3, 0.48]], 24], 'A~'],
+    ['tube', [[[-0.14, 0.7, 0], [-0.1, 0.8, 0], [-0.05, 0.7, 0], [0, 0.8, 0], [0.05, 0.7, 0], [0.1, 0.8, 0], [0.14, 0.7, 0]], 0.014, 5], '#FFB01A*'], ['sph', [0.2, 14, 10], '#FFF6C8*~', [0, 0.74, 0]],
+    ['tube', [[[-0.14, 0.7, 0], [-0.08, 0.45, 0], [-0.04, 0.3, 0]], 0.008, 4], '#8E9299'], ['tube', [[[0.14, 0.7, 0], [0.08, 0.45, 0], [0.04, 0.3, 0]], 0.008, 4], '#8E9299'],
+    ['cyl', [0.03, 0.06, 0.2, 10], '#E8F7FF~', [0, 0.38, 0]],
+    ['cyl', [0.23, 0.24, 0.28, 24], '#A3A2A5', [0, 0.16, 0]], coil([0, 0.03, 0], [0, 1, 0], 0.26, 0.245, 0.24, 3, 0.022, '#8E9299'),
+    ['cyl', [0.16, 0.18, 0.06, 16], '#151515', [0, 0.0, 0]], ['cyl', [0.06, 0.08, 0.04, 12], '#B87333', [0, -0.04, 0]],
+    ['sph', [0.08, 10, 8], '#FFFFFF~', [-0.2, 0.9, 0.3], [0, 0, 0.5], [0.4, 1, 0.3]],
+  ] },
+  { id: 'gift', name: 'Surprise Gift', shine: true, main: '#C4281C', desc: 'What is inside? More hat. It is a hat.', parts: [
+    ['box', [1.0, 0.76, 1.0], 'A', [0, 0.41, 0]], ['box', [1.06, 0.14, 1.06], 'A', [0, 0.82, 0]],
+    ['box', [0.16, 0.78, 1.02], '#F5CD30', [0, 0.41, 0]], ['box', [1.02, 0.78, 0.16], '#F5CD30', [0, 0.41, 0]], ['box', [0.17, 0.15, 1.08], '#F5CD30', [0, 0.82, 0]], ['box', [1.08, 0.15, 0.17], '#F5CD30', [0, 0.82, 0]],
+    ...P(4, (i, a) => ['tor', [0.15, 0.05, T, 8, 20], '#F5CD30', at(0.15, a + Math.PI / 4, 0.99), [0, a + Math.PI / 4 - H, 0.4], [1.3, 0.8, 1]]), ['sph', [0.08, 10, 8], '#F5CD30', [0, 0.95, 0]],
+    ['box', [0.12, 0.32, 0.02], '#F5CD30', [0.12, 0.76, 0.55], [0.1, 0, 0.25]], ['box', [0.12, 0.3, 0.02], '#F5CD30', [-0.1, 0.77, 0.55], [0.1, 0, -0.2]],
+    ...[1, -1].flatMap(s => [[0.3, 0.17], [-0.3, 0.17], [0.3, 0.47], [-0.3, 0.47]].flatMap(([u, y]) => [['cyl', [0.07, 0.07, 0.01, 14], '#F2F3F3', [u, y, s * 0.505], [H, 0, 0]], ['cyl', [0.07, 0.07, 0.01, 14], '#F2F3F3', [s * 0.505, y, u], [0, 0, H]]])),
+    ...tubeC([[0.05, 0.93, 0.05], [0.35, 0.89, 0.4], [0.5, 0.72, 0.56]], 0.006, '#F2F3F3', 4), ['box', [0.14, 0.1, 0.01], '#F2F3F3', [0.52, 0.65, 0.57], [0, 0.3, 0.2]], ['sph', [0.022, 6, 4], '#C4281C', [0.52, 0.65, 0.58], 0, [1, 1, 0.4]],
+  ] },
+  { id: 'witch', name: 'Crooked Witch Hat', main: '#6B327C', desc: 'Comes with one free cackle. MWAHAHA.', parts: [
+    ['lathe', [[[0.5, -0.13], [0.9, -0.17], [1.12, -0.15], [1.2, -0.1]], 40], 'A'], ['tor', [1.195, 0.025, T, 6, 48], '#4A1F58', [0, -0.105, 0], [H, 0, 0]],
+    ...witchCrown,
+    ['cyl', [0.6, 0.62, 0.14, 28], '#4B974B', [0, -0.05, 0]],
+    ['box', [0.2, 0.03, 0.015], '#E0B020', [0, 0.03, 0.62]], ['box', [0.2, 0.03, 0.015], '#E0B020', [0, -0.13, 0.62]], ['box', [0.03, 0.19, 0.015], '#E0B020', [0.085, -0.05, 0.62]], ['box', [0.03, 0.19, 0.015], '#E0B020', [-0.085, -0.05, 0.62]], ['box', [0.03, 0.08, 0.02], '#E0B020', [0, -0.05, 0.625]],
+    ['box', [0.02, 0.16, 0.18], '#C98E4A', [-0.44, 0.27, 0.05], [0, 0, -0.36]], ...[[0.06, 0.06], [-0.06, 0.06], [0.06, -0.06], [-0.06, -0.06]].map(([y, z]) => ['box', [0.025, 0.04, 0.008], '#3A2A10', [-0.452 + y * 0.35, 0.27 + y, 0.05 + z], [0.7, 0, -0.36]]),
+    ['cyl', [0.004, 0.004, 0.4, 3], '#F2F3F3', [0.82, -0.36, 0.45]], ['sph', [0.055, 10, 8], '#151515', [0.82, -0.58, 0.45]], ['sph', [0.035, 8, 6], '#151515', [0.82, -0.54, 0.5]],
+    ...[1, -1].flatMap(s => [['sph', [0.01, 4, 4], '#FF3B30*', [0.82 + s * 0.015, -0.53, 0.53]], ...P(4, (i) => ['tube', [[[0.82, -0.58, 0.45 + (i - 1.5) * 0.03], [0.82 + s * 0.09, -0.54, 0.45 + (i - 1.5) * 0.05], [0.82 + s * 0.13, -0.63, 0.45 + (i - 1.5) * 0.07]], 0.007, 3], '#151515'])]),
+    ['ext', [star(5, 0.06, 0.025), 0.015, 0.004], '#F5CD30', [0.45, -0.05, 0.43], [0, 0.8, 0]],
+  ] },
+  { id: 'bandana', name: 'Pirate Bandana', main: '#C4281C', desc: 'Arr! Half a pirate hat for half the pirate.', parts: [
+    ['dome', [0.71], 'A', [0, -0.26, 0], 0, [1, 0.62, 1]], ['cyl', [0.715, 0.715, 0.14, 28], 'A', [0, -0.24, 0]], ['tor', [0.72, 0.02, T, 6, 40], '#9A1F16', [0, -0.17, 0], [H, 0, 0]],
+    ...P(24, (i) => { const a = rnd(i + 11) * T, e = 0.15 + rnd(i + 31) * 1.2; if (Math.abs(((a + Math.PI) % T) - Math.PI) < 0.5 && e < 0.9) return ['sph', [0.001, 3, 2], 'A', [0, -0.3, 0]];
+      return ['sph', [0.04, 8, 6], '#F2F3F3', [Math.cos(e) * Math.sin(a) * 0.715, -0.26 + Math.sin(e) * 0.715 * 0.62, Math.cos(e) * Math.cos(a) * 0.715], [H - e, a, 0, 'YXZ'], [1, 0.25, 1]]; }),
+    ['sph', [0.12, 12, 10], 'A', [0, -0.18, -0.68]],
+    ['ext', [[[0, 0], [0.09, -0.06], [0.13, -0.42], [0.02, -0.38], [-0.04, -0.1]], 0.02, 0.01], 'A', [0.04, -0.2, -0.7], [0, Math.PI, 0.15]],
+    ['ext', [[[0, 0], [0.09, -0.06], [0.13, -0.36], [0.02, -0.32], [-0.04, -0.1]], 0.02, 0.01], 'A', [-0.06, -0.2, -0.72], [0, Math.PI, -0.25]],
+    ['sph', [0.075, 12, 10], '#F2F3F3', [0, 0.0, 0.6], [-0.6, 0, 0], [1, 1, 0.35]], ['box', [0.06, 0.035, 0.02], '#F2F3F3', [0, -0.055, 0.585], [-0.6, 0, 0]],
+    ...[1, -1].map(s => ['sph', [0.018, 6, 4], '#151515', [s * 0.028, 0.008, 0.628]]),
+    ...[0.7, -0.7].flatMap(r => [['box', [0.22, 0.025, 0.02], '#F2F3F3', [0, -0.09, 0.585], [-0.6, 0, r]], ...[1, -1].map(k => ['sph', [0.02, 6, 4], '#F2F3F3', [k * 0.1 * Math.cos(r), -0.09 + k * 0.1 * Math.sin(r) * 0.8, 0.585 + k * 0.1 * Math.sin(r) * 0.55]])]),
+  ] },
+  { id: 'cheese', name: 'Cheese Wedge', shine: true, main: '#F4AE2E', desc: 'A wedge of the finest Blockburg cheddar. Smells great!', parts: [
+    ['ext', [cheeseTri, 0.42, 0.03], 'A', [0, 0.09, 0], [-H, 0, 0]],
+    ...[[0.1, 0.2, 0.1], [-0.25, -0.3, 0.08], [0.5, 0.05, 0.06], [-0.35, 0.35, 0.07], [0.15, -0.35, 0.05], [0.85, 0.0, 0.04]].map(([x, z, r]) => ['cyl', [r, r, 0.01, 14], '#C98A1E', [x, 0.335, z]]),
+    ...[[0.18, -0.35, 0.07], [-0.05, 0.5, 0.06], [0.2, 0.6, 0.04]].map(([y, z, r]) => ['cyl', [r, r, 0.01, 14], '#C98A1E', [-0.665, y, z], [0, 0, H]]),
+    ...cheeseSide(1), ...cheeseSide(-1),
+    ['cyl', [0.13, 0.13, 0.012, 16], '#3A2A10', [-0.666, 0.05, 0.15], [0, 0, H]],
+    ['sph', [0.11, 12, 10], '#A3A2A5', [-0.74, 0.05, 0.15], 0, [1.2, 0.9, 0.9]], ['cone', [0.06, 0.12, 10], '#A3A2A5', [-0.87, 0.03, 0.15], [0, 0, H]], ['sph', [0.025, 6, 4], '#FF8FA8', [-0.93, 0.03, 0.15]],
+    ...[1, -1].flatMap(s => [['cyl', [0.06, 0.06, 0.015, 14], '#A3A2A5', [-0.72, 0.15, 0.15 + s * 0.08], [0, 0, H]], ['cyl', [0.04, 0.04, 0.017, 14], '#FF9EB0', [-0.726, 0.15, 0.15 + s * 0.08], [0, 0, H]],
+      ['sph', [0.02, 6, 4], '#151515', [-0.83, 0.09, 0.15 + s * 0.045]],
+      ...[0.025, -0.02].map(dy => ['cyl', [0.003, 0.003, 0.14, 3], '#4D4D4D', [-0.88, 0.03 + dy, 0.15 + s * 0.06], [H, 0, dy * 8]])]),
+  ] },
+  { id: 'volcano', name: 'Mini Volcano', main: '#5A4A42', desc: 'Warning: may erupt during sword fights.', parts: [
+    ['lathe', [vp, 28], 'A'], ['cyl', [0.21, 0.21, 0.02, 20], '#FF6A1A*', [0, 0.47, 0]], ['sph', [0.12, 12, 8], '#FFB01A*', [0, 0.47, 0], 0, [1, 0.3, 1]],
+    ...P(18, (i, a) => { const y = -0.15 + rnd(i) * 0.55; return ['sph', [0.05 + rnd(i + 1) * 0.05, 6, 5], '#3E332E', at(rAt(y), a + rnd(i + 2), y), 0, [1, 0.7, 1]]; }),
+    ...[0.3, 2.6, 4.4].map((a0, j) => ['tube', [Array.from({ length: 8 }, (_, k) => { const y = 0.54 - k * 0.1, a = a0 + Math.sin(k * 1.3 + j) * 0.15; return at(rAt(y) + 0.02, a, y); }), 0.035, 5], '#FF6A1A*']),
+    ...[0.3, 2.6, 4.4].map((a0, j) => ['sph', [0.05, 8, 6], '#FF6A1A*', at(rAt(-0.16) + 0.04, a0 + Math.sin(7 * 1.3 + j) * 0.15, -0.16), 0, [1.4, 0.5, 1.4]]),
+    ...[[0.05, 0.75, 0.12], [-0.08, 0.9, 0.15], [0.06, 1.08, 0.18], [-0.02, 1.28, 0.14]].map(([x, y, r]) => ['sph', [r, 12, 10], '#8E9299~', [x, y, 0]]),
+    ['sph', [0.05, 8, 6], '#FF6A1A*', [0.25, 0.95, 0.1]], ['sph', [0.035, 8, 6], '#FF6A1A*', [-0.2, 1.05, -0.1]],
+    ...P(7, (i, a) => [['cyl', [0.015, 0.015, 0.06, 4], '#5A3A22', at(0.86, a + 0.2, -0.18)], ['cone', [0.06, 0.16, 6], '#3E7E3E', at(0.86, a + 0.2, -0.07)], ['cone', [0.045, 0.1, 6], '#3E7E3E', at(0.86, a + 0.2, 0.0)]]).flat(),
+  ] },
+  { id: 'bowler', name: 'Bowler Hat', main: '#4A3222', desc: 'Very proper. Tea and crumpets not included.', parts: [
+    ['lathe', [[[0.55, -0.14], [0.76, -0.17], [0.86, -0.14], [0.9, -0.08], [0.89, -0.05]], 36], 'A'], ['tor', [0.895, 0.018, T, 6, 44], '#2E1E12', [0, -0.065, 0], [H, 0, 0]],
+    ['sph', [0.66, 28, 20], 'A', [0, 0.02, 0], 0, [1, 0.8, 1]], ['cyl', [0.67, 0.665, 0.12, 32], '#151515', [0, -0.08, 0]],
+    ['tor', [0.06, 0.02, T, 6, 14], '#151515', [-0.675, -0.08, 0.07], [0, H, 0], [1.4, 1, 1]], ['tor', [0.06, 0.02, T, 6, 14], '#151515', [-0.675, -0.08, -0.07], [0, H, 0], [1.4, 1, 1]],
+    ['sph', [0.028, 8, 6], '#151515', [-0.675, -0.08, 0]], ['box', [0.01, 0.1, 0.03], '#151515', [-0.675, -0.14, 0.03], [0.3, 0, 0]], ['box', [0.01, 0.1, 0.03], '#151515', [-0.675, -0.14, -0.03], [-0.3, 0, 0]],
+    ['tor', [0.664, 0.008, T, 4, 32], '#2E1E12', [0, -0.018, 0], [H, 0, 0]], ['sph', [0.022, 6, 4], '#E0B020', [0.3, -0.08, 0.6]],
+  ] },
+  { id: 'jester', name: 'Jester Hat', shine: true, main: '#6B327C', desc: 'Jingle jingle! Everyone will know you are coming.', parts: [
+    ['cyl', [0.68, 0.7, 0.2, 32], '#F5CD30', [0, -0.18, 0]], ...P(14, (i, a) => ['box', [0.1, 0.1, 0.02], i % 2 ? '#C4281C' : '#6B327C', at(0.695, a, -0.18), [0, a, Math.PI / 4, 'YXZ']]),
+    ...P(14, (i, a) => ['sph', [0.025, 6, 5], '#E0B020', at(0.705, a + Math.PI / 14, -0.08)]), ['sph', [0.07, 12, 10], '#2fc8ff', [0, -0.18, 0.72], 0, [1, 1, 0.6]],
+    ...[[[[-0.25, 0.0, 0], [-0.45, 0.35, 0], [-0.7, 0.6, 0], [-0.92, 0.52, 0], [-1.02, 0.3, 0]], 'A'], [[[0.25, 0.0, 0], [0.45, 0.35, 0], [0.7, 0.6, 0], [0.92, 0.52, 0], [1.02, 0.3, 0]], '#C4281C'],
+      [[[0, 0.0, -0.2], [0, 0.4, -0.3], [0, 0.65, -0.55], [0, 0.55, -0.8], [0, 0.3, -0.88]], '#4B974B']].flatMap(([pts, c]) => { const e = pts[pts.length - 1];
+      return [...hornC(pts, 0.3, 0.035, c), ...ringsOn(pts, 0.3, 0.035, [0.3, 0.6], 0.02, '#F5CD30'),
+        ['sph', [0.1, 14, 10], '#E0B020', [e[0], e[1] - 0.09, e[2]]], ['box', [0.12, 0.015, 0.015], '#3A2A10', [e[0], e[1] - 0.12, e[2]]], ['sph', [0.02, 6, 4], '#3A2A10', [e[0], e[1] - 0.14, e[2] + 0.07]]]; }),
+  ] },
+  { id: 'melon', name: 'Watermelon Helmet', main: '#4B974B', desc: 'You ate the inside. Now it is armor.', parts: [
+    ['dome', [0.74], 'A', [0, -0.26, 0]], ...[0, 1, 2, 3, 4, 5].map(i => ['tor', [0.745, 0.035, Math.PI, 6, 40], '#2C6B2E', [0, -0.26, 0], [0, i / 6 * Math.PI + 0.26, 0]]),
+    ...[0, 1, 2, 3, 4, 5].map(i => ['tor', [0.745, 0.012, Math.PI, 4, 40], '#5FB050', [0, -0.26, 0], [0, i / 6 * Math.PI + 0.52, 0]]),
+    ['cyl', [0.75, 0.75, 0.06, 28], '#F2F3F3', [0, -0.24, 0]], ['cyl', [0.73, 0.73, 0.05, 28], '#E8505B', [0, -0.29, 0]],
+    ...P(16, (i, a) => ['sph', [0.025, 6, 5], '#151515', at(0.735, a, -0.3), [0, a, 0], [0.6, 1, 0.4]]),
+    ...tubeC([[0, 0.46, 0], [0.04, 0.56, 0], [0.0, 0.62, 0.05], [-0.06, 0.6, 0.02]], 0.025, '#6B8E23', 5),
+    ['ext', [[[0, 0], [0.08, 0.06], [0.22, 0.03], [0.28, 0], [0.2, -0.04], [0.08, -0.05]], 0.01, 0.005], '#4B974B', [0.02, 0.5, 0], [0, -0.4, 0.3]],
+    ...tubeC([[0.7, -0.3, 0.1], [0.62, -0.75, 0.3], [0.3, -1.18, 0.4], [0, -1.22, 0.42], [-0.3, -1.18, 0.4], [-0.62, -0.75, 0.3], [-0.7, -0.3, 0.1]], 0.018, '#3E332E', 6),
+    ['box', [0.08, 0.06, 0.02], '#A3A2A5', [0.45, -1.05, 0.4]], ...[1, -1].map(s => ['cyl', [0.05, 0.05, 0.02, 12], '#3E332E', [s * 0.72, -0.3, 0.1], [0, 0, H]]),
+  ] },
+  { id: 'chicken', name: 'Chicken Buddy', shine: true, main: '#F2F3F3', desc: 'Bawk. Bawk bawk. (She likes you.)', parts: [
+    ['sph', [0.45, 24, 18], 'A', [0, 0.18, -0.05], 0, [1, 0.85, 1.2]], ['sph', [0.3, 16, 12], 'A', [0, 0.25, 0.28]], ['sph', [0.24, 20, 16], 'A', [0, 0.6, 0.33]],
+    ...P(5, (i, a) => ['sph', [0.06, 8, 6], 'A', [Math.sin(a) * 0.12, 0.8, 0.3 + Math.cos(a) * 0.08]]),
+    ['sph', [0.065, 10, 8], '#C4281C', [0, 0.86, 0.26], 0, [0.5, 1, 1]], ['sph', [0.075, 10, 8], '#C4281C', [0, 0.89, 0.34], 0, [0.5, 1, 1]], ['sph', [0.06, 10, 8], '#C4281C', [0, 0.85, 0.43], 0, [0.5, 1, 1]],
+    ['cone', [0.07, 0.16, 8], '#F5A623', [0, 0.58, 0.62], [H, 0, 0]], ['cone', [0.05, 0.1, 8], '#E08A1A', [0, 0.54, 0.6], [H + 0.25, 0, 0]],
+    ['sph', [0.045, 8, 6], '#C4281C', [0, 0.46, 0.55], 0, [0.7, 1.5, 0.7]],
+    ...[1, -1].flatMap(s => [['sph', [0.045, 10, 8], '#151515', [s * 0.13, 0.65, 0.52]], ['sph', [0.014, 6, 4], '#FFFFFF', [s * 0.13 + 0.015, 0.67, 0.56]], ['sph', [0.05, 8, 6], '#FF9EB0', [s * 0.17, 0.56, 0.5], [0, s * 0.5, 0], [1, 0.6, 0.3]],
+      ['sph', [0.3, 14, 10], 'A', [s * 0.42, 0.2, -0.08], [0.15, 0, s * 0.15], [0.25, 0.6, 1]],
+      ...P(4, (i) => ['cap', [0.035, 0.18, 5], '#E5E4DF', [s * 0.46, 0.08 + i * 0.05, -0.3 - i * 0.03], [1.2, 0, s * 0.1], [0.5, 1, 1]])]),
+    ...P(5, (i) => { const t = -0.6 + i * 0.3; return ['cap', [0.06, 0.32, 6], i % 2 ? 'A' : '#E5E4DF', [t * 0.25, 0.45, -0.62], [-0.7, 0, t], [0.5, 1, 1]]; }),
+    ['sph', [0.13, 14, 12], '#F5EBCF', [0.42, 0.06, 0.4], 0, [1, 1.25, 1]], ['tor', [0.1, 0.03, T, 6, 14], '#E5C86A', [0.42, -0.06, 0.4], [H, 0, 0]],
+    ...P(6, (i, a) => ['cyl', [0.008, 0.008, 0.14, 3], '#E5C86A', [0.42 + Math.sin(a) * 0.11, -0.05, 0.4 + Math.cos(a) * 0.11], [0, a, H + 0.3, 'YXZ']]),
+  ] },
+  ];
+})();
+const boxHatDef = (k) => BOX_HATS.find(h => h.id === k);
+const boxHatId = (k, r, gl) => `bx:${k}:${r}:${gl ? 1 : 0}`;
+// 'bx:duck:3:1' -> { def, r: 3, gl: true } (or null when it isn't a real box hat)
+function parseBoxHat(id) {
+  if (typeof id !== 'string' || !id.startsWith('bx:')) return null;
+  const [, k, r, gl] = id.split(':'), def = boxHatDef(k), n = +r;
+  return def && Number.isInteger(n) && n >= 0 && n < RARITIES.length && (gl === '0' || gl === '1') ? { def, r: n, gl: gl === '1' } : null;
+}
+// what it's called: "Sparkly Gleaming Rubber Duck"
+function boxHatName(id) {
+  const b = parseBoxHat(id); if (!b) return 'Box Hat';
+  return `${RARITIES[b.r].name} ${b.gl ? 'Gleaming ' : ''}${b.def.name}`;
+}
+// open a box: a random hat, a random rarity (by the odds), and maybe Gleaming (only hats that can shine), which bumps it up one
+function rollBox() {
+  const def = BOX_HATS[(Math.random() * BOX_HATS.length) | 0];
+  let x = Math.random() * 100, r = 0;
+  while (r < RARITIES.length - 1 && (x -= RARITIES[r].odds) >= 0) r++;
+  const gl = !!def.shine && Math.random() < 0.25;
+  if (gl) r = Math.min(RARITIES.length - 1, r + 1);
+  return boxHatId(def.id, r, gl);
+}
+// a color, faded the way a Stale hat is (greyer and darker)
+function staleColor(hex) {
+  const c = new THREE.Color(hex), hsl = {}; c.getHSL(hsl);
+  return c.setHSL(hsl.h, hsl.s * 0.35, hsl.l * 0.78 + 0.06);
+}
+// a soft round glow, for flames and the LEGENDARY sparks
+const blobTex = HEADLESS ? null : tex(canvas(64, 64, (g) => {
+  const gr = g.createRadialGradient(32, 32, 0, 32, 32, 31);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+}));
+// the Gleaming shine: a bright band that sweeps across the whole hat every couple of seconds (added into each
+// material's shader; U.t is the time and U.c where the hat is, both kept up to date by the hat every frame)
+function gleamify(m, U) {
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uGT = U.t; sh.uniforms.uGC = U.c;
+    sh.vertexShader = 'varying vec3 vGW;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n  vGW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = 'uniform float uGT;\nuniform vec3 uGC;\nvarying vec3 vGW;\n' + sh.fragmentShader.replace('#include <dithering_fragment>',
+      '#include <dithering_fragment>\n  { float d = dot(vGW - uGC, normalize(vec3(1.0, 0.8, 0.25))); float s = mod(uGT, 2.6) * 1.6 - 1.4;\n    gl_FragColor.rgb += (1.0 - smoothstep(0.0, 0.13, abs(d - s))) * 0.75; }');
+  };
+  m.customProgramCacheKey = () => 'gleam';
+}
+// one shape for a box hat part (see BOX_HATS for what each shape's numbers mean)
+function hatGeo(shape, s) {
+  const v3 = (p) => new V3(...p);
+  switch (shape) {
+    case 'box': return new THREE.BoxGeometry(...s);
+    case 'cyl': return new THREE.CylinderGeometry(s[0], s[1], s[2], s[3] || 20, 1, !!s[4], s[5] || 0, s[6] || T);
+    case 'sph': return new THREE.SphereGeometry(s[0], s[1] || 20, s[2] || 14);
+    case 'sphp': return new THREE.SphereGeometry(s[0], 28, 16, 0, T, s[1], s[2]);   // a band of a ball, from angle s[1] (0 = the top) for s[2]
+    case 'dome': return new THREE.SphereGeometry(s[0], 22, 12, 0, T, 0, H);
+    case 'cone': return new THREE.ConeGeometry(s[0], s[1], s[2] || 20);
+    case 'tor': return new THREE.TorusGeometry(s[0], s[1], s[3] || 8, s[4] || 28, s[2] || T);
+    case 'cap': return new THREE.CapsuleGeometry(s[0], s[1], 3, s[2] || 8);
+    case 'lathe': return new THREE.LatheGeometry(s[0].map(([r, y]) => new THREE.Vector2(r, y)), s[1] || 24);   // spun round like a vase
+    case 'tube': { const c = new THREE.CatmullRomCurve3(s[0].map(v3), !!s[3]); return new THREE.TubeGeometry(c, Math.max(8, s[0].length * 6), s[1], s[2] || 8, !!s[3]); }
+    case 'horn': {   // a tube that gets thinner from s[1] to s[2]
+      const c = new THREE.CatmullRomCurve3(s[0].map(v3)), n = Math.max(12, s[0].length * 6), rad = s[3] || 12;
+      const geo = new THREE.TubeGeometry(c, n, 1, rad, false), P = geo.attributes.position, mid = new V3(), p = new V3();
+      for (let i = 0; i <= n; i++) {
+        const k = i / n, r = s[1] + (s[2] - s[1]) * k; c.getPointAt(k, mid);
+        for (let j = 0; j <= rad; j++) { const q = i * (rad + 1) + j; p.fromBufferAttribute(P, q).sub(mid).multiplyScalar(r).add(mid); P.setXYZ(q, p.x, p.y, p.z); }
+      }
+      geo.computeVertexNormals(); return geo;
+    }
+    case 'ext': {   // a flat outline, made thick
+      const sh = new THREE.Shape(s[0].map(([x, y]) => new THREE.Vector2(x, y)));
+      return new THREE.ExtrudeGeometry(sh, { depth: s[1], bevelEnabled: !!s[2], bevelThickness: s[2] || 0, bevelSize: s[2] || 0, bevelSegments: 2 }).translate(0, 0, -s[1] / 2);
+    }
+  }
+  return new THREE.BoxGeometry(0.1, 0.1, 0.1);
+}
+// glue lots of little parts into one mesh (way faster to draw than hundreds of separate ones)
+function mergeParts(list) {
+  let n = 0;
+  const gs = list.map(m => { m.updateMatrix(); const geo = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone(); m.geometry.dispose(); geo.applyMatrix4(m.matrix); n += geo.attributes.position.count; return geo; });
+  const P = new Float32Array(n * 3), N = new Float32Array(n * 3); let o = 0;
+  for (const geo of gs) { P.set(geo.attributes.position.array, o * 3); N.set(geo.attributes.normal.array, o * 3); o += geo.attributes.position.count; geo.dispose(); }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.BufferAttribute(P, 3)); out.setAttribute('normal', new THREE.BufferAttribute(N, 3));
+  out.computeBoundingSphere(); return out;
+}
+// a blinking light: [how long each light stays on, which turn is this one's, how many take turns]
+function setFlash(m, t, [period, slot, slots]) {
+  const on = Math.floor(t / period) % slots === slot, M = m.material;
+  if (M.userData.on === on) return; M.userData.on = on;
+  M.color.copy(m.userData.base).multiplyScalar(on ? 1 : 0.3); M.emissiveIntensity = on ? 1.3 : 0.05;
+}
+// build a box hat. noFx: leave out the moving sprites (for pictures)
+function makeBoxHat(id, noFx = false) {
+  const g = new THREE.Group(), b = parseBoxHat(id);
+  if (!b) return g;
+  const { def, r, gl } = b, R = r, U = { t: { value: 0 }, c: { value: new V3() } }, rainbow = [];
+  const mainHex = R === 4 ? '#D9A000' : def.main;
+  const mats = new Map();
+  const mat = (spec, dbl, key) => {
+    if (key !== undefined && mats.has(key)) return mats.get(key);
+    const glow = spec.endsWith('*'), glass = spec.endsWith('~'), raw = spec.replace(/[*~]$/, ''), isMain = raw === 'A';
+    let col = new THREE.Color(isMain ? mainHex : raw);
+    if (R === 0) col = staleColor('#' + col.getHexString());
+    if (isMain && R === 3) col.lerp(new THREE.Color('#b05cff'), 0.3);
+    const m = new THREE.MeshPhongMaterial({ color: col, specular: 0x444444, shininess: 40 });
+    if (R === 0) { m.specular.set(0x111111); m.shininess = 4; }
+    if (isMain && R >= 2 && R !== 4) {   // shiny and up: glossy, with a little of the sky reflected in it
+      m.specular.set(0xffffff); m.shininess = 140;
+      if (envTex) { m.envMap = envTex; m.combine = THREE.MixOperation; m.reflectivity = 0.12; }
+    }
+    if (isMain && R === 4) { m.specular.set(0xfff0a0); m.shininess = 70; m.emissive.set(0x4a3000); }   // LEGENDARY: real gold
+    if (glow) { m.emissive.copy(col); m.emissiveIntensity = 0.85; }
+    if (glass) { m.transparent = true; m.opacity = 0.35; m.depthWrite = false; }
+    if (isMain && R === 5) { m.color.setHSL((rainbow.length * 0.17) % 1, 0.85, 0.55); rainbow.push(m); }
+    if (gl || R === 5) gleamify(m, U);
+    if (dbl) m.side = THREE.DoubleSide;
+    if (key !== undefined) mats.set(key, m);
+    return m;
+  };
+  // moving groups (fish swimming round the bowl, a planet's rings and moons)
+  const spinners = [], holders = { '': g };
+  for (const [name, o] of Object.entries(def.groups || {})) {
+    const outer = new THREE.Group(), inner = new THREE.Group();
+    if (o.at) outer.position.set(...o.at); if (o.tilt) outer.rotation.set(...o.tilt);
+    outer.add(inner); g.add(outer); holders[name] = inner;
+    if (o.spin) spinners.push([inner, o.spin * T]);
+  }
+  const flashers = [], piles = new Map();   // piles: the parts that get glued into one mesh (per group and material)
+  def.parts.forEach(([shape, s, spec, pos = [0, 0, 0], rot = 0, scl = 0, extra = {}], idx) => {
+    const geo = hatGeo(shape, s), dbl = shape === 'lathe';
+    const key = spec + (dbl ? '|2' : '') + (R === 5 && spec === 'A' ? '|' + (idx % 4) : '');
+    const m = new THREE.Mesh(geo, extra.flash ? mat(spec, dbl) : mat(spec, dbl, key));
+    m.position.set(...pos); if (rot) m.rotation.set(...rot); if (scl) m.scale.set(...scl);
+    const home = holders[extra.grp || ''] || g;
+    if (extra.flash) { m.userData.base = m.material.color.clone(); flashers.push([m, ...extra.flash]); home.add(m); setFlash(m, 0, extra.flash); return; }
+    const pk = (extra.grp || '') + '#' + key;
+    if (!piles.has(pk)) piles.set(pk, [home, m.material, []]);
+    piles.get(pk)[2].push(m);
+  });
+  for (const [home, material, list] of piles.values()) {
+    const m = new THREE.Mesh(mergeParts(list), material);
+    if (material.transparent) m.renderOrder = 2;
+    home.add(m);
+  }
+  if (noFx) return g;
+  // where the hat is, for the effects around it
+  g.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(g), ctr = bb.getCenter(new V3()), sz = bb.getSize(new V3());
+  const sprites = [];
+  const sprite = (map, color, extra) => {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map, color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+    sp.userData = { ph: Math.random() * 7, ...extra }; g.add(sp); sprites.push(sp); return sp;
+  };
+  const shell = (u) => {   // a random spot just outside the hat
+    const a = Math.random() * T, y = (Math.random() - 0.35) * sz.y;
+    u.x = ctr.x + Math.cos(a) * (sz.x / 2 + 0.15); u.y = ctr.y + y; u.z = ctr.z + Math.sin(a) * (sz.z / 2 + 0.15);
+  };
+  if (R === 2) for (let i = 0; i < 2; i++) { const sp = sprite(sparkleTex, 0xffffff, { glint: true, ph: i * 1.1 }); shell(sp.userData); }   // Shiny: a quick glint now and then
+  if (R === 3) for (let i = 0; i < 9; i++) { const sp = sprite(sparkleTex, 0xe6c8ff, {}); shell(sp.userData); }   // Sparkly: twinkles
+  if (R === 4) {   // LEGENDARY: a warm glow, and golden sparks drifting up
+    sprite(blobTex, 0xffc23a, { glow: true });
+    for (let i = 0; i < 10; i++) { const sp = sprite(blobTex, 0xffd75a, { ember: true }); shell(sp.userData); sp.userData.y -= Math.random() * sz.y; }
+  }
+  if (R === 5) {   // ULTRACOMPLEX UNIQE QUERLY-: rainbow flames licking up off the top, and stars going round
+    for (let i = 0; i < 12; i++) sprite(blobTex, 0xffffff, { flame: true, k: Math.random() });
+    for (let i = 0; i < 5; i++) sprite(sparkleTex, 0xffffff, { star: true, a: i / 5 * T });
+  }
+  const top = bb.max.y;
+  g.userData.tick = (o, dt, t) => {
+    U.t.value = t; g.getWorldPosition(U.c.value);
+    for (const [grp, sp] of spinners) grp.rotation.y += dt * sp;
+    for (const f of flashers) setFlash(f[0], t, f.slice(1));
+    rainbow.forEach((m, i) => m.color.setHSL((t * 0.25 + i * 0.07) % 1, 0.85, 0.55));
+    for (const sp of sprites) {
+      const u = sp.userData, M = sp.material;
+      if (u.glow) { const k = 0.75 + Math.sin(t * 3) * 0.15; sp.position.copy(ctr); sp.scale.setScalar(Math.max(sz.x, sz.y) * 1.9 * k); M.opacity = 0.32 * k; continue; }
+      if (u.ember) { u.y += dt * 0.55; if (u.y > top + 0.8) { shell(u); u.y = bb.min.y; } const k = Math.min(1, (top + 0.8 - u.y) * 1.5); sp.position.set(u.x, u.y, u.z); sp.scale.setScalar(0.09 + 0.05 * Math.sin(t * 7 + u.ph)); M.opacity = k; continue; }
+      if (u.flame) {
+        u.k += dt * 0.9; if (u.k > 1) { u.k -= 1; u.x = ctr.x + (Math.random() - 0.5) * sz.x * 0.8; u.z = ctr.z + (Math.random() - 0.5) * sz.z * 0.8; u.ph = Math.random(); }
+        if (u.x === undefined) { u.x = ctr.x + (Math.random() - 0.5) * sz.x * 0.8; u.z = ctr.z + (Math.random() - 0.5) * sz.z * 0.8; }
+        sp.position.set(u.x, top - 0.1 + u.k * 0.9, u.z); sp.scale.set(0.34 * (1 - u.k) + 0.06, 0.62 * (1 - u.k) + 0.1, 1);
+        M.color.setHSL((t * 0.25 + u.ph * 0.3 + u.k * 0.15) % 1, 1, 0.6); M.opacity = Math.sin(u.k * Math.PI) * 0.9; continue;
+      }
+      if (u.star) { u.a += dt * 1.6; const rr = Math.max(sz.x, sz.z) / 2 + 0.35; sp.position.set(ctr.x + Math.cos(u.a) * rr, ctr.y + Math.sin(t * 2 + u.ph) * 0.2, ctr.z + Math.sin(u.a) * rr); const k = 0.6 + 0.4 * Math.sin(t * 6 + u.ph); sp.scale.setScalar(0.26 * k + 0.1); M.opacity = k; continue; }
+      if (u.glint) {   // a quick bright flash on the hat, every couple of seconds
+        const p = (t + u.ph) % 2.2, k = p < 0.3 ? Math.sin(p / 0.3 * Math.PI) : 0;
+        if (p >= 0.3 && !u.moved) { shell(u); u.x = ctr.x + (u.x - ctr.x) * 0.75; u.z = ctr.z + (u.z - ctr.z) * 0.75; u.moved = true; } else if (p < 0.3) u.moved = false;
+        sp.position.set(u.x, u.y, u.z); sp.scale.setScalar(0.45 * k); M.opacity = k; continue;
+      }
+      // a sparkle: fades in and out, then pops up somewhere else
+      const k = Math.sin((t * 1.3 + u.ph) % Math.PI);
+      if (k < 0.02 && !u.moved) { shell(u); u.moved = true; } else if (k > 0.5) u.moved = false;
+      sp.position.set(u.x, u.y, u.z); sp.scale.setScalar(0.12 + 0.26 * k); M.opacity = k;
+    }
+  };
   return g;
 }
 
@@ -3271,7 +4086,7 @@ function wearHat(ch, id) {
   if (id && id !== 'none') {
     const hat = shadowAll(makeHat(id));
     ch.hatHolder.add(hat); skinParts(ch);
-    hat.traverse(o => { const u = o.userData; if (u.spin || u.bob || u.blink !== undefined) { u.y0 = o.position.y; ch.hatAnim.push(o); } });
+    hat.traverse(o => { const u = o.userData; if (u.spin || u.bob || u.blink !== undefined || u.tick) { u.y0 = o.position.y; ch.hatAnim.push(o); } });
   }
   setFx(ch);
 }
@@ -3400,6 +4215,7 @@ function animateFx(ch, dt, t) {
     if (u.spin) o.rotation.y += dt * u.spin;
     if (u.bob) o.position.y = u.y0 + Math.sin(t * 2.2) * u.bob;
     if (u.blink !== undefined) o.material.color.setHSL((t * 0.25 + u.blink * 0.3) % 1, 1, 0.6);
+    if (u.tick) u.tick(o, dt, t);
   }
   const fx = ch.fx; if (!fx) return;
   const k0 = fx.kind;
@@ -3720,7 +4536,8 @@ function kill(h, killer, fromNet = false, force = false) {
 const hatPickups = [];
 function spawnHatPickup(id, hatObj, vel) {
   hatObj.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(hatObj);
+  const box = new THREE.Box3(); hatObj.traverse(o => { if (o.isMesh) box.expandByObject(o); });
+  if (box.isEmpty()) box.setFromObject(hatObj);
   const center = box.getCenter(new V3()), size = box.getSize(new V3());
   const q = hatObj.getWorldQuaternion(new THREE.Quaternion()), wp = hatObj.getWorldPosition(new V3());
   const wrap = new THREE.Group(); wrap.position.copy(center); wrap.quaternion.copy(q);
@@ -3751,6 +4568,7 @@ function updateHatPickups(dt) {
   for (let i = hatPickups.length - 1; i >= 0; i--) {
     const hp = hatPickups[i]; hp.age += dt; hp.life -= dt;
     hp.wrap.position.copy(hp.body.position); hp.wrap.quaternion.copy(hp.body.quaternion);
+    const inner = hp.wrap.children[0]; if (inner && inner.userData.tick && !HEADLESS) inner.userData.tick(inner, dt, performance.now() / 1000);
     if (hp.life <= 0 || hp.body.position.y < -150) { removeHatPickup(hp); continue; }
     if (hp.age < 1.2) continue;
     for (const h of humanoids) {
@@ -3811,6 +4629,7 @@ function buxPrice(item) {
   return Math.max(was + 1, Math.round(was * 1.3));
 }
 function owns(slot, id) {
+  if (slot === 'hat' && typeof id === 'string' && id.startsWith('bx:')) return !!parseBoxHat(id) && wallet.owned.includes('hat:' + id);
   const item = (BUYABLE[slot] || []).find(i => i.id === id);
   return !item || item.admin || !buxPrice(item) || wallet.owned.includes(slot + ':' + id);
 }
@@ -7660,7 +8479,27 @@ const pvCam = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
 const pvChar = makeCharacter(look.colors); pvScene.add(pvChar.root);
 
 // hat thumbnails for the catalog
-const hatThumbs = {};
+// (box hats have their pictures made the first time something shows one: there are lots of them)
+const hatThumbs = new Proxy({}, { get: (o, k) => (typeof k === 'string' && k.startsWith('bx:') && !(k in o) ? (o[k] = parseBoxHat(k) ? snapHat(makeBoxHat(k, true)) : '') : o[k]) });
+// a 128 x 128 picture of a hat (or anything) on white, using the avatar preview's renderer for a moment
+function snapHat(g, dir = new V3(0.55, 0.5, 1)) {
+  const size = pv.getSize(new THREE.Vector2()), cc = pv.getClearColor(new THREE.Color()), ca = pv.getClearAlpha(), was = pvChar.root.visible;
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+  pv.setSize(128, 128, false); pv.setClearColor(0xffffff, 1); pvChar.root.visible = false; pvScene.add(g);
+  g.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(g), c = box.getCenter(new V3()), m = box.getSize(new V3()).length();
+  cam.position.copy(c).add(dir.clone().normalize().multiplyScalar(m * 2.2)); cam.lookAt(c);
+  pv.render(pvScene, cam); const url = pv.domElement.toDataURL();
+  pvScene.remove(g); pvChar.root.visible = was; pv.setSize(size.x, size.y, false); pv.setClearColor(cc, ca);
+  g.traverse(o => { if (o.geometry) o.geometry.dispose(); o.material?.dispose?.(); });
+  return url;
+}
+// (the box hats get their pictures made a few at a time while nothing else is going on, so the Locked Boxes tab opens fast)
+if (!HEADLESS && window.requestIdleCallback) {
+  let i = 0;
+  const next = (d) => { while (i < BOX_HATS.length && d.timeRemaining() > 8) hatThumbs[boxHatId(BOX_HATS[i++].id, 1, 0)]; if (i < BOX_HATS.length) requestIdleCallback(next); };
+  setTimeout(() => requestIdleCallback(next), 5000);
+}
 pv.setSize(128, 128); pv.setClearColor(0xffffff, 1);
 for (const h of HATS) {
   if (h.id === 'none') {
@@ -7848,7 +8687,7 @@ function renderCatalog() {
     .filter(i => (!i.admin || adminPriv) && (!isLimited(catTab, i.id) || !limitedOver() || look[slot] === i.id))
     .map(i => ({ ...i, slot }));
   // the Accessories tab: the hats, then the arm accessories (worn on top of a hat, in their own slot)
-  if (catTab === 'hats') list.push(...BACKS.filter(b => b.id !== 'none').map(b => ({ ...b, slot: 'back' })), ...ACCS.filter(a => a.id !== 'none').map(a => ({ ...a, slot: 'acc' })));
+  if (catTab === 'hats') list.push(...myBoxHats().map(id => ({ id, name: boxHatLabel(id), desc: parseBoxHat(id).def.desc, slot: 'hat', boxed: true })), ...BACKS.filter(b => b.id !== 'none').map(b => ({ ...b, slot: 'back' })), ...ACCS.filter(a => a.id !== 'none').map(a => ({ ...a, slot: 'acc' })));
   const thumbs = catTab === 'hats' ? hatThumbs : catTab === 'faces' ? faceThumbs : clothThumbs[catTab];
   // whatever you're wearing gets a Take Off button under it (not faces: you always have one).
   // An arm accessory has a button for each arm instead of Wear (the one you're wearing it on is ticked).
@@ -7858,8 +8697,8 @@ function renderCatalog() {
     ? `<div class="arms">${ARMS.map(([a, n]) => { const on = look.acc === h.id && (look.arm || 'right') === a; return `<button class="s-btn${on ? ' on' : ''}" data-wear="${h.id}" data-slot="acc" data-arm="${a}">${on ? '✓ ' : ''}${n}</button>`; }).join('')}${takeOff(h)}</div>`
     : `<div class="arms"><button class="s-btn" data-wear="${h.id}" data-slot="${h.slot}">${look[h.slot] === h.id ? 'Wearing' : (h.id === 'none' ? 'Take Off' : 'Wear')}</button>${takeOff(h)}</div>`;
   document.querySelectorAll('[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === catTab));
-  $('hatGrid').innerHTML = list.map(h => `<div class="hcard ${look[h.slot] === h.id ? 'on' : ''}"><img src="${h.id === 'none' ? hatThumbs.none : ({ acc: accThumbs, back: backThumbs }[h.slot] || thumbs)[h.id]}" alt="">
-    <div class="gt">${h.name}</div>${h.desc ? `<div class="ds">"${h.desc}"</div>` : ''}<div class="pr">${priceTag(h) || '&nbsp;'}</div>
+  $('hatGrid').innerHTML = list.map(h => `<div class="hcard ${look[h.slot] === h.id ? 'on' : ''}"><img src="${h.id === 'none' ? hatThumbs.none : ({ acc: accThumbs, back: backThumbs }[h.slot] || thumbs)[h.id]}" alt="">${h.boxed ? gleamDecal(h.id) : ''}
+    <div class="gt">${h.name}</div>${h.desc ? `<div class="ds">"${h.desc}"</div>` : ''}<div class="pr">${h.boxed ? '&#10003; From a Locked Box' : priceTag(h) || '&nbsp;'}</div>
     ${wearBtns(h)}${goneNote(catTab, h.id)}</div>`).join('');
   const on = setOfLook({ ...look, colors: normColors(look.colors) });
   $('setList').innerHTML = SETS.filter(s => !isLimited('sets', s.id) || !limitedOver() || on === s).map(s => `<div class="hcard ${on === s ? 'on' : ''}"><img src="${hatThumbs[s.wear.hat]}" alt="">
@@ -7935,6 +8774,7 @@ const BOB_LINES = {
   wear: ['Oh yeah, that is a good look.', 'Now THAT is style.', 'Lookin fresh!'],
   trade: ['Tix for Bux, coming right up!', 'Here ya go, fresh Bux!'],
   noTix: [`You need ${TIX_PER_BUX} Tix for a Bux, pal. Go PWN somebody!`],
+  box: ['One Locked Box, coming right up!', 'Ooh, I wonder what is in this one!', 'Shake it! Shake it!', 'I hope it is a good one, pal!'],
   bye: ['Come back soon!', 'See ya, pal!', 'Stay fresh!', 'Later!'],
   coming: ['Be right there!', 'Coming, coming!', 'One sec!', 'Hold on!'],
   fetch: ['Hang on, I got a bag in the back!', 'Big spender! Be right back!', 'One sec, grabbing a bag!'],
@@ -7943,7 +8783,7 @@ const BOB_LINES = {
 };
 const bobPick = (k) => { const l = BOB_LINES[k]; return l[(Math.random() * l.length) | 0]; };
 const SHOP_TABS = [['hats', 'Hats', 'hat', HATS], ['shirts', 'Shirts', 'shirt', SHIRTS], ['pants', 'Pants', 'pants', PANTS],
-  ['tshirts', 'T-Shirts', 'tshirt', TSHIRTS], ['faces', 'Faces', 'face', FACES]];
+  ['tshirts', 'T-Shirts', 'tshirt', TSHIRTS], ['faces', 'Faces', 'face', FACES], ['boxes', 'Locked Boxes', 'hat', []]];
 const BOB_LEAN = 0.32;
 // where the camera ends up (looking in over the counter, a little to the side so the shop window doesn't cover Bob),
 // and where it slides in from
@@ -8351,6 +9191,7 @@ function shopFrame(now) {
   shop.raf = requestAnimationFrame(shopFrame);
   const dt = Math.max(0, Math.min(0.05, (now - shop.last) / 1000)); shop.last = now;
   glassStep(dt); screenStep(dt);
+  if (shop.me) animateFx(shop.me, dt, now / 1000);
   // the camera slides in from the left side of the shed to looking in over the counter (so the view goes right)
   if (shop.camT < 1) shop.camT = Math.min(1, shop.camT + dt / 1.5);
   const k = easeInOut(Math.max(0, shop.camT - 0.1) / 0.9), C = SHOP_CAM, lerp = (a, b) => new V3(...a).lerp(new V3(...b), k);
@@ -8603,7 +9444,8 @@ function renderShop() {
   $('shopSay').innerHTML = `<b>Bob:</b> ${escHtml(shop.say)}`;
   $('shopWallet').innerHTML = `<span>${pxIcon('tix', 16)} <b>${wallet.tix}</b> Tix</span><span>${pxIcon('bux', 16)} <b>${wallet.bux}</b> Bux</span>
     <button class="b" data-shop="1">Trade ${TIX_PER_BUX} Tix for 1 Bux</button><button class="b" data-shop="all">Trade all</button>`;
-  $('shopTabs').innerHTML = SHOP_TABS.map(([id, name]) => `<button class="b${id === tab ? ' on' : ''}" data-shoptab="${id}">${name}</button>`).join('');
+  $('shopTabs').innerHTML = SHOP_TABS.map(([id, name]) => `<button class="b${id === tab ? ' on' : ''}${id === 'boxes' ? ' bxtab' : ''}" data-shoptab="${id}">${name}</button>`).join('');
+  if (tab === 'boxes') { $('shopGrid').innerHTML = boxesHtml(); return; }
   $('shopGrid').innerHTML = list.filter(i => buxPrice(i) && !i.admin && !isLimited(tab, i.id)).map(i => {
     const mine = owns(slot, i.id), on = look[slot] === i.id;
     return `<div class="shop-it${on ? ' on' : ''}"><img src="${thumbs[i.id]}" alt=""><div class="nm">${escHtml(i.name)}</div>
@@ -8665,6 +9507,166 @@ $('shopWin').addEventListener('click', (e) => {
   renderShop();
 });
 
+/* ================= LOCKED BOXES at Bob's Shop =================
+   The Locked Boxes tab: buy a box for BOX_PRICE Bux and it opens right there, in choppy stop-motion like Bob:
+   the crate drops in, rattles, the padlock pops off, the lid bursts open and your new hat rises out, spinning,
+   with its rarity in big letters. */
+// the box hats you own (each one once, rarest first)
+function myBoxHats() {
+  return [...new Set(wallet.owned.filter(o => o.startsWith('hat:bx:')).map(o => o.slice(4)))].filter(parseBoxHat)
+    .sort((a, b) => parseBoxHat(b).r - parseBoxHat(a).r || boxHatName(a).localeCompare(boxHatName(b)));
+}
+// its rarity in its own color, then its name ("<Sparkly> Gleaming Rubber Duck")
+// cooltinpot's Gleaming sticker, for the corner of a hat's picture (only on Gleaming hats)
+const gleamDecal = (id) => parseBoxHat(id)?.gl ? '<span class="gleam-dec" title="Gleaming!"></span>' : '';
+function boxHatLabel(id) {
+  const b = parseBoxHat(id); if (!b) return 'Box Hat';
+  return `<span class="rar r${b.r}">${escHtml(RARITIES[b.r].name)}</span> ${b.gl ? '<span class="rar gl">Gleaming</span> ' : ''}${escHtml(b.def.name)}`;
+}
+// the wooden crate with a padlock on the front
+const crateTex = HEADLESS ? null : tex(canvas(128, 128, (g) => {
+  g.fillStyle = '#a8743e'; g.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 4; i++) {   // four planks with wood grain
+    g.fillStyle = i % 2 ? '#9e6c38' : '#ad7a44'; g.fillRect(0, i * 32 + 2, 128, 28);
+    g.strokeStyle = 'rgba(80,45,15,.35)'; g.lineWidth = 1;
+    for (let k = 0; k < 4; k++) { g.beginPath(); const y = i * 32 + 6 + k * 6 + Math.random() * 3; g.moveTo(0, y); g.bezierCurveTo(40, y + 3, 80, y - 3, 128, y + 1); g.stroke(); }
+  }
+  g.fillStyle = 'rgba(40,20,5,.8)'; g.font = 'bold 74px Arial Black, Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('?', 64, 68);
+}));
+function makeCrate() {
+  const g = new THREE.Group(), body = new THREE.Group(), lid = new THREE.Group(), lock = new THREE.Group();
+  const wood = new THREE.MeshPhongMaterial({ color: 0xffffff, map: crateTex, shininess: 8 }), dark = new THREE.MeshPhongMaterial({ color: 0x6e4a26, shininess: 8 });
+  const metal = new THREE.MeshPhongMaterial({ color: 0x8a8d92, specular: 0xffffff, shininess: 80 }), gold = new THREE.MeshPhongMaterial({ color: 0xe0b020, specular: 0xfff0b0, shininess: 90 });
+  const box = (w, h, d, m, x, y, z, p) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); p.add(o); return o; };
+  g.add(body, lid, lock);
+  box(2.4, 1.7, 2.4, wood, 0, 0.85, 0, body);
+  for (const x of [-1.16, 1.16]) for (const z of [-1.16, 1.16]) box(0.18, 1.74, 0.18, dark, x, 0.87, z, body);
+  box(2.46, 0.16, 2.46, metal, 0, 0.32, 0, body); box(2.46, 0.16, 2.46, metal, 0, 1.38, 0, body);
+  lid.position.set(0, 1.7, -1.22);   // (it swings open on its back edge)
+  box(2.56, 0.3, 2.56, wood, 0, 0.15, 1.22, lid); box(2.6, 0.12, 0.2, metal, 0, 0.16, 2.4, lid); box(2.6, 0.12, 0.2, metal, 0, 0.16, 0.06, lid);
+  box(0.2, 0.36, 0.06, metal, 0, 0.0, 2.52, lid);   // the hasp the lock hangs on
+  lock.position.set(0, 1.5, 1.32);
+  box(0.52, 0.44, 0.18, gold, 0, -0.24, 0, lock);
+  const sh = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.055, 8, 16, Math.PI), metal); sh.position.set(0, -0.02, 0); lock.add(sh);
+  box(0.08, 0.16, 0.2, new THREE.MeshBasicMaterial({ color: 0x222222 }), 0, -0.27, 0.01, lock);
+  return { g, body, lid, lock };
+}
+// a picture of the crate (made once)
+let crateImg = '';
+const crateThumb = () => crateImg || (crateImg = snapHat(makeCrate().g, new V3(0.6, 0.55, 1)));
+
+const unbox = { el: null, r: null, raf: 0 };
+// open a box you just bought: id is the hat that was inside
+function openBoxShow(id) {
+  if (HEADLESS || unbox.el) return;
+  const b = parseBoxHat(id); if (!b) return;
+  const R = b.r, rar = RARITIES[R];
+  const el = unbox.el = document.body.appendChild(Object.assign(document.createElement('div'), { id: 'unbox', className: 'r' + R }));
+  el.innerHTML = `<div class="ub-rays"></div><div class="ub-cv">${gleamDecal(id)}</div>
+    <div class="ub-txt"><div class="ub-rar rar r${R}">${escHtml(rar.name)}${b.gl ? ' <span class="rar gl">Gleaming</span>' : ''}</div>
+    <div class="ub-nm">${escHtml(b.def.name)}</div><div class="ub-ds">"${escHtml(b.def.desc)}"</div><div class="ub-say">${escHtml(rar.say)}${b.gl ? ' And it GLEAMS!' : ''}</div></div>
+    <div class="ub-btns"><button class="b yes" data-ub="wear">Wear it!</button><button class="b" data-ub="ok">Cool!</button><button class="b" data-ub="again">Open another (${BOX_PRICE} Bux)</button></div>`;
+  if (!unbox.r) { unbox.r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); unbox.r.setPixelRatio(Math.min(devicePixelRatio, 2)); }
+  const r = unbox.r, S = Math.min(460, innerWidth - 32, innerHeight - 250);
+  r.setSize(Math.max(200, S), Math.max(200, S)); r.setClearColor(0x000000, 0); el.querySelector('.ub-cv').appendChild(r.domElement);
+  const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x6a5a4a, 1.8));
+  { const s = new THREE.DirectionalLight(0xffffff, 2.4); s.position.set(3, 6, 5); scene.add(s); }
+  cam.position.set(0, 3.4, 9); cam.lookAt(0, 2.0, 0);
+  const crate = makeCrate(); scene.add(crate.g);
+  const hat = makeBoxHat(id), spin = new THREE.Group(); spin.add(hat); scene.add(spin); spin.visible = false;
+  { const bb = new THREE.Box3(); hat.traverse(o => { if (o.isMesh) bb.expandByObject(o); }); const sz = bb.getSize(new V3());
+    const k = 2.2 / Math.max(sz.x, sz.y, sz.z, 0.5); hat.scale.setScalar(k); hat.position.set(-bb.getCenter(new V3()).x * k, -bb.min.y * k, -bb.getCenter(new V3()).z * k); }
+  audioInit();
+  const born = performance.now(); let lastBeat = -1;
+  const lockV = new V3((Math.random() - 0.5) * 3, 6, 4), lidV = new V3((Math.random() - 0.5) * 3, 8, -7);
+  const said = new Set(), once = (k, f) => { if (!said.has(k)) { said.add(k); f(); } };
+  const step = (now) => {
+    unbox.raf = requestAnimationFrame(step);
+    const beat = Math.floor((now - born) / 125); if (beat === lastBeat) return;   // stop-motion: 8 poses a second
+    const dt = lastBeat < 0 ? 0 : (beat - lastBeat) * 0.125; lastBeat = beat;
+    const t = beat * 0.125, C = crate;
+    // 1) it drops in and bounces
+    if (t < 0.5) C.g.position.y = 7 * (1 - (t / 0.5) ** 2);
+    else if (t < 0.75) { once('land', () => playWavs(['collide'], 1)); C.g.position.y = Math.sin((t - 0.5) / 0.25 * Math.PI) * 0.5; }
+    else C.g.position.y = 0;
+    // 2) it rattles, harder and harder
+    if (t >= 0.75 && t < 1.75) {
+      const k = (t - 0.75) / 1, s = beat % 2 ? 1 : -1;
+      C.g.rotation.z = s * (0.03 + k * 0.08); C.g.position.x = s * k * 0.12; C.lock.rotation.z = -s * k * 0.5;
+      if (beat % 2 === 0) playWavs(['tick'], 0.7);
+    } else { C.g.rotation.z = 0; C.g.position.x = 0; }
+    // 3) the lock pops off
+    if (t >= 1.75) {
+      once('lock', () => playWavs(['snap'], 1));
+      C.lock.position.addScaledVector(lockV, dt); lockV.y -= 22 * dt; C.lock.rotation.x += dt * 9; C.lock.rotation.z += dt * 5;
+    }
+    // 4) the lid bursts open, and out comes the hat
+    if (t >= 2.0) {
+      once('lid', () => { playWavs(R >= 4 ? ['victory', 'flashbulb'] : R >= 2 ? ['flashbulb', 'kerplunk'] : ['kerplunk'], 1); el.classList.add('pop'); });
+      C.lid.rotation.x = Math.max(-2.6, C.lid.rotation.x - dt * 9);
+      if (t >= 2.25) { C.lid.position.addScaledVector(lidV, dt); lidV.y -= 5 * dt; C.lid.rotation.z += dt * 2; }
+      spin.visible = true;
+      const k = Math.min(1, (t - 2.0) / 0.9);
+      spin.position.y = 0.6 + (1 - (1 - k) ** 2) * 2.3 + (k >= 1 ? Math.sin(t * 2.5) * 0.12 : 0);
+      spin.scale.setScalar(0.3 + 0.7 * k);
+      spin.rotation.y = -0.5 + t * 1.6;
+      hat.userData.tick?.(hat, dt, t);
+      // the crate sinks away once the hat is out
+      if (t >= 3.0) C.body.position.y = Math.max(-5, C.body.position.y - dt * 4);
+      if (t >= 3.75) C.g.visible = false;
+    }
+    if (t >= 2.5) once('txt', () => { el.classList.add('show'); if (R >= 5) playWavs(['updatepop'], 1); });
+    if (t >= 3.0) once('btn', () => el.classList.add('btns'));
+    r.render(scene, cam);
+  };
+  unbox.raf = requestAnimationFrame(step);
+  const close = (how) => {
+    cancelAnimationFrame(unbox.raf); el.remove(); unbox.el = null; removeEventListener('keydown', key, true);
+    scene.traverse(o => { if (o.geometry) o.geometry.dispose(); o.material?.dispose?.(); });
+    if (how === 'wear') { shopWear('hat', id); SFX.click(); bobSay(bobPick('wear')); }
+    else if (how === 'again') buyBox();
+    renderShop();
+  };
+  const key = (e) => { if (e.key === 'Escape') { e.stopImmediatePropagation(); if (el.classList.contains('btns')) close('ok'); } };
+  addEventListener('keydown', key, true);
+  el.addEventListener('click', (e) => { const x = e.target.closest('[data-ub]'); if (x && el.classList.contains('btns')) close(x.dataset.ub); });
+}
+// "Buy & Open": ask first, then take the Bux, roll the hat and open it
+function buyBox() {
+  if (unbox.el) return;
+  if (wallet.bux < BOX_PRICE) { shop.shake = 0.9; SFX.hurt(); bobSay(bobPick('broke'), `(A Locked Box is ${BOX_PRICE} Bux. You need ${BOX_PRICE - wallet.bux} more.)`); award('windowshop', true); return; }
+  askBuy('a Locked Box', BOX_PRICE, crateThumb(), () => {
+    if (wallet.bux < BOX_PRICE) return;
+    const id = rollBox();
+    wallet.bux -= BOX_PRICE; wallet.owned.push('hat:' + id); saveWallet(); showWallet(); award('shopper', true); walletBadges();
+    bobSay(bobPick('box')); renderShop(); openBoxShow(id);
+  }, () => bobSay(bobPick('nevermind')));
+}
+// what the Locked Boxes tab shows
+function boxesHtml() {
+  const mine = myBoxHats(), n = (id) => wallet.owned.filter(o => o === 'hat:' + id).length;
+  return `<div class="bx-card"><img src="${crateThumb()}" alt=""><div><b>Locked Box</b>
+      <small>Open it for a hat you can't get anywhere else, in a random rarity! ${BOX_HATS.length} different hats could be inside.</small>
+      <button class="b buy" data-openbox="1">Buy &amp; Open: ${pxIcon('bux', 12)} ${BOX_PRICE} Bux</button></div></div>
+    <div class="bx-leg">${RARITIES.map((r, i) => `<div><span class="rar r${i}">${escHtml(r.name)}</span><i>${r.odds}%</i></div>`).join('')}
+      <small>Hats with a &#10022; can come out <span class="rar gl">Gleaming</span>: a shine sweeps across them, and they go up one rarity!</small></div>
+    <div class="bx-h">Your box hats (${mine.length})</div>
+    ${mine.length ? mine.map(id => { const on = look.hat === id, c = n(id);
+      return `<div class="shop-it bxr${parseBoxHat(id).r}${on ? ' on' : ''}"><img src="${hatThumbs[id]}" alt="">${gleamDecal(id)}<div class="nm">${boxHatLabel(id)}${c > 1 ? ` <i>x${c}</i>` : ''}</div>
+        <button class="b" data-bxwear="${id}">${on ? 'Wearing' : 'Wear'}</button></div>`; }).join('') : '<div class="bx-none">None yet. Open a box!</div>'}
+    <div class="bx-h">What could be inside</div>
+    ${BOX_HATS.map(h => `<div class="shop-it bx-in"><img src="${hatThumbs[boxHatId(h.id, 1, 0)]}" alt=""><div class="nm">${escHtml(h.name)}${h.shine ? ' &#10022;' : ''}</div></div>`).join('')}`;
+}
+$('shopWin').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-openbox],[data-bxwear]'); if (!b) return;
+  const id = b.dataset.bxwear;
+  if (!id) { buyBox(); return; }
+  if (!owns('hat', id)) return;
+  if (look.hat === id) bobSay(bobPick('own')); else { shopWear('hat', id); SFX.click(); bobSay(bobPick('wear')); }
+  renderShop();
+});
+
 /* ================= UPDATE LOG =================
    Every update day gets an entry here, newest first: its date, a headline, and what changed (behind EXTEND).
    The newest headline also shows at the top of Blockburg News.
@@ -8675,7 +9677,13 @@ $('shopWin').addEventListener('click', (e) => {
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
-  { date: '11/3/2026', ver: '4.3', top: 'BLOCKBURG CITY! A whole new city you can blow up! Plus a choppy stop-motion update package', text: [
+  { date: '11/3/2026', ver: '4.4', top: 'LOCKED BOXES at Bobs Shop: 42 brand new hats in 6 rarities! Plus BLOCKBURG CITY, a whole city you can blow up', text: [
+    'NEW: LOCKED BOXES, an idea by cooltinpot! Open the new Locked Boxes tab at Bobs Shop and buy a box for 40 Bux. The crate drops in, rattles, the padlock pops off, the lid bursts open and your new hat rises out, all in choppy stop-motion. Inside is one of 42 brand new hats you can not get anywhere else: a Rubber Duck, a Toaster, a Fishbowl Helmet, a Shark Fin, a Tiny Planet, a Chicken Buddy and lots more!',
+    'Every box hat comes out in a random RARITY: Stale (dull and faded), Fresh, Shiny (glossy, with a glint), Sparkly (purple and twinkling), LEGENDARY (solid gold, glowing, with sparks floating up) and the super rare ULTRACOMPLEX UNIQE QUERLY- (only 1 in 100!), which cycles through the rainbow with rainbow flames and stars flying around it.',
+    'Some hats (the ones with a star next to them) can also come out GLEAMING: a shine sweeps across the whole hat every couple of seconds, and it bumps the hat up one rarity! Everyone in the server sees your rarity, your effects and your gleam.',
+    'Your box hats show up in the Catalog with your other hats, and in the Locked Boxes tab. PWN people to get Tix, trade them for Bux and go open some boxes!',
+    'All 42 box hats are now WAY more detailed! The duck has wings and a water ring, the toaster has real toast and a cord, the fish swim around the fishbowl, the traffic light really changes from green to yellow to red, the planet has spinning rings and moons, the birds nest has a mama bird and speckled eggs, and lots more. Every hat got tons of little extra parts.',
+    'Gleaming hats now have a cool sticker on the corner of their picture, drawn by cooltinpot: a stripy top hat with a sparkle! You will see it in the Catalog, in your box hats at Bobs Shop, and it STAMPS on when a Gleaming hat comes out of a box.',
     'NEW GAME: BLOCKBURG CITY! A huge city built from every kind of brick: balls, cylinders, wedges, trusses, glass, neon, signs, doors, buttons, seats, cars and even a plane. There is a City Square with a fountain, a 10-floor Blockburg Tower with a helipad, a bank with a gold vault, shops, Hotel Blox, a park with a pond, a gas station, Bloxy Burger, apartments with a pool, a construction site, a power plant (do not touch the blue coils), a fire station, a police station and an airport. Play it from the front page or the Games page, solo or online!',
     'Almost everything in BLOCKBURG CITY blows up! Grab a rocket, or click one of the red TNT crates hidden around town to set it off. Blow up the bottom of a building and everything stacked on it comes crashing down. Try toppling Blockburg Tower!',
     'Explosions are better everywhere: big bricks get thrown if their edge is in the blast, bricks thrown by a blast slide right out of walls instead of getting stuck, and stacks crumble and tip over instead of standing there balanced.',
@@ -11433,7 +12441,7 @@ if (!HEADLESS) (async () => {
   setTimeout(() => (window.requestIdleCallback || setTimeout)(warmShop, { timeout: 4000 }), 2000);   // (once the page is up and quiet)
 })();
 
-window.__g = { player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
+window.__g = { makeHat, hatThumbs, openBoxShow, rollBox, BOX_HATS, RARITIES, boxHatId, renderShop, player, npcs, parts, world, camera, equip, explode, kill, SFX, playPlace, dropHat, hatPickups, SHIRTS, PANTS, prepTemplate, dressCharacter, get camDist() { return camDist; }, get state() { return { started, menuOpen, siteOpen }; }, setCam(y, p, d) { camYaw = y; camPitch = p; camDist = d; },
   keys, net, humanoids, partsByNid, hostGame, joinGame, netStop, serverHost, pxUrl, BLUEPRINTS, makePart, BC, LOD, trailer, startTrailer, stopTrailer, adminLogin, setCape, freecam, joy, proj, projMessage, postProject, answerProject, playProject, inboxOpened, showPage,
   get currentPlace() { return currentPlace; }, get currentFile() { return currentFile; }, loadPlaces, get dragging() { return dragging; },
   award, playWavs, shop, enterShop, leaveShop, shopFrame, updateOutAlert, get wallet() { return wallet; }, badgeTick, spawnRocket, setAdmin, runCmd, get myBadges() { return myBadges; }, get audio() { return AC; },
