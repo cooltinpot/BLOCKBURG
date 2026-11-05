@@ -4666,7 +4666,14 @@ if (!wallet || !Array.isArray(wallet.owned)) {
   look = ownedLook(look); saveWallet(); saveLook();
 }
 function saveWallet() { try { localStorage.setItem(WALLET_KEY, JSON.stringify(wallet)); } catch { } }
-function showWallet() { if (HEADLESS) return; $('tixN').textContent = wallet.tix; $('buxN').textContent = wallet.bux; }
+// the admin has INFINITE Tix: they never run out, and trading never takes any away (setAdmin turns it on and off)
+let infTix = false;
+const ADMIN_TRADE_ALL = 1000;   // "Trade all" with infinite Tix: this many Bux at a time
+const tixShown = () => (infTix ? '&infin;' : wallet.tix);
+// how many Bux a trade gets (all: as many as your Tix buy), or 0 when you can't afford even one
+const tradeN = (all) => (infTix ? (all ? ADMIN_TRADE_ALL : 1) : all ? Math.floor(wallet.tix / TIX_PER_BUX) : wallet.tix >= TIX_PER_BUX ? 1 : 0);
+function payTix(n) { if (!infTix) wallet.tix -= n * TIX_PER_BUX; }
+function showWallet() { if (HEADLESS) return; $('tixN').innerHTML = tixShown(); $('buxN').textContent = wallet.bux; }
 showWallet();
 const tixPopEl = HEADLESS ? null : document.body.appendChild(Object.assign(document.createElement('div'), { id: 'tixPop' }));
 // trading: Tix burst out of the button you pressed and tumble away (stop-motion: they hop 8 times a second)
@@ -8683,7 +8690,7 @@ const priceTag = (h) => h.admin ? h.price : !buxPrice(h) ? (h.id === 'none' ? ''
 const setMissing = (st) => Object.entries(st.wear).filter(([slot, id]) => BUYABLE[slot] && !owns(slot, id));
 const setCost = (st) => setMissing(st).reduce((n, [slot, id]) => n + buxPrice(BUYABLE[slot].find(i => i.id === id)), 0);
 function renderWallet() {
-  $('walletBox').innerHTML = `<b>Your wallet:</b> ${pxIcon('tix')} <b>${wallet.tix}</b> Tix &nbsp; ${pxIcon('bux')} <b>${wallet.bux}</b> Bux &nbsp;
+  $('walletBox').innerHTML = `<b>Your wallet:</b> ${pxIcon('tix')} <b>${tixShown()}</b> Tix &nbsp; ${pxIcon('bux')} <b>${wallet.bux}</b> Bux &nbsp;
     <button class="s-btn" data-trade="1">Trade ${TIX_PER_BUX} Tix for 1 Bux</button> <button class="s-btn" data-trade="all">Trade all my Tix</button>
     <div class="fm-sm">PWN someone in a game to get ${TIX_PER_PWN} Tix. Trade your Tix for Bux, then spend Bux on cool stuff!</div>
     ${walletNote ? `<div class="note">${escHtml(walletNote)}</div>` : ''}`;
@@ -8691,9 +8698,9 @@ function renderWallet() {
 $('walletBox').addEventListener('click', (e) => {
   const b = e.target.closest('[data-trade]');
   if (!b) return;
-  const n = b.dataset.trade === 'all' ? Math.floor(wallet.tix / TIX_PER_BUX) : 1;
-  if (!n || wallet.tix < n * TIX_PER_BUX) { walletNote = `You need ${TIX_PER_BUX} Tix to get 1 Bux. PWN people in a game to get Tix!`; SFX.hurt(); }
-  else { wallet.tix -= n * TIX_PER_BUX; wallet.bux += n; saveWallet(); showWallet(); walletNote = `You traded ${n * TIX_PER_BUX} Tix for ${n} Bux!`; tixBurst(b, n); playWavs(['flashbulb'], 1); award('trader', true); walletBadges(); }
+  const n = tradeN(b.dataset.trade === 'all');
+  if (!n) { walletNote = `You need ${TIX_PER_BUX} Tix to get 1 Bux. PWN people in a game to get Tix!`; SFX.hurt(); }
+  else { payTix(n); wallet.bux += n; saveWallet(); showWallet(); walletNote = infTix ? `You traded ${n * TIX_PER_BUX} Tix for ${n} Bux! (You still have infinite Tix.)` : `You traded ${n * TIX_PER_BUX} Tix for ${n} Bux!`; tixBurst(b, n); playWavs(['flashbulb'], 1); award('trader', true); walletBadges(); }
   renderWallet();
 });
 function renderCatalog() {
@@ -9458,7 +9465,7 @@ function renderShop() {
   const [tab, , slot, list] = SHOP_TABS.find(t => t[0] === shop.tab);
   const thumbs = tab === 'hats' ? hatThumbs : tab === 'faces' ? faceThumbs : clothThumbs[tab];
   $('shopSay').innerHTML = `<b>Bob:</b> ${escHtml(shop.say)}`;
-  $('shopWallet').innerHTML = `<span>${pxIcon('tix', 16)} <b>${wallet.tix}</b> Tix</span><span>${pxIcon('bux', 16)} <b>${wallet.bux}</b> Bux</span>
+  $('shopWallet').innerHTML = `<span>${pxIcon('tix', 16)} <b>${tixShown()}</b> Tix</span><span>${pxIcon('bux', 16)} <b>${wallet.bux}</b> Bux</span>
     <button class="b" data-shop="1">Trade ${TIX_PER_BUX} Tix for 1 Bux</button><button class="b" data-shop="all">Trade all</button>`;
   $('shopTabs').innerHTML = SHOP_TABS.map(([id, name]) => `<button class="b${id === tab ? ' on' : ''}${id === 'boxes' ? ' bxtab' : ''}" data-shoptab="${id}">${name}</button>`).join('');
   if (tab === 'boxes') { $('shopGrid').innerHTML = boxesHtml(); return; }
@@ -9502,9 +9509,9 @@ $('shopWin').addEventListener('click', (e) => {
   if (d.shoptab) { shop.tab = d.shoptab; SFX.click(); renderShop(); $('shopGrid').scrollTop = 0; return; }
   if (d.shop) {   // Tix for Bux, right at the counter
     payGift();
-    const n = d.shop === 'all' ? Math.floor(wallet.tix / TIX_PER_BUX) : 1;
-    if (!n || wallet.tix < n * TIX_PER_BUX) { shop.shake = 0.9; bobSay(bobPick('noTix')); SFX.hurt(); }
-    else { wallet.tix -= n * TIX_PER_BUX; wallet.bux += n; saveWallet(); showWallet(); tixBurst(b, n); playWavs(['flashbulb'], 1); award('trader', true); walletBadges();
+    const n = tradeN(d.shop === 'all');
+    if (!n) { shop.shake = 0.9; bobSay(bobPick('noTix')); SFX.hurt(); }
+    else { payTix(n); wallet.bux += n; saveWallet(); showWallet(); tixBurst(b, n); playWavs(['flashbulb'], 1); award('trader', true); walletBadges();
       if (d.shop !== 'all') { bobSay(bobPick('trade')); billBack(); shop.give = 0; }
       else if (shop.fetch < BOB_FETCH.done) shop.bagN += n;   // (already getting a bag: it just gets bigger)
       else { bobSay(bobPick('fetch')); billBack(); shop.give = 9; shop.bagN = n; shop.fetch = 0; shop.fetchPrev = -9; shop.entN = 0; }
@@ -9697,7 +9704,8 @@ const UPDATES = [
   { date: '11/5/2026', ver: '4.5', top: 'THE GOLDEN FRYING PAN: the rarest hat in all of BLOCKBURG', text: [
     'NEW BOX HAT: the Golden Frying Pan, an idea by cooltinpot! A solid gold frying pan that sits on your head with its handle sticking out the back. It is SUPER RARE: only about 1 Locked Box in 100 has it, and it always comes out LEGENDARY or better (and it can come out Gleaming, which makes it ULTRACOMPLEX UNIQE QUERLY-).',
     'When the Golden Frying Pan comes out of a box, you hear the golden BONG!',
-    'Look for it in the Locked Boxes tab at Bobs Shop, marked SUPER RARE. Good luck!' ] },
+    'Look for it in the Locked Boxes tab at Bobs Shop, marked SUPER RARE. Good luck!',
+    'Admins have INFINITE Tix now! Their Tix show as \u221e, trading never takes any away, and Trade all gets 1000 Bux at a time.' ] },
   { date: '11/3/2026', ver: '4.4', top: 'LOCKED BOXES at Bobs Shop: 42 brand new hats in 6 rarities! Plus BLOCKBURG CITY, a whole city you can blow up', text: [
     'NEW: LOCKED BOXES, an idea by cooltinpot! Open the new Locked Boxes tab at Bobs Shop and buy a box for 40 Bux. The crate drops in, rattles, the padlock pops off, the lid bursts open and your new hat rises out, all in choppy stop-motion. Inside is one of 42 brand new hats you can not get anywhere else: a Rubber Duck, a Toaster, a Fishbowl Helmet, a Shark Fin, a Tiny Planet, a Chicken Buddy and lots more!',
     'Every box hat comes out in a random RARITY: Stale (dull and faded), Fresh, Shiny (glossy, with a glint), Sparkly (purple and twinkling), LEGENDARY (solid gold, glowing, with sparks floating up) and the super rare ULTRACOMPLEX UNIQE QUERLY- (only 1 in 100!), which cycles through the rainbow with rainbow flames and stars flying around it.',
@@ -9939,6 +9947,7 @@ function setAdmin(h, on = true) {
     $('trailerBtn').style.display = on ? '' : 'none';   // the trailer camera is the admin's
     if (!on && freecam.on) toggleFreecam();             // and so is the free cam
     projRender();                                       // (the admin's Inbox has the projects waiting to be checked)
+    infTix = on; showWallet(); renderWallet(); if (shop.open) renderShop();   // the admin has INFINITE Tix
   }
 }
 // the admin takes the cape off or puts it back on: here, for everyone in the room, and remembered for next time
@@ -11853,7 +11862,7 @@ function showBanner(text, from = 'ANNOUNCEMENT FROM THE ADMIN') {
 const CMDS = [
   { name: 'help', use: '', desc: 'list every command', run: () => { CMDS.forEach(c => cmdOut(`/${c.name} ${c.use}  - ${c.desc}`)); return ''; } },
   { name: 'tix', use: '<number>', desc: 'give yourself Tix (to test the Catalog)', hint: () => ['10', '100', '1000'],
-    run: ([n]) => { const v = Math.floor(+n); if (!v) return 'Try: /tix 100'; earnTix(v); return `You have ${wallet.tix} Tix now.`; } },
+    run: ([n]) => { const v = Math.floor(+n); if (!v) return 'Try: /tix 100'; earnTix(v); return infTix ? 'You have INFINITE Tix (you are the admin)!' : `You have ${wallet.tix} Tix now.`; } },
   { name: 'speed', use: '<number>', desc: 'your walk speed (normal 16)', hint: () => ['16', '32', '60', '100'],
     run: ([n]) => { const v = Math.min(200, Math.max(1, +n || WALK)); player.walk = v; return `Walk speed is ${v}.`; } },
   { name: 'jump', use: '<number>', desc: 'your jump power (normal 50)', hint: () => ['50', '100', '150'],
