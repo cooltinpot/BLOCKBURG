@@ -1618,7 +1618,8 @@ const wavBufs = {};
 // play several at exactly the same moment (they're decoded first, then all started together)
 function playWavs(names, v = 1) {
   if (!AC || !MASTER) return;
-  Promise.all(names.map(n => wavBufs[n] || (wavBufs[n] = AC.decodeAudioData(Uint8Array.from(atob(WAVS[n].split(',')[1]), c => c.charCodeAt(0)).buffer))))
+  Promise.all(names.map(n => wavBufs[n] || (wavBufs[n] = n.endsWith('.mp3') ? fetch(n).then(r => r.arrayBuffer()).then(a => AC.decodeAudioData(a))   // (a sound file next to the game)
+    : AC.decodeAudioData(Uint8Array.from(atob(WAVS[n].split(',')[1]), c => c.charCodeAt(0)).buffer))))
     .then(bufs => {
       const at = AC.currentTime + 0.02;
       for (const buf of bufs) { const s = AC.createBufferSource(), g = AC.createGain(); s.buffer = buf; g.gain.value = v; s.connect(g).connect(MASTER); s.start(at); }
@@ -3218,6 +3219,17 @@ const BOX_HATS = (() => {
     ['sph', [0.13, 14, 12], '#F5EBCF', [0.42, 0.06, 0.4], 0, [1, 1.25, 1]], ['tor', [0.1, 0.03, T, 6, 14], '#E5C86A', [0.42, -0.06, 0.4], [H, 0, 0]],
     ...P(6, (i, a) => ['cyl', [0.008, 0.008, 0.14, 3], '#E5C86A', [0.42 + Math.sin(a) * 0.11, -0.05, 0.4 + Math.cos(a) * 0.11], [0, a, H + 0.3, 'YXZ']]),
   ] },
+  // cooltinpot's idea: the rarest box hat. It comes out of about 1 box in 100 (rare: its share of the boxes,
+  // where every other hat is 1), and never worse than LEGENDARY (minR). It sits on your head, handle out the back.
+  { id: 'goldpan', name: 'Golden Frying Pan', shine: true, rare: 0.42, minR: 4, main: '#E0A400', desc: 'BONG. Made of solid gold. Do not cook eggs in it.', parts: [
+    ['lathe', [[[0, 0], [0.5, 0], [0.6, 0.03], [0.74, 0.2], [0.82, 0.3], [0.84, 0.33], [0.8, 0.33], [0.76, 0.28], [0.66, 0.12], [0.55, 0.05], [0.45, 0.04], [0, 0.04]], 44], 'A'],
+    ['tor', [0.825, 0.026, T, 8, 52], 'A', [0, 0.325, 0], [H, 0, 0]],
+    ['tor', [0.5, 0.008, T, 6, 40], 'A', [0, 0.045, 0], [H, 0, 0]],
+    ['box', [0.26, 0.12, 0.24], 'A', [0, 0.27, -0.84], [0.25, 0, 0]],
+    ...[1, -1].map(s => ['sph', [0.038, 8, 6], 'A', [s * 0.09, 0.18, -0.74]]),
+    ['cap', [0.085, 1.0, 10], 'A', [0, 0.433, -1.44], [-1.32, 0, 0], [1.35, 1, 0.7]],
+    ['cyl', [0.05, 0.05, 0.13, 16], '#2A1E00', [0, 0.547, -1.887], [0.25, 0, 0]],
+  ] },
   ];
 })();
 const boxHatDef = (k) => BOX_HATS.find(h => h.id === k);
@@ -3235,9 +3247,13 @@ function boxHatName(id) {
 }
 // open a box: a random hat, a random rarity (by the odds), and maybe Gleaming (only hats that can shine), which bumps it up one
 function rollBox() {
-  const def = BOX_HATS[(Math.random() * BOX_HATS.length) | 0];
+  // which hat: each one has the same chance, except the rare ones (rare = their share, 1 is normal)
+  const share = (h) => h.rare || 1;
+  let w = Math.random() * BOX_HATS.reduce((a, h) => a + share(h), 0), def = BOX_HATS[BOX_HATS.length - 1];
+  for (const h of BOX_HATS) if ((w -= share(h)) < 0) { def = h; break; }
   let x = Math.random() * 100, r = 0;
   while (r < RARITIES.length - 1 && (x -= RARITIES[r].odds) >= 0) r++;
+  r = Math.max(r, def.minR || 0);   // (the Golden Frying Pan is always LEGENDARY or better)
   const gl = !!def.shine && Math.random() < 0.25;
   if (gl) r = Math.min(RARITIES.length - 1, r + 1);
   return boxHatId(def.id, r, gl);
@@ -9603,7 +9619,8 @@ function openBoxShow(id) {
     }
     // 4) the lid bursts open, and out comes the hat
     if (t >= 2.0) {
-      once('lid', () => { playWavs(R >= 4 ? ['victory', 'flashbulb'] : R >= 2 ? ['flashbulb', 'kerplunk'] : ['kerplunk'], 1); el.classList.add('pop'); });
+      once('lid', () => { playWavs(R >= 4 ? ['victory', 'flashbulb'] : R >= 2 ? ['flashbulb', 'kerplunk'] : ['kerplunk'], 1); el.classList.add('pop');
+        if (b.def.id === 'goldpan') playWavs(['goldpan.mp3'], 1); });   // (the golden BONG)
       C.lid.rotation.x = Math.max(-2.6, C.lid.rotation.x - dt * 9);
       if (t >= 2.25) { C.lid.position.addScaledVector(lidV, dt); lidV.y -= 5 * dt; C.lid.rotation.z += dt * 2; }
       spin.visible = true;
@@ -9656,7 +9673,7 @@ function boxesHtml() {
       return `<div class="shop-it bxr${parseBoxHat(id).r}${on ? ' on' : ''}"><img src="${hatThumbs[id]}" alt="">${gleamDecal(id)}<div class="nm">${boxHatLabel(id)}${c > 1 ? ` <i>x${c}</i>` : ''}</div>
         <button class="b" data-bxwear="${id}">${on ? 'Wearing' : 'Wear'}</button></div>`; }).join('') : '<div class="bx-none">None yet. Open a box!</div>'}
     <div class="bx-h">What could be inside</div>
-    ${BOX_HATS.map(h => `<div class="shop-it bx-in"><img src="${hatThumbs[boxHatId(h.id, 1, 0)]}" alt=""><div class="nm">${escHtml(h.name)}${h.shine ? ' &#10022;' : ''}</div></div>`).join('')}`;
+    ${BOX_HATS.map(h => `<div class="shop-it bx-in"><img src="${hatThumbs[boxHatId(h.id, h.minR || 1, 0)]}" alt=""><div class="nm">${escHtml(h.name)}${h.shine ? ' &#10022;' : ''}${h.rare ? ' <span class="rar r4">SUPER RARE</span>' : ''}</div></div>`).join('')}`;
 }
 $('shopWin').addEventListener('click', (e) => {
   const b = e.target.closest('[data-openbox],[data-bxwear]'); if (!b) return;
@@ -9677,6 +9694,10 @@ $('shopWin').addEventListener('click', (e) => {
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '11/5/2026', ver: '4.5', top: 'THE GOLDEN FRYING PAN: the rarest hat in all of BLOCKBURG', text: [
+    'NEW BOX HAT: the Golden Frying Pan, an idea by cooltinpot! A solid gold frying pan that sits on your head with its handle sticking out the back. It is SUPER RARE: only about 1 Locked Box in 100 has it, and it always comes out LEGENDARY or better (and it can come out Gleaming, which makes it ULTRACOMPLEX UNIQE QUERLY-).',
+    'When the Golden Frying Pan comes out of a box, you hear the golden BONG!',
+    'Look for it in the Locked Boxes tab at Bobs Shop, marked SUPER RARE. Good luck!' ] },
   { date: '11/3/2026', ver: '4.4', top: 'LOCKED BOXES at Bobs Shop: 42 brand new hats in 6 rarities! Plus BLOCKBURG CITY, a whole city you can blow up', text: [
     'NEW: LOCKED BOXES, an idea by cooltinpot! Open the new Locked Boxes tab at Bobs Shop and buy a box for 40 Bux. The crate drops in, rattles, the padlock pops off, the lid bursts open and your new hat rises out, all in choppy stop-motion. Inside is one of 42 brand new hats you can not get anywhere else: a Rubber Duck, a Toaster, a Fishbowl Helmet, a Shark Fin, a Tiny Planet, a Chicken Buddy and lots more!',
     'Every box hat comes out in a random RARITY: Stale (dull and faded), Fresh, Shiny (glossy, with a glint), Sparkly (purple and twinkling), LEGENDARY (solid gold, glowing, with sparks floating up) and the super rare ULTRACOMPLEX UNIQE QUERLY- (only 1 in 100!), which cycles through the rainbow with rainbow flames and stars flying around it.',
