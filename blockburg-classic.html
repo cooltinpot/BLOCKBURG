@@ -298,7 +298,9 @@
   .box{border:1px solid #6e99c9;margin-bottom:10px}
   .box>h3{margin:0;background:#6e99c9;color:#fff;font:bold 13px Verdana;padding:4px 8px}
   .box>.in{padding:8px}
-  .trailer video{display:block;width:100%;aspect-ratio:16/9;background:#000;border:1px solid #888;box-sizing:border-box}
+  .trailer video{display:block;width:100%;aspect-ratio:16/9;background:#000;border:1px solid #888;box-sizing:border-box;margin-top:5px}
+  .trailer .up-item:first-child{padding-top:0}
+  .trailer .tr-vid.hidden{display:none}
   .s-btn{font:bold 12px Verdana;background:linear-gradient(#fff,#d7e3f2);border:1px solid #6e99c9;padding:4px 10px;cursor:pointer;color:#0b4a99}
   .s-btn:hover{background:linear-gradient(#fff,#b6cff0)}
   .s-btn.go.online{background:linear-gradient(#7fc4ff,#1f6fd1);border-color:#11498f;text-shadow:1px 1px 0 #11498f}
@@ -865,12 +867,8 @@
         <div class="box"><h3 id="badgesHd">My Badges</h3><div class="in" id="myBadges"></div></div>
       </div>
       <div>
-        <!-- the BLOCKBURG trailer: the real video file, played right here (it only downloads when you press play) -->
-        <div class="box trailer"><h3>Watch the Trailer!</h3><div class="in">
-          <video id="trailerVid" poster="trailer-poster.jpg" controls playsinline preload="none">
-            <source src="trailer.mp4" type="video/mp4"><source src="trailer.webm" type="video/webm">   <!-- (the WebM is for browsers that can't play MP4) -->
-          </video>
-        </div></div>
+        <!-- the BLOCKBURG trailers, one per update, like the Update Log (see TRAILERS) -->
+        <div class="box trailer"><h3>Trailers</h3><div class="in" id="trailerList"></div></div>
         <div class="box"><h3>Featured Game</h3><div class="in" style="display:flex;gap:10px;flex-wrap:wrap">
           <img class="thumbClassic" style="width:220px;aspect-ratio:4/3;border:1px solid #888;background:#4b974b" alt="">
           <div style="flex:1;min-width:180px"><div class="gt" style="font:bold 14px Verdana;color:#0b4a99">Blockburg Classic</div>
@@ -10189,7 +10187,7 @@ const UPDATES = [
     'Inside is one of 42 captain and sea accessories you can not get anywhere else: a Captains Tricorn, an Admirals Bicorne, a Parrot Pal that sits on your shoulder, an Eyepatch, a Captains Beard, a Cutlass Through The Head, The Kraken, a Shark Attack Hood, a whole Pirate Ship, a Lighthouse with a spinning light, a Diving Helmet, a Coral Reef Crown with fish swimming around it, a Ship in a Bottle and lots more!',
     'They come out in the same rarities as the Locked Box, with sea effects: Sparkly ones have bubbles floating up, and LEGENDARY ones have gold doubloons flipping up into the air.',
     'Instead of Gleaming, pirate accessories can come out SWASHBUCKLING: a wave swooshes round and round them while they gleam, and every so often it splashes water up onto them! It bumps them up one rarity, and they get a wave sticker on their picture.',
-    'The BLOCKBURG TRAILER is on the front page! Press play in the Watch the Trailer! box at the top of My Blockburg.' ] },
+    'TRAILERS on the front page! The new trailer is at the top of My Blockburg, and the old v3.0 trailer is right under it. Each one sits under the update it came out with, like the Update Log.' ] },
   { date: '11/5/2026', ver: '4.5', top: 'THE GOLDEN FRYING PAN: the rarest hat in all of BLOCKBURG', text: [
     'NEW BOX HAT: the Golden Frying Pan, an idea by cooltinpot! A solid gold frying pan that sits on your head with its handle sticking out the back. It is SUPER RARE: only about 1 Locked Box in 100 has it, and it always comes out LEGENDARY or better (and it can come out Gleaming, which makes it ULTRACOMPLEX UNIQE QUERLY-).',
     'When the Golden Frying Pan comes out of a box, you hear a big golden BONG! (Fixed: at first it only played a quiet sparkle, at the same time as the fanfare.)',
@@ -10374,10 +10372,34 @@ $('updLog').addEventListener('click', (e) => {
   const open = b.nextElementSibling.classList.toggle('hidden') === false;
   b.textContent = open ? 'HIDE' : 'EXTEND';
 });
+/* ---- the trailers: each one belongs to the update it came out with (ver), newest first, like the Update Log.
+   The newest one is ready to play; older ones open with WATCH. The videos are files next to the game
+   (trailers/<file>.mp4, a .webm for browsers that can't play MP4, and a .jpg cover), and nothing downloads
+   until you press play. */
+const TRAILERS = [
+  { ver: '4.6', name: 'A GAME YOU WILL NEVER PLAY', file: 'trailers/blockburg-v4.6' },
+  { ver: '3.0', name: 'BLOCKBURG Trailer', file: 'trailers/blockburg-v3.0' },
+];
+function renderTrailers() {
+  const vid = (t) => `<video poster="${t.file}.jpg" controls playsinline preload="none"><source src="${t.file}.mp4" type="video/mp4"><source src="${t.file}.webm" type="video/webm"></video>`;
+  $('trailerList').innerHTML = TRAILERS.map((t, i) => { const u = UPDATES.find(x => x.ver === t.ver);
+    return `<div class="up-item${i === 0 ? ' up-newest' : ''}">
+    <div class="up-date"><span class="up-ver">v${escHtml(t.ver)}</span>${u ? u.date : ''}</div>
+    <span class="up-top">${escHtml(t.name)}</span>${i ? `<span class="up-ext" data-trl="${i}">WATCH</span>` : ''}
+    <div class="tr-vid${i ? ' hidden' : ''}">${vid(t)}</div></div>`; }).join('');
+}
+$('trailerList').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-trl]'); if (!b) return;
+  const box = b.nextElementSibling, open = box.classList.toggle('hidden') === false;
+  b.textContent = open ? 'HIDE' : 'WATCH';
+  if (!open) box.querySelector('video').pause();
+});
+// one trailer at a time: starting one pauses the others
+$('trailerList').addEventListener('play', (e) => { document.querySelectorAll('#trailerList video').forEach(v => { if (v !== e.target) v.pause(); }); }, true);
 function startUpdates() {
   if (limitedOver() && $('newsHalloween')) $('newsHalloween').remove();   // the Halloween items are gone, so is their news
   $('newsBody').insertAdjacentHTML('afterbegin', `<p><span class="new">NEW!</span><b>v${escHtml(String(UPDATES[0].ver))}: ${escHtml(UPDATES[0].top)}</b> ${UPDATES[0].date}. See the Update Log below for everything that changed.</p>`);
-  renderUpdates();
+  renderUpdates(); renderTrailers();
 }
 
 /* ================= ADMIN =================
