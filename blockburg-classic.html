@@ -298,6 +298,7 @@
   .box{border:1px solid #6e99c9;margin-bottom:10px}
   .box>h3{margin:0;background:#6e99c9;color:#fff;font:bold 13px Verdana;padding:4px 8px}
   .box>.in{padding:8px}
+  .trailer video{display:block;width:100%;aspect-ratio:16/9;background:#000;border:1px solid #888;box-sizing:border-box}
   .s-btn{font:bold 12px Verdana;background:linear-gradient(#fff,#d7e3f2);border:1px solid #6e99c9;padding:4px 10px;cursor:pointer;color:#0b4a99}
   .s-btn:hover{background:linear-gradient(#fff,#b6cff0)}
   .s-btn.go.online{background:linear-gradient(#7fc4ff,#1f6fd1);border-color:#11498f;text-shadow:1px 1px 0 #11498f}
@@ -864,6 +865,12 @@
         <div class="box"><h3 id="badgesHd">My Badges</h3><div class="in" id="myBadges"></div></div>
       </div>
       <div>
+        <!-- the BLOCKBURG trailer: the real video file, played right here (it only downloads when you press play) -->
+        <div class="box trailer"><h3>Watch the Trailer!</h3><div class="in">
+          <video id="trailerVid" poster="trailer-poster.jpg" controls playsinline preload="none">
+            <source src="trailer.mp4" type="video/mp4"><source src="trailer.webm" type="video/webm">   <!-- (the WebM is for browsers that can't play MP4) -->
+          </video>
+        </div></div>
         <div class="box"><h3>Featured Game</h3><div class="in" style="display:flex;gap:10px;flex-wrap:wrap">
           <img class="thumbClassic" style="width:220px;aspect-ratio:4/3;border:1px solid #888;background:#4b974b" alt="">
           <div style="flex:1;min-width:180px"><div class="gt" style="font:bold 14px Verdana;color:#0b4a99">Blockburg Classic</div>
