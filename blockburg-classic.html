@@ -131,8 +131,11 @@
   .rar{font-weight:bold}
   .rar.r0{color:#77776f}.rar.r1{color:#2c962c}.rar.r2{color:#1f6fe0}.rar.r3{color:#9a30e0;text-shadow:0 0 3px #e3c4ff}
   .rar.r4{color:#c98a00;text-shadow:0 0 4px #ffe27a}
-  .rar.r5,.rar.gl{background:linear-gradient(90deg,#ff3b3b,#ffa21a,#f5e22a,#3fd44a,#2fc8ff,#5a5cff,#e04cff,#ff3b3b);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rarRun 2s steps(16) infinite}
+  .rar.r5,.rar.gl,.rar.swash{background:linear-gradient(90deg,#ff3b3b,#ffa21a,#f5e22a,#3fd44a,#2fc8ff,#5a5cff,#e04cff,#ff3b3b);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rarRun 2s steps(16) infinite}
   .rar.gl{background-image:linear-gradient(90deg,#a87a10,#a87a10,#ffd84a,#a87a10,#a87a10);background-size:300% 100%}
+  .rar.swash{background-image:linear-gradient(90deg,#0b5fa8,#0b5fa8,#6fd8ff,#ffffff,#6fd8ff,#0b5fa8,#0b5fa8);background-size:300% 100%}
+  .gleam-dec.swash{background-image:var(--swash-dec)}
+  #shopTabs button.bxtab.pir{color:#0b5fa8}
   @keyframes rarRun{to{background-position:-200% 0}}
   #shopTabs button.bxtab{color:#7a3d00}
   .shop-it,.hcard{position:relative}
@@ -171,7 +174,7 @@
   #unbox .ub-rar{font:900 30px 'Arial Black',Arial;text-shadow:0 2px 0 #000}
   #unbox .ub-rar.r0{color:#c8c8c0}#unbox .ub-rar.r1{color:#5fe05f}#unbox .ub-rar.r2{color:#5aa8ff}#unbox .ub-rar.r3{color:#d08cff}#unbox .ub-rar.r4{color:#ffd23a}
   #unbox .ub-rar.r5{font-size:26px;text-shadow:none;filter:drop-shadow(0 2px 0 #000)}
-  #unbox .ub-rar .gl{font-size:22px;text-shadow:none}
+  #unbox .ub-rar .gl,#unbox .ub-rar .swash{font-size:22px;text-shadow:none}
   #unbox .ub-nm{font:bold 20px Arial;margin-top:2px}#unbox .ub-ds{font:italic 13px Arial;color:#ccc;margin-top:3px}
   #unbox .ub-say{font:bold 14px Arial;color:#ffe680;margin-top:6px}
   #unbox .ub-btns{display:flex;gap:8px;z-index:1;visibility:hidden;margin-top:6px;flex-wrap:wrap;justify-content:center}
@@ -2673,6 +2676,17 @@ function makeHat(id) {
    A box hat's id says everything about it, so it works everywhere a hat id does (your look, online, pickups):
    'bx:<hat>:<rarity 0-5>:<gleaming 0/1>'. You own one when wallet.owned has 'hat:' + that id. */
 const BOX_PRICE = 40;
+// the boxes at Bob's Shop. A box hat's box is its def.box (none = the Locked Box). They cost the same and have
+// the same rarities; what's different is the hats inside, and the special finish some of them can come out with.
+const BOXES = {
+  locked: { name: 'Locked Box', fx: 'Gleaming', fxc: 'gl', say: ' And it GLEAMS!', things: 'hats',
+    blurb: "Open it for a hat you can't get anywhere else, in a random rarity!", fxNote: 'a shine sweeps across them' },
+  pirate: { name: 'PIRATE BOOTYS BOX', fx: 'Swashbuckling', fxc: 'swash', say: ' And it is SWASHBUCKLING!', things: 'accessories',
+    blurb: "Arrr! Full of captain and sea accessories you can't get anywhere else, in a random rarity!",
+    fxNote: 'a wave swooshes round and round them as they gleam, splashing them with water' },
+};
+const boxKind = (def) => (def && def.box) || 'locked';
+const boxOf = (def) => BOXES[boxKind(def)];
 const RARITIES = [
   { name: 'Stale', color: '#8b8b86', odds: 38, say: 'Smells a little old. Still a hat though!' },
   { name: 'Fresh', color: '#3fae3f', odds: 30, say: 'Fresh out of the box!' },
@@ -3240,6 +3254,367 @@ const BOX_HATS = (() => {
     ['cap', [0.085, 1.0, 10], 'A', [0, 0.433, -1.44], [-1.32, 0, 0], [1.35, 1, 0.7]],
     ['cyl', [0.05, 0.05, 0.13, 16], '#2A1E00', [0, 0.547, -1.887], [0.25, 0, 0]],
   ] },
+  // ---- the PIRATE BOOTYS BOX (cooltinpot's idea): 42 captain and sea accessories, only from that box ----
+  // Some sit on your face, chin, ears or shoulder instead of on top: the head is from y = 0.05 (top) to -1.15 (chin),
+  // 0.62 out from the middle on every side (the face is at z = 0.62), and the shoulders are just under it at y = -1.15.
+  ...(() => {
+    const W = '#F2F3F3', K = '#151515', GOLD = '#E0B020', WOOD = '#7A4A22', DWOOD = '#4A2C14', BRASS = '#C9A040', IRON = '#3A3F44', GLASS = '#BFE6FF~';
+    const up = (r, a, y, d, th) => at(r + d * Math.sin(th), a, y + d * Math.cos(th));   // a spot d up a panel that leans out by th
+    // a spot given in a part's own frame, turned forward by rx then round by ry, plus where the part is
+    const xf = (l, rx, ry, base) => {
+      const y1 = l[1] * Math.cos(rx) - l[2] * Math.sin(rx), z1 = l[1] * Math.sin(rx) + l[2] * Math.cos(rx);
+      return [base[0] + l[0] * Math.cos(ry) + z1 * Math.sin(ry), base[1] + y1, base[2] - l[0] * Math.sin(ry) + z1 * Math.cos(ry)];
+    };
+    // a skull and crossbones facing the front (s = size)
+    const skullF = (x, y, z, s = 1, bone = W, hole = K) => [
+      ['sph', [0.1 * s, 14, 10], bone, [x, y + 0.02 * s, z], 0, [1, 0.95, 0.55]], ['box', [0.11 * s, 0.06 * s, 0.05 * s], bone, [x, y - 0.075 * s, z]],
+      ...[1, -1].map(e => ['sph', [0.028 * s, 8, 6], hole, [x + e * 0.037 * s, y + 0.01 * s, z + 0.05 * s], 0, [1, 1, 0.4]]),
+      ...[1, -1].map(e => ['box', [0.32 * s, 0.035 * s, 0.03 * s], bone, [x, y - 0.02 * s, z - 0.02 * s], [0, 0, e * 0.6]]),
+      ...[1, -1].flatMap(e => [1, -1].map(f => ['sph', [0.026 * s, 6, 5], bone, [x + f * 0.13 * s, y - 0.02 * s + e * f * 0.09 * s, z - 0.02 * s]])),
+    ];
+    // a three-cornered hat, flat side to the front (c = its color, trim = the edging)
+    const tricorn = (c, trim) => [
+      ['cyl', [0.5, 0.6, 0.36, 28], c, [0, 0.2, 0]], ['dome', [0.5], c, [0, 0.37, 0], 0, [1, 0.5, 1]],
+      ['cyl', [1.16, 1.16, 0.05, 3], c, [0, 0.03, 0], [0, Math.PI, 0]],
+      ...[0, T / 3, -T / 3].flatMap(a => [
+        ['box', [1.98, 0.5, 0.05], c, up(0.56, a, 0.03, 0.25, 0.24), [0.24, a, 0, 'YXZ']],
+        ['box', [2.0, 0.045, 0.075], trim, up(0.56, a, 0.03, 0.5, 0.24), [0.24, a, 0, 'YXZ']],
+      ]),
+    ];
+    const bottle = [[0, 0], [0.26, 0], [0.28, 0.04], [0.28, 0.62], [0.2, 0.76], [0.1, 0.83], [0.09, 1.02], [0.11, 1.04], [0.11, 1.08], [0, 1.08]];
+    const bicTop = (x) => 0.12 + 0.7 * Math.pow(Math.max(0, 1 - (x / 1.15) ** 2), 0.6);
+    const bicX = Array.from({ length: 15 }, (_, i) => -1.15 + i * 2.3 / 14);
+    const shell = [[-0.06, 0], [0.06, 0], ...Array.from({ length: 15 }, (_, i) => { const t = 0.75 - i * 1.5 / 14, r = i % 2 ? 0.29 : 0.32; return [Math.sin(t) * r, 0.06 + Math.cos(t) * r]; })];
+    const mask = Array.from({ length: 28 }, (_, i) => { const t = i / 28 * T, c = Math.cos(t), s = Math.sin(t); return [Math.sign(c) * Math.abs(c) ** 0.5 * 0.34, Math.sign(s) * Math.abs(s) ** 0.5 * 0.17]; });
+    const paper = [[-0.8, 0], [0.8, 0], [0, 1.0]];
+    const coins = (x, z, n, k) => Array.from({ length: n }, (_, i) => ['cyl', [0.17, 0.17, 0.045, 20], 'A', [x + (rnd(i + k) - 0.5) * 0.035, 0.075 + i * 0.048, z + (rnd(i + k + 50) - 0.5) * 0.035]]);
+    const coral = (a, h, c, i) => {
+      const s = rnd(i) - 0.5, p = [at(0.42, a, 0.05), at(0.47, a + s * 0.3, 0.3 * h), at(0.44, a + s * 0.5, 0.6 * h), at(0.5, a + s * 0.7, 0.85 * h)];
+      const b = [p[1], at(0.68, a + s * 0.2 + 0.3, 0.55 * h), at(0.76, a + s * 0.2 + 0.35, 0.74 * h)];
+      return [...hornC(p, 0.07, 0.03, c), ...hornC(b, 0.05, 0.022, c), ['sph', [0.045, 8, 6], '#FFE0F4*', p[3]], ['sph', [0.035, 8, 6], '#FFE0F4*', b[2]]];
+    };
+    return [
+  { id: 'p_tricorn', name: "Captain's Tricorn", shine: true, main: '#1B1B1B', desc: 'The captain of the ship. And of your head.', parts: [
+    ...tricorn('A', GOLD), ...skullF(0, 0.25, 0.7, 0.9),
+    ['cap', [0.06, 0.55, 6], '#C4281C', [-0.5, 0.62, -0.15], [0, 0, 0.75], [1, 1, 0.4]], ['cap', [0.04, 0.4, 6], '#F2F3F3', [-0.42, 0.6, -0.2], [0, 0, 0.6], [1, 1, 0.4]],
+  ] },
+  { id: 'p_bandana', name: 'Skull Bandana', shine: true, main: '#C4281C', desc: 'Keeps the sun off and the sea spray out.', parts: [
+    ['lathe', [[[0.655, -0.3], [0.655, -0.05], [0.6, 0.07], [0.4, 0.11], [0, 0.12]], 32], 'A'],
+    ...P(12, (i, a) => ['sph', [0.035, 8, 6], W, at(0.662, a + 0.25, -0.24 + (i % 2) * 0.13), [0, a + 0.25, 0], [1, 1, 0.3]]),
+    ...P(5, (i, a) => ['sph', [0.032, 8, 6], W, at(0.36, a, 0.115), 0, [1, 0.3, 1]]),
+    ...skullF(0, -0.13, 0.67, 0.55),
+    ['sph', [0.09, 10, 8], 'A', [0, -0.17, -0.67]], ...[1, -1].map(s => ['cap', [0.06, 0.32, 6], 'A', [s * 0.1, -0.42, -0.72], [0.25, 0, s * 0.35], [1, 1, 0.45]]),
+  ] },
+  { id: 'p_eyepatch', name: 'Eyepatch', shine: true, main: '#151515', desc: 'Arr. Lost the eye to a seagull. Long story.', parts: [
+    ['cyl', [0.17, 0.17, 0.04, 20], 'A', [0.22, -0.4, 0.6], [H, 0.36, 0, 'YXZ'], [1, 1, 0.85]],
+    ['tor', [0.66, 0.02, T, 6, 48], 'A', [0, -0.3, 0], [H, 0, -0.25, 'ZYX']],
+    ...skullF(0.235, -0.4, 0.635, 0.4),
+    ['tor', [0.1, 0.018, T, 6, 20], GOLD, [-0.66, -0.75, 0.02], [0, H, 0]],
+  ] },
+  { id: 'p_parrot', name: 'Parrot Pal', shine: true, main: '#3FAE3F', desc: 'Polly wants a cracker. Polly wants your Bux.', groups: { pp: { at: [-1.0, -1.15, 0], size: 1.5 } }, parts: inG([
+    ['sph', [0.22, 18, 14], 'A', [0, 0.29, 0], 0, [0.85, 1.25, 0.95]],
+    ['sph', [0.15, 16, 12], '#C4281C', [0, 0.63, 0.04]],
+    ['cone', [0.055, 0.14, 8], '#F5CD30', [0, 0.6, 0.21], [H + 0.3, 0, 0]], ['sph', [0.045, 8, 6], '#3A3A3A', [0, 0.55, 0.2]],
+    ...[1, -1].flatMap(s => [['sph', [0.045, 10, 8], W, [s * 0.085, 0.67, 0.15]], ['sph', [0.022, 8, 6], K, [s * 0.09, 0.67, 0.19]]]),
+    ...[1, -1].map(s => ['sph', [0.18, 14, 10], '#0D69AC', [s * 0.15, 0.29, -0.03], [0.25, 0, s * 0.15], [0.35, 1.15, 0.9]]),
+    ['box', [0.09, 0.5, 0.03], '#0D69AC', [0, 0.15, -0.44], [1.27, 0, 0]], ['box', [0.06, 0.45, 0.03], '#C4281C', [0.07, 0.15, -0.42], [1.27, 0.15, 0]],
+    ['box', [0.06, 0.45, 0.03], '#F5CD30', [-0.07, 0.15, -0.42], [1.27, -0.15, 0]],
+    ...[1, -1].map(s => ['cap', [0.03, 0.08, 6], '#E8781E', [s * 0.07, 0.02, 0.06], [H, 0, 0]]),
+    ['cyl', [0.1, 0.15, 0.05, 3], K, [0, 0.78, 0.03], [0, Math.PI, 0]], ['cyl', [0.07, 0.08, 0.07, 12], K, [0, 0.82, 0.03]], ['sph', [0.02, 6, 4], W, [0, 0.81, 0.11]],
+  ], 'pp') },
+  { id: 'p_bicorne', name: "Admiral's Bicorne", shine: true, main: '#1B2A35', desc: 'For the admiral of the whole Blockburg navy. That is you now.', parts: [
+    ['cyl', [0.5, 0.6, 0.22, 24], 'A', [0, 0.08, 0]],
+    ['ext', [[...bicX.map(x => [x, bicTop(x)]), ...bicX.slice().reverse().map(x => [x, 0.12 * (x / 1.15) ** 2])], 0.32, 0.03], 'A'],
+    ...[1, -1].map(s => ['tube', [bicX.slice(1, -1).map(x => [x, bicTop(x) + 0.01, s * 0.18]), 0.03, 6], GOLD]),
+    ['cyl', [0.14, 0.14, 0.03, 18], W, [0.45, 0.4, 0.2], [H, 0, 0]], ['cyl', [0.08, 0.08, 0.035, 14], '#C4281C', [0.45, 0.4, 0.21], [H, 0, 0]], ['sph', [0.035, 8, 6], GOLD, [0.45, 0.4, 0.23]],
+    ...[1, -1].flatMap(s => [['sph', [0.06, 8, 6], GOLD, [s * 1.12, 0.12, 0]], ['cone', [0.06, 0.18, 8], GOLD, [s * 1.12, 0.0, 0], [Math.PI, 0, 0]]]),
+    ...[-0.6, -0.3, 0, 0.3, 0.6].map(x => ['cap', [0.075, 0.12, 6], W, [x, bicTop(x) + 0.06, 0], [0, 0, -x * 0.7]]),
+  ] },
+  { id: 'p_captaincap', name: "Captain's Cap", shine: true, main: '#F2F3F3', desc: 'Captain on deck! Everybody salute!', parts: [
+    ['cyl', [0.645, 0.645, 0.2, 32], '#1B2A35', [0, -0.02, 0]], ['cyl', [0.74, 0.645, 0.2, 32], 'A', [0, 0.17, 0]],
+    ['cyl', [0.74, 0.74, 0.03, 32], 'A', [0, 0.285, 0]], ['tor', [0.74, 0.02, T, 6, 40], 'A', [0, 0.27, 0], [H, 0, 0]],
+    ['cyl', [0.66, 0.66, 0.035, 24, false, -1.05, 2.1], K, [0, -0.1, 0.12], [0.22, 0, 0]],
+    ['tube', [Array.from({ length: 13 }, (_, i) => at(0.66, -1.2 + i * 0.2, 0.05)), 0.016, 5], GOLD],
+    ['tor', [0.035, 0.01, T, 6, 12], GOLD, [0, 0.07, 0.66]], ['box', [0.018, 0.13, 0.02], GOLD, [0, -0.01, 0.66]], ['box', [0.07, 0.015, 0.02], GOLD, [0, 0.04, 0.66]],
+    ['tube', [[[-0.05, -0.04, 0.66], [-0.03, -0.075, 0.665], [0, -0.085, 0.665], [0.03, -0.075, 0.665], [0.05, -0.04, 0.66]], 0.012, 5], GOLD],
+  ] },
+  { id: 'p_sailor', name: 'Sailor Hat', shine: true, main: '#F2F3F3', desc: 'Swab the deck! (You swab the deck.)', parts: [
+    ['lathe', [[[0.6, -0.1], [0.63, 0.12], [0.57, 0.3], [0.35, 0.38], [0, 0.4]], 32], 'A'],
+    ['lathe', [[[0.62, -0.12], [0.7, -0.1], [0.8, 0.05], [0.8, 0.09], [0.76, 0.08], [0.67, -0.06], [0.62, -0.06]], 36], 'A'],
+    ['tube', [P(40, (i, a) => at(0.8, a, 0.075)), 0.013, 4, true], '#0D69AC'],
+    ['cyl', [0.64, 0.64, 0.05, 32], '#0D69AC', [0, 0.1, 0]],
+  ] },
+  { id: 'p_wheel', name: "Ship's Wheel", shine: true, main: '#7A4A22', desc: 'Hard to port! Hard to starboard! Hard to see!', groups: { wh: { at: [0, 0.98, -0.05], tilt: [H, 0, 0], spin: 0.2 } }, parts: [
+    ['cyl', [0.07, 0.1, 0.95, 10], DWOOD, [0, 0.5, -0.22]], ['cyl', [0.25, 0.3, 0.08, 16], DWOOD, [0, 0.06, -0.15]], ['cyl', [0.05, 0.05, 0.2, 8], DWOOD, [0, 0.98, -0.15], [H, 0, 0]],
+    ...inG([
+      ['tor', [0.5, 0.05, T, 8, 36], 'A', [0, 0, 0], [H, 0, 0]], ['tor', [0.4, 0.03, T, 6, 32], 'A', [0, 0, 0], [H, 0, 0]],
+      ['cyl', [0.1, 0.1, 0.14, 14], 'A'], ['cyl', [0.06, 0.06, 0.16, 10], GOLD],
+      ...P(8, (i, a) => ['cyl', [0.03, 0.03, 0.5, 6], 'A', [Math.sin(a) * 0.25, 0, Math.cos(a) * 0.25], [H, a, 0, 'YXZ']]),
+      ...P(8, (i, a) => ['cap', [0.045, 0.16, 6], 'A', [Math.sin(a) * 0.66, 0, Math.cos(a) * 0.66], [H, a, 0, 'YXZ']]),
+      ...P(8, (i, a) => ['tor', [0.05, 0.012, T, 6, 12], GOLD, [Math.sin(a) * 0.57, 0, Math.cos(a) * 0.57], [0, a, 0]]),
+    ], 'wh'),
+  ] },
+  { id: 'p_anchor', name: 'Anchor Hat', shine: true, main: '#3A3F44', desc: 'Drop anchor! (Please do not drop it on your foot.)', parts: [
+    ['cyl', [0.06, 0.06, 1.0, 10], 'A', [0, 0.68, 0]], ['tor', [0.13, 0.04, T, 8, 20], 'A', [0, 1.3, 0]],
+    ['cyl', [0.04, 0.04, 0.62, 8], 'A', [0, 1.02, 0], [0, 0, H]], ...[1, -1].map(s => ['sph', [0.06, 8, 6], 'A', [s * 0.31, 1.02, 0]]),
+    ['tor', [0.42, 0.06, Math.PI, 8, 24], 'A', [0, 0.58, 0], [0, 0, Math.PI]], ['sph', [0.09, 10, 8], 'A', [0, 0.16, 0]],
+    ...[1, -1].map(s => ['cone', [0.11, 0.24, 4], 'A', [s * 0.42, 0.66, 0], [0, 0, -s * 0.35], [1, 1, 0.45]]),
+    ...Array.from({ length: 8 }, (_, i) => { const k = i / 7; return ['tor', [0.055, 0.017, T, 6, 12], '#5A5F64', [0.13 + 0.47 * k, 1.2 - 1.15 * k, -0.32 * k], [i % 2 ? H : 0, 0.4, 0]]; }),
+    ['tube', [[[0, 0.3, 0.07], [0.05, 0.5, 0.06], [-0.04, 0.7, 0.07], [0.04, 0.9, 0.06]], 0.018, 5], '#4B974B'],
+  ] },
+  { id: 'p_chest', name: 'Treasure Chest', shine: true, main: '#7A4A22', desc: 'X marks the spot. The spot is your head.', parts: [
+    ['box', [0.9, 0.42, 0.62], 'A', [0, 0.26, 0]], ...[1, -1].map(s => ['box', [0.07, 0.44, 0.64], GOLD, [s * 0.3, 0.26, 0]]),
+    ['box', [0.92, 0.6, 0.07], 'A', [0, 0.752, -0.413], [-0.35, 0, 0]], ...[1, -1].map(s => ['box', [0.075, 0.62, 0.08], GOLD, [s * 0.3, 0.752, -0.413], [-0.35, 0, 0]]),
+    ['box', [0.14, 0.16, 0.04], GOLD, [0, 0.36, 0.32]], ['box', [0.03, 0.06, 0.045], K, [0, 0.35, 0.325]],
+    ['sph', [0.42, 16, 10], GOLD, [0, 0.47, 0.02], 0, [1.0, 0.32, 0.68]],
+    ...P(12, (i, a) => ['cyl', [0.06, 0.06, 0.015, 12], GOLD, [Math.sin(a) * 0.25 * (0.5 + rnd(i)), 0.55 + rnd(i + 5) * 0.06, Math.cos(a) * 0.17 * (0.5 + rnd(i + 2))], [rnd(i + 7) * 1.2, rnd(i + 9) * 3, 0]]),
+    ['sph', [0.05, 8, 6], '#E8505B*', [0.12, 0.6, 0.08]], ['sph', [0.045, 8, 6], '#2FC8FF*', [-0.15, 0.59, -0.02]], ['sph', [0.045, 8, 6], '#3FD44A*', [0, 0.62, -0.1]],
+    ...Array.from({ length: 9 }, (_, i) => { const k = i / 8; return ['sph', [0.03, 8, 6], '#F7F3EA', [-0.3 + 0.6 * k, 0.47 - 0.09 * Math.sin(Math.PI * k), 0.33]]; }),
+  ] },
+  { id: 'p_coins', name: 'Pile of Doubloons', shine: true, main: '#E0B020', desc: 'Pieces of eight! Pieces of nine! Lots of pieces!', parts: [
+    ...coins(-0.25, 0.1, 7, 0), ...coins(0.22, -0.08, 10, 20), ...coins(0.02, 0.32, 4, 40), ...coins(-0.05, -0.32, 5, 60),
+    ...[[-0.25, 0.1, 7], [0.22, -0.08, 10], [0.02, 0.32, 4], [-0.05, -0.32, 5]].map(([x, z, n]) => ['tor', [0.14, 0.012, T, 6, 20], 'A', [x, 0.075 + (n - 1) * 0.048 + 0.024, z], [H, 0, 0]]),
+    ...P(5, (i, a) => ['cyl', [0.17, 0.17, 0.045, 20], 'A', at(0.5, a + 0.4, 0.12), [1.1, a + 0.4, 0, 'YXZ']]),
+  ] },
+  { id: 'p_message', name: 'Message in a Bottle', shine: true, main: '#5FB878', desc: 'It says: HELP, I AM STUCK ON SOMEBODY\'S HEAD.', groups: { bt: { at: [0, 0.03, 0], tilt: [0, 0, 0.35] } }, parts: inG([
+    ['lathe', [bottle, 28], 'A~'], ['cyl', [0.085, 0.075, 0.14, 12], '#B5852F', [0, 1.12, 0]], ['cyl', [0.24, 0.24, 0.06, 20], '#E5D3A1', [0, 0.05, 0]],
+    ['cyl', [0.07, 0.07, 0.42, 14], '#F5EBCF', [0.02, 0.33, 0], [0, 0, 0.12]], ['tor', [0.074, 0.015, T, 6, 16], '#C4281C', [0.02, 0.33, 0], [H, 0, 0.12, 'ZYX']],
+    ['sph', [0.045, 8, 6], '#E8BAC8', [-0.1, 0.1, 0.1]],
+  ], 'bt') },
+  { id: 'p_kraken', name: 'The Kraken', shine: true, main: '#6B327C', desc: 'RELEASE THE KRAKEN! (It just wants a hug.)', parts: [
+    ['sph', [0.55, 24, 18], 'A', [0, 0.45, -0.12], 0, [1, 1.2, 1]],
+    ...P(8, (i, a) => { const [p, r] = surf([0, 0.45, -0.12], 0.55, 0.35 + rnd(i) * 0.6, a + 0.4); return ['sph', [0.05 + rnd(i + 3) * 0.04, 8, 6], '#9A5CC6', [p[0], 0.45 + (p[1] - 0.45) * 1.2, p[2]], r, [1, 0.35, 1]]; }),
+    ...[1, -1].flatMap(s => [['sph', [0.15, 14, 12], W, [s * 0.22, 0.38, 0.36]], ['box', [0.12, 0.04, 0.03], K, [s * 0.22, 0.38, 0.505]], ['sph', [0.03, 6, 4], W, [s * 0.19, 0.42, 0.52]]]),
+    ...[0.75, 1.45, 2.2, 2.85, -0.75, -1.45, -2.2, -2.85].flatMap(a => { const s = Math.sign(a);
+      return hornC([at(0.45, a, 0.2), at(0.66, a, -0.15), at(0.7, a, -0.55), at(0.76, a + 0.12 * s, -0.9), at(0.92, a + 0.3 * s, -1.02), at(1.02, a + 0.48 * s, -0.88), at(0.98, a + 0.6 * s, -0.74)], 0.12, 0.02, 'A'); }),
+  ] },
+  { id: 'p_shark', name: 'Shark Attack Hood', shine: true, main: '#8A97A3', desc: 'Chomp! You are the snack now.', parts: [
+    ['sphp', [0.74, 0, 1.18], 'A', [0, -0.42, 0], 0, [1, 1, 1.12]],
+    ['sph', [0.42, 18, 14], 'A', [0, 0.14, 0.62], [-0.15, 0, 0], [0.95, 0.55, 1.15]], ['sph', [0.38, 16, 12], '#E5E4DF', [0, 0.06, 0.66], [-0.15, 0, 0], [0.85, 0.35, 1.05]],
+    ...[1, -1].flatMap(s => [['sph', [0.065, 10, 8], K, [s * 0.35, 0.2, 0.62]], ['sph', [0.02, 6, 4], W, [s * 0.37, 0.23, 0.67]]]),
+    ...Array.from({ length: 13 }, (_, i) => { const a = -1.25 + i * 2.5 / 12; return ['cone', [0.035, 0.11, 4], W, [Math.sin(a) * 0.69, -0.2, Math.cos(a) * 0.77], [Math.PI, 0, 0]]; }),
+    ...[1, -1].flatMap(s => [0, 1, 2].map(k => ['box', [0.015, 0.18, 0.03], '#5A6670', [s * 0.62, 0.0, -0.1 - k * 0.1], [0, 0, s * 0.15]])),
+    ['ext', [[[-0.3, 0], [0.38, 0], [0.32, 0.55], [0.18, 0.5]], 0.06, 0.02], 'A', [0, 0.27, -0.05], [0, H, 0]],
+  ] },
+  { id: 'p_ship', name: 'Pirate Ship', shine: true, main: '#7A4A22', desc: 'Set sail for adventure! Mind the ears.', parts: [
+    ['cyl', [0.62, 0.66, 0.08, 28], '#2F7FC8', [0, 0.07, 0]], ['tube', [P(36, (i, a) => at(0.64, a, 0.11)), 0.02, 4, true], W],
+    ...P(10, (i, a) => ['sph', [0.08, 8, 6], '#5FA8E8', at(0.5, a, 0.11), 0, [1, 0.4, 1]]),
+    ['ext', [[[-0.62, 0.32], [-0.52, 0.04], [-0.35, -0.02], [0.4, -0.02], [0.62, 0.12], [0.78, 0.36]], 0.42, 0.02], 'A', [0, 0.13, 0], [0, -H, 0]],
+    ['box', [0.4, 0.03, 1.2], '#B5865A', [0, 0.43, 0.05]], ...[1, -1].map(s => ['box', [0.01, 0.05, 1.25], '#F5CD30', [s * 0.222, 0.36, 0.05]]),
+    ...[1, -1].flatMap(s => [-0.25, 0.05, 0.35].map(z => ['cyl', [0.03, 0.03, 0.08, 8], K, [s * 0.23, 0.29, z], [0, 0, H]])),
+    ['box', [0.42, 0.18, 0.3], 'A', [0, 0.53, -0.42]], ['box', [0.3, 0.06, 0.01], '#F5CD30*', [0, 0.51, -0.575]],
+    ['cyl', [0.025, 0.03, 1.05, 8], DWOOD, [0, 0.95, 0.2]], ['cyl', [0.025, 0.03, 0.85, 8], DWOOD, [0, 0.85, -0.2]],
+    ['box', [0.62, 0.3, 0.03], W, [0, 0.82, 0.23]], ['box', [0.5, 0.25, 0.03], W, [0, 1.15, 0.23]], ['box', [0.5, 0.26, 0.03], W, [0, 0.78, -0.17]], ['box', [0.4, 0.2, 0.03], W, [0, 1.05, -0.17]],
+    ['cyl', [0.015, 0.02, 0.42, 6], DWOOD, [0, 0.52, 0.92], [1.2, 0, 0]], ['ext', [[[0, 0], [0.38, 0], [0, 0.42]], 0.01], W, [0, 0.47, 0.5], [0, -H, 0]],
+    ['box', [0.16, 0.1, 0.01], K, [0.08, 1.42, 0.2]], ['sph', [0.025, 6, 4], W, [0.08, 1.42, 0.21]], ['cyl', [0.06, 0.05, 0.06, 8], DWOOD, [0, 1.3, 0.2]],
+  ] },
+  { id: 'p_nest', name: "Crow's Nest", shine: true, main: '#7A4A22', desc: 'LAND HO! (It is just the baseplate.)', parts: [
+    ['cyl', [0.06, 0.08, 1.9, 10], 'A', [0, 0.98, 0]], ['cyl', [0.28, 0.34, 0.1, 16], DWOOD, [0, 0.07, 0]],
+    ['cyl', [0.035, 0.035, 1.1, 8], 'A', [0, 1.0, 0], [0, 0, H]], ['cap', [0.07, 0.9, 8], W, [0, 0.93, 0.03], [0, 0, H]],
+    ['cyl', [0.3, 0.25, 0.26, 18], 'A', [0, 1.55, 0]], ['tor', [0.3, 0.025, T, 6, 24], DWOOD, [0, 1.68, 0], [H, 0, 0]], ['tor', [0.27, 0.02, T, 6, 24], DWOOD, [0, 1.47, 0], [H, 0, 0]],
+    ['box', [0.3, 0.18, 0.015], K, [0.17, 1.84, 0]], ...skullF(0.17, 1.84, 0.012, 0.45),
+    ...[1, -1].map(s => ['cyl', [0.012, 0.012, 1.45, 4], '#C9B48A', [s * 0.19, 0.78, 0], [0, 0, -s * 0.07]]),
+    ...[0.3, 0.55, 0.8, 1.05, 1.3].map(y => ['cyl', [0.01, 0.01, 0.38 - y * 0.06, 4], '#C9B48A', [0, y, 0], [0, 0, H]]),
+    ['sph', [0.07, 10, 8], W, [0.5, 1.08, 0], 0, [0.8, 0.8, 1.3]], ['sph', [0.045, 8, 6], W, [0.5, 1.15, 0.08]], ['cone', [0.02, 0.07, 6], '#F5CD30', [0.5, 1.14, 0.15], [H, 0, 0]],
+  ] },
+  { id: 'p_spyglass', name: "Captain's Spyglass", shine: true, main: '#C9A040', desc: 'Ahoy! I can see your house from here!', parts: [
+    ['cyl', [0.07, 0.07, 0.16, 14], 'A', [0.22, -0.4, 0.7], [H, 0, 0]], ['tor', [0.075, 0.015, T, 6, 16], 'A', [0.22, -0.4, 0.78]],
+    ['cyl', [0.09, 0.09, 0.24, 16], '#5A3A1C', [0.22, -0.4, 0.9], [H, 0, 0]], ['tor', [0.095, 0.018, T, 6, 18], 'A', [0.22, -0.4, 1.02]],
+    ['cyl', [0.11, 0.11, 0.3, 16], 'A', [0.22, -0.4, 1.17], [H, 0, 0]], ['tor', [0.12, 0.022, T, 6, 20], 'A', [0.22, -0.4, 1.32]],
+    ['cyl', [0.1, 0.1, 0.01, 16], '#9FD8FF~', [0.22, -0.4, 1.33], [H, 0, 0]],
+    ['tube', [[[0.22, -0.47, 0.64], [0.45, -0.6, 0.55], [0.62, -0.62, 0.3], [0.64, -0.5, 0.05]], 0.01, 4], GOLD],
+  ] },
+  { id: 'p_flag', name: 'Jolly Roger', shine: true, main: '#151515', desc: 'Fly the black flag! Everyone will know who is boss.', parts: [
+    ['cyl', [0.035, 0.04, 1.7, 8], '#8A5A2B', [-0.4, 0.85, -0.35]], ['sph', [0.06, 8, 6], GOLD, [-0.4, 1.72, -0.35]], ['cyl', [0.1, 0.12, 0.06, 10], '#5A3A1C', [-0.4, 0.03, -0.35]],
+    ['box', [0.45, 0.55, 0.025], 'A', [-0.17, 1.38, -0.35], [0, -0.2, 0]], ['box', [0.42, 0.55, 0.025], 'A', [0.24, 1.38, -0.31], [0, 0.25, 0]],
+    ...skullF(-0.15, 1.42, -0.3, 0.85),
+  ] },
+  { id: 'p_cannon', name: 'Cannon Hat', shine: true, main: '#2A2A2A', desc: 'FIRE! (It is not loaded. Probably.)', parts: [
+    ['box', [0.5, 0.18, 0.75], WOOD, [0, 0.14, -0.02]], ...[1, -1].map(s => ['box', [0.08, 0.22, 0.6], DWOOD, [s * 0.2, 0.3, -0.05]]),
+    ...[1, -1].flatMap(s => [0.25, -0.3].flatMap(z => [['cyl', [0.15, 0.15, 0.07, 14], DWOOD, [s * 0.29, 0.15, z], [0, 0, H]], ['cyl', [0.04, 0.04, 0.09, 8], GOLD, [s * 0.3, 0.15, z], [0, 0, H]]])),
+    ['cyl', [0.1, 0.15, 0.95, 16], 'A', [0, 0.4, 0.12], [H - 0.2, 0, 0]], ['tor', [0.11, 0.03, T, 8, 18], 'A', [0, 0.495, 0.585], [-0.2, 0, 0]],
+    ['tor', [0.135, 0.022, T, 8, 18], 'A', [0, 0.4, 0.12], [-0.2, 0, 0]], ['sph', [0.08, 10, 8], 'A', [0, 0.29, -0.4]],
+    ...[[0, 0.56, 0.78, 0.12], [0.08, 0.63, 0.86, 0.09], [-0.07, 0.61, 0.88, 0.08], [0.02, 0.7, 0.95, 0.06]].map(([x, y, z, r]) => ['sph', [r, 10, 8], '#D8D8D8', [x, y, z]]),
+  ] },
+  { id: 'p_balls', name: 'Cannonball Stack', shine: true, main: '#2A2A2A', desc: 'Ready, aim... wait, where is the cannon?', parts: [
+    ['box', [1.0, 0.06, 1.0], WOOD, [0, 0.04, 0]], ...[1, -1].flatMap(s => [['box', [1.04, 0.08, 0.04], DWOOD, [0, 0.08, s * 0.5]], ['box', [0.04, 0.08, 1.04], DWOOD, [s * 0.5, 0.08, 0]]]),
+    ...[-1, 0, 1].flatMap(i => [-1, 0, 1].map(j => ['sph', [0.16, 14, 10], 'A', [i * 0.32, 0.23, j * 0.32]])),
+    ...[-0.5, 0.5].flatMap(i => [-0.5, 0.5].map(j => ['sph', [0.16, 14, 10], 'A', [i * 0.32, 0.456, j * 0.32]])), ['sph', [0.16, 14, 10], 'A', [0, 0.68, 0]],
+    ['cyl', [0.015, 0.015, 0.12, 5], '#C9B48A', [0, 0.86, 0]], ['sph', [0.04, 6, 4], '#FFB020*', [0, 0.93, 0]],
+  ] },
+  { id: 'p_barrel', name: 'Barrel of Fish', shine: true, main: '#8A5A2B', desc: 'Smells like the ocean. And fish. Mostly fish.', parts: [
+    ['lathe', [[[0, 0], [0.44, 0], [0.5, 0.2], [0.53, 0.42], [0.5, 0.64], [0.44, 0.84], [0, 0.84]], 28], 'A', [0, 0.03, 0]],
+    ...[[0.1, 0.465], [0.3, 0.515], [0.55, 0.52], [0.76, 0.465]].map(([y, r]) => ['tor', [r, 0.022, T, 6, 32], '#4A4F55', [0, 0.03 + y, 0], [H, 0, 0]]),
+    ...P(14, (i, a) => ['box', [0.012, 0.18, 0.01], '#5A3A1C', at(0.53, a, 0.45), [0, a, 0]]),
+    ...[-0.2, 0, 0.2].map(x => ['box', [0.01, 0.005, 0.8], '#5A3A1C', [x, 0.875, 0]]),
+    ...[[0.12, 0.3, 0.05], [-0.15, -0.4, -0.08]].flatMap(([x, r, z]) => [['ext', [[[0, 0], [0.12, 0.22], [0, 0.15], [-0.12, 0.22]], 0.03, 0.01], '#74869D', [x, 0.97, z], [0, r, 0]], ['cap', [0.06, 0.12, 6], '#74869D', [x, 0.9, z]]]),
+  ] },
+  { id: 'p_lantern', name: "Ship's Lantern", shine: true, main: '#2A2A2A', desc: 'Lights the way on dark and stormy nights.', parts: [
+    ['cyl', [0.3, 0.33, 0.08, 16], 'A', [0, 0.07, 0]], ['cyl', [0.06, 0.06, 0.14, 10], '#F5EBCF', [0, 0.17, 0]],
+    ['sph', [0.09, 10, 8], '#FFB020*', [0, 0.3, 0], 0, [1, 1.6, 1]], ['sph', [0.16, 10, 8], '#FFE27A~', [0, 0.3, 0]], ['cyl', [0.24, 0.24, 0.42, 16], '#FFE9A8~', [0, 0.32, 0]],
+    ...P(4, (i, a) => ['box', [0.04, 0.46, 0.04], 'A', at(0.25, a + Math.PI / 4, 0.32)]),
+    ['cyl', [0.28, 0.28, 0.06, 16], 'A', [0, 0.56, 0]], ['cone', [0.26, 0.22, 16], 'A', [0, 0.7, 0]], ['tor', [0.12, 0.025, T, 6, 16], 'A', [0, 0.9, 0]],
+  ] },
+  { id: 'p_lighthouse', name: 'Lighthouse', shine: true, main: '#C4281C', desc: 'Keeps ships off the rocks. And off your head.', groups: { beam: { at: [0, 1.17, 0], spin: 0.35 } }, parts: [
+    ...[0, 1, 2, 3].map(i => ['cyl', [0.42 - (i + 1) * 0.035, 0.42 - i * 0.035, 0.24, 20], i % 2 ? W : 'A', [0, 0.17 + i * 0.24, 0]]),
+    ...P(7, (i, a) => ['sph', [0.12 + rnd(i) * 0.06, 8, 6], '#8A8A86', at(0.45, a, 0.06), 0, [1, 0.6, 1]]),
+    ['box', [0.12, 0.18, 0.02], '#5A3A1C', [0, 0.14, 0.415]], ['box', [0.07, 0.09, 0.02], '#1B2A35', [0, 0.62, 0.36]],
+    ['cyl', [0.36, 0.36, 0.04, 20], '#2A2A2A', [0, 1.03, 0]], ['tube', [P(28, (i, a) => at(0.35, a, 1.13)), 0.012, 4, true], '#2A2A2A'],
+    ...P(8, (i, a) => ['cyl', [0.01, 0.01, 0.1, 4], '#2A2A2A', at(0.35, a, 1.08)]),
+    ['cyl', [0.2, 0.2, 0.24, 16], '#FFF6B0~', [0, 1.17, 0]], ['sph', [0.11, 10, 8], '#FFF2A8*', [0, 1.17, 0]],
+    ['cone', [0.26, 0.24, 16], 'A', [0, 1.41, 0]], ['sph', [0.04, 6, 4], '#2A2A2A', [0, 1.55, 0]],
+    ...inG([['cone', [0.22, 1.1, 16], '#FFF2A8~', [0.6, 0, 0], [0, 0, H]], ['cone', [0.22, 1.1, 16], '#FFF2A8~', [-0.6, 0, 0], [0, 0, -H]]], 'beam'),
+  ] },
+  { id: 'p_lifering', name: 'Life Ring', shine: true, main: '#E8505B', desc: 'Man overboard! (You are the man.)', parts: [
+    ...P(8, (i, a) => ['tor', [0.74, 0.15, T / 8 + 0.01, 10, 8], i % 2 ? W : 'A', [0, -1.06, 0], [H, a, 0, 'YXZ']]),
+    ...P(4, (i, a) => ['tube', [[at(0.88, a - 0.3, -1.06), at(0.94, a, -0.98), at(0.88, a + 0.3, -1.06)], 0.016, 4], '#E5D3A1']),
+    ...P(4, (i, a) => ['tor', [0.16, 0.018, T, 6, 14], '#E5D3A1', at(0.74, a + 0.3, -1.06), [0, a + 0.3 + H, 0]]),
+  ] },
+  { id: 'p_seagull', name: 'Seagull Buddy', shine: true, main: '#F2F3F3', desc: 'MINE. MINE. MINE. (It stole your fries.)', parts: [
+    ['sph', [0.25, 16, 12], 'A', [0, 0.27, -0.05], 0, [0.85, 0.75, 1.45]], ['sph', [0.16, 14, 12], 'A', [0, 0.5, 0.28]],
+    ['cone', [0.04, 0.18, 8], '#F5CD30', [0, 0.48, 0.48], [H, 0, 0]], ['sph', [0.015, 6, 4], '#E8505B', [0, 0.465, 0.47]],
+    ...[1, -1].map(s => ['sph', [0.025, 6, 4], K, [s * 0.1, 0.54, 0.36]]),
+    ...[1, -1].flatMap(s => [['sph', [0.2, 12, 8], '#A3A2A5', [s * 0.19, 0.3, -0.08], [0, 0, s * 0.2], [0.3, 0.55, 1.3]], ['sph', [0.08, 8, 6], K, [s * 0.2, 0.3, -0.38], 0, [0.3, 0.5, 1.2]]]),
+    ['box', [0.16, 0.03, 0.2], '#A3A2A5', [0, 0.3, -0.45], [-0.2, 0, 0]],
+    ...[1, -1].flatMap(s => [['cyl', [0.015, 0.015, 0.12, 4], '#E8781E', [s * 0.07, 0.07, 0]], ['box', [0.08, 0.015, 0.1], '#E8781E', [s * 0.07, 0.015, 0.03]]]),
+    ['box', [0.03, 0.03, 0.24], '#F5CD30', [0.06, 0.465, 0.5], [0, 0.7, 0]],
+  ] },
+  { id: 'p_crab', name: 'Crab Pinch', shine: true, main: '#C4281C', desc: 'Ow ow ow ow. It likes your ear.', parts: [
+    ['sph', [0.42, 20, 14], 'A', [0, 0.17, 0], 0, [1.1, 0.45, 0.85]],
+    ...[1, -1].flatMap(s => [['cyl', [0.025, 0.025, 0.18, 6], 'A', [s * 0.12, 0.37, 0.25]], ['sph', [0.06, 10, 8], W, [s * 0.12, 0.48, 0.27]], ['sph', [0.03, 8, 6], K, [s * 0.12, 0.49, 0.32]]]),
+    ['box', [0.1, 0.015, 0.02], K, [0, 0.18, 0.37]],
+    ...[1, -1].flatMap(s => [-0.25, -0.05, 0.15].map(z => ['cap', [0.035, 0.3, 6], 'A', [s * 0.55, 0.05, z], [0, 0, s * 0.93]])),
+    ...tubeC([[0.35, 0.15, 0.2], [0.68, 0.0, 0.25], [0.74, -0.3, 0.15]], 0.05, 'A'), ['sph', [0.12, 12, 10], 'A', [0.74, -0.42, 0.08], 0, [0.8, 1.1, 0.8]],
+    ['cone', [0.05, 0.2, 6], 'A', [0.7, -0.6, 0.1], [Math.PI, 0, -0.25]], ['cone', [0.04, 0.18, 6], 'A', [0.8, -0.58, 0.04], [Math.PI, 0, 0.3]],
+    ...tubeC([[-0.35, 0.15, 0.2], [-0.6, 0.3, 0.3], [-0.65, 0.6, 0.25]], 0.05, 'A'), ['sph', [0.12, 12, 10], 'A', [-0.65, 0.74, 0.25], 0, [0.8, 1.1, 0.8]],
+    ['cone', [0.045, 0.2, 6], 'A', [-0.69, 0.92, 0.25], [0, 0, 0.25]], ['cone', [0.04, 0.18, 6], 'A', [-0.58, 0.9, 0.25], [0, 0, -0.35]],
+  ] },
+  { id: 'p_starfish', name: 'Starfish Friends', shine: true, main: '#E8781E', desc: 'Two starfish. Zero plans to let go.', parts: [
+    ['ext', [star(5, 0.4, 0.17), 0.07, 0.04], 'A', [0.66, -0.35, 0.05], [0, H, 0.3, 'YXZ']],
+    ...P(5, (i, a) => { const l = [Math.sin(a) * 0.24, Math.cos(a) * 0.24]; return ['sph', [0.035, 8, 6], '#F5CD30', [0.66 + 0.07, -0.35 + l[0] * Math.sin(0.3) + l[1] * Math.cos(0.3), 0.05 - (l[0] * Math.cos(0.3) - l[1] * Math.sin(0.3))]]; }),
+    ...[1, -1].flatMap(s => [['sph', [0.05, 10, 8], W, [0.72, -0.3, 0.05 + s * 0.06]], ['sph', [0.025, 8, 6], K, [0.765, -0.3, 0.05 + s * 0.06]]]),
+    ['ext', [star(5, 0.22, 0.09), 0.05, 0.02], '#E8505B', [-0.15, 0.09, 0.1], [-H, 0, 0.5]],
+  ] },
+  { id: 'p_jelly', name: 'Glowing Jellyfish', shine: true, main: '#E8BAC8', desc: 'Wobbly, glowy and a little bit stingy.', parts: [
+    ['sphp', [0.62, 0, 1.45], 'A~', [0, -0.02, 0], 0, [1, 0.85, 1]], ['sph', [0.3, 14, 10], '#FF8FC8*', [0, 0.2, 0], 0, [1, 0.7, 1]],
+    ...P(12, (i, a) => ['sph', [0.08, 8, 6], '#F7C6E0~', at(0.6, a, 0), 0, [1, 0.6, 1]]),
+    ...P(10, (i, a) => ['sph', [0.03, 6, 4], '#FFE0F4*', at(0.62, a + 0.3, 0.05)]),
+    ...[0.8, 1.4, 2.0, 2.6, 3.2, 3.8, 4.4, 5.0, 5.5].flatMap(a => tubeC([at(0.55, a, 0), at(0.68, a + 0.1, -0.35), at(0.64, a - 0.1, -0.7), at(0.72, a + 0.12, -1.05), at(0.68, a, -1.3)], 0.025, '#F7C6E0~')),
+  ] },
+  { id: 'p_turtle', name: 'Sea Turtle', shine: true, main: '#4B974B', desc: 'Slow and steady wins the race. Of hats.', parts: [
+    ['sph', [0.5, 24, 14], 'A', [0, 0.15, -0.05], 0, [1, 0.55, 1.2]], ['tor', [0.5, 0.035, T, 6, 32], '#A4BD47', [0, 0.15, -0.05], [H, 0, 0], [1, 1.2, 1]],
+    ['sph', [0.14, 10, 8], '#2F6E3A', [0, 0.42, -0.05], 0, [1, 0.25, 1.1]],
+    ...P(6, (i, a) => ['sph', [0.12, 10, 8], '#2F6E3A', [Math.sin(a) * 0.28, 0.37, Math.cos(a) * 0.33 - 0.05], [Math.cos(a) * 0.3, 0, -Math.sin(a) * 0.3], [1, 0.3, 1]]),
+    ['sph', [0.17, 14, 12], '#A4BD47', [0, 0.2, 0.7], 0, [0.9, 0.8, 1.1]],
+    ...[1, -1].flatMap(s => [['sph', [0.035, 8, 6], K, [s * 0.09, 0.26, 0.84]], ['sph', [0.012, 6, 4], W, [s * 0.1, 0.275, 0.865]]]),
+    ['tube', [[[-0.06, 0.17, 0.86], [0, 0.15, 0.88], [0.06, 0.17, 0.86]], 0.008, 4], K],
+    ...[[1, 1], [-1, 1], [1, -1], [-1, -1]].map(([sx, sz]) => ['sph', [0.18, 12, 8], '#A4BD47', [sx * 0.5, 0.12, sz * 0.42 - 0.05], [0, sx * sz * 0.6, 0], [1, 0.25, 0.55]]),
+    ['cone', [0.06, 0.15, 6], '#A4BD47', [0, 0.13, -0.72], [-H, 0, 0]],
+  ] },
+  { id: 'p_puffer', name: 'Pufferfish', shine: true, main: '#F5CD30', desc: 'Do not poke it. Seriously. Do not poke it.', parts: [
+    ['sph', [0.46, 22, 16], 'A', [0, 0.5, 0]],
+    ...[-0.5, 0, 0.5, 1.0].flatMap((e, j) => P(10, (i, a) => { const [p, r] = surf([0, 0.5, 0], 0.5, e, a + j * 0.3), n = [Math.cos(e) * Math.sin(a + j * 0.3), Math.sin(e), Math.cos(e) * Math.cos(a + j * 0.3)];
+      return ['cone', [0.03, 0.13, 5], '#FFF6D0', [p[0] + n[0] * 0.02, p[1] + n[1] * 0.02, p[2] + n[2] * 0.02], r]; })),
+    ['cone', [0.03, 0.13, 5], '#FFF6D0', [0, 1.0, 0]],
+    ...P(8, (i, a) => { const [p, r] = surf([0, 0.5, 0], 0.46, 0.3 + rnd(i) * 0.6, a + 1.2); return ['sph', [0.05, 8, 6], '#B5852F', p, r, [1, 0.3, 1]]; }),
+    ...[1, -1].flatMap(s => [['sph', [0.12, 12, 10], W, [s * 0.2, 0.6, 0.36]], ['sph', [0.06, 10, 8], K, [s * 0.2, 0.61, 0.46]], ['sph', [0.02, 6, 4], W, [s * 0.18, 0.64, 0.51]]]),
+    ['tor', [0.06, 0.03, T, 6, 14], '#E8781E', [0, 0.42, 0.45]],
+    ...[1, -1].map(s => ['ext', [[[0, 0], [0.18, 0.12], [0.2, -0.1]], 0.02, 0.01], '#E8781E', [s * 0.44, 0.48, 0.08], [0, s > 0 ? 0 : Math.PI, 0]]),
+    ['ext', [[[0, 0], [0.2, 0.15], [0.2, -0.15]], 0.03, 0.01], '#E8781E', [0, 0.5, -0.46], [0, H, 0]],
+  ] },
+  { id: 'p_shells', name: 'Seashell Crown', shine: true, main: '#E8BAC8', desc: 'Queen of the tide pools. King of the beach.', parts: [
+    ['cyl', [0.645, 0.645, 0.1, 32], '#F5EBCF', [0, 0, 0]],
+    ...P(26, (i, a) => ['sph', [0.03, 8, 6], '#F7F3EA', at(0.656, a, 0.055)]), ...P(26, (i, a) => ['sph', [0.025, 8, 6], '#F7F3EA', at(0.656, a + 0.12, -0.05)]),
+    ...P(7, (i, a) => { const k = i ? 1 : 1.4, c = i ? ['A', '#F5CD30', '#7FC8E8', '#F7F3EA'][i % 4] : 'A';
+      return [['ext', [shell, 0.04, 0.015], c, at(0.67, a, 0.03), [0.15, a, 0, 'YXZ'], [k, k, 1]],
+        ...[-0.5, -0.25, 0, 0.25, 0.5].map(q => ['box', [0.012, 0.22 * k, 0.012], '#C98FA8', xf([Math.sin(q) * 0.17 * k, (0.06 + Math.cos(q) * 0.15) * k, 0.03], 0.15, a, at(0.67, a, 0.03)), [0.15, a, -q, 'YXZ']])]; }).flat(),
+    ['sph', [0.07, 12, 10], '#F7F3EA', xf([0, 0.2, 0.05], 0.15, 0, at(0.67, 0, 0.03))],
+  ] },
+  { id: 'p_clam', name: 'Clam with a Pearl', shine: true, main: '#B4D2E4', desc: 'The pearl is real. The clam is grumpy.', groups: { lid: { at: [0, 0.2, -0.38], tilt: [-0.95, 0, 0] } }, parts: [
+    ['sph', [0.5, 20, 12], 'A', [0, 0.13, 0.05], 0, [1.1, 0.28, 0.9]], ['sph', [0.46, 18, 10], '#F7C6D9', [0, 0.16, 0.05], 0, [1.05, 0.2, 0.85]],
+    ...P(12, (i, a) => ['sph', [0.05, 8, 6], 'A', [Math.sin(a) * 0.55, 0.13, Math.cos(a) * 0.45 + 0.05], 0, [1, 0.6, 1]]),
+    ...inG([['sph', [0.5, 20, 12], 'A', [0, 0, 0.43], 0, [1.1, 0.28, 0.9]], ['sph', [0.46, 18, 10], '#F7C6D9', [0, -0.03, 0.43], 0, [1.05, 0.2, 0.85]],
+      ...P(12, (i, a) => ['sph', [0.05, 8, 6], 'A', [Math.sin(a) * 0.55, 0, Math.cos(a) * 0.45 + 0.43], 0, [1, 0.6, 1]])], 'lid'),
+    ['sph', [0.17, 20, 16], '#F7F3EA', [0, 0.36, 0.12]],
+  ] },
+  { id: 'p_coral', name: 'Coral Reef Crown', shine: true, main: '#FF7F6E', desc: 'A whole coral reef, fish included. Free of charge.', groups: { fish: { spin: 0.18 } }, parts: [
+    ['cyl', [0.6, 0.64, 0.1, 28], '#E5D3A1', [0, 0.02, 0]], ...P(8, (i, a) => ['sph', [0.07, 8, 6], '#A3A2A5', at(0.6, a + 0.2, 0.06), 0, [1, 0.6, 1]]),
+    ...P(7, (i, a) => coral(a + 0.2, 1.0 + rnd(i + 3) * 0.5, ['A', '#9A5CC6', 'A', '#F5CD30', 'A', '#E8505B', 'A'][i], i)).flat(),
+    ...fish(1, 0.55, '#E8781E'), ...fish(-1, 0.8, '#2FC8FF'),
+  ] },
+  { id: 'p_diving', name: 'Diving Helmet', shine: true, main: '#C9A040', desc: 'Somebody is in there. Probably.', parts: [
+    ['sph', [0.82, 26, 20], 'A', [0, -0.45, 0]], ['cyl', [0.78, 0.95, 0.22, 28], 'A', [0, -1.2, 0]], ...P(12, (i, a) => ['sph', [0.04, 8, 6], '#8A6A2A', at(0.88, a, -1.15)]),
+    ['tor', [0.3, 0.06, T, 10, 28], '#8A6A2A', [0, -0.42, 0.78]], ['cyl', [0.28, 0.28, 0.02, 24], '#0E1A24', [0, -0.42, 0.79], [H, 0, 0]],
+    ['cyl', [0.29, 0.29, 0.02, 24], '#9FD8FF~', [0, -0.42, 0.81], [H, 0, 0]], ...[0, H].map(r => ['box', [0.56, 0.03, 0.03], '#8A6A2A', [0, -0.42, 0.83], [0, 0, r]]),
+    ...[1, -1].map(s => ['sph', [0.035, 8, 6], '#FFFFFF*', [s * 0.1, -0.36, 0.8]]),
+    ...[1, -1].flatMap(s => [['tor', [0.15, 0.04, T, 8, 20], '#8A6A2A', [s * 0.8, -0.42, 0], [0, H, 0]], ['cyl', [0.14, 0.14, 0.02, 16], '#0E1A24', [s * 0.8, -0.42, 0], [0, 0, H]]]),
+    ['cyl', [0.08, 0.08, 0.18, 10], '#8A6A2A', [0, 0.42, 0]], ['tor', [0.12, 0.02, T, 6, 16], '#C4281C', [0, 0.52, 0], [H, 0, 0]],
+    ['cyl', [0.08, 0.08, 0.12, 10], '#8A6A2A', [0, -0.2, -0.78], [H, 0, 0]], ['tube', [[[0, -0.2, -0.82], [0, -0.5, -1.1], [0.1, -1.1, -1.0], [0.2, -1.5, -0.7]], 0.06, 8], '#3A3A3A'],
+  ] },
+  { id: 'p_snorkel', name: 'Snorkel Mask', shine: true, main: '#2FC8FF', desc: 'Blub blub blub. (That means hello.)', parts: [
+    ['ext', [mask, 0.1, 0.02], 'A', [0, -0.4, 0.66]], ['ext', [mask.map(([x, y]) => [x * 0.85, y * 0.75]), 0.02], GLASS, [0, -0.4, 0.72]],
+    ['sph', [0.08, 10, 8], 'A', [0, -0.55, 0.7], 0, [0.8, 1, 0.8]], ['tor', [0.655, 0.04, T, 6, 48], K, [0, -0.4, 0], [H, 0, 0], [1, 1, 0.6]],
+    ['tube', [[[0.08, -0.75, 0.67], [0.4, -0.78, 0.55], [0.66, -0.62, 0.25], [0.7, -0.2, 0.08], [0.7, 0.35, 0.0]], 0.055, 10], 'A'],
+    ['cyl', [0.08, 0.07, 0.1, 12], '#E8781E', [0.7, 0.4, 0]], ['box', [0.18, 0.06, 0.04], K, [0.05, -0.76, 0.66]],
+    ...[[0.75, 0.6, 0, 0.05], [0.68, 0.75, 0.05, 0.04], [0.78, 0.88, -0.02, 0.03]].map(([x, y, z, r]) => ['sph', [r, 8, 6], GLASS, [x, y, z]]),
+  ] },
+  { id: 'p_compass', name: 'Treasure Compass', shine: true, main: '#C9A040', desc: 'It does not point north. It points to TREASURE.', groups: { nd: { at: [0, 0.62, 0.1], tilt: [H, 0, 0], spin: 0.08 } }, parts: [
+    ['box', [0.3, 0.1, 0.25], DWOOD, [0, 0.1, 0]], ['cyl', [0.04, 0.04, 0.12, 6], 'A', [0, 0.17, 0]],
+    ['cyl', [0.48, 0.48, 0.14, 32], 'A', [0, 0.62, 0], [H, 0, 0]], ['tor', [0.48, 0.04, T, 8, 36], 'A', [0, 0.62, 0.07]],
+    ['cyl', [0.42, 0.42, 0.02, 32], '#F5EBCF', [0, 0.62, 0.075], [H, 0, 0]],
+    ...P(16, (i, a) => ['box', [0.012, i % 4 ? 0.05 : 0.1, 0.01], '#3A2A1C', [Math.sin(a) * 0.36, 0.62 + Math.cos(a) * 0.36, 0.09], [0, 0, -a]]),
+    ['cone', [0.05, 0.1, 3], '#C4281C', [0, 0.95, 0.09]],
+    ...inG([['cone', [0.04, 0.3, 4], '#C4281C', [0, 0, -0.15], [-H, 0, 0], [1, 1, 0.3]], ['cone', [0.04, 0.3, 4], W, [0, 0, 0.15], [H, 0, 0], [1, 1, 0.3]], ['sph', [0.035, 8, 6], GOLD, [0, 0.02, 0]]], 'nd'),
+    ['cyl', [0.42, 0.42, 0.01, 32], '#DFF3FF~', [0, 0.62, 0.13], [H, 0, 0]],
+    ['cyl', [0.05, 0.05, 0.08, 10], 'A', [0, 1.13, 0]], ['tor', [0.08, 0.025, T, 6, 16], 'A', [0, 1.22, 0]],
+  ] },
+  { id: 'p_map', name: 'Treasure Map Hat', shine: true, main: '#E5D3A1', desc: 'Folded from a real treasure map. Oops.', groups: { fr: { at: [0, -0.08, 0.55], tilt: [-0.55, 0, 0] }, bk: { at: [0, -0.08, -0.55], tilt: [0.55, 0, 0] } }, parts: [
+    ...inG([['ext', [paper, 0.02], 'A'],
+      ['box', [0.12, 0.024, 0.01], '#C4281C', [0.22, 0.36, 0.015], [0, 0, 0.785]], ['box', [0.12, 0.024, 0.01], '#C4281C', [0.22, 0.36, 0.015], [0, 0, -0.785]],
+      ...[0, 1, 2, 3, 4].map(i => ['box', [0.05, 0.016, 0.01], '#7A4A22', [-0.36 + i * 0.11, 0.14 + Math.sin(i * 1.3) * 0.05, 0.015], [0, 0, 0.3 * Math.cos(i)]]),
+      ['sph', [0.12, 10, 6], '#4B974B', [-0.12, 0.36, 0.012], 0, [1.3, 0.8, 0.1]], ['sph', [0.08, 10, 6], '#A4BD47', [0.3, 0.12, 0.012], 0, [1.2, 0.7, 0.1]],
+      ['tor', [0.06, 0.01, T, 6, 12], '#7A4A22', [-0.52, 0.08, 0.015]], ['box', [0.01, 0.12, 0.01], '#7A4A22', [-0.52, 0.08, 0.015]], ['box', [0.12, 0.01, 0.01], '#7A4A22', [-0.52, 0.08, 0.015]],
+    ], 'fr'),
+    ...inG([['ext', [paper, 0.02], 'A'], ['sph', [0.1, 10, 6], '#4B974B', [0.15, 0.25, -0.012], 0, [1.4, 0.8, 0.1]], ['box', [0.5, 0.014, 0.01], '#7A4A22', [-0.15, 0.12, -0.015], [0, 0, 0.2]]], 'bk'),
+    ...[1, -1].map(s => ['box', [1.66, 0.12, 0.03], '#D9C48F', [0, -0.03, s * 0.57], [s * -0.55, 0, 0]]),
+  ] },
+  { id: 'p_ghost', name: "Ghost Captain's Hat", shine: true, main: '#7CFFB0', desc: 'Lost at sea. Found on your head. Boooo.', groups: { w: { spin: 0.15 } }, parts: [
+    ...tricorn('A~', '#C8FFE0~'), ...skullF(0, 0.25, 0.7, 0.9, '#C8FFE0*', '#0A3A22'),
+    ...inG(P(6, (i, a) => ['sph', [0.06 + rnd(i) * 0.05, 8, 6], '#BFFFDA~', at(0.95, a, 0.3 + rnd(i + 4) * 0.6)]), 'w'),
+  ] },
+  { id: 'p_cutlass', name: 'Cutlass Through The Head', shine: true, main: '#D0D4DA', desc: 'Tis but a scratch! (It is a costume. Probably.)', parts: [
+    ['ext', [[[0, -0.06], [0.55, -0.08], [0.75, -0.04], [0.9, 0.06], [0.8, 0.06], [0.55, 0.04], [0, 0.06]], 0.025, 0.006], 'A', [-0.6, -0.35, 0], [0, Math.PI, 0]],
+    ['box', [0.06, 0.11, 0.025], 'A', [0.64, -0.35, 0]], ['cyl', [0.14, 0.14, 0.03, 16], GOLD, [0.67, -0.35, 0], [0, 0, H]],
+    ['tube', [[[0.67, -0.35, 0.12], [0.8, -0.3, 0.18], [0.95, -0.32, 0.12], [1.05, -0.35, 0.03]], 0.018, 5], GOLD],
+    ['cyl', [0.04, 0.035, 0.34, 10], '#2A1E14', [0.86, -0.35, 0], [0, 0, H]], ['sph', [0.06, 10, 8], GOLD, [1.05, -0.35, 0]],
+  ] },
+  { id: 'p_beard', name: "Captain's Beard", shine: true, main: '#3E2A1C', desc: 'Took 40 years at sea to grow. Took 40 Bux to buy.', parts: [
+    ['sph', [0.48, 18, 14], 'A', [0, -1.05, 0.45], 0, [1.2, 1.0, 0.5]], ['sph', [0.38, 16, 12], 'A', [0, -1.38, 0.5], 0, [1.0, 0.9, 0.45]],
+    ...[1, -1].map(s => ['box', [0.12, 0.5, 0.4], 'A', [s * 0.58, -0.78, 0.25]]),
+    ...[1, -1].flatMap(s => hornC([[s * 0.02, -0.72, 0.68], [s * 0.18, -0.74, 0.7], [s * 0.32, -0.68, 0.68], [s * 0.4, -0.56, 0.64]], 0.06, 0.02, 'A')),
+    ...[1, -1].flatMap(s => [...[0, 1, 2, 3].map(k => ['sph', [0.07 - k * 0.008, 8, 6], 'A', [s * 0.2, -1.55 - k * 0.11, 0.55]]), ['cyl', [0.05, 0.05, 0.06, 10], GOLD, [s * 0.2, -2.0, 0.55]], ['sph', [0.04, 8, 6], '#C4281C', [s * 0.2, -2.07, 0.55]]]),
+  ] },
+  { id: 'p_whale', name: 'Whale Hat', shine: true, main: '#2F6FB0', desc: 'Thar she blows! (From the top of your head.)', parts: [
+    ['sph', [0.55, 22, 16], 'A', [0, 0.36, -0.05], 0, [0.9, 0.68, 1.25]], ['sph', [0.5, 18, 12], '#B4D2E4', [0, 0.27, 0.05], 0, [0.82, 0.5, 1.12]],
+    ['cyl', [0.12, 0.2, 0.4, 12], 'A', [0, 0.5, -0.78], [-0.86, 0, 0]],
+    ['ext', [[[0, 0], [0.45, 0.15], [0.35, -0.05], [0.1, -0.08], [0, -0.03], [-0.1, -0.08], [-0.35, -0.05], [-0.45, 0.15]], 0.05, 0.02], 'A', [0, 0.7, -0.98], [-H + 0.3, 0, 0]],
+    ...[1, -1].flatMap(s => [['sph', [0.06, 10, 8], W, [s * 0.42, 0.38, 0.5]], ['sph', [0.035, 8, 6], K, [s * 0.45, 0.38, 0.53]]]),
+    ['tube', [[[-0.35, 0.22, 0.55], [0, 0.15, 0.68], [0.35, 0.22, 0.55]], 0.012, 4], K],
+    ...[1, -1].map(s => ['sph', [0.18, 10, 8], 'A', [s * 0.5, 0.15, 0.2], [0, 0, s * 0.6], [1, 0.25, 0.5]]),
+    ['cyl', [0.05, 0.08, 0.5, 10], GLASS, [0, 0.95, 0.05]], ['sph', [0.09, 10, 8], GLASS, [0, 1.22, 0.05]],
+    ...P(7, (i, a) => ['sph', [0.06, 8, 6], GLASS, [Math.sin(a) * 0.18, 1.18 + Math.cos(i) * 0.04, Math.cos(a) * 0.18 + 0.05]]),
+    ...P(6, (i, a) => ['sph', [0.035, 6, 4], GLASS, [Math.sin(a) * 0.32, 1.0 - rnd(i) * 0.2, Math.cos(a) * 0.32 + 0.05]]),
+  ] },
+  { id: 'p_bottleship', name: 'Ship in a Bottle', shine: true, main: '#BFE6FF', desc: 'How did they get it in there? Nobody knows.', parts: [
+    ...[0.3, -0.3].map(x => ['box', [0.12, 0.16, 0.42], WOOD, [x, 0.1, 0]]), ['box', [0.9, 0.04, 0.45], DWOOD, [0, 0.03, 0]],
+    ['lathe', [bottle, 28], 'A~', [-0.55, 0.42, 0], [0, 0, -H]], ['cyl', [0.085, 0.075, 0.14, 12], '#B5852F', [0.6, 0.42, 0], [0, 0, -H]],
+    ['box', [0.62, 0.06, 0.4], '#2F7FC8', [-0.2, 0.25, 0]],
+    ['ext', [[[-0.22, 0.1], [-0.18, 0], [0.18, 0], [0.25, 0.1]], 0.1, 0.005], WOOD, [-0.2, 0.27, 0]],
+    ['cyl', [0.008, 0.008, 0.3, 4], DWOOD, [-0.25, 0.5, 0]], ['cyl', [0.008, 0.008, 0.24, 4], DWOOD, [-0.12, 0.47, 0]],
+    ['box', [0.015, 0.14, 0.18], W, [-0.25, 0.5, 0]], ['box', [0.015, 0.11, 0.14], W, [-0.12, 0.47, 0]], ['box', [0.06, 0.035, 0.005], '#C4281C', [-0.22, 0.66, 0]],
+  ] },
+    ];
+  })().map(h => ({ ...h, box: 'pirate' })),
   ];
 })();
 const boxHatDef = (k) => BOX_HATS.find(h => h.id === k);
@@ -3253,14 +3628,14 @@ function parseBoxHat(id) {
 // what it's called: "Sparkly Gleaming Rubber Duck"
 function boxHatName(id) {
   const b = parseBoxHat(id); if (!b) return 'Box Hat';
-  return `${RARITIES[b.r].name} ${b.gl ? 'Gleaming ' : ''}${b.def.name}`;
+  return `${RARITIES[b.r].name} ${b.gl ? boxOf(b.def).fx + ' ' : ''}${b.def.name}`;
 }
 // open a box: a random hat, a random rarity (by the odds), and maybe Gleaming (only hats that can shine), which bumps it up one
-function rollBox() {
-  // which hat: each one has the same chance, except the rare ones (rare = their share, 1 is normal)
-  const share = (h) => h.rare || 1;
-  let w = Math.random() * BOX_HATS.reduce((a, h) => a + share(h), 0), def = BOX_HATS[BOX_HATS.length - 1];
-  for (const h of BOX_HATS) if ((w -= share(h)) < 0) { def = h; break; }
+function rollBox(kind = 'locked') {
+  // which hat (only the ones from this box): each one has the same chance, except the rare ones (rare = their share, 1 is normal)
+  const pool = BOX_HATS.filter(h => boxKind(h) === kind), share = (h) => h.rare || 1;
+  let w = Math.random() * pool.reduce((a, h) => a + share(h), 0), def = pool[pool.length - 1];
+  for (const h of pool) if ((w -= share(h)) < 0) { def = h; break; }
   let x = Math.random() * 100, r = 0;
   while (r < RARITIES.length - 1 && (x -= RARITIES[r].odds) >= 0) r++;
   r = Math.max(r, def.minR || 0);   // (the Golden Frying Pan is always LEGENDARY or better)
@@ -3279,6 +3654,15 @@ const blobTex = HEADLESS ? null : tex(canvas(64, 64, (g) => {
   gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
   g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
 }));
+// a bubble (pirate Sparkly): a thin ring with a shine on it
+const bubbleTex = HEADLESS ? null : tex(canvas(64, 64, (g) => {
+  g.strokeStyle = 'rgba(255,255,255,.95)'; g.lineWidth = 4; g.beginPath(); g.arc(32, 32, 26, 0, 7); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.18)'; g.fill();
+  g.fillStyle = 'rgba(255,255,255,.95)'; g.beginPath(); g.ellipse(22, 20, 7, 4, -0.7, 0, 7); g.fill();
+}));
+// a gold doubloon (pirate LEGENDARY)
+const coinGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.022, 18);
+const coinMat = new THREE.MeshPhongMaterial({ color: 0xe0b020, specular: 0xfff0b0, shininess: 90, emissive: 0x4a3000 });
 // the Gleaming shine: a bright band that sweeps across the whole hat every couple of seconds (added into each
 // material's shader; U.t is the time and U.c where the hat is, both kept up to date by the hat every frame)
 function gleamify(m, U) {
@@ -3368,7 +3752,7 @@ function makeBoxHat(id, noFx = false) {
   const spinners = [], holders = { '': g };
   for (const [name, o] of Object.entries(def.groups || {})) {
     const outer = new THREE.Group(), inner = new THREE.Group();
-    if (o.at) outer.position.set(...o.at); if (o.tilt) outer.rotation.set(...o.tilt);
+    if (o.at) outer.position.set(...o.at); if (o.tilt) outer.rotation.set(...o.tilt); if (o.size) outer.scale.setScalar(o.size);
     outer.add(inner); g.add(outer); holders[name] = inner;
     if (o.spin) spinners.push([inner, o.spin * T]);
   }
@@ -3402,11 +3786,30 @@ function makeBoxHat(id, noFx = false) {
     const a = Math.random() * T, y = (Math.random() - 0.35) * sz.y;
     u.x = ctr.x + Math.cos(a) * (sz.x / 2 + 0.15); u.y = ctr.y + y; u.z = ctr.z + Math.sin(a) * (sz.z / 2 + 0.15);
   };
+  const pir = boxKind(def) === 'pirate';   // (things from the PIRATE BOOTYS BOX have sea effects)
   if (R === 2) for (let i = 0; i < 2; i++) { const sp = sprite(sparkleTex, 0xffffff, { glint: true, ph: i * 1.1 }); shell(sp.userData); }   // Shiny: a quick glint now and then
-  if (R === 3) for (let i = 0; i < 9; i++) { const sp = sprite(sparkleTex, 0xe6c8ff, {}); shell(sp.userData); }   // Sparkly: twinkles
-  if (R === 4) {   // LEGENDARY: a warm glow, and golden sparks drifting up
+  if (R === 3 && !pir) for (let i = 0; i < 9; i++) { const sp = sprite(sparkleTex, 0xe6c8ff, {}); shell(sp.userData); }   // Sparkly: twinkles
+  if (R === 3 && pir) for (let i = 0; i < 9; i++) { const sp = sprite(bubbleTex, 0xd8f4ff, { bubble: true }); shell(sp.userData); sp.userData.y = bb.min.y + Math.random() * sz.y; }   // (pirate: bubbles floating up)
+  const coins = [];
+  if (R === 4) {   // LEGENDARY: a warm glow, and golden sparks drifting up (pirate: gold doubloons, flipping as they go)
     sprite(blobTex, 0xffc23a, { glow: true });
-    for (let i = 0; i < 10; i++) { const sp = sprite(blobTex, 0xffd75a, { ember: true }); shell(sp.userData); sp.userData.y -= Math.random() * sz.y; }
+    if (!pir) for (let i = 0; i < 10; i++) { const sp = sprite(blobTex, 0xffd75a, { ember: true }); shell(sp.userData); sp.userData.y -= Math.random() * sz.y; }
+    else for (let i = 0; i < 10; i++) {
+      const c = new THREE.Mesh(coinGeo, coinMat); c.userData = { ph: Math.random() * 7 }; shell(c.userData); c.userData.y = bb.min.y + Math.random() * sz.y; g.add(c); coins.push(c);
+    }
+  }
+  // Swashbuckling (pirate things that would be Gleaming): a wave runs round and round the bottom of it, its crest
+  // curling over, and now and then it splashes a few drops of water up onto it
+  let wave = null;
+  if (gl && pir) {
+    const wr = Math.max(sz.x, sz.z) / 2 + 0.22, geo = new THREE.CylinderGeometry(wr, wr * 1.06, 0.26, 72, 2, true), cols = [];
+    const P0 = geo.attributes.position.array.slice();
+    for (let i = 0; i < geo.attributes.position.count; i++) { const y = P0[i * 3 + 1], c = new THREE.Color(y > 0.1 ? '#eafcff' : y > -0.1 ? '#3fb4ef' : '#1560b0'); cols.push(c.r, c.g, c.b); }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+    const mesh = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ vertexColors: true, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false, shininess: 100, specular: 0xffffff }));
+    mesh.position.set(ctr.x, bb.min.y + 0.04, ctr.z); mesh.renderOrder = 3; g.add(mesh);   // (low down, so it doesn't hide flat things like the tricorn)
+    const drops = Array.from({ length: 6 }, () => { const d = new THREE.Sprite(new THREE.SpriteMaterial({ map: blobTex, color: 0xb8ecff, transparent: true, depthWrite: false, opacity: 0 })); d.userData = { age: 9 }; g.add(d); return d; });
+    wave = { geo, P0, mesh, wr, drops, next: 0.8 };
   }
   if (R === 5) {   // ULTRACOMPLEX UNIQE QUERLY-: rainbow flames licking up off the top, and stars going round
     for (let i = 0; i < 12; i++) sprite(blobTex, 0xffffff, { flame: true, k: Math.random() });
@@ -3415,6 +3818,36 @@ function makeBoxHat(id, noFx = false) {
   const top = bb.max.y;
   g.userData.tick = (o, dt, t) => {
     U.t.value = t; g.getWorldPosition(U.c.value);
+    for (const c of coins) {   // doubloons drift up, flipping over and over
+      const u = c.userData; u.y += dt * 0.5; if (u.y > top + 0.8) { shell(u); u.y = bb.min.y; }
+      c.position.set(u.x, u.y, u.z); c.rotation.set(t * 4 + u.ph, t * 1.3 + u.ph, 0); c.scale.setScalar(Math.max(0.01, Math.min(1, (top + 0.8 - u.y) * 1.6)));
+    }
+    if (wave) {
+      const A = wave.geo.attributes.position, p = A.array, P0 = wave.P0, ca = t * 2.2;   // ca: where the crest is (it goes round and round)
+      for (let i = 0; i < A.count; i++) {
+        const x = P0[i * 3], y = P0[i * 3 + 1], z = P0[i * 3 + 2], a = Math.atan2(x, z);
+        const d = Math.atan2(Math.sin(a - ca), Math.cos(a - ca)), crest = Math.exp(-d * d * 3), k = y > 0.1 ? 1 : y > -0.1 ? 0.45 : 0;
+        const out = 1 + crest * 0.14 * k, lean = crest * 0.22 * k, c = Math.cos(lean), sn = Math.sin(lean);   // the top curls out and over, ahead of the wave
+        p[i * 3] = (x * c + z * sn) * out; p[i * 3 + 2] = (-x * sn + z * c) * out;
+        p[i * 3 + 1] = y + k * (crest * 0.3 + Math.sin(a * 9 - t * 5) * 0.025);
+      }
+      A.needsUpdate = true; wave.geo.computeVertexNormals();
+      // a splash: a few drops fly up off the crest and land on it
+      if ((wave.next -= dt) <= 0) {
+        wave.next = 1.2 + Math.random() * 1.2;
+        const m = wave.mesh.position, a = ca;
+        wave.drops.forEach((dp, i) => { if (i > 3 && Math.random() < 0.5) return; const u = dp.userData;
+          u.age = 0; u.p = new V3(m.x + Math.sin(a) * wave.wr, m.y + 0.35, m.z + Math.cos(a) * wave.wr);
+          const to = new V3(ctr.x + (Math.random() - 0.5) * sz.x * 0.6, top - Math.random() * 0.15, ctr.z + (Math.random() - 0.5) * sz.z * 0.6);
+          u.v = new V3((to.x - u.p.x) / 0.6, (to.y - u.p.y) / 0.6 + 0.6 * 6 / 2, (to.z - u.p.z) / 0.6); });
+      }
+      for (const dp of wave.drops) {
+        const u = dp.userData; u.age += dt;
+        if (u.age > 0.95) { dp.material.opacity = 0; continue; }
+        if (u.age < 0.6) { u.v.y -= 6 * dt; u.p.addScaledVector(u.v, dt); dp.position.copy(u.p); dp.scale.setScalar(0.08); dp.material.opacity = 0.95; }
+        else { const k = (u.age - 0.6) / 0.35; dp.scale.set(0.08 + k * 0.22, 0.08 * (1 - k * 0.6), 1); dp.material.opacity = 0.9 * (1 - k); }   // (splat!)
+      }
+    }
     for (const [grp, sp] of spinners) grp.rotation.y += dt * sp;
     for (const f of flashers) setFlash(f[0], t, f.slice(1));
     rainbow.forEach((m, i) => m.color.setHSL((t * 0.25 + i * 0.07) % 1, 0.85, 0.55));
@@ -3422,6 +3855,11 @@ function makeBoxHat(id, noFx = false) {
       const u = sp.userData, M = sp.material;
       if (u.glow) { const k = 0.75 + Math.sin(t * 3) * 0.15; sp.position.copy(ctr); sp.scale.setScalar(Math.max(sz.x, sz.y) * 1.9 * k); M.opacity = 0.32 * k; continue; }
       if (u.ember) { u.y += dt * 0.55; if (u.y > top + 0.8) { shell(u); u.y = bb.min.y; } const k = Math.min(1, (top + 0.8 - u.y) * 1.5); sp.position.set(u.x, u.y, u.z); sp.scale.setScalar(0.09 + 0.05 * Math.sin(t * 7 + u.ph)); M.opacity = k; continue; }
+      if (u.bubble) {   // pirate Sparkly: bubbles wobble up, then pop
+        u.y += dt * 0.42; if (u.y > top + 0.6) { shell(u); u.y = bb.min.y; }
+        const k = Math.min(1, (u.y - bb.min.y) * 4, (top + 0.6 - u.y) * 3);
+        sp.position.set(u.x + Math.sin(t * 3 + u.ph) * 0.04, u.y, u.z); sp.scale.setScalar(0.11 + 0.08 * Math.sin(u.ph * 3) ** 2); M.opacity = Math.max(0, k) * 0.9; continue;
+      }
       if (u.flame) {
         u.k += dt * 0.9; if (u.k > 1) { u.k -= 1; u.x = ctr.x + (Math.random() - 0.5) * sz.x * 0.8; u.z = ctr.z + (Math.random() - 0.5) * sz.z * 0.8; u.ph = Math.random(); }
         if (u.x === undefined) { u.x = ctr.x + (Math.random() - 0.5) * sz.x * 0.8; u.z = ctr.z + (Math.random() - 0.5) * sz.z * 0.8; }
@@ -8731,7 +9169,7 @@ function renderCatalog() {
     : `<div class="arms"><button class="s-btn" data-wear="${h.id}" data-slot="${h.slot}">${look[h.slot] === h.id ? 'Wearing' : (h.id === 'none' ? 'Take Off' : 'Wear')}</button>${takeOff(h)}</div>`;
   document.querySelectorAll('[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === catTab));
   $('hatGrid').innerHTML = list.map(h => `<div class="hcard ${look[h.slot] === h.id ? 'on' : ''}"><img src="${h.id === 'none' ? hatThumbs.none : ({ acc: accThumbs, back: backThumbs }[h.slot] || thumbs)[h.id]}" alt="">${h.boxed ? gleamDecal(h.id) : ''}
-    <div class="gt">${h.name}</div>${h.desc ? `<div class="ds">"${h.desc}"</div>` : ''}<div class="pr">${h.boxed ? '&#10003; From a Locked Box' : priceTag(h) || '&nbsp;'}</div>
+    <div class="gt">${h.name}</div>${h.desc ? `<div class="ds">"${h.desc}"</div>` : ''}<div class="pr">${h.boxed ? `&#10003; From a ${boxOf(parseBoxHat(h.id).def).name}` : priceTag(h) || '&nbsp;'}</div>
     ${wearBtns(h)}${goneNote(catTab, h.id)}</div>`).join('');
   const on = setOfLook({ ...look, colors: normColors(look.colors) });
   $('setList').innerHTML = SETS.filter(s => !isLimited('sets', s.id) || !limitedOver() || on === s).map(s => `<div class="hcard ${on === s ? 'on' : ''}"><img src="${hatThumbs[s.wear.hat]}" alt="">
@@ -8807,6 +9245,7 @@ const BOB_LINES = {
   wear: ['Oh yeah, that is a good look.', 'Now THAT is style.', 'Lookin fresh!'],
   trade: ['Tix for Bux, coming right up!', 'Here ya go, fresh Bux!'],
   noTix: [`You need ${TIX_PER_BUX} Tix for a Bux, pal. Go PWN somebody!`],
+  pirate: ['Arrr! One PIRATE BOOTYS BOX, matey!', 'Yo ho ho! Let us see what treasure is in there!', 'Careful, that one is still wet.', 'Found that one washed up out back!'],
   box: ['One Locked Box, coming right up!', 'Ooh, I wonder what is in this one!', 'Shake it! Shake it!', 'I hope it is a good one, pal!'],
   bye: ['Come back soon!', 'See ya, pal!', 'Stay fresh!', 'Later!'],
   coming: ['Be right there!', 'Coming, coming!', 'One sec!', 'Hold on!'],
@@ -8816,7 +9255,7 @@ const BOB_LINES = {
 };
 const bobPick = (k) => { const l = BOB_LINES[k]; return l[(Math.random() * l.length) | 0]; };
 const SHOP_TABS = [['hats', 'Hats', 'hat', HATS], ['shirts', 'Shirts', 'shirt', SHIRTS], ['pants', 'Pants', 'pants', PANTS],
-  ['tshirts', 'T-Shirts', 'tshirt', TSHIRTS], ['faces', 'Faces', 'face', FACES], ['boxes', 'Locked Boxes', 'hat', []]];
+  ['tshirts', 'T-Shirts', 'tshirt', TSHIRTS], ['faces', 'Faces', 'face', FACES], ['boxes', 'Locked Boxes', 'hat', []], ['pirate', 'Pirate Booty', 'hat', []]];
 const BOB_LEAN = 0.32;
 // where the camera ends up (looking in over the counter, a little to the side so the shop window doesn't cover Bob),
 // and where it slides in from
@@ -9477,8 +9916,8 @@ function renderShop() {
   $('shopSay').innerHTML = `<b>Bob:</b> ${escHtml(shop.say)}`;
   $('shopWallet').innerHTML = `<span>${pxIcon('tix', 16)} <b>${tixShown()}</b> Tix</span><span>${pxIcon('bux', 16)} <b>${wallet.bux}</b> Bux</span>
     <button class="b" data-shop="1">Trade ${TIX_PER_BUX} Tix for 1 Bux</button><button class="b" data-shop="all">Trade all</button>`;
-  $('shopTabs').innerHTML = SHOP_TABS.map(([id, name]) => `<button class="b${id === tab ? ' on' : ''}${id === 'boxes' ? ' bxtab' : ''}" data-shoptab="${id}">${name}</button>`).join('');
-  if (tab === 'boxes') { $('shopGrid').innerHTML = boxesHtml(); return; }
+  $('shopTabs').innerHTML = SHOP_TABS.map(([id, name]) => `<button class="b${id === tab ? ' on' : ''}${id === 'boxes' ? ' bxtab' : id === 'pirate' ? ' bxtab pir' : ''}" data-shoptab="${id}">${name}</button>`).join('');
+  if (tab === 'boxes' || tab === 'pirate') { $('shopGrid').innerHTML = boxesHtml(tab === 'pirate' ? 'pirate' : 'locked'); return; }
   $('shopGrid').innerHTML = list.filter(i => buxPrice(i) && !i.admin && !isLimited(tab, i.id)).map(i => {
     const mine = owns(slot, i.id), on = look[slot] === i.id;
     return `<div class="shop-it${on ? ' on' : ''}"><img src="${thumbs[i.id]}" alt=""><div class="nm">${escHtml(i.name)}</div>
@@ -9551,10 +9990,25 @@ function myBoxHats() {
 }
 // its rarity in its own color, then its name ("<Sparkly> Gleaming Rubber Duck")
 // cooltinpot's Gleaming sticker, for the corner of a hat's picture (only on Gleaming hats)
-const gleamDecal = (id) => parseBoxHat(id)?.gl ? '<span class="gleam-dec" title="Gleaming!"></span>' : '';
+// (the PIRATE BOOTYS BOX's Swashbuckling things get a wave sticker instead)
+const gleamDecal = (id) => { const b = parseBoxHat(id); return !b?.gl ? '' : boxKind(b.def) === 'pirate' ? '<span class="gleam-dec swash" title="Swashbuckling!"></span>' : '<span class="gleam-dec" title="Gleaming!"></span>'; };
+// the Swashbuckling sticker: a big curling wave, drawn once
+if (!HEADLESS) document.documentElement.style.setProperty('--swash-dec', `url(${canvas(200, 200, (g) => {
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  const wave = () => { g.beginPath(); g.moveTo(14, 182); g.bezierCurveTo(20, 120, 60, 40, 128, 34); g.bezierCurveTo(176, 30, 196, 66, 184, 98);
+    g.bezierCurveTo(176, 120, 146, 124, 138, 104); g.bezierCurveTo(132, 88, 150, 78, 158, 88); g.bezierCurveTo(150, 70, 112, 70, 98, 104);
+    g.bezierCurveTo(86, 134, 112, 170, 186, 182); g.closePath(); };
+  wave(); g.lineWidth = 22; g.strokeStyle = '#ffffff'; g.stroke(); g.lineWidth = 9; g.strokeStyle = '#111'; g.stroke();
+  wave(); g.fillStyle = '#2f8fe0'; g.fill();
+  g.fillStyle = '#1b5fa8'; g.beginPath(); g.moveTo(40, 182); g.bezierCurveTo(50, 130, 80, 90, 104, 96); g.bezierCurveTo(90, 130, 110, 166, 150, 182); g.closePath(); g.fill();
+  g.fillStyle = '#ffffff'; for (const [x, y, r] of [[128, 46, 9], [150, 44, 7], [170, 54, 8], [180, 74, 6], [110, 52, 6]]) { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+  g.strokeStyle = '#111'; g.lineWidth = 4;
+  for (const [x, y] of [[40, 40], [60, 18], [22, 70]]) { g.fillStyle = '#b8ecff'; g.beginPath(); g.arc(x, y, 9, 0, 7); g.fill(); g.stroke(); }
+}).toDataURL()})`);
 function boxHatLabel(id) {
   const b = parseBoxHat(id); if (!b) return 'Box Hat';
-  return `<span class="rar r${b.r}">${escHtml(RARITIES[b.r].name)}</span> ${b.gl ? '<span class="rar gl">Gleaming</span> ' : ''}${escHtml(b.def.name)}`;
+  const X = boxOf(b.def);
+  return `<span class="rar r${b.r}">${escHtml(RARITIES[b.r].name)}</span> ${b.gl ? `<span class="rar ${X.fxc}">${X.fx}</span> ` : ''}${escHtml(b.def.name)}`;
 }
 // the wooden crate with a padlock on the front
 const crateTex = HEADLESS ? null : tex(canvas(128, 128, (g) => {
@@ -9566,10 +10020,20 @@ const crateTex = HEADLESS ? null : tex(canvas(128, 128, (g) => {
   }
   g.fillStyle = 'rgba(40,20,5,.8)'; g.font = 'bold 74px Arial Black, Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('?', 64, 68);
 }));
-function makeCrate() {
-  const g = new THREE.Group(), body = new THREE.Group(), lid = new THREE.Group(), lock = new THREE.Group();
-  const wood = new THREE.MeshPhongMaterial({ color: 0xffffff, map: crateTex, shininess: 8 }), dark = new THREE.MeshPhongMaterial({ color: 0x6e4a26, shininess: 8 });
-  const metal = new THREE.MeshPhongMaterial({ color: 0x8a8d92, specular: 0xffffff, shininess: 80 }), gold = new THREE.MeshPhongMaterial({ color: 0xe0b020, specular: 0xfff0b0, shininess: 90 });
+// the PIRATE BOOTYS BOX, like cooltinpot drew it: dark planks streaked with sea-blue
+const pirateTex = HEADLESS ? null : tex(canvas(128, 128, (g) => {
+  g.fillStyle = '#3a200e'; g.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 4; i++) { g.fillStyle = i % 2 ? '#3f2410' : '#4a2b13'; g.fillRect(0, i * 32 + 2, 128, 28); }
+  g.lineCap = 'round'; const r = rng(31);
+  for (let k = 0; k < 11; k++) { const x = r() * 128, y = r() * 128; g.strokeStyle = k % 3 ? 'rgba(52,96,118,.8)' : 'rgba(90,140,160,.6)'; g.lineWidth = 4 + r() * 4;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + 12 + r() * 26, y + (r() - 0.5) * 12); g.stroke(); }
+  g.fillStyle = 'rgba(0,0,0,.45)'; for (let i = 1; i < 4; i++) g.fillRect(0, i * 32 - 1, 128, 3);
+}));
+function makeCrate(kind = 'locked') {
+  const g = new THREE.Group(), body = new THREE.Group(), lid = new THREE.Group(), lock = new THREE.Group(), pir = kind === 'pirate';
+  const wood = new THREE.MeshPhongMaterial({ color: 0xffffff, map: pir ? pirateTex : crateTex, shininess: 8 }), dark = new THREE.MeshPhongMaterial({ color: pir ? 0x1c120b : 0x6e4a26, shininess: 8 });
+  const gold = new THREE.MeshPhongMaterial({ color: 0xe0b020, specular: 0xfff0b0, shininess: 90 });
+  const metal = pir ? new THREE.MeshPhongMaterial({ color: 0x6a2416, shininess: 20 }) : new THREE.MeshPhongMaterial({ color: 0x8a8d92, specular: 0xffffff, shininess: 80 });
   const box = (w, h, d, m, x, y, z, p) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); p.add(o); return o; };
   g.add(body, lid, lock);
   box(2.4, 1.7, 2.4, wood, 0, 0.85, 0, body);
@@ -9585,8 +10049,8 @@ function makeCrate() {
   return { g, body, lid, lock };
 }
 // a picture of the crate (made once)
-let crateImg = '';
-const crateThumb = () => crateImg || (crateImg = snapHat(makeCrate().g, new V3(0.6, 0.55, 1)));
+const crateImgs = {};
+const crateThumb = (kind = 'locked') => crateImgs[kind] || (crateImgs[kind] = snapHat(makeCrate(kind).g, new V3(0.6, 0.55, 1)));
 
 const unbox = { el: null, r: null, raf: 0 };
 // open a box you just bought: id is the hat that was inside
@@ -9594,10 +10058,11 @@ function openBoxShow(id) {
   if (HEADLESS || unbox.el) return;
   const b = parseBoxHat(id); if (!b) return;
   const R = b.r, rar = RARITIES[R];
+  const X = boxOf(b.def);
   const el = unbox.el = document.body.appendChild(Object.assign(document.createElement('div'), { id: 'unbox', className: 'r' + R }));
   el.innerHTML = `<div class="ub-rays"></div><div class="ub-cv">${gleamDecal(id)}</div>
-    <div class="ub-txt"><div class="ub-rar rar r${R}">${escHtml(rar.name)}${b.gl ? ' <span class="rar gl">Gleaming</span>' : ''}</div>
-    <div class="ub-nm">${escHtml(b.def.name)}</div><div class="ub-ds">"${escHtml(b.def.desc)}"</div><div class="ub-say">${escHtml(rar.say)}${b.gl ? ' And it GLEAMS!' : ''}</div></div>
+    <div class="ub-txt"><div class="ub-rar rar r${R}">${escHtml(rar.name)}${b.gl ? ` <span class="rar ${X.fxc}">${X.fx}</span>` : ''}</div>
+    <div class="ub-nm">${escHtml(b.def.name)}</div><div class="ub-ds">"${escHtml(b.def.desc)}"</div><div class="ub-say">${escHtml(rar.say)}${b.gl ? X.say : ''}</div></div>
     <div class="ub-btns"><button class="b yes" data-ub="wear">Wear it!</button><button class="b" data-ub="ok">Cool!</button><button class="b" data-ub="again">Open another (${BOX_PRICE} Bux)</button></div>`;
   if (!unbox.r) { unbox.r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); unbox.r.setPixelRatio(Math.min(devicePixelRatio, 2)); }
   const r = unbox.r, S = Math.min(460, innerWidth - 32, innerHeight - 250);
@@ -9606,7 +10071,7 @@ function openBoxShow(id) {
   scene.add(new THREE.HemisphereLight(0xffffff, 0x6a5a4a, 1.8));
   { const s = new THREE.DirectionalLight(0xffffff, 2.4); s.position.set(3, 6, 5); scene.add(s); }
   cam.position.set(0, 3.4, 9); cam.lookAt(0, 2.0, 0);
-  const crate = makeCrate(); scene.add(crate.g);
+  const crate = makeCrate(boxKind(b.def)); scene.add(crate.g);
   const hat = makeBoxHat(id), spin = new THREE.Group(); spin.add(hat); scene.add(spin); spin.visible = false;
   { const bb = new THREE.Box3(); hat.traverse(o => { if (o.isMesh) bb.expandByObject(o); }); const sz = bb.getSize(new V3());
     const k = 2.2 / Math.max(sz.x, sz.y, sz.z, 0.5); hat.scale.setScalar(k); hat.position.set(-bb.getCenter(new V3()).x * k, -bb.min.y * k, -bb.getCenter(new V3()).z * k); }
@@ -9641,6 +10106,7 @@ function openBoxShow(id) {
       once('lid', () => {
         if (pan) { SFX.bong(1.3); playWavs(['goldpan-hit.mp3'], 1.4); playWavs(['goldpan.mp3'], 1.2, 0.55); playWavs(['victory'], 0.5, 0.9); }   // BONG! then the golden sparkle, then the fanfare
         else playWavs(R >= 4 ? ['victory', 'flashbulb'] : R >= 2 ? ['flashbulb', 'kerplunk'] : ['kerplunk'], 1);
+        if (b.gl && boxKind(b.def) === 'pirate') playWavs(['kerplunk', 'whoosh'], 0.9, 0.25);   // (Swashbuckling: SPLOOSH)
         el.classList.add('pop'); });
       C.lid.rotation.x = Math.max(-2.6, C.lid.rotation.x - dt * 9);
       if (t >= 2.25) { C.lid.position.addScaledVector(lidV, dt); lidV.y -= 5 * dt; C.lid.rotation.z += dt * 2; }
@@ -9663,7 +10129,7 @@ function openBoxShow(id) {
     cancelAnimationFrame(unbox.raf); el.remove(); unbox.el = null; removeEventListener('keydown', key, true);
     scene.traverse(o => { if (o.geometry) o.geometry.dispose(); o.material?.dispose?.(); });
     if (how === 'wear') { shopWear('hat', id); SFX.click(); bobSay(bobPick('wear')); }
-    else if (how === 'again') buyBox();
+    else if (how === 'again') buyBox(boxKind(b.def));
     renderShop();
   };
   const key = (e) => { if (e.key === 'Escape') { e.stopImmediatePropagation(); if (el.classList.contains('btns')) close('ok'); } };
@@ -9671,35 +10137,37 @@ function openBoxShow(id) {
   el.addEventListener('click', (e) => { const x = e.target.closest('[data-ub]'); if (x && el.classList.contains('btns')) close(x.dataset.ub); });
 }
 // "Buy & Open": ask first, then take the Bux, roll the hat and open it
-function buyBox() {
+function buyBox(kind = 'locked') {
   if (unbox.el) return;
-  if (wallet.bux < BOX_PRICE) { shop.shake = 0.9; SFX.hurt(); bobSay(bobPick('broke'), `(A Locked Box is ${BOX_PRICE} Bux. You need ${BOX_PRICE - wallet.bux} more.)`); award('windowshop', true); return; }
-  askBuy('a Locked Box', BOX_PRICE, crateThumb(), () => {
+  const B = BOXES[kind];
+  if (wallet.bux < BOX_PRICE) { shop.shake = 0.9; SFX.hurt(); bobSay(bobPick('broke'), `(A ${B.name} is ${BOX_PRICE} Bux. You need ${BOX_PRICE - wallet.bux} more.)`); award('windowshop', true); return; }
+  askBuy(`a ${B.name}`, BOX_PRICE, crateThumb(kind), () => {
     if (wallet.bux < BOX_PRICE) return;
-    const id = rollBox();
+    const id = rollBox(kind);
     wallet.bux -= BOX_PRICE; wallet.owned.push('hat:' + id); saveWallet(); showWallet(); award('shopper', true); walletBadges();
-    bobSay(bobPick('box')); renderShop(); openBoxShow(id);
+    bobSay(bobPick(kind === 'pirate' ? 'pirate' : 'box')); renderShop(); openBoxShow(id);
   }, () => bobSay(bobPick('nevermind')));
 }
 // what the Locked Boxes tab shows
-function boxesHtml() {
-  const mine = myBoxHats(), n = (id) => wallet.owned.filter(o => o === 'hat:' + id).length;
-  return `<div class="bx-card"><img src="${crateThumb()}" alt=""><div><b>Locked Box</b>
-      <small>Open it for a hat you can't get anywhere else, in a random rarity! ${BOX_HATS.length} different hats could be inside.</small>
-      <button class="b buy" data-openbox="1">Buy &amp; Open: ${pxIcon('bux', 12)} ${BOX_PRICE} Bux</button></div></div>
+function boxesHtml(kind = 'locked') {
+  const B = BOXES[kind], pool = BOX_HATS.filter(h => boxKind(h) === kind), Things = B.things[0].toUpperCase() + B.things.slice(1);
+  const mine = myBoxHats().filter(id => boxKind(parseBoxHat(id).def) === kind), n = (id) => wallet.owned.filter(o => o === 'hat:' + id).length;
+  return `<div class="bx-card"><img src="${crateThumb(kind)}" alt=""><div><b>${escHtml(B.name)}</b>
+      <small>${escHtml(B.blurb)} ${pool.length} different ${B.things} could be inside.</small>
+      <button class="b buy" data-openbox="${kind}">Buy &amp; Open: ${pxIcon('bux', 12)} ${BOX_PRICE} Bux</button></div></div>
     <div class="bx-leg">${RARITIES.map((r, i) => `<div><span class="rar r${i}">${escHtml(r.name)}</span><i>${r.odds}%</i></div>`).join('')}
-      <small>Hats with a &#10022; can come out <span class="rar gl">Gleaming</span>: a shine sweeps across them, and they go up one rarity!</small></div>
-    <div class="bx-h">Your box hats (${mine.length})</div>
+      <small>${Things} with a &#10022; can come out <span class="rar ${B.fxc}">${B.fx}</span>: ${escHtml(B.fxNote)}, and they go up one rarity!</small></div>
+    <div class="bx-h">Your ${B.things} from this box (${mine.length})</div>
     ${mine.length ? mine.map(id => { const on = look.hat === id, c = n(id);
       return `<div class="shop-it bxr${parseBoxHat(id).r}${on ? ' on' : ''}"><img src="${hatThumbs[id]}" alt="">${gleamDecal(id)}<div class="nm">${boxHatLabel(id)}${c > 1 ? ` <i>x${c}</i>` : ''}</div>
         <button class="b" data-bxwear="${id}">${on ? 'Wearing' : 'Wear'}</button></div>`; }).join('') : '<div class="bx-none">None yet. Open a box!</div>'}
     <div class="bx-h">What could be inside</div>
-    ${BOX_HATS.map(h => `<div class="shop-it bx-in"><img src="${hatThumbs[boxHatId(h.id, h.minR || 1, 0)]}" alt=""><div class="nm">${escHtml(h.name)}${h.shine ? ' &#10022;' : ''}${h.rare ? ' <span class="rar r4">SUPER RARE</span>' : ''}</div></div>`).join('')}`;
+    ${pool.map(h => `<div class="shop-it bx-in"><img src="${hatThumbs[boxHatId(h.id, h.minR || 1, 0)]}" alt=""><div class="nm">${escHtml(h.name)}${h.shine ? ' &#10022;' : ''}${h.rare ? ' <span class="rar r4">SUPER RARE</span>' : ''}</div></div>`).join('')}`;
 }
 $('shopWin').addEventListener('click', (e) => {
   const b = e.target.closest('[data-openbox],[data-bxwear]'); if (!b) return;
   const id = b.dataset.bxwear;
-  if (!id) { buyBox(); return; }
+  if (!id) { buyBox(b.dataset.openbox === 'pirate' ? 'pirate' : 'locked'); return; }
   if (!owns('hat', id)) return;
   if (look.hat === id) bobSay(bobPick('own')); else { shopWear('hat', id); SFX.click(); bobSay(bobPick('wear')); }
   renderShop();
@@ -9715,6 +10183,11 @@ $('shopWin').addEventListener('click', (e) => {
    The newest update is shown in big red text, and the newest BIG UPDATE is red too.
    The label next to it (BIG UPDATE / UPDATE / BUG FIX) is worked out from the number automatically. */
 const UPDATES = [
+  { date: '11/5/2026', ver: '4.6', top: 'ARRR! The PIRATE BOOTYS BOX is here: 42 captain and sea accessories!', text: [
+    'NEW BOX: the PIRATE BOOTYS BOX, an idea (and a box drawing) by cooltinpot! Open the new Pirate Booty tab at Bobs Shop and buy one for 40 Bux. A dark wooden pirate chest with a gold padlock drops in, rattles, and bursts open.',
+    'Inside is one of 42 captain and sea accessories you can not get anywhere else: a Captains Tricorn, an Admirals Bicorne, a Parrot Pal that sits on your shoulder, an Eyepatch, a Captains Beard, a Cutlass Through The Head, The Kraken, a Shark Attack Hood, a whole Pirate Ship, a Lighthouse with a spinning light, a Diving Helmet, a Coral Reef Crown with fish swimming around it, a Ship in a Bottle and lots more!',
+    'They come out in the same rarities as the Locked Box, with sea effects: Sparkly ones have bubbles floating up, and LEGENDARY ones have gold doubloons flipping up into the air.',
+    'Instead of Gleaming, pirate accessories can come out SWASHBUCKLING: a wave swooshes round and round them while they gleam, and every so often it splashes water up onto them! It bumps them up one rarity, and they get a wave sticker on their picture.' ] },
   { date: '11/5/2026', ver: '4.5', top: 'THE GOLDEN FRYING PAN: the rarest hat in all of BLOCKBURG', text: [
     'NEW BOX HAT: the Golden Frying Pan, an idea by cooltinpot! A solid gold frying pan that sits on your head with its handle sticking out the back. It is SUPER RARE: only about 1 Locked Box in 100 has it, and it always comes out LEGENDARY or better (and it can come out Gleaming, which makes it ULTRACOMPLEX UNIQE QUERLY-).',
     'When the Golden Frying Pan comes out of a box, you hear a big golden BONG! (Fixed: at first it only played a quiet sparkle, at the same time as the fanfare.)',
