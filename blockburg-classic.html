@@ -1552,6 +1552,11 @@ function noise(dur, vol, { type = 'bandpass', f0 = 1000, f1 = null, Q = 1, delay
   s.connect(f).connect(g).connect(MASTER); s.start(t0, Math.random()); s.stop(t0 + dur + 0.05);
 }
 const SFX = {
+  // a big metal pan hitting something: BONG (a deep ring with a clank on top), like ULTRA PARRY's frying pan
+  bong(v = 1) {
+    noise(0.05, 0.5 * v, { type: 'highpass', f0: 2500 });
+    osc('sine', 330, 320, 1.5, 0.55 * v); osc('sine', 495, 480, 1.2, 0.28 * v); osc('sine', 792, 780, 0.7, 0.12 * v); osc('triangle', 165, 160, 0.9, 0.2 * v);
+  },
   // the legendary death groan: a voice-like buzz through "uh" vowel formants, sliding down
   uuhhh(v = 1) {
     if (!AC || v < 0.02) return;
@@ -1616,12 +1621,17 @@ const WAVS = {
 };
 const wavBufs = {};
 // play several at exactly the same moment (they're decoded first, then all started together)
-function playWavs(names, v = 1) {
+// get a sound ready (a built-in one, or a sound file next to the game), so playing it later has no wait
+function wavBuf(n) {
+  return wavBufs[n] || (wavBufs[n] = (n.endsWith('.mp3') ? fetch(n).then(r => r.arrayBuffer()).then(a => AC.decodeAudioData(a))
+    : AC.decodeAudioData(Uint8Array.from(atob(WAVS[n].split(',')[1]), c => c.charCodeAt(0)).buffer))
+    .catch(e => { delete wavBufs[n]; throw e; }));   // (didn't load: try again next time)
+}
+function playWavs(names, v = 1, delay = 0) {
   if (!AC || !MASTER) return;
-  Promise.all(names.map(n => wavBufs[n] || (wavBufs[n] = n.endsWith('.mp3') ? fetch(n).then(r => r.arrayBuffer()).then(a => AC.decodeAudioData(a))   // (a sound file next to the game)
-    : AC.decodeAudioData(Uint8Array.from(atob(WAVS[n].split(',')[1]), c => c.charCodeAt(0)).buffer))))
+  Promise.all(names.map(wavBuf))
     .then(bufs => {
-      const at = AC.currentTime + 0.02;
+      const at = AC.currentTime + 0.02 + delay;
       for (const buf of bufs) { const s = AC.createBufferSource(), g = AC.createGain(); s.buffer = buf; g.gain.value = v; s.connect(g).connect(MASTER); s.start(at); }
     }).catch(() => { });
 }
@@ -9601,6 +9611,8 @@ function openBoxShow(id) {
   { const bb = new THREE.Box3(); hat.traverse(o => { if (o.isMesh) bb.expandByObject(o); }); const sz = bb.getSize(new V3());
     const k = 2.2 / Math.max(sz.x, sz.y, sz.z, 0.5); hat.scale.setScalar(k); hat.position.set(-bb.getCenter(new V3()).x * k, -bb.min.y * k, -bb.getCenter(new V3()).z * k); }
   audioInit();
+  const pan = b.def.id === 'goldpan';   // (the Golden Frying Pan has its own BONG: get its sounds ready while the box rattles)
+  if (pan && AC) ['goldpan-hit.mp3', 'goldpan.mp3'].forEach(n => wavBuf(n).catch(() => { }));
   const born = performance.now(); let lastBeat = -1;
   const lockV = new V3((Math.random() - 0.5) * 3, 6, 4), lidV = new V3((Math.random() - 0.5) * 3, 8, -7);
   const said = new Set(), once = (k, f) => { if (!said.has(k)) { said.add(k); f(); } };
@@ -9626,8 +9638,10 @@ function openBoxShow(id) {
     }
     // 4) the lid bursts open, and out comes the hat
     if (t >= 2.0) {
-      once('lid', () => { playWavs(R >= 4 ? ['victory', 'flashbulb'] : R >= 2 ? ['flashbulb', 'kerplunk'] : ['kerplunk'], 1); el.classList.add('pop');
-        if (b.def.id === 'goldpan') playWavs(['goldpan.mp3'], 1); });   // (the golden BONG)
+      once('lid', () => {
+        if (pan) { SFX.bong(1.3); playWavs(['goldpan-hit.mp3'], 1.4); playWavs(['goldpan.mp3'], 1.2, 0.55); playWavs(['victory'], 0.5, 0.9); }   // BONG! then the golden sparkle, then the fanfare
+        else playWavs(R >= 4 ? ['victory', 'flashbulb'] : R >= 2 ? ['flashbulb', 'kerplunk'] : ['kerplunk'], 1);
+        el.classList.add('pop'); });
       C.lid.rotation.x = Math.max(-2.6, C.lid.rotation.x - dt * 9);
       if (t >= 2.25) { C.lid.position.addScaledVector(lidV, dt); lidV.y -= 5 * dt; C.lid.rotation.z += dt * 2; }
       spin.visible = true;
@@ -9703,7 +9717,7 @@ $('shopWin').addEventListener('click', (e) => {
 const UPDATES = [
   { date: '11/5/2026', ver: '4.5', top: 'THE GOLDEN FRYING PAN: the rarest hat in all of BLOCKBURG', text: [
     'NEW BOX HAT: the Golden Frying Pan, an idea by cooltinpot! A solid gold frying pan that sits on your head with its handle sticking out the back. It is SUPER RARE: only about 1 Locked Box in 100 has it, and it always comes out LEGENDARY or better (and it can come out Gleaming, which makes it ULTRACOMPLEX UNIQE QUERLY-).',
-    'When the Golden Frying Pan comes out of a box, you hear the golden BONG!',
+    'When the Golden Frying Pan comes out of a box, you hear a big golden BONG! (Fixed: at first it only played a quiet sparkle, at the same time as the fanfare.)',
     'Look for it in the Locked Boxes tab at Bobs Shop, marked SUPER RARE. Good luck!',
     'Admins have INFINITE Tix now! Their Tix show as \u221e, trading never takes any away, and Trade all gets 1000 Bux at a time.' ] },
   { date: '11/3/2026', ver: '4.4', top: 'LOCKED BOXES at Bobs Shop: 42 brand new hats in 6 rarities! Plus BLOCKBURG CITY, a whole city you can blow up', text: [
