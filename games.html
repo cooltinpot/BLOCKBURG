@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cooltinpot games</title>
+<meta name="description" content="Free browser games by cooltinpot: BLOCKBURG and MINECRAP. Play solo or with friends.">
+<link rel="icon" href="cover.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* the game launcher: every game cooltinpot makes, one link to bookmark */
+:root{color-scheme:light dark;--ink:#10203a;--paper:#fff}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;min-height:100vh;font:21px/1.3 'VT323',monospace;color:var(--ink);
+ background:repeating-linear-gradient(-45deg,#3d7fd9 0 34px,#3674cc 34px 68px);display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px}
+h1{font:clamp(20px,5.4vw,40px)/1.2 'Press Start 2P',monospace;color:#fff;text-align:center;margin:8px 0 6px;text-shadow:0 4px 0 #10203a,0 7px 0 rgba(0,0,0,.25)}
+.sub{color:#e8f0ff;text-align:center;margin:0 0 26px;font-size:22px;text-shadow:2px 2px 0 #10203a}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:22px;width:min(980px,100%)}
+.card{background:var(--paper);border:4px solid #10203a;box-shadow:0 8px 0 #10203a;display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:transform .12s,box-shadow .12s}
+a.card:hover,a.card:focus-visible{transform:translateY(-4px);box-shadow:0 12px 0 #10203a;outline:none}
+a.card:active{transform:translateY(3px);box-shadow:0 4px 0 #10203a}
+.art{position:relative;aspect-ratio:4/3;overflow:hidden;border-bottom:4px solid #10203a}
+.art img,.art canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bb{background:linear-gradient(#fafcff,#e8eef7)}.bb img{object-fit:contain;padding:6%}
+.mc{background:#2a5a2a}
+.art img{transition:transform .35s ease}
+a.card:hover .art img,a.card:focus-visible .art img{transform:scale(1.07)}
+.mclogo{position:absolute;left:0;right:0;top:8%;text-align:center;font:clamp(20px,5vw,32px)/1 'Press Start 2P',monospace;color:#f4efe2;text-shadow:0 3px 0 #8a5a30,0 6px 0 #5a3a1c,0 9px 0 #3a2410,0 12px 14px rgba(0,0,0,.55)}
+.new{position:absolute;right:10px;bottom:12px;font:11px/1 'Press Start 2P',monospace;background:#ffef3a;color:#3f3a00;padding:6px 8px;transform:rotate(-8deg);border:2px solid #3f3a00}
+.body{padding:16px 18px 18px;display:grid;gap:8px;flex:1}
+.name{font:17px/1.2 'Press Start 2P',monospace;margin:0}
+.bbname{color:#e2231a;font-style:italic;text-shadow:2px 2px 0 #10203a}
+.mcname{color:#6b4423}
+.tag{margin:0;color:#33415c}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:6px;flex-wrap:wrap}
+.play{font:13px/1 'Press Start 2P',monospace;color:#fff;background:#2fa84f;border:3px solid #10203a;padding:12px 16px;box-shadow:inset -3px -3px 0 #1d7a36,inset 3px 3px 0 #59cc75}
+.bbplay{background:#e2231a;box-shadow:inset -3px -3px 0 #a3150f,inset 3px 3px 0 #ff5b52}
+.on{font-size:19px;color:#33415c;white-space:nowrap}
+.on b{display:inline-block;width:10px;height:10px;border-radius:50%;background:#9aa6b8;margin-right:6px;vertical-align:1px}
+.on.live b{background:#2fa84f;box-shadow:0 0 0 3px rgba(47,168,79,.25)}
+.soon{border-style:dashed;background:rgba(255,255,255,.8);box-shadow:none;align-items:center;justify-content:center;text-align:center;padding:30px 20px;min-height:220px}
+.soon .q{font:46px/1 'Press Start 2P',monospace;color:#3674cc;margin-bottom:14px}
+.tip{margin-top:30px;color:#fff;text-align:center;text-shadow:2px 2px 0 #10203a;font-size:22px}
+.tip kbd{font:13px 'Press Start 2P',monospace;background:#fff;color:#10203a;padding:3px 6px;border:2px solid #10203a;text-shadow:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#f3f6fb}}
+@media (prefers-reduced-motion:reduce){.card,.art img{transition:none}}
+</style>
+</head>
+<body>
+<h1>cooltinpot games</h1>
+<p class="sub">Free games in your browser. Play solo or with friends!</p>
+
+<main class="games">
+  <a class="card" href="./">
+    <div class="art bb"><img src="cover.png" alt="The BLOCKBURG guy"></div>
+    <div class="body">
+      <h2 class="name bbname">BLOCKBURG</h2>
+      <p class="tag">Explode things, pwn people, do it all! Build, hang out and play together online.</p>
+      <div class="foot"><span class="play bbplay">PLAY</span><span class="on" id="onBB"><b></b>Online play</span></div>
+    </div>
+  </a>
+
+  <a class="card" href="minecrap.html">
+    <div class="art mc"><img src="minecrap-cover.jpg" alt="A MINECRAP world: blocky hills and trees"><div class="mclogo">MINECRAP</div><span class="new">NEW!</span></div>
+    <div class="body">
+      <h2 class="name mcname">MINECRAP</h2>
+      <p class="tag">Mine, craft and survive the Stinkers at night. Make a room and send friends the 4-letter code.</p>
+      <div class="foot"><span class="play">PLAY</span><span class="on" id="onMC"><b></b>Online play</span></div>
+    </div>
+  </a>
+
+  <div class="card soon">
+    <div class="q">?</div>
+    <h2 class="name">More coming soon</h2>
+    <p class="tag">New games show up here first. Bookmark this page!</p>
+  </div>
+</main>
+
+<p class="tip">Bookmark this page: <kbd>Ctrl</kbd> + <kbd>D</kbd> (or <kbd>Cmd</kbd> + <kbd>D</kbd> on a Mac)</p>
+
+<script>
+{
+// POP when you point at a game. Browsers keep sound off until you've clicked or tapped the page once,
+// so the very first hover can be silent; after that every hover pops.
+let ac=null;
+const wake=()=>{try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume().catch(()=>{})}catch(_){}};
+function pop(){if(!ac||ac.state!=='running')return;const t=ac.currentTime,o=ac.createOscillator(),v=ac.createGain();
+ o.type='sine';o.frequency.setValueAtTime(380+Math.random()*80,t);o.frequency.exponentialRampToValueAtTime(1100,t+.05);
+ v.gain.setValueAtTime(.0001,t);v.gain.exponentialRampToValueAtTime(.3,t+.008);v.gain.exponentialRampToValueAtTime(.0001,t+.09);
+ o.connect(v).connect(ac.destination);o.start(t);o.stop(t+.1)}
+['pointerdown','keydown','touchstart'].forEach(e=>addEventListener(e,wake,{passive:true}));
+addEventListener('pointermove',wake,{once:true,passive:true});
+document.querySelectorAll('a.card').forEach(a=>{
+ a.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'){wake();pop()}});
+ a.addEventListener('focus',pop);
+ a.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'){wake();setTimeout(pop,0)}})});
+
+// who's playing right now (the same server runs both games)
+fetch('https://us-ewr-fb65e743.colyseus.cloud/api/online',{cache:'no-store'}).then(r=>r.json()).then(n=>{
+ let bb=0;for(const[k,v]of Object.entries(n))if(k!=='minecrap')bb+=+v||0;const mc=+n.minecrap||0;
+ const set=(id,v)=>{const el=document.getElementById(id);el.classList.toggle('live',v>0);el.lastChild.textContent=v>0?`${v} playing now`:'Online play'};
+ set('onBB',bb);set('onMC',mc)}).catch(()=>{});
+}
+</script>
+</body>
+</html>

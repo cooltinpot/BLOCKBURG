@@ -509,7 +509,7 @@ let state='menu',started=false,locked=false,lockFails=0,touch=matchMedia('(point
 const ovOpen=()=>!$('#inv').classList.contains('hide')||!$('#chestUI').classList.contains('hide');
 function toast(t){const n=$('#name');n.textContent=t;n.style.opacity=1;clearTimeout(nameT);nameT=setTimeout(()=>n.style.opacity=0,1500)}
 function setHelp(){document.body.classList.toggle('touch',touch);$('#help').innerHTML=touch?'<b>Stick</b> move &middot; <b>drag</b> look &middot; hold <b>MINE</b> to dig and fight &middot; <b>USE</b> to build, eat and open chests &middot; <b>BAG</b> to craft'
- :'<b>WASD</b> move &middot; <b>mouse</b> look &middot; hold <b>left click</b> to dig and fight &middot; <b>right click</b> to build, eat and open chests &middot; <b>E</b> bag + crafting &middot; <b>T</b> chat &middot; <b>F</b> fly (creative)'}
+ :'<b>WASD</b> move &middot; <b>mouse</b> look &middot; hold <b>left click</b> to dig and fight &middot; <b>right click</b> to build, eat and open chests &middot; <b>E</b> bag + crafting &middot; <b>T</b> chat &middot; <b>F</b> fly (creative)<br>No mouse? <b>Q</b> (hold) dig and fight &middot; <b>R</b> build, eat, open chests &middot; <b>arrow keys</b> look around'}
 setHelp();
 function renderBar(){$('#bar').innerHTML=bar.map((id,i)=>{const n=mode==='creative'?0:inv[id]||0,show=id&&(mode==='creative'||n>0);
  return`<div class="slot${i===cur?' on':''}" data-i="${i}">${show?`<img alt="${esc(ITEM[id].n)}" src="${icon[id]}">${n>1?`<b>${n}</b>`:''}`:''}</div>`}).join('');
@@ -641,15 +641,16 @@ const showTouch=()=>{if(!touch){touch=true;setHelp()}if(state==='play')$('#tc').
 addEventListener('pointerdown',e=>{if(e.pointerType==='touch')showTouch()},true);
 addEventListener('keydown',e=>{if(state!=='play'||chatOpen)return;keys[e.code]=true;
  if(e.code==='KeyF'&&mode==='creative'){P.fly=!P.fly;P.vy=0}
+ if((e.code==='KeyQ'||e.code==='KeyR')&&!e.repeat&&!ovOpen()&&!dead){ensureAudio();press(e.code==='KeyQ'?0:2)}
  if(e.code==='KeyE'&&!dead)toggleInv();
  if((e.code==='KeyT'||e.code==='Enter')&&!ovOpen()){e.preventDefault();openChat()}
  if(/^Digit[1-9]$/.test(e.code))sel(+e.code[5]-1);
  if(e.code==='Escape'&&!locked)ovOpen()?closeOv():showMenu();
  if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault()});
-addEventListener('keyup',e=>{keys[e.code]=false});
+addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='KeyQ'&&hold==='break'||e.code==='KeyR'&&hold==='place')hold=null});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;hold=null});
 addEventListener('wheel',e=>{if(state==='play'&&!ovOpen()&&e.deltaY)sel((cur+(e.deltaY>0?1:8))%9)},{passive:true});
-cv.addEventListener('contextmenu',e=>e.preventDefault());
+addEventListener('contextmenu',e=>{if(!e.target.closest('input'))e.preventDefault()});
 let drag=null;
 function press(btn){if(dead)return;if(btn===2){hold='place';holdT=.3;useItem(false)}else{hold='break';holdT=0}}
 cv.addEventListener('pointerdown',e=>{if(state!=='play'||ovOpen()||dead)return;ensureAudio();
