@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cooltinpot games</title>
+<meta name="description" content="Free browser games by cooltinpot: BLOCKBURG and MINECRAP. Play solo or with friends.">
+<link rel="icon" href="cover.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* the game launcher: every game cooltinpot makes, one link to bookmark */
+:root{color-scheme:light dark;--ink:#10203a;--paper:#fff}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;min-height:100vh;font:21px/1.3 'VT323',monospace;color:var(--ink);
+ background:repeating-linear-gradient(-45deg,#3d7fd9 0 34px,#3674cc 34px 68px);display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px}
+h1{font:clamp(20px,5.4vw,40px)/1.2 'Press Start 2P',monospace;color:#fff;text-align:center;margin:8px 0 6px;text-shadow:0 4px 0 #10203a,0 7px 0 rgba(0,0,0,.25)}
+.sub{color:#e8f0ff;text-align:center;margin:0 0 26px;font-size:22px;text-shadow:2px 2px 0 #10203a}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:22px;width:min(980px,100%)}
+.card{background:var(--paper);border:4px solid #10203a;box-shadow:0 8px 0 #10203a;display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:transform .12s,box-shadow .12s}
+a.card:hover,a.card:focus-visible{transform:translateY(-4px);box-shadow:0 12px 0 #10203a;outline:none}
+a.card:active{transform:translateY(3px);box-shadow:0 4px 0 #10203a}
+.art{position:relative;aspect-ratio:4/3;overflow:hidden;border-bottom:4px solid #10203a}
+.art img,.art canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bb{background:linear-gradient(#fafcff,#e8eef7)}.bb img{object-fit:contain;padding:6%}
+.mc{background:linear-gradient(#7fbfff,#b9dcff 60%,#6aa84a 60%)}
+.mc canvas{image-rendering:pixelated}
+.mclogo{position:absolute;left:0;right:0;top:9%;text-align:center;font:clamp(18px,4.4vw,30px)/1 'Press Start 2P',monospace;color:#f4efe2;text-shadow:0 3px 0 #8a5a30,0 6px 0 #3a2410}
+.new{position:absolute;right:10px;bottom:12px;font:11px/1 'Press Start 2P',monospace;background:#ffef3a;color:#3f3a00;padding:6px 8px;transform:rotate(-8deg);border:2px solid #3f3a00}
+.body{padding:16px 18px 18px;display:grid;gap:8px;flex:1}
+.name{font:17px/1.2 'Press Start 2P',monospace;margin:0}
+.bbname{color:#e2231a;font-style:italic;text-shadow:2px 2px 0 #10203a}
+.mcname{color:#6b4423}
+.tag{margin:0;color:#33415c}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:6px;flex-wrap:wrap}
+.play{font:13px/1 'Press Start 2P',monospace;color:#fff;background:#2fa84f;border:3px solid #10203a;padding:12px 16px;box-shadow:inset -3px -3px 0 #1d7a36,inset 3px 3px 0 #59cc75}
+.bbplay{background:#e2231a;box-shadow:inset -3px -3px 0 #a3150f,inset 3px 3px 0 #ff5b52}
+.on{font-size:19px;color:#33415c;white-space:nowrap}
+.on b{display:inline-block;width:10px;height:10px;border-radius:50%;background:#9aa6b8;margin-right:6px;vertical-align:1px}
+.on.live b{background:#2fa84f;box-shadow:0 0 0 3px rgba(47,168,79,.25)}
+.soon{border-style:dashed;background:rgba(255,255,255,.8);box-shadow:none;align-items:center;justify-content:center;text-align:center;padding:30px 20px;min-height:220px}
+.soon .q{font:46px/1 'Press Start 2P',monospace;color:#3674cc;margin-bottom:14px}
+.tip{margin-top:30px;color:#fff;text-align:center;text-shadow:2px 2px 0 #10203a;font-size:22px}
+.tip kbd{font:13px 'Press Start 2P',monospace;background:#fff;color:#10203a;padding:3px 6px;border:2px solid #10203a;text-shadow:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#f3f6fb}}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<h1>cooltinpot games</h1>
+<p class="sub">Free games in your browser. Play solo or with friends!</p>
+
+<main class="games">
+  <a class="card" href="./">
+    <div class="art bb"><img src="cover.png" alt="The BLOCKBURG guy"></div>
+    <div class="body">
+      <h2 class="name bbname">BLOCKBURG</h2>
+      <p class="tag">Explode things, pwn people, do it all! Build, hang out and play together online.</p>
+      <div class="foot"><span class="play bbplay">PLAY</span><span class="on" id="onBB"><b></b>Online play</span></div>
+    </div>
+  </a>
+
+  <a class="card" href="minecrap.html">
+    <div class="art mc"><canvas id="mcArt" width="160" height="120" aria-label="A grass block, a Crap Block and a gold block"></canvas><div class="mclogo">MINECRAP</div><span class="new">NEW!</span></div>
+    <div class="body">
+      <h2 class="name mcname">MINECRAP</h2>
+      <p class="tag">Mine, craft and survive the Stinkers at night. Make a room and send friends the 4-letter code.</p>
+      <div class="foot"><span class="play">PLAY</span><span class="on" id="onMC"><b></b>Online play</span></div>
+    </div>
+  </a>
+
+  <div class="card soon">
+    <div class="q">?</div>
+    <h2 class="name">More coming soon</h2>
+    <p class="tag">New games show up here first. Bookmark this page!</p>
+  </div>
+</main>
+
+<p class="tip">Bookmark this page: <kbd>Ctrl</kbd> + <kbd>D</kbd> (or <kbd>Cmd</kbd> + <kbd>D</kbd> on a Mac)</p>
+
+<script>
+{
+// a little MINECRAP scene: three blocks drawn in the game's own pixel style
+const c=document.getElementById('mcArt'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
+let s=7;const r=()=>{s=(s*16807)%2147483647;return s/2147483647};
+const tile=f=>{const t=document.createElement('canvas');t.width=t.height=16;const x=t.getContext('2d');for(let y=0;y<16;y++)for(let i=0;i<16;i++){const col=f(i,y);x.fillStyle=`rgb(${col.map(v=>Math.round(v)).join(',')})`;x.fillRect(i,y,1,1)}return t};
+const sh=(c,k)=>c.map(v=>v*k),E=[3,4,3,2,3,4,5,4,3,3,2,3,4,3,4,3];
+const grassTop=tile(()=>sh([96,162,56],.8+r()*.3)),grassSide=tile((x,y)=>y<E[x]?sh([96,162,56],.8+r()*.3):sh([134,96,67],.8+r()*.35));
+const crap=tile((x,y)=>{if((x===4||x===5||x===10||x===11)&&(y===5||y===6))return(x===5||x===11)&&y===6?[20,12,6]:[245,245,240];
+ if((y===11&&x>=5&&x<=10)||(y===10&&(x===4||x===11)))return[45,24,10];const dx=x-7.5,dy=y-8.5;return sh([118,74,36],(Math.sin(Math.hypot(dx,dy)*1.6+Math.atan2(dy,dx))>.55?.66:.92)+r()*.18)});
+const gold=tile((x,y)=>x===0||y===0||x===15||y===15?[196,140,18]:(x+y)%7===0?[255,246,150]:sh([250,206,48],.92+r()*.1));
+function cube(ox,oy,top,side,sz){const k=sz/16;
+ const face=(t,m,dark)=>{g.setTransform(m[0]*k,m[1]*k,m[2]*k,m[3]*k,ox+m[4]*k,oy+m[5]*k);g.drawImage(t,0,0);if(dark){g.fillStyle=`rgba(0,0,0,${dark})`;g.fillRect(0,0,16,16)}};
+ face(top,[20/16,-10/16,20/16,10/16,4,14],0);face(side,[20/16,10/16,0,22/16,4,14],.22);face(side,[20/16,-10/16,0,22/16,24,24],.42);g.setTransform(1,0,0,1,0,0)}
+cube(18,52,grassTop,grassSide,20);cube(62,46,crap,crap,20);cube(104,54,gold,gold,18);
+
+// who's playing right now (the same server runs both games)
+fetch('https://us-ewr-fb65e743.colyseus.cloud/api/online',{cache:'no-store'}).then(r=>r.json()).then(n=>{
+ let bb=0;for(const[k,v]of Object.entries(n))if(k!=='minecrap')bb+=+v||0;const mc=+n.minecrap||0;
+ const set=(id,v)=>{const el=document.getElementById(id);el.classList.toggle('live',v>0);el.lastChild.textContent=v>0?`${v} playing now`:'Online play'};
+ set('onBB',bb);set('onMC',mc)}).catch(()=>{});
+}
+</script>
+</body>
+</html>
