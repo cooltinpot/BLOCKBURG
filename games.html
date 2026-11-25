@@ -23,9 +23,10 @@ a.card:active{transform:translateY(3px);box-shadow:0 4px 0 #10203a}
 .art{position:relative;aspect-ratio:4/3;overflow:hidden;border-bottom:4px solid #10203a}
 .art img,.art canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .bb{background:linear-gradient(#fafcff,#e8eef7)}.bb img{object-fit:contain;padding:6%}
-.mc{background:linear-gradient(#7fbfff,#b9dcff 60%,#6aa84a 60%)}
-.mc canvas{image-rendering:pixelated}
-.mclogo{position:absolute;left:0;right:0;top:9%;text-align:center;font:clamp(18px,4.4vw,30px)/1 'Press Start 2P',monospace;color:#f4efe2;text-shadow:0 3px 0 #8a5a30,0 6px 0 #3a2410}
+.mc{background:#2a5a2a}
+.art img{transition:transform .35s ease}
+a.card:hover .art img,a.card:focus-visible .art img{transform:scale(1.07)}
+.mclogo{position:absolute;left:0;right:0;top:8%;text-align:center;font:clamp(20px,5vw,32px)/1 'Press Start 2P',monospace;color:#f4efe2;text-shadow:0 3px 0 #8a5a30,0 6px 0 #5a3a1c,0 9px 0 #3a2410,0 12px 14px rgba(0,0,0,.55)}
 .new{position:absolute;right:10px;bottom:12px;font:11px/1 'Press Start 2P',monospace;background:#ffef3a;color:#3f3a00;padding:6px 8px;transform:rotate(-8deg);border:2px solid #3f3a00}
 .body{padding:16px 18px 18px;display:grid;gap:8px;flex:1}
 .name{font:17px/1.2 'Press Start 2P',monospace;margin:0}
@@ -43,7 +44,7 @@ a.card:active{transform:translateY(3px);box-shadow:0 4px 0 #10203a}
 .tip{margin-top:30px;color:#fff;text-align:center;text-shadow:2px 2px 0 #10203a;font-size:22px}
 .tip kbd{font:13px 'Press Start 2P',monospace;background:#fff;color:#10203a;padding:3px 6px;border:2px solid #10203a;text-shadow:none}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#f3f6fb}}
-@media (prefers-reduced-motion:reduce){.card{transition:none}}
+@media (prefers-reduced-motion:reduce){.card,.art img{transition:none}}
 </style>
 </head>
 <body>
@@ -61,7 +62,7 @@ a.card:active{transform:translateY(3px);box-shadow:0 4px 0 #10203a}
   </a>
 
   <a class="card" href="minecrap.html">
-    <div class="art mc"><canvas id="mcArt" width="160" height="120" aria-label="A grass block, a Crap Block and a gold block"></canvas><div class="mclogo">MINECRAP</div><span class="new">NEW!</span></div>
+    <div class="art mc"><img src="minecrap-cover.jpg" alt="A MINECRAP world: blocky hills and trees"><div class="mclogo">MINECRAP</div><span class="new">NEW!</span></div>
     <div class="body">
       <h2 class="name mcname">MINECRAP</h2>
       <p class="tag">Mine, craft and survive the Stinkers at night. Make a room and send friends the 4-letter code.</p>
@@ -80,20 +81,6 @@ a.card:active{transform:translateY(3px);box-shadow:0 4px 0 #10203a}
 
 <script>
 {
-// a little MINECRAP scene: three blocks drawn in the game's own pixel style
-const c=document.getElementById('mcArt'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
-let s=7;const r=()=>{s=(s*16807)%2147483647;return s/2147483647};
-const tile=f=>{const t=document.createElement('canvas');t.width=t.height=16;const x=t.getContext('2d');for(let y=0;y<16;y++)for(let i=0;i<16;i++){const col=f(i,y);x.fillStyle=`rgb(${col.map(v=>Math.round(v)).join(',')})`;x.fillRect(i,y,1,1)}return t};
-const sh=(c,k)=>c.map(v=>v*k),E=[3,4,3,2,3,4,5,4,3,3,2,3,4,3,4,3];
-const grassTop=tile(()=>sh([96,162,56],.8+r()*.3)),grassSide=tile((x,y)=>y<E[x]?sh([96,162,56],.8+r()*.3):sh([134,96,67],.8+r()*.35));
-const crap=tile((x,y)=>{if((x===4||x===5||x===10||x===11)&&(y===5||y===6))return(x===5||x===11)&&y===6?[20,12,6]:[245,245,240];
- if((y===11&&x>=5&&x<=10)||(y===10&&(x===4||x===11)))return[45,24,10];const dx=x-7.5,dy=y-8.5;return sh([118,74,36],(Math.sin(Math.hypot(dx,dy)*1.6+Math.atan2(dy,dx))>.55?.66:.92)+r()*.18)});
-const gold=tile((x,y)=>x===0||y===0||x===15||y===15?[196,140,18]:(x+y)%7===0?[255,246,150]:sh([250,206,48],.92+r()*.1));
-function cube(ox,oy,top,side,sz){const k=sz/16;
- const face=(t,m,dark)=>{g.setTransform(m[0]*k,m[1]*k,m[2]*k,m[3]*k,ox+m[4]*k,oy+m[5]*k);g.drawImage(t,0,0);if(dark){g.fillStyle=`rgba(0,0,0,${dark})`;g.fillRect(0,0,16,16)}};
- face(top,[20/16,-10/16,20/16,10/16,4,14],0);face(side,[20/16,10/16,0,22/16,4,14],.22);face(side,[20/16,-10/16,0,22/16,24,24],.42);g.setTransform(1,0,0,1,0,0)}
-cube(18,52,grassTop,grassSide,20);cube(62,46,crap,crap,20);cube(104,54,gold,gold,18);
-
 // POP when you point at a game. Browsers keep sound off until you've clicked or tapped the page once,
 // so the very first hover can be silent; after that every hover pops.
 let ac=null;
