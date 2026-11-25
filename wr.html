@@ -206,7 +206,6 @@ const MAT={
  bag:M({map:burlapTex,color:0xd8c59a,clippingPlanes:CLIP}),timber:M({map:timberTex,roughness:.85,clippingPlanes:CLIP}),
  steel:M({map:steelTex,metalness:.55,roughness:.55,clippingPlanes:CLIP}),brick:M({map:brickTex,clippingPlanes:CLIP}),
  bark:M({map:barkTex,color:0x8a7a6a,clippingPlanes:CLIP}),wire:M({color:0x3a3632,metalness:.6,roughness:.5,clippingPlanes:CLIP}),post:M({color:0x5a4a38,clippingPlanes:CLIP}),
- water:new T.MeshStandardMaterial({color:0x2f3128,roughness:.12,metalness:.35,transparent:true,opacity:.92,clippingPlanes:CLIP}),
  soil:M({map:soilTex,side:T.DoubleSide,color:0xb8a890}),
  skin:M({color:0xd8a585,roughness:.75}),boot:M({color:0x2a2119,roughness:.6}),web:M({color:0x6e5d3d,map:woolTex}),
  wood:M({color:0x6b4426,map:timberTex,roughness:.6}),gun:M({color:0x26282b,metalness:.75,roughness:.38}),
@@ -218,39 +217,108 @@ const GEO={box:new T.BoxGeometry(1,1,1),cyl:new T.CylinderGeometry(.5,.5,1,12),c
 const mesh=(g,m,sx,sy,sz,x,y,z,parent,shadow=true)=>{const o=new T.Mesh(g,m);o.scale.set(sx,sy,sz);o.position.set(x,y,z);o.castShadow=shadow;o.receiveShadow=true;if(parent)parent.add(o);return o};
 
 /* ================= TERRAIN ================= */
-const W=160,D=48,S=.5,NX=W/S,NZ=D/S,BED=-7,WATER=-2.3,VN=(NX+1)*(NZ+1);
+const W=160,D=48,S=.5,NX=W/S,NZ=D/S,BED=-7,WATER=-1.9,VN=(NX+1)*(NZ+1);
 const hgt=new Float32Array(VN),surf=new Uint8Array(VN);   // surf: 0 grass, 1 mud, 2 dug earth, 3 scorched
 const VI=(i,j)=>j*(NX+1)+i;
 function heightIn(a,x,z){const fx=clamp(x/S,0,NX-1e-4),fz=clamp(z/S,0,NZ-1e-4),i=Math.floor(fx),j=Math.floor(fz),tx=fx-i,tz=fz-j;
  const p=a[VI(i,j)],b=a[VI(i+1,j)],c=a[VI(i,j+1)],d=a[VI(i+1,j+1)];return p+(b-p)*tx+(c-p)*tz+(p-b-c+d)*tx*tz}
 const heightAt=(x,z)=>heightIn(hgt,x,z);
+// water table: shell holes and anything dug more than ~1 m below the old ground fill with ground water; low ground below WATER becomes ponds
+const wtab=new Float32Array(VN).fill(-99),waterAt=(x,z)=>heightIn(wtab,x,z);function resetWater(){for(let v=0;v<VN;v++)wtab[v]=Math.max(hgt[v]-1,WATER)}
 const tGeo=new T.BufferGeometry();{const pos=new Float32Array(VN*3),uv=new Float32Array(VN*2),col=new Float32Array(VN*3),idx=[];
  for(let j=0;j<=NZ;j++)for(let i=0;i<=NX;i++){const v=VI(i,j);pos[v*3]=i*S;pos[v*3+2]=j*S;uv[v*2]=i*S/3;uv[v*2+1]=j*S/3}
  for(let j=0;j<NZ;j++)for(let i=0;i<NX;i++){const a=VI(i,j),b=VI(i+1,j),c=VI(i,j+1),d=VI(i+1,j+1);idx.push(a,c,b,b,c,d)}
  tGeo.setAttribute('position',new T.BufferAttribute(pos,3));tGeo.setAttribute('uv',new T.BufferAttribute(uv,2));tGeo.setAttribute('color',new T.BufferAttribute(col,3));tGeo.setIndex(idx)}
 const terrain=new T.Mesh(tGeo,MAT.ground);terrain.receiveShadow=true;terrain.castShadow=true;scene.add(terrain);
-const water=new T.Mesh(new T.PlaneGeometry(W,D),MAT.water);water.rotation.x=-Math.PI/2;water.position.set(W/2,WATER,D/2);scene.add(water);
-const outerM=M({color:0x4d4130,roughness:1});outerM.color.convertSRGBToLinear();const outer=new T.Mesh(new T.PlaneGeometry(900,900),outerM);outer.rotation.x=-Math.PI/2;outer.position.set(W/2,-.6,D/2);outer.receiveShadow=true;scene.add(outer);
+/* ---- water: its own shader. Rippling surface, sky reflection that grows at low angles (Fresnel), sun glints,
+   murky brown-green body that's clear at the shallow edges, muddy foam where it meets the bank, and rings from
+   bullets, grenades, shells and anyone wading through. ---- */
+const RIPN=12,ripples=Array.from({length:RIPN},()=>new T.Vector4(0,0,-99,0));let ripI=0;
+const waterMat=new T.ShaderMaterial({transparent:true,depthWrite:false,fog:true,clipping:true,clippingPlanes:CLIP,
+ uniforms:T.UniformsUtils.merge([T.UniformsLib.fog,{t:{value:0},sunDir:{value:new T.Vector3()},rip:{value:ripples},refl:{value:null},rMat:{value:new T.Matrix4()},useR:{value:0}}]),
+ vertexShader:`attribute float depth;varying vec3 vW;varying float vDepth;
+ #include <fog_pars_vertex>
+ #include <clipping_planes_pars_vertex>
+ void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;vDepth=depth;vec4 mvPosition=viewMatrix*w;gl_Position=projectionMatrix*mvPosition;
+ #include <clipping_planes_vertex>
+ #include <fog_vertex>
+ }`,
+ fragmentShader:`uniform float t;uniform vec3 sunDir;uniform vec4 rip[${RIPN}];uniform sampler2D refl;uniform mat4 rMat;uniform float useR;varying vec3 vW;varying float vDepth;
+ #include <common>
+ #include <fog_pars_fragment>
+ #include <clipping_planes_pars_fragment>
+ float hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+ float ns(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i),hs(i+vec2(1.,0.)),f.x),mix(hs(i+vec2(0.,1.)),hs(i+vec2(1.,1.)),f.x),f.y);}
+ float rings(vec2 p){float h=0.;for(int i=0;i<${RIPN};i++){vec4 r=rip[i];float age=t-r.z;if(age>0.&&age<3.5){float d=length(p-r.xy),fr=.25+age*1.6;h+=r.w*sin((d-fr)*16.)*exp(-abs(d-fr)*3.)*pow(1.-age/3.5,2.)*.5/(1.+d*.6);}}return h;}
+ float wave(vec2 p){return ns(p*.7+vec2(t*.05,t*.03))*.5+ns(p*1.9-vec2(t*.09,-t*.07))*.22+ns(p*4.7+vec2(-t*.16,t*.12))*.08+ns(p*11.+vec2(t*.3,t*.25))*.025+rings(p);}
+ vec3 sky(vec3 v){float h=clamp(v.y,0.,1.);return mix(vec3(.66,.64,.58),vec3(.36,.43,.52),pow(h,.6));}
+ void main(){
+  #include <clipping_planes_fragment>
+  if(vDepth<=0.)discard;
+  vec2 p=vW.xz;float e=.04,hx=wave(p+vec2(e,0.))-wave(p-vec2(e,0.)),hz=wave(p+vec2(0.,e))-wave(p-vec2(0.,e));
+  float scum=smoothstep(.55,.8,ns(p*.45+3.1))*smoothstep(.15,.6,vDepth);
+  vec3 N=normalize(vec3(-hx*.22*(1.-scum*.7),2.*e,-hz*.22*(1.-scum*.7))),V=normalize(cameraPosition-vW),Rv=reflect(-V,N);
+  float fr=.03+.97*pow(1.-max(dot(N,V),0.),5.);fr*=1.-scum*.5;
+  vec3 rc=pow(sky(Rv),vec3(2.2));
+  if(useR>.5){vec4 c=rMat*vec4(vW,1.);vec2 uv=c.xy/c.w+N.xz*.05;rc=pow(texture2D(refl,clamp(uv,.001,.999)).rgb,vec3(2.2));}
+  float sd=max(dot(Rv,sunDir),0.),glint=pow(sd,1400.)*2.2*(1.-scum)+pow(sd,60.)*.05;
+  float dep=clamp(vDepth,0.,4.);vec3 body=mix(vec3(.12,.10,.065),vec3(.02,.026,.02),smoothstep(0.,1.2,dep));body=mix(body,vec3(.085,.08,.045),scum*.6);
+  vec3 col=mix(toneMapping(body),rc,fr)+vec3(1.,.88,.66)*glint;
+  float foam=(1.-smoothstep(.02,.14,dep))*(.4+.6*ns(p*8.+t*.3));col=mix(col,toneMapping(vec3(.2,.17,.12)),foam*.65);
+  gl_FragColor=vec4(col,clamp(smoothstep(0.,.25,dep)*.9+fr*.3,0.,.98));
+  #include <encodings_fragment>
+  #include <fog_fragment>
+ }`});
+const wGeo=new T.BufferGeometry(),wDepth=new Float32Array(VN),wPos=new Float32Array(VN*3);{const pos=wPos;for(let j=0;j<=NZ;j++)for(let i=0;i<=NX;i++){const v=VI(i,j);pos[v*3]=i*S;pos[v*3+2]=j*S}
+ wGeo.setAttribute('position',new T.BufferAttribute(pos,3));wGeo.setAttribute('depth',new T.BufferAttribute(wDepth,1));wGeo.setIndex(tGeo.index)}
+const water=new T.Mesh(wGeo,waterMat);water.frustumCulled=false;water.renderOrder=2;scene.add(water);
+/* mirror pass: the scene is drawn upside down from under the water line into a half-size texture, so craters reflect the
+   banks, wire, soldiers and sky. Water sits at slightly different levels in different holes, so the mirror height
+   follows the closest pool in front of you. High graphics only. */
+const rRT=new T.WebGLRenderTarget(16,16,{encoding:T.sRGBEncoding}),rCam=new T.PerspectiveCamera(),rBias=new T.Matrix4().set(.5,0,0,.5,0,.5,0,.5,0,0,.5,.5,0,0,0,1);
+let rL=null,rScanT=0;waterMat.uniforms.refl.value=rRT.texture;
+function poolLevel(c){const f=new T.Vector3(0,0,-1).applyQuaternion(c.quaternion),cx=c.position.x,cz=c.position.z;let best=null,bd=1e9;
+ for(let z=.5;z<D;z+=1)for(let x=Math.max(.5,cx-45);x<Math.min(W,cx+45);x+=1){const dx=x-cx,dz=z-cz,d=Math.hypot(dx,dz);if(d>45||(dx*f.x+dz*f.z)<-d*.3)continue;const wl=waterAt(x,z);if(wl<=heightAt(x,z)+.05)continue;if(d<bd){bd=d;best=wl}}return best}
+function reflPass(c,w,h,dt){const u=waterMat.uniforms;if(opts.gfx<=0||view===2||!c.isPerspectiveCamera){u.useR.value=0;return}
+ rScanT-=dt;if(rScanT<=0){rScanT=.3;const l=poolLevel(c);rL=l===null?null:rL===null||Math.abs(rL-l)>.6?l:rL+(l-rL)*.5}if(rL===null||c.position.y<rL){u.useR.value=0;return}
+ const pr=renderer.getPixelRatio()*.5,rw=Math.max(16,Math.floor(w*pr)),rh=Math.max(16,Math.floor(h*pr));if(rRT.width!==rw||rRT.height!==rh)rRT.setSize(rw,rh);
+ c.updateMatrixWorld();rCam.copy(c);const p=c.position,f=new T.Vector3(0,0,-1).applyQuaternion(c.quaternion),up=new T.Vector3(0,1,0).applyQuaternion(c.quaternion);
+ rCam.position.set(p.x,2*rL-p.y,p.z);rCam.up.set(up.x,-up.y,up.z);rCam.lookAt(p.x+f.x,2*rL-p.y-f.y,p.z+f.z);rCam.updateMatrixWorld();rCam.projectionMatrix.copy(c.projectionMatrix);
+ u.rMat.value.copy(rBias).multiply(rCam.projectionMatrix).multiply(rCam.matrixWorldInverse);
+ water.visible=false;ghost.visible=false;const gr=grass.visible;grass.visible=false;sky.position.copy(rCam.position);const au=renderer.shadowMap.autoUpdate;renderer.shadowMap.autoUpdate=false;
+ const cn=clipPlane.normal.clone(),cc=clipPlane.constant;clipPlane.normal.set(0,1,0);clipPlane.constant=-(rL-.06);
+ renderer.setRenderTarget(rRT);renderer.clear();renderer.render(scene,rCam);renderer.setRenderTarget(null);clipPlane.normal.copy(cn);clipPlane.constant=cc;
+ renderer.shadowMap.autoUpdate=au;water.visible=true;grass.visible=gr;sky.position.copy(c.position);u.useR.value=1}
+function ripple(x,z,str){ripples[ripI=(ripI+1)%RIPN].set(x,z,waterMat.uniforms.t.value,str)}
+const inWater=(x,z)=>waterAt(x,z)>heightAt(x,z)+.02;
+function splash(x,z,big){const wl=waterAt(x,z);ripple(x,z,big?2.5:.6);const n=big?28:4;for(let k=0;k<n;k++){const c=big&&k<12;puff(x+(R()-.5)*(c?.6:big?2:.2),wl+.05,z+(R()-.5)*(c?.6:big?2:.2),{vx:(R()-.5)*(c?1:big?4:1.2),vy:c?9+R()*7:(big?3:1.5)+R()*(big?5:2),vz:(R()-.5)*(c?1:big?4:1.2),g:14,life:big?1.8:.55,s0:big?.3:.08,s1:big?(c?1.6:1):.25,a:.9,color:0xd4d6cf})}
+ if(big)for(let k=0;k<6;k++)puff(x,wl+.5,z,{vx:(R()-.5)*2,vy:1+R()*2,vz:(R()-.5)*2,life:2.5,s0:1,s1:4,a:.4,color:0xdfe2dc});boom(big?'bigsplash':'splash',x,wl,z)}
+const outerM=M({color:0x4d4130,roughness:1});outerM.color.convertSRGBToLinear();const oSh=new T.Shape([new T.Vector2(-450,-450),new T.Vector2(450,-450),new T.Vector2(450,450),new T.Vector2(-450,450)]);oSh.holes.push(new T.Path([new T.Vector2(-W/2+.05,-D/2+.05),new T.Vector2(-W/2+.05,D/2-.05),new T.Vector2(W/2-.05,D/2-.05),new T.Vector2(W/2-.05,-D/2+.05)]));
+// the land beyond the map, with a hole cut out for the battlefield (it used to sit across the whole field at -0.6 and cover the bottoms of trenches and craters)
+const outer=new T.Mesh(new T.ShapeGeometry(oSh),outerM);outer.rotation.x=-Math.PI/2;outer.position.set(W/2,-.6,D/2);outer.receiveShadow=true;scene.add(outer);
 {const hm=M({color:0x55503f,roughness:1});hm.color.convertSRGBToLinear();const r=rng(55);for(let i=0;i<26;i++){const a=i/26*Math.PI*2,dist=150+r()*80,h=8+r()*18;mesh(GEO.sph,hm,60+r()*60,h*2,40+r()*40,W/2+Math.cos(a)*dist,-h*.35,D/2+Math.sin(a)*dist*.8,scene,false)}}
 let tDirty=true,tDirtyT=0,capZ=-99,capDirty=true;
 const COLS=[[.33,.35,.18],[.25,.19,.13],[.34,.26,.17],[.15,.13,.11]];
 function paintTerrain(i0=0,j0=0,i1=NX,j1=NZ){const pos=tGeo.attributes.position.array,col=tGeo.attributes.color.array;
  for(let j=Math.max(0,j0);j<=Math.min(NZ,j1);j++)for(let i=Math.max(0,i0);i<=Math.min(NX,i1);i++){const v=VI(i,j),h=hgt[v];pos[v*3+1]=h;
   const hx=hgt[VI(Math.min(NX,i+1),j)]-hgt[VI(Math.max(0,i-1),j)],hz=hgt[VI(i,Math.min(NZ,j+1))]-hgt[VI(i,Math.max(0,j-1))],slope=Math.hypot(hx,hz)/(2*S);
-  let c=COLS[surf[v]];if(slope>.9)c=c.map((x,k)=>lerp(x,COLS[2][k]*.9,clamp((slope-.9)*1.5,0,1)));if(h<WATER+.25)c=c.map(x=>x*.7);
-  const n=.9+((i*928371+j*1237)%97)/97*.2;col[v*3]=(c[0]*n)**2.2;col[v*3+1]=(c[1]*n)**2.2;col[v*3+2]=(c[2]*n)**2.2}
- tGeo.attributes.position.needsUpdate=true;tGeo.attributes.color.needsUpdate=true;tDirty=true;capDirty=true}
+  let c=COLS[surf[v]];if(slope>.9)c=c.map((x,k)=>lerp(x,COLS[2][k]*.9,clamp((slope-.9)*1.5,0,1)));if(h<wtab[v]+.25)c=c.map(x=>x*.7);
+  const n=.9+((i*928371+j*1237)%97)/97*.2;col[v*3]=(c[0]*n)**2.2;col[v*3+1]=(c[1]*n)**2.2;col[v*3+2]=(c[2]*n)**2.2;const wd=wtab[v]-h;wDepth[v]=wd;wPos[v*3+1]=h+clamp(wd,-.5,99)}
+ wGeo.attributes.depth.needsUpdate=true;wGeo.attributes.position.needsUpdate=true;tGeo.attributes.position.needsUpdate=true;tGeo.attributes.color.needsUpdate=true;tDirty=true;capDirty=true}
 // dig / raise / flatten with a soft round brush (amt > 0 lowers)
 function shape(x,z,r,amt,kind,flatTo){const i0=Math.floor((x-r)/S),i1=Math.ceil((x+r)/S),j0=Math.floor((z-r)/S),j1=Math.ceil((z+r)/S);
  for(let j=Math.max(0,j0);j<=Math.min(NZ,j1);j++)for(let i=Math.max(0,i0);i<=Math.min(NX,i1);i++){const d=Math.hypot(i*S-x,j*S-z);if(d>r)continue;const w=.5+.5*Math.cos(d/r*Math.PI),v=VI(i,j);
-  if(flatTo!==undefined)hgt[v]=lerp(hgt[v],flatTo,Math.min(1,w*amt));else hgt[v]=clamp(hgt[v]-amt*w,BED,14);if(kind!==undefined&&w>.25&&(kind!==2||surf[v]!==3))surf[v]=kind}
+  const wet=wtab[v]>hgt[v];if(flatTo!==undefined)hgt[v]=lerp(hgt[v],flatTo,Math.min(1,w*amt));else hgt[v]=clamp(hgt[v]-amt*w,BED,14);
+  if(mode==='maker')wtab[v]=Math.max(hgt[v]-1,WATER);else if(kind===2&&!wet)wtab[v]=Math.min(wtab[v],hgt[v]-.03);if(kind!==undefined&&w>.25&&(kind!==2||surf[v]!==3))surf[v]=kind}
  paintTerrain(i0-1,j0-1,i1+1,j1+1);hideGrass(x,z,r)}
 function shapeTo(x,z,r,h){const i0=Math.floor((x-r)/S),i1=Math.ceil((x+r)/S),j0=Math.floor((z-r)/S),j1=Math.ceil((z+r)/S);
  for(let j=Math.max(0,j0);j<=Math.min(NZ,j1);j++)for(let i=Math.max(0,i0);i<=Math.min(NX,i1);i++){if(Math.hypot(i*S-x,j*S-z)>r)continue;const v=VI(i,j);if(hgt[v]>h){hgt[v]=h;surf[v]=2}}}
 // the cut-away face for the 2D view
 const capGeo=new T.BufferGeometry(),cap=new T.Mesh(capGeo,MAT.soil);cap.visible=false;scene.add(cap);
+const capWGeo=new T.BufferGeometry(),capW=new T.Mesh(capWGeo,new T.MeshBasicMaterial({color:new T.Color(0x3b3c2c).convertSRGBToLinear(),transparent:true,opacity:.82,depthWrite:false,side:T.DoubleSide}));capW.renderOrder=3;cap.add(capW);
 function buildCap(z){const pos=[],uv=[],idx=[];for(let i=0;i<=NX;i++){const x=i*S,h=heightAt(x,z);pos.push(x,BED-1,z,x,h,z);uv.push(x/6,1-(h-BED+1)/12,x/6,1)}
- for(let i=0;i<NX;i++){const a=i*2;idx.push(a,a+2,a+1,a+1,a+2,a+3)}capGeo.setAttribute('position',new T.Float32BufferAttribute(pos,3));capGeo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));capGeo.setIndex(idx);capGeo.computeVertexNormals();capZ=z;capDirty=false}
+ for(let i=0;i<NX;i++){const a=i*2;idx.push(a,a+2,a+1,a+1,a+2,a+3)}capGeo.setAttribute('position',new T.Float32BufferAttribute(pos,3));capGeo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));capGeo.setIndex(idx);capGeo.computeVertexNormals();
+ const wp=[];for(let i=0;i<=NX;i++){const x=i*S,h=heightAt(x,z);const wl=waterAt(x,z);wp.push(x,h,z+.01,x,Math.max(h,wl),z+.01)}capWGeo.setAttribute('position',new T.Float32BufferAttribute(wp,3));capWGeo.setIndex(idx.slice());capZ=z;capDirty=false}
 // grass tufts
 const GRASSN=5000,grassGeo=(()=>{const g=new T.BufferGeometry(),p=[],u=[],ix=[];for(let k=0;k<2;k++){const a=k*Math.PI/2,cx=Math.cos(a)*.25,cz=Math.sin(a)*.25,b=p.length/3;p.push(-cx,0,-cz,cx,0,cz,cx,.42,cz,-cx,.42,-cz);u.push(0,0,1,0,1,1,0,1);ix.push(b,b+1,b+2,b,b+2,b+3)}
  g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('uv',new T.Float32BufferAttribute(u,2));g.setIndex(ix);g.computeVertexNormals();return g})();
@@ -291,6 +359,7 @@ function gen(seed){const r=rng(seed),hs=seed*7919|0;clearPieces();
  const vn=(x,z)=>{const xi=Math.floor(x),zi=Math.floor(z),xf=x-xi,zf=z-zi,u=xf*xf*(3-2*xf),v=zf*zf*(3-2*zf),a=hash(xi,zi),b=hash(xi+1,zi),c=hash(xi,zi+1),d=hash(xi+1,zi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v};
  for(let j=0;j<=NZ;j++)for(let i=0;i<=NX;i++){const x=i*S,z=j*S,n=vn(x/26,z/26)*.6+vn(x/10,z/10)*.3+vn(x/4,z/4)*.1,v=VI(i,j);hgt[v]=(n-.5)*4.5;
   const nm=x>30&&x<130;surf[v]=nm&&hash(i*3,j*7)<.55+.35*Math.min(1,Math.min(x-30,130-x)/20)?1:0}
+ const pre=hgt.slice();
  for(let k=0;k<26;k++){const x=32+r()*96,z=3+r()*42,rad=1.6+r()*2.6;shape(x,z,rad,rad*.55,1)}
  // each side's trench: zig-zag, 2 m deep with a firing step, sandbag parapet facing the enemy, duckboards and exit steps
  const base=hgt.slice();
@@ -299,6 +368,7 @@ function gen(seed){const r=rng(seed),hs=seed*7919|0;clearPieces();
   for(let z=1.5;z<D-1;z+=1.2){const lip=xo(z)+dir*1.9,g=heightAt(lip,z);addPiece('bag',lip,g+.17,z,.5,.32,.95);if(Math.floor(z/1.2)%2)addPiece('bag',lip,g+.47,z+.3,.5,.32,.95);
    if(Math.floor(z)%3===0)addPiece('timber',xo(z),heightAt(xo(z),z)+.04,z,.9,.06,1.1)}
   for(let z=6;z<D-3;z+=11){const fl=heightAt(xo(z),z);for(let s=0;s<3;s++){const sy=.3+s*.32;addPiece('timber',xo(z)+dir*(.3+s*.45),fl+sy/2,z,.45,sy,1.2)}}}
+ for(let v=0;v<VN;v++){wtab[v]=Math.max(pre[v]-1,WATER);if(hgt[v]<base[v]-.3)wtab[v]=Math.min(wtab[v],hgt[v]-.03)}
  for(const wx of[36,124])for(let z=1;z<D-1;z+=2.2){if(r()<.2)continue;const x=wx+(r()-.5)*1.5;addPiece('wire',x,heightAt(x,z)+.5,z,.6,1,2.1)}
  for(let k=0;k<16;k++){const x=6+r()*148,z=2+r()*44;if(FX.some(f=>Math.abs(f-x)<4&&Math.abs(FZ-z)<4)||Math.abs(x-18)<4||Math.abs(x-140)<4)continue;const h=3+r()*5;addPiece('tree',x,heightAt(x,z)+h/2-.2,z,.4,h,.4)}
  for(let k=0;k<5;k++){const x=44+r()*72,z0=4+r()*30,len=3+Math.floor(r()*5),alongX=r()<.5;for(let s=0;s<len;s++){const x1=alongX?x+s:x,z1=alongX?z0:z0+s,ht=.6+r()*2.6;if(r()<.2)continue;
@@ -306,7 +376,7 @@ function gen(seed){const r=rng(seed),hs=seed*7919|0;clearPieces();
  makeFlags();paintTerrain();placeGrass()}
 function makeFlags(){for(const f of flags)scene.remove(f.obj);flags=FX.map((x,i)=>{const o=new T.Group();mesh(GEO.cyl,MAT.pole,.08,7,.08,0,3.5,0,o);const cl=new T.Mesh(new T.PlaneGeometry(1.5,.95,8,4),MAT.flag[2]);cl.position.set(.78,6,0);cl.castShadow=true;o.add(cl);scene.add(o);
  return{x,z:FZ,y:0,label:'ABCDE'[i],owner:i===0?0:i===4?1:-1,p:i===0?1:i===4?-1:0,obj:o,cloth:cl}});for(const f of flags)f.y=heightAt(f.x,f.z)}
-function flat(){clearPieces();hgt.fill(0);surf.fill(0);makeFlags();paintTerrain();placeGrass()}
+function flat(){clearPieces();hgt.fill(0);surf.fill(0);resetWater();makeFlags();paintTerrain();placeGrass()}
 
 /* ================= RAYS ================= */
 const norm=v=>{const l=Math.hypot(...v)||1;return v.map(c=>c/l)};
@@ -327,8 +397,8 @@ function ensureAudio(){if(!ac){try{ac=new(window.AudioContext||window.webkitAudi
 const earVol=(x,y,z)=>1/(1+Math.hypot(x-cam.position.x,y-cam.position.y,z-cam.position.z)/14);
 function boom(kind,x,y,z){if(!ac||ac.state!=='running'||sndBudget>18)return;sndBudget++;const v=x===undefined?1:earVol(x,y,z);if(v<.03)return;
  try{const t=ac.currentTime,src=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();src.buffer=noise;
-  const P={musket:[700,.45,.6],smg:[1800,.12,.22],carbine:[1100,.3,.4],nade:[260,1.4,1],art:[160,2.2,1.1],dig:[500,.14,.18],hit:[3000,.04,.12],far:[120,1.8,.25]}[kind];
-  f.type=kind==='nade'||kind==='art'||kind==='far'?'lowpass':'bandpass';f.frequency.value=P[0];f.Q.value=.7;g.gain.setValueAtTime(P[2]*v,t);g.gain.exponentialRampToValueAtTime(.001,t+P[1]);
+  const P={musket:[700,.45,.6],smg:[1800,.12,.22],carbine:[1100,.3,.4],nade:[260,1.4,1],art:[160,2.2,1.1],dig:[500,.14,.18],hit:[3000,.04,.12],far:[120,1.8,.25],splash:[1700,.18,.18],bigsplash:[600,1.2,.7]}[kind];
+  f.type=kind==='nade'||kind==='art'||kind==='far'||kind==='bigsplash'?'lowpass':'bandpass';f.frequency.value=P[0];f.Q.value=.7;g.gain.setValueAtTime(P[2]*v,t);g.gain.exponentialRampToValueAtTime(.001,t+P[1]);
   src.connect(f).connect(g).connect(ac.destination);src.start(t,Math.random());src.stop(t+P[1]+.05);
   if(kind==='nade'||kind==='art'){const o=ac.createOscillator(),g2=ac.createGain();o.frequency.setValueAtTime(80,t);o.frequency.exponentialRampToValueAtTime(25,t+.8);g2.gain.setValueAtTime(.7*v,t);g2.gain.exponentialRampToValueAtTime(.001,t+.9);o.connect(g2).connect(ac.destination);o.start(t);o.stop(t+.9)}}catch(_){}}
 function tone(f0,f1,d,vol,type){if(!ac||ac.state!=='running')return;try{const t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+d);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d)}catch(_){}}
@@ -339,11 +409,14 @@ function groundUnder(e){let g=heightAt(e.x,e.z);for(const p of near(e.x,e.z,1)){
 function blocked(e,x,z){if(x<.4||z<.4||x>W-.4||z>D-.4)return true;const gh=heightAt(x,z),here=heightAt(e.x,e.z),dist=Math.hypot(x-e.x,z-e.z)||1e-3;
  if(gh>e.y+STEP)return true;if(gh>e.y+.05&&(gh-here)/dist>1.7)return true;
  for(const p of near(x,z,1)){if(p.soft)continue;if(x+.28>p.min[0]&&x-.28<p.max[0]&&z+.28>p.min[2]&&z-.28<p.max[2]&&p.min[1]<e.y+1.75&&p.max[1]>e.y+STEP)return true}return false}
+function wade(e,dt){const dpt=waterAt(e.x,e.z)-e.y;if(dpt<=.02)return 1;e.wadeT=(e.wadeT||0)-dt;if(e.wadeT<=0&&Math.hypot(e.vx,e.vz)>.6){e.wadeT=.45;ripple(e.x,e.z,.5);if(R()<.35)boom('splash',e.x,e.y+dpt,e.z)}return clamp(1-dpt*.55,.4,1)}
 function physics(e,dt){e.bump=false;const n=Math.max(1,Math.ceil(Math.hypot(e.vx,e.vz)*dt/.2)),h=dt/n;
  for(let k=0;k<n;k++){const nx=e.x+e.vx*h;if(!blocked(e,nx,e.z))e.x=nx;else{e.vx*=.2;e.bump=true}const nz=e.z+e.vz*h;if(!blocked(e,e.x,nz))e.z=nz;else{e.vz*=.2;e.bump=true}}
  if(!e.climb)e.vy=Math.max(-30,e.vy-24*dt);e.y+=e.vy*dt;
  if(e.vy>0)for(const p of near(e.x,e.z,1)){if(p.soft)continue;if(e.x+.28>p.min[0]&&e.x-.28<p.max[0]&&e.z+.28>p.min[2]&&e.z-.28<p.max[2]&&p.min[1]>e.y+.9&&p.min[1]<e.y+1.8){e.y=p.min[1]-1.8;e.vy=0}}
- const g=groundUnder(e);if(e.y<=g){e.y=g;if(e.vy<0)e.vy=0;e.ground=true}else e.ground=e.y-g<.06}
+ const g=groundUnder(e);if(e.y<=g){e.y=g;if(e.vy<0)e.vy=0;e.ground=true}else e.ground=e.y-g<.06;
+ // deep water: tread water with your head and shoulders out instead of walking along the bottom
+ const sw=waterAt(e.x,e.z)-1.3;if(sw>g&&e.y<=sw+.05){if(e.y<sw){e.y+=Math.min(sw-e.y,dt*3);if(e.vy<0)e.vy=0}e.ground=true}}
 const inSoft=(e,type)=>{for(const p of near(e.x,e.z,1))if(p.type===type&&e.x>p.min[0]-.2&&e.x<p.max[0]+.2&&e.z>p.min[2]-.2&&e.z<p.max[2]+.2&&e.y<p.max[1]&&e.y+1.7>p.min[1])return true;return false};
 
 /* ================= WEAPONS (real WW1 guns, part by part) ================= */
@@ -458,6 +531,7 @@ function fire(s,dir,flat){const g=CLS[s.cls].gun;if(!s.alive||s.reloadT>0||s.fir
  s.mag--;s.fireT=g.rate;s.flash=.05;const mv=Math.hypot(s.vx,s.vz)>1.2,sp=s===me?(adsK>.6?g.ads:g.hip)*(s.ground?1:3)+(mv?.012:0):g.spread*(s.ground?1:2.5)*(mv?1.5:1);
  const d=norm([dir[0]+(R()-.5)*2*sp,dir[1]+(R()-.5)*2*sp,flat?0:dir[2]+(R()-.5)*2*sp]),o=flat?[s.x,s.y+1.42,s.z]:eye(s),r=shoot(s,o,d,g.range,flat),m=muzzle(s,d);
  tracers.push({a:m,b:r.pt,t:.05});puff(m[0],m[1],m[2],{vy:.6,life:.7,s0:.15,s1:.7,a:.35,color:0xbdb6aa});
+ if(r.pt&&inWater(r.pt[0],r.pt[2])&&waterAt(r.pt[0],r.pt[2])>r.pt[1]){let k=0,q=r.pt.slice();while(k++<80&&waterAt(q[0],q[2])>q[1]){q[0]-=d[0]*.1;q[1]-=d[1]*.1;q[2]-=d[2]*.1}splash(q[0],q[2],false)}
  if(s===me||Math.hypot(s.x-cam.position.x,s.z-cam.position.z)<25){flashLight.position.set(...m);flashT=.05}
  if(r.hit){damage(r.hit,g.dmg*(r.head?1.6:1),s,gunName(s)+(r.head?' HEADSHOT':''));puff(r.pt[0],r.pt[1],r.pt[2],{life:.4,s0:.1,s1:.4,a:.4,color:0x9a8f80})}
  else if(r.world){const c=r.world.ground?0x5a4632:r.world.piece.type==='bag'?0xc8b48a:r.world.piece.type==='brick'?0x9a6050:0x7a6650;for(let k=0;k<3;k++)puff(r.pt[0],r.pt[1],r.pt[2],{vx:(R()-.5)*2,vy:1+R()*2,vz:(R()-.5)*2,g:6,life:.6,s0:.08,s1:.25,a:.9,color:c})}
@@ -469,6 +543,7 @@ function throwNade(s,dir){if(s.nades<=0||!s.alive)return;s.nades--;const o=eye(s
 function explode(x,y,z,rad,dmg,owner,kind){
  if(mode!=='maker'){shape(x,z,rad*.95,rad*.5,3);for(const p of near(x,z,rad+1))if(!p.dead&&!(p.tough&&kind!=='art')&&Math.hypot(p.c[0]-x,p.c[1]-y,p.c[2]-z)<rad+.6)removePiece(p)}
  for(const s of soldiers){if(!s.alive||(owner&&s!==owner&&s.team===owner.team))continue;const d=Math.hypot(s.x-x,s.y+.9-y,s.z-z);if(d<rad+2){const k=1-d/(rad+2),kx=(s.x-x)/(d||1)*7*k,kz=(s.z-z)/(d||1)*7*k;damage(s,dmg*k,owner,kind==='art'?'Artillery':'Grenade',kx,kz)}}
+ if(inWater(x,z)&&y<waterAt(x,z)+1)splash(x,z,true);
  puff(x,y+.5,z,{life:.25,s0:1,s1:rad*2.4,a:1,add:1,color:0xffb050});boomLight.position.set(x,y+2,z);boomT=.25;
  for(let k=0;k<14;k++)puff(x+(R()-.5)*rad,y+.3,z+(R()-.5)*rad,{vx:(R()-.5)*3,vy:2+R()*5,vz:(R()-.5)*3,life:2.5+R()*2,s0:1,s1:3.5+rad,a:.55,color:k%3?0x5d564c:0x3a342c});
  for(let k=0;k<18;k++)puff(x,y+.3,z,{vx:(R()-.5)*12,vy:5+R()*9,vz:(R()-.5)*12,g:16,life:1.6,s0:.15,s1:.25,a:1,color:0x3b2e22});
@@ -501,7 +576,7 @@ function botUpdate(s,dt){s.think-=dt;if(s.think<=0){s.think=.35+R()*.25;botThink
   if(d>2){mx=dx/d;mz=dz/d;s.yaw=Math.atan2(-mx,-mz)}else{s.digIn-=dt;if(s.digIn<=0){s.digIn=7+R()*8;if(s.role==='def'||R()<.4)digIn(s)}}}
  if(s.mag===0)reload(s);
  if(inSoft(s,'wire')){sp*=.3;s.wireT=(s.wireT||0)+dt;if(s.wireT>1){s.wireT=0;damage(s,4,null,'Barbed wire')}}
- const k=Math.min(1,dt*(s.ground?10:2));s.vx+=(mx*sp-s.vx)*k;s.vz+=(mz*sp-s.vz)*k;const ox=s.x,oz=s.z;physics(s,dt);
+ sp*=wade(s,dt);const k=Math.min(1,dt*(s.ground?10:2));s.vx+=(mx*sp-s.vx)*k;s.vz+=(mz*sp-s.vz)*k;const ox=s.x,oz=s.z;physics(s,dt);
  if(s.bump&&s.ground&&(mx||mz)){const fx=s.x+mx*.9,fz=s.z+mz*.9,gh=heightAt(fx,fz);
   if(gh>s.y+1){s.digT+=dt;if(s.digT>.5){s.digT=0;shape(fx,fz,.85,.45,2);boom('dig',fx,gh,fz)}}else s.vy=6.4;
   for(const p of near(fx,fz,.6))if(!p.soft&&!p.tough&&p.type!=='tree'&&p.max[1]>s.y+STEP&&p.min[1]<s.y+1.8&&Math.hypot(p.c[0]-fx,p.c[2]-fz)<.9&&R()<dt*1.5)removePiece(p)}
@@ -568,7 +643,7 @@ function playerUpdate(dt){const c=CLS[me.cls],live=me.alive&&mode!=='deploy';let
  if(live){if(view===2){s=(keys.KeyD?1:0)-(keys.KeyA?1:0)+jx;const zz=(keys.KeyS?1:0)-(keys.KeyW?1:0)+jy;me.vz+=(zz*2.5-me.vz)*Math.min(1,dt*10)}
   else{f=(keys.KeyW?1:0)-(keys.KeyS?1:0)-jy;s=(keys.KeyD?1:0)-(keys.KeyA?1:0)+jx}
   if(keys.ArrowLeft)me.yaw+=dt*2.2;if(keys.ArrowRight)me.yaw-=dt*2.2;if(keys.ArrowUp)me.pitch=Math.min(1.45,me.pitch+dt*1.6);if(keys.ArrowDown)me.pitch=Math.max(-1.45,me.pitch-dt*1.6)}
- const l=Math.hypot(f,s);if(l>1){f/=l;s/=l}const sprint=(keys.ShiftLeft||keys.ShiftRight)&&mode!=='maker'&&adsK<.3,sp=mode==='maker'?12:c.sp*(sprint?1.4:1)*(inSoft(me,'wire')?.3:1)*(1-.45*adsK);
+ const l=Math.hypot(f,s);if(l>1){f/=l;s/=l}const sprint=(keys.ShiftLeft||keys.ShiftRight)&&mode!=='maker'&&adsK<.3,sp=mode==='maker'?12:c.sp*(sprint?1.4:1)*(inSoft(me,'wire')?.3:1)*(1-.45*adsK)*(mode==='maker'?1:wade(me,dt));
  let vx,vz;if(view===2){vx=s*sp;vz=me.vz}else{const fx=-Math.sin(me.yaw),fz=-Math.cos(me.yaw),rx=Math.cos(me.yaw),rz=-Math.sin(me.yaw);vx=(fx*f+rx*s)*sp;vz=(fz*f+rz*s)*sp}
  const k=Math.min(1,dt*(me.ground||mode==='maker'?12:4));me.vx+=(vx-me.vx)*k;if(view!==2)me.vz+=(vz-me.vz)*k;
  const jump=live&&(keys.Space||tJump),ladder=inSoft(me,'ladder');me.climb=false;
@@ -661,7 +736,7 @@ function loadMapCode(code){if(!code||!code.startsWith('WR2:'))return false;const
  for(let i=0;i<s.length;i+=2){const v=s.charCodeAt(i),n=s.charCodeAt(i+1);if(p+n>q.length)return false;q.fill(v,p,p+n);p+=n}if(p!==q.length)return false;
  const P=JSON.parse(atob(pp||'W10=')),types=['bag','timber','steel','brick','tree','wire','ladder'];clearPieces();
  for(let i=0;i<VN;i++){hgt[i]=q[i]/10+BED;surf[i]=Math.min(3,q[VN+i])}for(const r of P){if(Array.isArray(r)&&types.includes(r[0])&&r.length===7&&r.slice(1).every(Number.isFinite))addPiece(r[0],r[1],r[2],r[3],clamp(r[4],.01,8),clamp(r[5],.01,10),clamp(r[6],.01,8))}
- makeFlags();paintTerrain();placeGrass();return true}
+ resetWater();makeFlags();paintTerrain();placeGrass();return true}
 $('#bMaker').onclick=openMaker;
 $('#mSave').onclick=()=>{try{localStorage.setItem('wr2-map',mapCode());say('Map saved! Pick "My map" in the menu to fight on it.')}catch(_){say("Couldn't save: storage is full or blocked")}};
 $('#mPlay').onclick=()=>{$('#mSave').click();opts.map='mine';saveOpts();startBattle()};
@@ -731,7 +806,7 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;sndBudget=Ma
   if(mode==='deploy'&&deployT>0){deployT-=dt;renderDeployBtn()}
   if(mode!=='maker'){flagTick(dt);artTick(dt)}
   for(const n of nades){n.vy-=20*dt;const ox=n.x,oy=n.y,oz=n.z;n.x+=n.vx*dt;n.y+=n.vy*dt;n.z+=n.vz*dt;const g=heightAt(n.x,n.z);
-   if(n.y<g+.05){n.y=g+.05;n.vy=Math.abs(n.vy)*.3;n.vx*=.55;n.vz*=.55}for(const p of near(n.x,n.z,.5))if(!p.soft&&n.x>p.min[0]&&n.x<p.max[0]&&n.z>p.min[2]&&n.z<p.max[2]&&n.y>p.min[1]&&n.y<p.max[1]){n.x=ox;n.y=oy;n.z=oz;n.vx*=-.4;n.vz*=-.4;n.vy*=.4}
+   if(!n.wet&&inWater(n.x,n.z)&&n.y<waterAt(n.x,n.z)){n.wet=1;splash(n.x,n.z,false);n.vx*=.3;n.vz*=.3;n.vy*=.2}if(n.y<g+.05){n.y=g+.05;n.vy=Math.abs(n.vy)*.3;n.vx*=.55;n.vz*=.55}for(const p of near(n.x,n.z,.5))if(!p.soft&&n.x>p.min[0]&&n.x<p.max[0]&&n.z>p.min[2]&&n.z<p.max[2]&&n.y>p.min[1]&&n.y<p.max[1]){n.x=ox;n.y=oy;n.z=oz;n.vx*=-.4;n.vz*=-.4;n.vy*=.4}
    n.m.position.set(n.x,n.y,n.z);n.m.rotation.x+=dt*8;n.t-=dt;if(n.t<=0){n.done=1;scene.remove(n.m);explode(n.x,n.y,n.z,2.6,110,n.owner,'nade')}}nades=nades.filter(n=>!n.done)}
  for(const s of soldiers)poseSoldier(s,dt);if(me&&me.obj&&((view===1&&mode==='battle')||mode==='maker'))me.obj.visible=false;
  fx(dt);flagVisuals(now);
@@ -741,10 +816,12 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;sndBudget=Ma
  if(tDirty){tDirtyT-=dt;if(tDirtyT<=0){tGeo.computeVertexNormals();tDirty=false;tDirtyT=.08}}
  const w=innerWidth,h=innerHeight,pr=renderer.getPixelRatio();if(renderer.domElement.width!==Math.floor(w*pr)||renderer.domElement.height!==Math.floor(h*pr))renderer.setSize(w,h,false);
  const ac2=camera(w,h,now);sky.position.copy(cam.position);
+ waterMat.uniforms.t.value=now/1000;waterMat.uniforms.sunDir.value.copy(SUNDIR);
  const playing=me&&(mode==='battle'||mode==='maker'),focus=playing?[me.x,me.y,me.z]:[W/2,0,D/2];sun.target.position.set(...focus);sun.position.set(focus[0]+SUNDIR.x*90,focus[1]+SUNDIR.y*90,focus[2]+SUNDIR.z*90);
  scene.fog=view===2&&playing?null:fogObj;
  if(playing&&me.alive&&(tool!==0||mode==='maker')){if(tool===2&&me.cls==='eng'&&mode==='battle'){const L=bpList();ghostBoxes(L?L.map(boxOf):[],me.sup>=PREFABS[bpi].cost?0x66ff66:0xff5544)}
   else{const a=aimInfo();ghostBoxes(a.pt?[a.piece?{min:a.piece.min,max:a.piece.max}:{min:[a.pt[0]-.4,a.pt[1]-.05,a.pt[2]-.4],max:[a.pt[0]+.4,a.pt[1]+.05,a.pt[2]+.4]}]:[],0xffffff)}}else ghost.visible=false;
+ const gv=ghost.visible;reflPass(ac2,w,h,dt);ghost.visible=gv;
  renderer.clear();renderer.render(scene,ac2);
  if(view===1&&mode==='battle'&&me.alive&&vmRig){vmCam.aspect=w/h;vmCam.updateProjectionMatrix();const bob=Math.sin(me.ph*1.3)*.012*Math.min(1,Math.hypot(me.vx,me.vz)/3);
   vmRig.position.set(lerp(.15,0,adsK),lerp(-.14+bob,-.031,adsK)-(me.reloadT>0?.1:0),lerp(-.4,-.45,adsK)+kick*1.2);vmRig.rotation.set(kick*(2-adsK)+(me.reloadT>0?-.6:0),lerp(.07,0,adsK),lerp(.05,0,adsK));vmRig.userData.fl.visible=me.flash>0;
@@ -754,7 +831,7 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;sndBudget=Ma
 menuSegs();setHelp();view=opts.view;gen((R()*1e9|0)+1);me=mkSoldier(0,'musket',false,'You');applyGfx();
 requestAnimationFrame(frame);
 if(window.WR_TEST_HOOK)window.WR_TEST_HOOK({get me(){return me},get soldiers(){return soldiers},get flags(){return flags},get tickets(){return tickets},get mode(){return mode},get pieces(){return pieces},keys,setView,startBattle,
- setPrimary:v=>{primary=v;fired=false},altAction,setTool:t=>{tool=t},setBp:b=>{bpi=b},explode,heightAt,setOpts:o=>Object.assign(opts,o),cursor,openMaker,mapCode,loadMapCode,throwNade,aimInfo,setMaker:t=>{makerTool=t},setAds:v=>{ads=v}});
+ setPrimary:v=>{primary=v;fired=false},altAction,setTool:t=>{tool=t},setBp:b=>{bpi=b},explode,heightAt,waterAt,setOpts:o=>Object.assign(opts,o),cursor,openMaker,mapCode,loadMapCode,throwNade,aimInfo,setMaker:t=>{makerTool=t},setAds:v=>{ads=v}});
 }
 }
 </script>
