@@ -94,6 +94,21 @@ function cube(ox,oy,top,side,sz){const k=sz/16;
  face(top,[20/16,-10/16,20/16,10/16,4,14],0);face(side,[20/16,10/16,0,22/16,4,14],.22);face(side,[20/16,-10/16,0,22/16,24,24],.42);g.setTransform(1,0,0,1,0,0)}
 cube(18,52,grassTop,grassSide,20);cube(62,46,crap,crap,20);cube(104,54,gold,gold,18);
 
+// POP when you point at a game. Browsers keep sound off until you've clicked or tapped the page once,
+// so the very first hover can be silent; after that every hover pops.
+let ac=null;
+const wake=()=>{try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume().catch(()=>{})}catch(_){}};
+function pop(){if(!ac||ac.state!=='running')return;const t=ac.currentTime,o=ac.createOscillator(),v=ac.createGain();
+ o.type='sine';o.frequency.setValueAtTime(380+Math.random()*80,t);o.frequency.exponentialRampToValueAtTime(1100,t+.05);
+ v.gain.setValueAtTime(.0001,t);v.gain.exponentialRampToValueAtTime(.3,t+.008);v.gain.exponentialRampToValueAtTime(.0001,t+.09);
+ o.connect(v).connect(ac.destination);o.start(t);o.stop(t+.1)}
+['pointerdown','keydown','touchstart'].forEach(e=>addEventListener(e,wake,{passive:true}));
+addEventListener('pointermove',wake,{once:true,passive:true});
+document.querySelectorAll('a.card').forEach(a=>{
+ a.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'){wake();pop()}});
+ a.addEventListener('focus',pop);
+ a.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'){wake();setTimeout(pop,0)}})});
+
 // who's playing right now (the same server runs both games)
 fetch('https://us-ewr-fb65e743.colyseus.cloud/api/online',{cache:'no-store'}).then(r=>r.json()).then(n=>{
  let bb=0;for(const[k,v]of Object.entries(n))if(k!=='minecrap')bb+=+v||0;const mc=+n.minecrap||0;
