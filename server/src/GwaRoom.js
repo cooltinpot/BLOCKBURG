@@ -23,7 +23,7 @@ async function freeCode() {
   throw new Error('No free room codes');
 }
 const cleanName = (s) => String(s || '').replace(/[^\w .-]/g, '').trim().slice(0, 16) || 'Player';
-const cleanLook = (l) => Array.isArray(l) && (l.length === 4 || l.length === 5) && l.every(v => Number.isInteger(v) && v >= -1 && v <= 0xffffff) ? l : null;
+const cleanLook = (l) => Array.isArray(l) && l.length >= 4 && l.length <= 6 && l.every(v => Number.isInteger(v) && v >= -1 && v <= 0xffffff) ? l : null;
 const okState = (s) => Array.isArray(s) && s.length <= 12 && s.every(v => typeof v === 'number' && Number.isFinite(v));
 
 export class GwaRoom extends Room {
@@ -34,7 +34,7 @@ export class GwaRoom extends Room {
     this.roomId = await freeCode();
     this.pub = options.pub === true;
     this.names = new Map();      // sessionId -> name
-    this.outfits = new Map();    // sessionId -> [skin, shirt, pants, hair] colours, then which face
+    this.outfits = new Map();    // sessionId -> [skin, shirt, pants, hair] colours, then the layer (jacket, hoodie...) and its colour
     this.looks = new Map();      // sessionId -> where they were last
     this.born = Date.now();
     await this.setMetadata({ game: 'gwa', pub: this.pub });
