@@ -489,8 +489,13 @@ function faceFor(p){const st=p.state;if(st==='out')return'dead';if(st==='down')r
    shrugging, and idle life when standing still: breathing, shifting weight, looking around (and at you when you're close),
    checking their phone, stretching, checking the time, waving, and dancing on the beach or at night. Cops stand hands-on-belt. */
 const sm=(o,v,k,dt)=>o+(v-o)*Math.min(1,dt*k);
-const IDLES=['phone','phone','stretch','watch','wave','dance','tap'];
-function animPerson(p,dt){const m=p.m,sp=Math.hypot(p.vx,p.vz),A=p.anim||(p.anim={t:R()*9,idle:null,idleT:3+R()*8,hy:0,hp:0,hyT:0,tyaw:0,tpit:0,land:0,air:false,lastYaw:p.yaw,flinch:0,lastHp:p.hp});
+const IDLES=['phone','stretch','watch','wave','dance','tap','pushups','jacks','guitar','yawn','scratch','crossed','hips','flex','karate','tpose','floss','hotdog','sneeze','chicken','headbang','worm','map','sing'];
+// every person gets their own personality: a way of walking, a way of panicking, and 3 favourite things to do while standing around
+const WALKS=['normal','normal','normal','swagger','strut','sneaky','power','skip','robot','hunch','pockets','texting','zombie','limp','jogger','bouncy','proud'];
+const WALK_SPEED={sneaky:.85,power:1.7,skip:1.7,robot:1.1,hunch:.7,zombie:.8,limp:.8,jogger:3.3,texting:.85,bouncy:1.3,proud:1.1};
+const PANICS=['arms','arms','naruto','cover','flail','scream'];
+function personality(p){if(p.style)return;p.style=p.kind==='ped'?pick(WALKS):'normal';p.panicStyle=pick(PANICS);p.favs=[pick(IDLES),pick(IDLES),pick(IDLES)];if(p.kind==='ped'&&R()<.5)p.favs.push('phone')}
+function animPerson(p,dt){personality(p);const m=p.m,sp=Math.hypot(p.vx,p.vz),A=p.anim||(p.anim={t:R()*9,idle:null,idleT:3+R()*8,hy:0,hp:0,hyT:0,tyaw:0,tpit:0,land:0,air:false,lastYaw:p.yaw,flinch:0,lastHp:p.hp});
  const fm=faceMats[faceFor(p)];if(m.face.material!==fm)m.face.material=fm;
  A.t+=dt;const t=A.t,b=m.body,to=m.torso,hd=m.head,aL=m.armL,aR=m.armR,lL=m.legL,lR=m.legR;
  if(p.hp<A.lastHp)A.flinch=.35;A.lastHp=p.hp;A.flinch=Math.max(0,A.flinch-dt);
@@ -502,7 +507,7 @@ function animPerson(p,dt){const m=p.m,sp=Math.hypot(p.vx,p.vz),A=p.anim||(p.anim
   aL.rotation.z=sm(aL.rotation.z,out?-1.3:-.4,6,dt);aR.rotation.z=sm(aR.rotation.z,out?1.3:.4,6,dt);aL.rotation.x=sm(aL.rotation.x,out?-.2:-1.2,6,dt);aR.rotation.x=sm(aR.rotation.x,out?-.4:-1.2,6,dt);
   lL.rotation.x=sm(lL.rotation.x,out?-.1:.2,6,dt);lR.rotation.x=sm(lR.rotation.x,out?.25:-.3,6,dt);hd.rotation.set(out?0:Math.sin(t*9)*.15,out?.5:0,0);
   if(!out&&p.t<.5&&p.t>0){const u=1-p.t/.5;b.rotation.x=-Math.PI/2*(1-u);b.position.y=.22*(1-u)}return}
- b.rotation.x=sm(b.rotation.x,0,10,dt);b.rotation.z=sm(b.rotation.z,0,10,dt);
+ let bx=0,bz=0,by=0;lL.rotation.z=lR.rotation.z=0;
  const air=p.ground===false,run=sp>5.2,panic=p.kind==='ped'&&p.ai&&p.ai.flee>0;
  if(A.air&&!air)A.land=.16;A.air=air;A.land=Math.max(0,A.land-dt);
  // turning on the spot shuffles the feet
@@ -515,7 +520,29 @@ function animPerson(p,dt){const m=p.m,sp=Math.hypot(p.vx,p.vz),A=p.anim||(p.anim
  tl=(run?.28:.07)*moveK;tz=s*.05*k;ty=-s*.1*k;
  aLx=-s*(run?1.25:.7)*k;aRx=s*(run?1.25:.7)*k;if(run){aLz=-.18;aRz=.18}
  hx=Math.sin(p.phase*2)*.035*k;
- if(panic){const f=t*16;aLx=-2.8+Math.sin(f)*.35;aRx=-2.8+Math.cos(f)*.35;aLz=-.35;aRz=.35;tl=.12;hyw=Math.sin(t*7)*.4}
+ // how they walk
+ if(!panic&&!air&&sp>.3&&!p.aim&&!(p.punchT>0)){const st=p.style,f=p.phase;
+  if(st==='swagger'){tz=s*.16;ty=-s*.2;aLz=-.32;aRz=.32;aLx*=1.3;aRx*=1.3;hx=-.12;hyw=s*.12;bob*=.6}
+  else if(st==='strut'){tz=s*.12;ty=s*.18;aLx*=.4;aRx*=.4;aLz=-.15;aRz=.15;hx=-.22;lL.rotation.z=.12*s;lR.rotation.z=.12*s}
+  else if(st==='sneaky'){tl=.45;by=-.18;aLx=-.9+s*.2;aRx=-.9-s*.2;aLz=-.3;aRz=.3;hyw=Math.sin(t*3)*.7;hx=-.25;lL.rotation.x*=.6;lR.rotation.x*=.6}
+  else if(st==='power'){aLx=-s*1.5;aRx=s*1.5;aLz=-.35;aRz=.35;tl=.15;bob*=1.3}
+  else if(st==='skip'){const hop=Math.abs(Math.sin(f));bob=hop*.22;aLx=-1.2-s*1.1;aRx=-1.2+s*1.1;lL.rotation.x=s*.9-.3;lR.rotation.x=-s*.9-.3}
+  else if(st==='robot'){const q=Math.round(s*2)/2;lL.rotation.x=q*.6;lR.rotation.x=-q*.6;aLx=-1.57+q*.15;aRx=-1.57-q*.15;aLz=aRz=0;tz=0;ty=0;bob=0;hyw=Math.round(Math.sin(t*1.5))*.5;hx=0}
+  else if(st==='hunch'){tl=.55;by=-.08;aLx=.55;aRx=-.3+s*.2;aRz=.15;hx=-.4;bob*=.4;lL.rotation.x*=.5;lR.rotation.x*=.5}
+  else if(st==='pockets'){aLx=.2;aRx=.2;aLz=-.02;aRz=.02;hx=Math.sin(f*2)*.08;tz=s*.08;ty=0}
+  else if(st==='texting'){aLx=-1.6;aLz=.4;aRx=-1.3;aRz=-.35;hx=.38;m.phone.visible=true;tl=.12}
+  else if(st==='zombie'){aLx=-1.5+Math.sin(t*2)*.1;aRx=-1.5+Math.cos(t*2)*.1;aLz=aRz=0;tz=Math.sin(f*.5)*.2;hx=.3;hyw=.3;bob*=.5;lL.rotation.x*=.7;lR.rotation.x*=.7}
+  else if(st==='limp'){lR.rotation.x*=.25;by=-Math.max(0,s)*.08;tz=Math.max(0,s)*.15;aRz=.25}
+  else if(st==='jogger'){aLx=-s*1.1-.9;aRx=s*1.1-.9;aLz=-.2;aRz=.2;tl=.18;bob*=1.4}
+  else if(st==='bouncy'){bob=Math.abs(c2)*.16;hx=Math.sin(f*2)*.12;aLz=-.25;aRz=.25}
+  else if(st==='proud'){tl=-.12;hx=-.3;aLz=-.22;aRz=.22;aLx*=.8;aRx*=.8;ty=0}}
+ // how they panic
+ if(panic){const f=t*16,ps=p.panicStyle;
+  if(ps==='naruto'){aLx=1.35;aRx=1.35;aLz=-.15;aRz=.15;tl=.5;hx=-.35}
+  else if(ps==='cover'){aLx=-2.5;aRx=-2.5;aLz=.9;aRz=-.9;tl=.35;hx=.3}
+  else if(ps==='flail'){aLx=Math.sin(f)*1.6-1.2;aRx=Math.cos(f*1.1)*1.6-1.2;aLz=-.6+Math.sin(f*.7)*.4;aRz=.6+Math.cos(f*.8)*.4;tz=Math.sin(f*.5)*.2;hyw=Math.sin(t*9)*.5}
+  else if(ps==='scream'){aLx=-2.9;aRx=-2.9;aLz=-.6+Math.sin(f)*.15;aRz=.6-Math.sin(f)*.15;tl=-.15;hx=-.5}
+  else{aLx=-2.8+Math.sin(f)*.35;aRx=-2.8+Math.cos(f)*.35;aLz=-.35;aRz=.35;tl=.12;hyw=Math.sin(t*7)*.4}}
  if(air){aLx=-.5;aRx=-.5;aLz=-.9;aRz=.9;lL.rotation.x=-.6;lR.rotation.x=.35;tl=.05}
  // standing still: idle life
  const idle=sp<.3&&!air&&!p.aim&&!(p.punchT>0)&&!panic;
@@ -526,7 +553,7 @@ function animPerson(p,dt){const m=p.m,sp=Math.hypot(p.vx,p.vz),A=p.anim||(p.anim
   let ly=A.tyaw,lp=A.tpit;if(me&&p!==me&&me.hp>0){const dx=me.x-p.x,dz=me.z-p.z,d=Math.hypot(dx,dz);if(d<7){ly=clamp(wrapA(Math.atan2(dx,dz)-p.yaw),-1.2,1.2);lp=0}}
   hyw=ly;hx=lp;
   // little things people do while waiting
-  if(p.kind==='ped'){A.idleT-=dt;if(!A.idle&&A.idleT<=0){A.idle=pick(IDLES);A.idleD=A.idle==='phone'?4+R()*5:A.idle==='dance'?5+R()*4:2+R()*1.5;const h=dayT*24;if(A.idle==='dance'&&!(h>=21||h<4||p.x>CITY-20))A.idle='phone'}
+  if(p.kind==='ped'){A.idleT-=dt;if(!A.idle&&A.idleT<=0){A.idle=R()<.75?pick(p.favs):pick(IDLES);A.idleD=['phone','dance','floss','guitar','crossed','hips','map','worm','headbang','pushups'].includes(A.idle)?4+R()*5:2+R()*2;const h=dayT*24;if(A.idle==='dance'&&!(h>=21||h<4||p.x>CITY-20))A.idle='floss'}
    if(p.ai&&p.ai.wave&&!A.idle){A.idle='wave';A.idleD=99}
    if(A.idle){A.idleD-=dt;const I=A.idle;
     if(I==='phone'){aLx=-1.95;aLz=.38;hx=.32;hyw=.15;m.phone.visible=true}
@@ -535,6 +562,24 @@ function animPerson(p,dt){const m=p.m,sp=Math.hypot(p.vx,p.vz),A=p.anim||(p.anim
     else if(I==='wave'){aRx=-2.7;aRz=.25+Math.sin(t*10)*.35;hyw=0}
     else if(I==='tap'){lR.rotation.x=-Math.max(0,Math.sin(t*12))*.25}
     else if(I==='dance'){const f=t*7.5;bob=Math.abs(Math.sin(f))*.09;tz=Math.sin(f)*.12;ty=Math.sin(f*.5)*.35;aLx=-1.6+Math.sin(f)*.9;aRx=-1.6-Math.sin(f)*.9;aLz=-.3;aRz=.3;lL.rotation.x=Math.sin(f)*.3;lR.rotation.x=-Math.sin(f)*.3;hx=Math.sin(f)*.15}
+    else if(I==='pushups'){bx=1.38;by=.2+Math.abs(Math.sin(t*3.2))*.14;aLx=aRx=-1.5;aLz=-.25;aRz=.25;hx=-.6;hyw=0}
+    else if(I==='jacks'){const u=Math.abs(Math.sin(t*6));bob=u*.14;aLz=-.2-u*2.6;aRz=.2+u*2.6;aLx=aRx=0;lL.rotation.z=-u*.35;lR.rotation.z=u*.35}
+    else if(I==='guitar'){aLx=-1.2;aLz=.9;aRx=-.9+Math.sin(t*18)*.25;aRz=-.5;tl=-.1;hx=Math.sin(t*9)*.25;bob=Math.abs(Math.sin(t*9))*.04;lR.rotation.x=-.25}
+    else if(I==='yawn'){const u=Math.min(1,(2.5-A.idleD)*1.5);aLx=aRx=-3*u;aLz=-.4*u;aRz=.4*u;hx=-.55*u;tl=-.15*u}
+    else if(I==='scratch'){aRx=-2.6;aRz=-.45+Math.sin(t*20)*.08;hx=.1;hyw=-.2}
+    else if(I==='crossed'){aLx=aRx=-1.25;aLz=.85;aRz=-.85;hx=-.1;tz=.05}
+    else if(I==='hips'){aLz=-.75;aRz=.75;aLx=aRx=.35;tl=-.05;hx=-.12}
+    else if(I==='flex'){aLz=-1.5;aRz=1.5;aLx=aRx=Math.sin(t*4)*.15;tl=-.1;hx=-.2;bob=.02}
+    else if(I==='karate'){const k2=Math.floor(t*4)%2;aLx=k2?-1.57:-.4;aRx=k2?-.4:-1.57;aLz=-.2;aRz=.2;ty=k2?.3:-.3;by=-.08;lL.rotation.x=-.35;lR.rotation.x=.35}
+    else if(I==='tpose'){aLz=-1.57;aRz=1.57;aLx=aRx=0;hx=0;hyw=0;tz=0;bob=0}
+    else if(I==='floss'){const f=Math.sin(t*9);aLx=aRx=f>0?.6:-.6;aLz=-.35+f*.4;aRz=.35+f*.4;tz=-f*.15;bob=Math.abs(f)*.03}
+    else if(I==='hotdog'){aRx=-2.1+Math.max(0,Math.sin(t*3))*.4;aRz=-.55;hx=.1}
+    else if(I==='sneeze'){const u=A.idleD;if(u>.6){hx=-.4;tl=-.15}else{hx=.5;tl=.3}}
+    else if(I==='chicken'){const f=Math.sin(t*14);aLz=-.6-f*.5;aRz=.6+f*.5;aLx=aRx=-.3;bob=Math.abs(Math.sin(t*7))*.06;hx=Math.sin(t*7)*.2;tl=.15}
+    else if(I==='headbang'){hx=Math.sin(t*14)*.55;tl=Math.sin(t*14)*.18;aRx=-2.8;aRz=.3;bob=.02}
+    else if(I==='worm'){bx=1.5;by=.12+Math.max(0,Math.sin(t*5))*.12;tl=Math.sin(t*5)*.35;aLx=aRx=-2.9;hx=-.6}
+    else if(I==='map'){aLx=aRx=-1.15;aLz=.35;aRz=-.35;hx=.4;hyw=Math.sin(t*1.3)*.3}
+    else if(I==='sing'){aRx=-2.2+Math.sin(t*2)*.2;aRz=.6;aLx=-1.5;aLz=-.8;hx=-.3;bob=Math.abs(Math.sin(t*3))*.03}
     if(A.idleD<=0){A.idle=null;A.idleT=6+R()*12}}}
   if(p.shrugT>now){aLx=-.5;aRx=-.5;aLz=-.75;aRz=.75;hx=-.1;hyw=Math.sin(t*3)*.15;bob=.03}}
  else if(A.idle&&sp>.5){A.idle=null;A.idleT=4+R()*8}
@@ -544,7 +589,7 @@ function animPerson(p,dt){const m=p.m,sp=Math.hypot(p.vx,p.vz),A=p.anim||(p.anim
  // flinch when hit, squash on landing
  if(A.flinch>0){tl-=A.flinch*.8;hx-=A.flinch*.9}
  const sq=A.land>0?Math.sin(A.land/.16*Math.PI)*.07:0;
- b.position.y=sm(b.position.y,bob-sq,18,dt);
+ b.position.y=sm(b.position.y,bob-sq+by,18,dt);b.rotation.x=sm(b.rotation.x,bx,8,dt);b.rotation.z=sm(b.rotation.z,bz,8,dt);
  to.rotation.x=sm(to.rotation.x,tl,10,dt);to.rotation.z=sm(to.rotation.z,tz,10,dt);to.rotation.y=sm(to.rotation.y,ty,12,dt);
  hd.rotation.y=sm(hd.rotation.y,hyw,6,dt);hd.rotation.x=sm(hd.rotation.x,hx,8,dt);
  const ak=p.punchT>0?30:14;aL.rotation.x=sm(aL.rotation.x,aLx,ak,dt);aR.rotation.x=sm(aR.rotation.x,aRx,ak,dt);aL.rotation.z=sm(aL.rotation.z,aLz,10,dt);aR.rotation.z=sm(aR.rotation.z,aRz,10,dt);
@@ -942,7 +987,7 @@ function pedAI(p,dt){const a=p.ai;
  if(p.state==='fly')return;
  if(p.kind==='cop'&&copEngaged(p)){copFoot(p,dt);return}
  if((a.wave||a.stay)&&!(a.flee>0)){p.vx*=.8;p.vz*=.8;return}
- let sp=1.35,tx,tz;
+ let sp=1.35*(WALK_SPEED[p.style]||1),tx,tz;
  if(a.flee>0){a.flee-=dt;const dx=p.x-a.fx,dz=p.z-a.fz,d=Math.hypot(dx,dz)+.01;tx=p.x+dx/d*5;tz=p.z+dz/d*5;sp=5.4}
  else{if(a.tx==null)pedTarget(p);tx=a.tx;tz=a.tz;
   if(Math.hypot(tx-p.x,tz-p.z)<1){a.crossing=false;
