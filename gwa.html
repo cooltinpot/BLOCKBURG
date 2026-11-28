@@ -205,7 +205,7 @@ input{font:700 18px system-ui,sans-serif;padding:12px;border-radius:12px;border:
  <div id="buildBtns"><button id="bRot">↻ ROTATE <kbd>R</kbd></button><button id="bStore">STORE <kbd>X</kbd></button><button id="bZoomOut">－</button><button id="bZoomIn">＋</button><button id="bDone">DONE <kbd>B</kbd></button></div>
  <div id="buildHelp">Pick something, then click the floor to place it. Click furniture to pick it up and move it. A / D turn, W / S zoom.</div></div>
 <div id="shop" class="ov hide"><div class="panel"><h2 id="shopT"></h2><p id="shopP"></p><div id="shopL"></div><button class="btn pink" id="shopX" style="margin-top:12px">LEAVE</button></div></div>
-<div id="mapOv" class="ov hide"><canvas id="bigmap" width="900" height="900"></canvas><div id="mapKey"><span style="color:#ffe29a">■</span> jobs &nbsp; <span style="color:#7dff9a">■</span> shops &nbsp; <span style="color:#ff6b6b">●</span> cops &nbsp; <span style="color:#ffd84a">●</span> friends &nbsp; <span style="color:#fff">▲</span> you &nbsp;·&nbsp; M to close</div></div>
+<div id="mapOv" class="ov hide"><canvas id="bigmap" width="900" height="900"></canvas><div id="mapKey"><span style="color:#ffe29a">■</span> jobs &nbsp; <span style="color:#7dff9a">■</span> shops &nbsp; <span style="color:#30b8ff">⌂</span> houses for sale &nbsp; <span style="color:#ff6b6b">●</span> cops &nbsp; <span style="color:#ffd84a">●</span> friends &nbsp; <span style="color:#fff">▲</span> you &nbsp;·&nbsp; M to close</div></div>
 <div id="pause" class="ov hide"><div class="panel"><h2>PAUSED</h2><p id="pauseP"></p>
  <button class="btn" id="pResume">RESUME</button>
  <button class="btn purple hide" id="pQuitJob">QUIT THIS JOB</button>
@@ -478,6 +478,7 @@ function buildHouseExterior(L,id,r){const{x0,z0,x1,z1}=L,ix0=x0+SW,iz0=z0+SW,ix1
   if(A.uv)g.setAttribute('uv',new T.Float32BufferAttribute(A.uv,2));g.setIndex(A.idx);const m=new T.Mesh(g,mat);m.castShadow=m.receiveShadow=true;m.matrixAutoUpdate=false;scene.add(m);return m};
  mk(GW,wallMat);mk(GP,plainMat);
 })();
+for(const L of lots)L.blds=[];for(const b of cols)if(b.kind==='b'){const L=lotAt((b.x0+b.x1)/2,(b.z0+b.z1)/2);if(L)L.blds.push(b)}
 const ocean=new T.Mesh(new T.PlaneGeometry(4000,4000),new T.MeshPhongMaterial({color:LC(0x2a9fc8),specular:0x99ccdd,shininess:90}));ocean.rotation.x=-Math.PI/2;ocean.position.set(CITY/2,-.45,CITY/2);scene.add(ocean);
 
 /* ---- the map picture (for the minimap and the big map): 1 pixel = 1 metre ---- */
@@ -573,7 +574,7 @@ const IDLES=['phone','stretch','watch','wave','dance','tap','pushups','jacks','g
 const WALKS=['normal','normal','normal','swagger','strut','sneaky','power','skip','robot','hunch','pockets','texting','zombie','limp','jogger','bouncy','proud'];
 const WALK_SPEED={sneaky:.85,power:1.7,skip:1.7,robot:1.1,hunch:.7,zombie:.8,limp:.8,jogger:3.3,texting:.85,bouncy:1.3,proud:1.1};
 const PANICS=['arms','arms','naruto','cover','flail','scream'];
-function personality(p){if(p.style)return;p.style=p.kind==='ped'?pick(WALKS):'normal';p.panicStyle=pick(PANICS);p.favs=[pick(IDLES),pick(IDLES),pick(IDLES)];if(p.kind==='ped'&&R()<.5)p.favs.push('phone')}
+function personality(p){if(p.favs)return;p.style=p.style||(p.kind==='ped'?pick(WALKS):'normal');p.panicStyle=pick(PANICS);p.favs=[pick(IDLES),pick(IDLES),pick(IDLES)];if(p.kind==='ped'&&R()<.5)p.favs.push('phone')}
 function animPerson(p,dt){personality(p);const m=p.m,sp=Math.hypot(p.vx,p.vz),A=p.anim||(p.anim={t:R()*9,idle:null,idleT:3+R()*8,hy:0,hp:0,hyT:0,tyaw:0,tpit:0,land:0,air:false,lastYaw:p.yaw,flinch:0,lastHp:p.hp});
  const fm=faceMats[faceFor(p)];if(m.face.material!==fm)m.face.material=fm;
  A.t+=dt;const t=A.t,b=m.body,to=m.torso,hd=m.head,aL=m.armL,aR=m.armR,lL=m.legL,lR=m.legR;
@@ -660,6 +661,7 @@ function animPerson(p,dt){personality(p);const m=p.m,sp=Math.hypot(p.vx,p.vz),A=
     else if(I==='headbang'){hx=Math.sin(t*14)*.55;tl=Math.sin(t*14)*.18;aRx=-2.8;aRz=.3;bob=.02}
     else if(I==='worm'){bx=1.5;by=.12+Math.max(0,Math.sin(t*5))*.12;tl=Math.sin(t*5)*.35;aLx=aRx=-2.9;hx=-.6}
     else if(I==='map'){aLx=aRx=-1.15;aLz=.35;aRz=-.35;hx=.4;hyw=Math.sin(t*1.3)*.3}
+    else if(I==='photo'){aLx=aRx=-1.5;aLz=.35;aRz=-.35;hx=-.05;m.phone.visible=true}
     else if(I==='sing'){aRx=-2.2+Math.sin(t*2)*.2;aRz=.6;aLx=-1.5;aLz=-.8;hx=-.3;bob=Math.abs(Math.sin(t*3))*.03}
     if(A.idleD<=0){A.idle=null;A.idleT=6+R()*12}}}
   if(p.shrugT>now){aLx=-.5;aRx=-.5;aLz=-.75;aRz=.75;hx=-.1;hyw=Math.sin(t*3)*.15;bob=.03}}
@@ -1070,17 +1072,64 @@ function pedAI(p,dt){const a=p.ai;
  if(p.state==='out'){p.t-=dt;if(p.t<=0)removePerson(p);return}
  if(p.state==='fly')return;
  if(p.kind==='cop'&&copEngaged(p)){copFoot(p,dt);return}
- if((a.wave||a.stay)&&!(a.flee>0)){p.vx*=.8;p.vz*=.8;return}
+ if((a.wave||a.stay)&&!(a.flee>0)){p.vx*=.8;p.vz*=.8;if(a.stayT!=null){a.stayT-=dt;if(a.stayT<=0){a.stayT=null;afterStay(p)}}return}
  let sp=1.35*(WALK_SPEED[p.style]||1),tx,tz;
  if(a.flee>0){a.flee-=dt;const dx=p.x-a.fx,dz=p.z-a.fz,d=Math.hypot(dx,dz)+.01;tx=p.x+dx/d*5;tz=p.z+dz/d*5;sp=5.4}
+ else if(a.goIn){// walking up to a building to go inside: once at the door they disappear in
+  tx=a.goIn[0];tz=a.goIn[1];if(Math.hypot(tx-p.x,tz-p.z)<.9){removePerson(p);return}}
+ else if(a.direct){tx=a.dest.x;tz=a.dest.z;
+  if(Math.hypot(tx-p.x,tz-p.z)<1.6){a.direct=false;arrive(p);p.vx*=.3;p.vz*=.3;return}}
  else{if(a.tx==null)pedTarget(p);tx=a.tx;tz=a.tz;
   if(Math.hypot(tx-p.x,tz-p.z)<1){a.crossing=false;
-   if(R()<.2){const L=a.L,i=a.ci,hz=R()<.5;let nb=null,ni=i;
+   if(a.dest){routeStep(p);tx=a.direct?a.dest.x:a.tx;tz=a.direct?a.dest.z:a.tz}
+   else if(R()<.2){const L=a.L,i=a.ci,hz=R()<.5;let nb=null,ni=i;
     if(hz){const bx=L.bx+(i===0||i===3?-1:1);if(bx>=0&&bx<NB){nb=lots[bx*NB+L.bz];ni=[1,0,3,2][i]}}else{const bz=L.bz+(i<2?-1:1);if(bz>=0&&bz<NB){nb=lots[L.bx*NB+bz];ni=[3,2,1,0][i]}}
     if(nb){a.L=nb;a.ci=ni;a.crossing=true}else a.ci=(a.ci+a.dir+4)%4}
    else a.ci=(a.ci+a.dir+4)%4;pedTarget(p);tx=a.tx;tz=a.tz}}
  const dx=tx-p.x,dz=tz-p.z,d=Math.hypot(dx,dz)+.01,k=Math.min(1,dt*6);p.vx+=(dx/d*sp-p.vx)*k;p.vz+=(dz/d*sp-p.vz)*k;
  if(Math.hypot(p.vx,p.vz)>.3)p.yaw+=wrapA(Math.atan2(p.vx,p.vz)-p.yaw)*Math.min(1,dt*8)}
+/* ---- daily schedules: who's out and where they're headed depends on the time ----
+   commuters head downtown in the morning and home in the evening (and go inside buildings), joggers run at dawn and dusk,
+   beach people hang out on the sand during the day, shoppers go between stores, tourists take photos at THE WALKER,
+   and night owls party downtown after dark. */
+const hourNow=()=>dayT*24;
+const lotsOf=z=>lots.filter(L=>z==='park'?L.type==='park':z==='store'?L.type==='store'||L.type==='pizza':L.zone===z&&!L.type);
+const LOTS={downtown:lotsOf('downtown'),burbs:lotsOf('burbs'),mid:lotsOf('mid'),park:lotsOf('park'),store:lotsOf('store'),beach:lotsOf('beach')};
+const nearPick=(arr,x,z,maxD=320)=>{const c=arr.filter(L=>Math.hypot((L.x0+L.x1)/2-x,(L.z0+L.z1)/2-z)<maxD);return pick(c.length?c:arr)};
+function lotSpot(L){const s=Math.floor(R()*4),t=.2+R()*.6;return{L,x:s===1?L.x1-1.4:s===3?L.x0+1.4:lerp(L.x0,L.x1,t),z:s===0?L.z0+1.4:s===2?L.z1-1.4:lerp(L.z0,L.z1,t)}}
+const ROLES={
+ commuter:{w:h=>h>=6.5&&h<9.5||h>=16.5&&h<19.5?7:h>=9.5&&h<16.5?1.2:.2,dest:(p,h)=>lotSpot(nearPick(h<13?LOTS.downtown:LOTS.burbs,p.x,p.z)),act:['phone','watch'],stay:[4,10],enter:.8},
+ jogger:{w:h=>h>=6&&h<9||h>=17&&h<20?3.5:.4,dest:p=>lotSpot(nearPick(R()<.6?LOTS.park:LOTS.beach,p.x,p.z)),act:['stretch','jacks','pushups'],stay:[6,14],style:'jogger'},
+ beach:{w:h=>h>=10&&h<18.5?4:0,dest:p=>({L:null,x:BEACH0+8+R()*45,z:clamp(p.z+(R()-.5)*120,LZ0+15,LZ1-15)}),act:['dance','phone','sing','flex','yawn','tpose'],stay:[30,80]},
+ shopper:{w:h=>h>=9&&h<21?3:.3,dest:p=>lotSpot(nearPick(LOTS.store,p.x,p.z)),act:['phone','map','hotdog','watch'],stay:[5,15],enter:.6},
+ tourist:{w:h=>h>=9&&h<19?2:0,dest:()=>({L:lots[4*NB+4],x:places.walk.x+(R()-.5)*14,z:places.walk.z+3+R()*12}),act:['photo','map','wave','photo'],stay:[15,40]},
+ nightowl:{w:h=>h>=20||h<3?7:0,dest:p=>R()<.5?{L:lots[4*NB+4],x:places.walk.x+(R()-.5)*16,z:places.walk.z+4+R()*14}:lotSpot(nearPick(LOTS.downtown,p.x,p.z)),act:['dance','floss','headbang','sing','chicken'],stay:[30,80]},
+ wanderer:{w:h=>h>=7&&h<23?2:.8,dest:p=>lotSpot(nearPick(lots,p.x,p.z,200)),act:null,stay:[4,12],enter:.25},
+};
+function pickRole(){const h=hourNow();let n=0;const ws=[];for(const[k,r]of Object.entries(ROLES)){const w=r.w(h);ws.push([k,w]);n+=w}let x=R()*n;for(const[k,w]of ws){if((x-=w)<0)return k}return'wanderer'}
+function giveRole(p,role){const a=p.ai;a.role=role;const R0=ROLES[role];if(R0.style)p.style=R0.style;a.dest=R0.dest(p,hourNow());a.direct=false}
+// at a corner: pick the next corner (or cross the road) that gets closest to where they're going
+function routeStep(p){const a=p.ai,L=a.L,i=a.ci,d=a.dest;
+ if((d.L&&d.L===L)||(!d.L&&Math.hypot(d.x-p.x,d.z-p.z)<35)||Math.hypot(d.x-p.x,d.z-p.z)<9){a.direct=true;return}
+ const opts=[{L,ci:(i+1)%4},{L,ci:(i+3)%4}];
+ const bx=L.bx+(i===0||i===3?-1:1);if(bx>=0&&bx<NB)opts.push({L:lots[bx*NB+L.bz],ci:[1,0,3,2][i],cross:1});
+ const bz=L.bz+(i<2?-1:1);if(bz>=0&&bz<NB)opts.push({L:lots[L.bx*NB+bz],ci:[3,2,1,0][i],cross:1});
+ if(!d.L&&d.x>BEACH0&&L.bx===NB-1&&(i===1||i===2)){a.direct=true;return}
+ let best=null,bs=1e9;for(const o of opts){const c=lotCorner(o.L,o.ci),sc=Math.hypot(c[0]-d.x,c[1]-d.z)+R()*6;if(sc<bs){bs=sc;best=o}}
+ a.L=best.L;a.ci=best.ci;a.crossing=!!best.cross;pedTarget(p)}
+// got there: do their thing for a while, then head somewhere else (or go inside)
+function arrive(p){const a=p.ai,R0=ROLES[a.role]||ROLES.wanderer,st=R0.stay||[5,12],dur=st[0]+R()*(st[1]-st[0]);a.stay=1;a.stayT=dur;
+ if(p.anim&&R0.act){p.anim.idle=pick(R0.act);p.anim.idleD=dur}}
+function goInside(p){const a=p.ai,L=a.L||lotAt(p.x,p.z)||nearestLot(p.x,p.z);if(!L.blds||!L.blds.length)return false;const b=L.blds.reduce((m,c)=>{const dm=Math.hypot(clamp(p.x,m.x0,m.x1)-p.x,clamp(p.z,m.z0,m.z1)-p.z),dc=Math.hypot(clamp(p.x,c.x0,c.x1)-p.x,clamp(p.z,c.z0,c.z1)-p.z);return dc<dm?c:m});
+ a.goIn=[clamp(p.x,b.x0,b.x1),clamp(p.z,b.z0,b.z1)];a.stay=0;a.stayT=null;a.direct=false;return true}
+function afterStay(p){const a=p.ai,R0=ROLES[a.role]||ROLES.wanderer;a.stay=0;
+ if(R0.w(hourNow())<.5&&goInside(p))return;// it's not their time of day any more: they go home
+ if(R0.enter&&R()<R0.enter){const L=a.L||lotAt(p.x,p.z);const b=L&&L.blds&&L.blds.length?L.blds.reduce((m,c)=>{const dm=Math.hypot(clamp(p.x,m.x0,m.x1)-p.x,clamp(p.z,m.z0,m.z1)-p.z),dc=Math.hypot(clamp(p.x,c.x0,c.x1)-p.x,clamp(p.z,c.z0,c.z1)-p.z);return dc<dm?c:m}):null;
+  if(b){a.goIn=[clamp(p.x,b.x0,b.x1),clamp(p.z,b.z0,b.z1)];return}}
+ a.dest=R0.dest(p,hourNow());a.direct=false;if(!a.L)a.L=nearestLot(p.x,p.z)}
+// is a spot out of the player's sight? (behind the camera, off the side of the screen, or hidden behind a building)
+function unseen(x,z,y=1){const d=Math.hypot(x-cam.position.x,z-cam.position.z);if(d>175)return true;tmpV.set(x,y,z).project(cam);
+ if(tmpV.z>1||Math.abs(tmpV.x)>1.15||Math.abs(tmpV.y)>1.15)return true;return!clearLine(cam.position.x,cam.position.z,x,z,y)}
 function nearestLot(x,z){const bx=clamp(Math.floor((x-HR)/BL),0,NB-1),bz=clamp(Math.floor((z-HR)/BL),0,NB-1);return lots[bx*NB+bz]}
 function spawnPed(kind,x,z){const L=lotAt(x,z);if(!L)return null;const p=spawnPerson(kind,x,z);p.ai={L,ci:Math.floor(R()*4),dir:R()<.5?1:-1,flee:0};pedTarget(p);return p}
 
@@ -1165,21 +1214,33 @@ function spawnTraffic(){const cd=camDir();
  for(let k=0;k<14;k++){const i=Math.round(clamp(me.x/BL+(R()-.5)*5.5,0,NB)),j=Math.round(clamp(me.z/BL+(R()-.5)*5.5,0,NB));const ds=[[1,0],[-1,0],[0,1],[0,-1]].filter(d=>nodeOK(i+d[0],j+d[1]));const d=pick(ds);
   const along=12+R()*(BL-24),r=rgt(d[0],d[1]),parked=R()<.22,off=parked?HR-1.25:LANE,x=i*BL+d[0]*along+r[0]*off,z=j*BL+d[1]*along+r[1]*off,dist=Math.hypot(x-me.x,z-me.z);
   if(dist<(parked?45:70)||dist>175)continue;
-  const vis=((x-me.x)*cd[0]+(z-me.z)*cd[2])/dist;if(vis>.5&&dist<120)continue;
+  if(!unseen(x,z,1)&&dist<170)continue;
   if(cars.some(c=>Math.abs(c.x-x)<7&&Math.abs(c.z-z)<7))continue;
   const type=parked&&R()<.5?'sedan':pickType(),c=spawnCar(type,x,z,Math.atan2(d[0],d[1]));
   if(parked){c.ai={parked:true};return c}
   const drv=spawnPerson(type==='police'?'cop':'ped',x,z);drv.car=c;drv.m.g.visible=false;c.driver=drv;trafficAI(c,[i,j],d);if(type==='police'){c.ai.cop=true;c.ai.chase=false}
   c.vx=Math.sin(c.yaw)*9;c.vz=Math.cos(c.yaw)*9;return c}}
-function spawnPeds(){for(let k=0;k<6;k++){const a=R()*6.28,d=40+R()*70,x=me.x+Math.cos(a)*d,z=me.z+Math.sin(a)*d,L=lotAt(x,z);if(!L)continue;
-  const ci=Math.floor(R()*4),c0=lotCorner(L,ci),c1=lotCorner(L,(ci+1)%4),t=R(),px=lerp(c0[0],c1[0],t),pz=lerp(c0[1],c1[1],t);
-  const p=spawnPed(R()<.07?'cop':'ped',px,pz);if(p){p.ai.ci=(ci+1)%4;p.ai.dir=1;pedTarget(p)}return}}
+function spawnPeds(){const h=hourNow();
+ for(let k=0;k<10;k++){const a=R()*6.28,d=35+R()*95,x=me.x+Math.cos(a)*d,z=me.z+Math.sin(a)*d,L=lotAt(x,z)||(x>BEACH0&&x<LX1-10&&z>LZ0&&z<LZ1?'beach':null);if(!L)continue;
+  const role=pickRole();let px,pz,out=false;
+  if(L==='beach'){if(ROLES[role]!==ROLES.beach&&role!=='jogger')continue;px=x;pz=z}
+  else if(L.blds&&L.blds.length&&R()<.6){// come out of a building's door
+   const b=pick(L.blds),side=Math.floor(R()*4),t=.2+R()*.6;px=side===1?b.x1+.6:side===3?b.x0-.6:lerp(b.x0,b.x1,t);pz=side===0?b.z0-.6:side===2?b.z1+.6:lerp(b.z0,b.z1,t);out=true;
+   if(px<L.x0+.5||px>L.x1-.5||pz<L.z0+.5||pz>L.z1-.5||solidAt(px,pz,1))continue}
+  else{const ci=Math.floor(R()*4),c0=lotCorner(L,ci),c1=lotCorner(L,(ci+1)%4),t=R();px=lerp(c0[0],c1[0],t);pz=lerp(c0[1],c1[1],t)}
+  if(!unseen(px,pz))continue;
+  const p=L==='beach'?(()=>{const q=spawnPerson('ped',px,pz);q.ai={L:nearestLot(px,pz),ci:1,dir:1,flee:0};return q})():spawnPed(R()<.07?'cop':'ped',px,pz);if(!p)return;
+  if(p.kind==='cop'){pedTarget(p);return}
+  giveRole(p,role);if(L==='beach'||out){p.ai.direct=L==='beach';if(out){p.ai.ci=Math.floor(R()*4);pedTarget(p)}}else{p.ai.ci=Math.floor(R()*4);pedTarget(p)}
+  if(L==='beach'){arrive(p)}
+  return}}
 function spawner(dt){spawnT-=dt;if(spawnT>0)return;spawnT=.35;
- const maxCars=gfx?26:15,maxPeds=gfx?34:18;
- for(const c of [...cars]){if(c.remote||c===me.car||c===me.lastCar||c.job)continue;const d=Math.hypot(c.x-me.x,c.z-me.z);if(d>215||(c.dead&&c.burn<=0&&d>70))removeCar(c)}
- for(const p of [...people]){if(p===me||p.remote||p.car||p.job)continue;if(Math.hypot(p.x-me.x,p.z-me.z)>150)removePerson(p)}
+ const h=hourNow(),busy=h<5?.35:h<7||h>=22?.6:1,maxCars=Math.round((gfx?26:15)*(h<5?.5:1)),maxPeds=Math.round((gfx?34:18)*busy);
+ for(const c of [...cars]){if(c.remote||c===me.car||c===me.lastCar||c.job)continue;const d=Math.hypot(c.x-me.x,c.z-me.z);if(d>320||d>200&&unseen(c.x,c.z)||(c.dead&&c.burn<=0&&d>70&&unseen(c.x,c.z)))removeCar(c)}
+ for(const p of [...people]){if(p===me||p.remote||p.car||p.job)continue;const d=Math.hypot(p.x-me.x,p.z-me.z);if(d>260||d>140&&unseen(p.x,p.z))removePerson(p)}
  let nc=0;for(const c of cars)if(!c.remote&&!(c.ai&&c.ai.chase)&&!c.job)nc++;if(nc<maxCars)spawnTraffic();
- let np=0;for(const p of people)if(!p.car&&(p.kind==='ped'||p.kind==='cop'))np++;if(np<maxPeds)spawnPeds()}
+ let np=0;for(const p of people)if(!p.car&&(p.kind==='ped'||p.kind==='cop'))np++;if(np<maxPeds)spawnPeds();
+ else if(np>maxPeds+1&&R()<.3){const c=people.filter(q=>q.kind==='ped'&&!q.car&&q.ai&&q.ai.role&&!q.ai.goIn&&q.state==='walk'&&!q.job);if(c.length)goInside(pick(c))}}
 
 /* ================= CAMERA ================= */
 let camDist=5;const headL=new T.SpotLight(0xfff2d0,0,70,.5,.5,1.5);scene.add(headL,headL.target);
@@ -1335,7 +1396,7 @@ function updateHud(dt){toastT-=dt;if(toastT<=0)$('#toast').classList.remove('sho
  $('#cross').classList.toggle('hide',G.melee||me.hp<=0)}
 // minimap: north is wherever you're looking
 const mini=$('#mini'),mg=mini.getContext('2d');
-function blipList(){const b=[];for(const P of Object.values(places)){if(P.kind==='police')continue;if(job&&P.kind!=='guns'&&P.kind!=='hospital'&&P.kind!=='spray')continue;b.push({x:P.x,z:P.z,c:P.kind==='guns'||P.kind==='hospital'||P.kind==='spray'?'#7dff9a':'#ffe29a',s:'sq',edge:false,label:P.label})}
+function blipList(){const b=[];for(const P of Object.values(places)){if(P.kind==='police')continue;if(job&&P.kind!=='guns'&&P.kind!=='hospital'&&P.kind!=='spray'&&P.kind!=='house')continue;const hs=P.kind==='house';b.push({x:P.x,z:P.z,c:hs?(ownsHouse(P.name)?'#7dff9a':'#30b8ff'):P.kind==='guns'||P.kind==='hospital'||P.kind==='spray'?'#7dff9a':'#ffe29a',s:hs?'house':'sq',edge:hs&&ownsHouse(P.name),label:P.label})}
  if(job&&jobRing.visible)b.push({x:jobRing.position.x,z:jobRing.position.z,c:'#ffe03a',s:'big',edge:true,label:'Job'});
  for(const c of cars)if(c.ai&&c.ai.cop&&c.ai.chase&&!c.dead)b.push({x:c.x,z:c.z,c:Math.floor(now*4)%2?'#ff4a4a':'#4a7aff',s:'dot',edge:false});
  for(const p of people)if(p.kind==='cop'&&!p.car&&p.state!=='out'&&W.stars>0)b.push({x:p.x,z:p.z,c:'#ff6b6b',s:'dot',edge:false});
@@ -1346,13 +1407,14 @@ function drawMini(){const S=mini.width,sc=me.car&&Math.abs(carSpeed(me.car))>14?
  const lim=(S/2-8)/sc;
  for(const b of blipList()){let dx=b.x-me.x,dz=b.z-me.z;const d=Math.hypot(dx,dz);if(d>lim){if(!b.edge)continue;dx=dx/d*lim;dz=dz/d*lim}
   mg.save();mg.translate(dx,dz);mg.rotate(-th);mg.fillStyle=b.c;mg.strokeStyle='#000';mg.lineWidth=2/sc;const r=(b.s==='big'?7:b.s==='sq'?5.5:4)/sc;
-  if(b.s==='sq'){mg.fillRect(-r,-r,r*2,r*2);mg.strokeRect(-r,-r,r*2,r*2)}else{mg.beginPath();mg.arc(0,0,r,0,6.283);mg.fill();mg.stroke()}mg.restore()}
+  if(b.s==='house'){const q=r*1.25;mg.beginPath();mg.moveTo(-q,0);mg.lineTo(0,-q*1.1);mg.lineTo(q,0);mg.lineTo(q*.7,0);mg.lineTo(q*.7,q);mg.lineTo(-q*.7,q);mg.lineTo(-q*.7,0);mg.closePath();mg.fill();mg.stroke()}
+  else if(b.s==='sq'){mg.fillRect(-r,-r,r*2,r*2);mg.strokeRect(-r,-r,r*2,r*2)}else{mg.beginPath();mg.arc(0,0,r,0,6.283);mg.fill();mg.stroke()}mg.restore()}
  mg.restore();mg.save();mg.translate(cx,cx);mg.rotate(-wrapA((me.car?me.car.yaw:me.yaw)-camYaw));mg.fillStyle='#fff';mg.strokeStyle='#000';mg.lineWidth=2;mg.beginPath();mg.moveTo(0,-8);mg.lineTo(6,7);mg.lineTo(0,3);mg.lineTo(-6,7);mg.closePath();mg.fill();mg.stroke();mg.restore()}
 function toggleMap(){const o=$('#mapOv');if(o.classList.contains('hide')){o.classList.remove('hide');unlock();drawBigMap()}else o.classList.add('hide')}
 $('#mapOv').onclick=()=>$('#mapOv').classList.add('hide');
 function drawBigMap(){const cv=$('#bigmap'),g=cv.getContext('2d'),S=cv.width,sc=S/Math.max(MAPW,MAPH);g.fillStyle='#3b7fb0';g.fillRect(0,0,S,S);g.save();g.scale(sc,sc);g.drawImage(mapCan,0,0);
  g.font='bold 13px system-ui';g.textAlign='center';
- for(const b of blipList()){const x=b.x-MOX,z=b.z-MOZ;g.fillStyle=b.c;g.strokeStyle='#000';g.lineWidth=2;if(b.s==='sq'){g.fillRect(x-7,z-7,14,14);g.strokeRect(x-7,z-7,14,14)}else{g.beginPath();g.arc(x,z,b.s==='big'?9:6,0,6.283);g.fill();g.stroke()}
+ for(const b of blipList()){const x=b.x-MOX,z=b.z-MOZ;g.fillStyle=b.c;g.strokeStyle='#000';g.lineWidth=2;if(b.s==='house'){g.beginPath();g.moveTo(x-11,z);g.lineTo(x,z-12);g.lineTo(x+11,z);g.lineTo(x+8,z);g.lineTo(x+8,z+10);g.lineTo(x-8,z+10);g.lineTo(x-8,z);g.closePath();g.fill();g.stroke()}else if(b.s==='sq'){g.fillRect(x-7,z-7,14,14);g.strokeRect(x-7,z-7,14,14)}else{g.beginPath();g.arc(x,z,b.s==='big'?9:6,0,6.283);g.fill();g.stroke()}
   if(b.label){g.fillStyle='#fff';g.strokeStyle='#000';g.lineWidth=3;g.strokeText(b.label,x,z-12);g.fillText(b.label,x,z-12)}}
  g.save();g.translate(me.x-MOX,me.z-MOZ);g.rotate(-(me.car?me.car.yaw:me.yaw)+Math.PI);g.fillStyle='#fff';g.strokeStyle='#000';g.lineWidth=3;g.beginPath();g.moveTo(0,-14);g.lineTo(10,12);g.lineTo(0,6);g.lineTo(-10,12);g.closePath();g.fill();g.stroke();g.restore();
  g.font='900 22px Arial Black,sans-serif';g.fillStyle='#ffffffcc';g.fillText('LEONADA',(CITY/2)-MOX,(LZ0-MOZ)-14);g.restore()}
@@ -1480,7 +1542,7 @@ addEventListener('resize',resize);
 function applyGfx(){renderer.shadowMap.enabled=!!gfx;sun.castShadow=!!gfx;scene.fog.far=gfx?620:380;cam.far=gfx?1600:700;cam.updateProjectionMatrix();resize();
  for(const b of document.querySelectorAll('[data-g]'))b.classList.toggle('on',+b.dataset.g===gfx);plainMat.needsUpdate=wallMat.needsUpdate=true;for(const m of matCache.values())m.needsUpdate=true}
 // if anything ever goes wrong in a frame, note it and keep the game running instead of freezing
-let oopsN=0;function oops(e){if(oopsN++<5)console.error('GWA hiccup:',e)}
+let oopsN=0;function oops(e){if(oopsN++<5)console.error('GWA hiccup:',e&&e.stack||e)}
 function frame(t){requestAnimationFrame(frame);const dt=Math.min(.05,(t-lastT)/1000||0);lastT=t;
  if(playing&&(!paused||net.room)){try{update(dt)}catch(e){oops(e)}}else if(!playing){menuCam(dt)}
  renderer.render(scene,cam)}
@@ -1493,7 +1555,8 @@ function startGame(){ const lk=l=>[l.shirt,l.layer|0,l.layerCol].join();if(me&&S
  playing=true;paused=false;$('#menu').classList.add('hide');$('#hud').classList.remove('hide');if(TOUCH)$('#touch').classList.remove('hide');
  applyGfx();hudDirty=true;initAudio();if(AC&&AC.state==='suspended')AC.resume();
  if(!SV.seenIntro){SV.seenIntro=1;save();setTimeout(()=>big('WELCOME TO LEONADA','Steal a car (F), do jobs for cash, and try not to get busted','#ffb3d9',5),300)}
- else toast('Welcome back to Leonada')}
+ else toast('Welcome back to Leonada')
+ if(!SV.seenHouses){SV.seenHouses=1;save();setTimeout(()=>{addFeed('🏠 NEW: houses for sale! Look for the blue house icons on the map (M)');toast('🏠 Houses are for sale! Open the map (M) to find them')},2500)}}
 function setPause(v){if(!playing)return;paused=v;$('#pause').classList.toggle('hide',!v);if(v){unlock();$('#pauseP').textContent=net.room?(net.pub?'You\'re in the public city (it keeps going while you\'re paused).':`Room code ${net.code}: friends can join with it.`):'Leonada will wait for you.';
   $('#pRadio').textContent='RADIO: '+(radioOn?'ON':'OFF');if(hornG)hornG.gain.value=0}}
 $('#pResume').onclick=()=>setPause(false);
@@ -1722,7 +1785,7 @@ let tapStart=null;canvas.addEventListener('pointerdown',e=>{if(build&&e.pointerT
 canvas.addEventListener('pointerup',e=>{if(build&&e.pointerType!=='mouse'&&tapStart&&Math.hypot(e.clientX-tapStart[0],e.clientY-tapStart[1])<12&&performance.now()-tapStart[2]<500)buildClick(e);tapStart=null});
 canvas.addEventListener('wheel',e=>{if(build){build.dist=clamp(build.dist+e.deltaY*.02,6,40)}},{passive:true});
 
-if(window.GWA_TEST_HOOK)window.GWA_TEST_HOOK({get inHouse(){return inHouse},get build(){return build},HS,enterHouse,enterBuild,exitBuild,selectItem,buildClick,useThing,houseMarker,setMouse(x,y){mouseNDC.set(x,y);moveGhost()},clickCell(gx,gz){const b=build,st=b.st,[w,d]=b.sel?fp(b.sel.k,b.rot):[1,1];const v=new T.Vector3(st.x0+gx+w/2,0,st.z0+gz+d/2).project(cam),r=canvas.getBoundingClientRect();buildClick({clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height})},get me(){return me},cars,people,places,W,net,startGame,startJob,endJob,get job(){return job},jobs:{pizza:jobPizza,taxi:jobTaxi,race:jobRace,walk:jobWalk},
+if(window.GWA_TEST_HOOK)window.GWA_TEST_HOOK({camObj:()=>cam,clearLine,get inHouse(){return inHouse},get build(){return build},HS,enterHouse,enterBuild,exitBuild,selectItem,buildClick,useThing,houseMarker,setMouse(x,y){mouseNDC.set(x,y);moveGhost()},clickCell(gx,gz){const b=build,st=b.st,[w,d]=b.sel?fp(b.sel.k,b.rot):[1,1];const v=new T.Vector3(st.x0+gx+w/2,0,st.z0+gz+d/2).project(cam),r=canvas.getBoundingClientRect();buildClick({clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height})},get me(){return me},cars,people,places,W,net,startGame,startJob,endJob,get job(){return job},jobs:{pizza:jobPizza,taxi:jobTaxi,race:jobRace,walk:jobWalk},
  get money(){return money},set money(v){money=v},toggleCar,setStars(n){W.stars=n;W.lx=me.x;W.lz=me.z},teleport(x,z){if(me.car){me.car.x=x;me.car.z=z}else{me.x=x;me.z=z}},
  cam:()=>({yaw:camYaw,pitch:camPitch}),aimPoint(d){const v=camDir();return[cam.position.x+v[0]*d,cam.position.y+v[1]*d,cam.position.z+v[2]*d]},setCam(y,p){camYaw=y;camPitch=p;lastLook=now+5},keys,get heli(){return heli},setDay(t){dayT=t},explode,openShop,get stars(){return starsNow()},spawnCar,spawnPed,setLook(p,l){scene.remove(p.m.g);p.look=l;p.m=makePerson(l);p.anim=null},lotAt,setGfx(g){gfx=g;applyGfx()}});
 </script>
