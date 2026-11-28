@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>cooltinpot games</title>
-<meta name="description" content="Free browser games by cooltinpot: BLOCKBURG, MINECRAP, Bitterwater Payload and WR. Play solo or with friends.">
+<meta name="description" content="Free browser games by cooltinpot: BLOCKBURG, MINECRAP, Bitterwater Payload, WR and GRAND WALK AUTO. Play solo or with friends.">
 <link rel="icon" href="cover.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
@@ -48,6 +48,14 @@ a.card:hover .art img,a.card:focus-visible .art img{transform:scale(1.07)}
 .wrlogo small{display:block;font-size:.24em;letter-spacing:.2em;color:#b49a5e;margin-top:6px}
 .wrname{color:#6b5a40}
 .wrplay{background:#c0392b;box-shadow:inset -3px -3px 0 #8e2a20,inset 3px 3px 0 #e2604f}
+.gwaart{background:#3a1450}
+.gwalogo{position:absolute;left:0;right:0;top:5%;text-align:center;font-family:'Arial Black',Impact,sans-serif;line-height:.82;filter:drop-shadow(0 4px 0 rgba(30,6,40,.6)) drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+.gwalogo span{display:block;-webkit-background-clip:text;background-clip:text;color:transparent}
+.gwalogo .g{font-size:clamp(14px,3.4vw,22px);letter-spacing:.08em;background-image:linear-gradient(#fff,#ffd9ef)}
+.gwalogo .w{font-size:clamp(40px,10vw,64px);transform:skew(-8deg);background-image:linear-gradient(170deg,#ffe29a,#ff7ab6 45%,#b04bff)}
+.gwalogo .a{font-size:clamp(14px,3.4vw,22px);letter-spacing:.34em;margin-left:.34em;background-image:linear-gradient(#fff,#ffc7a6)}
+.gwaname{color:#b0307a}
+.gwaplay{background:#ff5aa0;box-shadow:inset -3px -3px 0 #c02a6e,inset 3px 3px 0 #ff9ac8}
 .soon{border-style:dashed;background:rgba(255,255,255,.8);box-shadow:none;align-items:center;justify-content:center;text-align:center;padding:30px 20px;min-height:220px}
 .soon .q{font:46px/1 'Press Start 2P',monospace;color:#3674cc;margin-bottom:14px}
 .tip{margin-top:30px;color:#fff;text-align:center;text-shadow:2px 2px 0 #10203a;font-size:22px}
@@ -89,11 +97,20 @@ a.card:hover .art img,a.card:focus-visible .art img{transform:scale(1.07)}
   </a>
 
   <a class="card" href="wr.html">
-    <div class="art wrart"><img src="wr-cover.jpg" alt="WR: soldiers fighting over a flag on a cut-away battlefield"><div class="wrlogo">WR<small>WAR BUT COOL</small></div><span class="new">NEW!</span></div>
+    <div class="art wrart"><img src="wr-cover.jpg" alt="WR: soldiers fighting over a flag on a cut-away battlefield"><div class="wrlogo">WR<small>WAR BUT COOL</small></div></div>
     <div class="body">
       <h2 class="name wrname">WR: WAR BUT COOL</h2>
       <p class="tag">Dig trenches, build bunkers and capture the flags. Musket, SMG or Engineer. 3D, 1st person or 2D!</p>
       <div class="foot"><span class="play wrplay">PLAY</span><span class="on"><b></b>Solo vs bots</span></div>
+    </div>
+  </a>
+
+  <a class="card" href="gwa.html">
+    <div class="art gwaart"><img src="gwa-cover.jpg" alt="GRAND WALK AUTO: a pink sports car on the beach road at sunset with two police cars chasing it"><div class="gwalogo"><span class="g">GRAND</span><span class="w">WALK</span><span class="a">AUTO</span></div><span class="new">NEW!</span></div>
+    <div class="body">
+      <h2 class="name gwaname">GRAND WALK AUTO</h2>
+      <p class="tag">An offbrand GTA 6! Steal cars, outrun the cops, do jobs for cash and wreck Leonada with friends.</p>
+      <div class="foot"><span class="play gwaplay">PLAY</span><span class="on" id="onGWA"><b></b>Online play</span></div>
     </div>
   </a>
 
@@ -123,11 +140,11 @@ document.querySelectorAll('a.card').forEach(a=>{
  a.addEventListener('focus',pop);
  a.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'){wake();setTimeout(pop,0)}})});
 
-// who's playing right now (the same server runs both games)
+// who's playing right now (the same server runs BLOCKBURG, MINECRAP and GRAND WALK AUTO)
 fetch('https://us-ewr-fb65e743.colyseus.cloud/api/online',{cache:'no-store'}).then(r=>r.json()).then(n=>{
- let bb=0;for(const[k,v]of Object.entries(n))if(k!=='minecrap')bb+=+v||0;const mc=+n.minecrap||0;
+ let bb=0;for(const[k,v]of Object.entries(n))if(k!=='minecrap'&&k!=='gwa')bb+=+v||0;const mc=+n.minecrap||0,gwa=+n.gwa||0;
  const set=(id,v)=>{const el=document.getElementById(id);el.classList.toggle('live',v>0);el.lastChild.textContent=v>0?`${v} playing now`:'Online play'};
- set('onBB',bb);set('onMC',mc)}).catch(()=>{});
+ set('onBB',bb);set('onMC',mc);set('onGWA',gwa)}).catch(()=>{});
 }
 </script>
 </body>
