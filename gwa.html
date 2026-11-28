@@ -446,8 +446,9 @@ const LAYERS=['none','jacket','hoodie','vest','flannel','puffer'],LAYER_COLS=[0x
 const shade=(h,k)=>{const c=new T.Color(h);c.multiplyScalar(k);return c.getHex()};
 function makePerson(look){const g=new T.Group(),body=new T.Group();g.add(body);
  const skin=look.skin==null?pick(SKINS):look.skin,sh=look.shirt,pa=look.pants,ly=look.cop?'none':LAYERS[look.layer|0]||'none',lc=look.layerCol??0x2a2a2e,dk=shade(lc,.72);
- const legL=new T.Group(),legR=new T.Group(),armL=new T.Group(),armR=new T.Group();
- legL.position.set(-.17,.82,0);legR.position.set(.17,.82,0);armL.position.set(-.49,1.5,0);armR.position.set(.49,1.5,0);body.add(legL,legR,armL,armR);
+ const legL=new T.Group(),legR=new T.Group(),armL=new T.Group(),armR=new T.Group(),torso=new T.Group(),head=new T.Group();
+ torso.position.y=.82;head.position.y=.73;legL.position.set(-.17,.82,0);legR.position.set(.17,.82,0);armL.position.set(-.49,.68,0);armR.position.set(.49,.68,0);
+ body.add(legL,legR,torso);torso.add(armL,armR,head);
  const legG=boxesGeo('leg'+pa,[[.3,.74,.32,0,-.37,0,pa],[.32,.12,.42,0,-.76,.04,0x1e1e22]]);
  // arms: t-shirt sleeve + bare forearm, then the layer's sleeve on top (rolled up for a flannel, none for a vest)
  const A=[[.25,.46,.27,0,-.2,0,look.cop?sh:sh],[.23,.3,.25,0,-.57,0,look.cop?sh:skin]];if(look.cop)A.push([.22,.1,.24,0,-.68,0,skin]);
@@ -456,8 +457,8 @@ function makePerson(look){const g=new T.Group(),body=new T.Group();g.add(body);
  else if(ly==='flannel')A.push([.29,.48,.31,0,-.21,0,lc],[.3,.05,.32,0,-.43,0,dk]);
  const armG=boxesGeo('arm'+[sh,skin,ly,lc,!!look.cop].join('_'),A);
  gm(legL,legG);gm(legR,legG);gm(armL,armG);gm(armR,armG);
- const B=[[.74,.72,.4,0,1.18,0,sh],[.46,.46,.46,0,1.78,0,skin]];
- if(look.hair!=null)B.push([.48,.13,.48,0,2.03,-.01,look.hair]);
+ const B=[[.74,.72,.4,0,1.18,0,sh],[.18,.08,.18,0,1.56,0,skin]],HB=[[.46,.46,.46,0,1.78,0,skin]];
+ if(look.hair!=null)HB.push([.48,.13,.48,0,2.03,-.01,look.hair]);
  if(look.chain)B.push([.32,.04,.02,0,1.47,.205,0xffd33a],[.06,.08,.02,0,1.41,.207,0xffd33a]);
  if(ly==='jacket'||ly==='flannel'){// open front: two panels and a back, the t-shirt shows down the middle
   B.push([.32,.75,.46,-.22,1.18,0,lc],[.32,.75,.46,.22,1.18,0,lc],[.76,.75,.06,0,1.18,-.215,lc],[.14,.12,.06,-.14,1.53,.215,dk],[.14,.12,.06,.14,1.53,.215,dk]);
@@ -466,13 +467,15 @@ function makePerson(look){const g=new T.Group(),body=new T.Group();g.add(body);
  else if(ly==='hoodie')B.push([.8,.76,.46,0,1.18,0,lc],[.44,.18,.03,0,1.0,.235,dk],[.5,.24,.16,0,1.6,-.27,lc],[.03,.17,.02,-.08,1.42,.235,0xf2f2f2],[.03,.17,.02,.08,1.42,.235,0xf2f2f2]);
  else if(ly==='puffer'){B.push([.86,.78,.52,0,1.18,0,lc],[.5,.13,.34,0,1.59,0,lc]);for(const y of[1.0,1.18,1.36])B.push([.87,.04,.53,0,y,0,dk])}
  if(look.pack)B.push([.5,.52,.18,0,1.2,-.32,look.pack],[.4,.14,.04,0,1.08,-.42,shade(look.pack,.75)]);
- if(look.cop)B.push([.5,.12,.52,0,2.05,0,0x101830],[.5,.04,.2,0,2.0,.3,0x101830],[.12,.12,.03,-.2,1.36,.21,0xffd33a],[.76,.08,.42,0,.86,0,0x111111]);
+ if(look.cop){HB.push([.5,.12,.52,0,2.05,0,0x101830],[.5,.04,.2,0,2.0,.3,0x101830]);B.push([.12,.12,.03,-.2,1.36,.21,0xffd33a],[.76,.08,.42,0,.86,0,0x111111])}
  if(look.player)B.push([.76,.12,.42,0,.86,0,0xffd33a]);
- gm(body,boxesGeo('body'+[sh,skin,look.hair,ly,lc,look.chain|0,look.pack|0,!!look.cop,!!look.player].join('_'),B));
+ gm(torso,boxesGeo('body'+[sh,skin,ly,lc,look.chain|0,look.pack|0,!!look.cop,!!look.player].join('_'),B)).position.y=-.82;
+ gm(head,boxesGeo('head'+[skin,look.hair,!!look.cop].join('_'),HB)).position.y=-1.55;
+ const phone=new T.Mesh(boxesGeo('phone',[[.09,.16,.03,0,0,0,0x15151a],[.075,.13,.01,0,0,.016,0x4a8aff]]),personMat);phone.position.set(0,-.68,.1);phone.rotation.x=-.3;phone.visible=false;armL.add(phone);
  // everyone wears Default; 1 in 5 people walking around wear Happy; cops get the officer faces. The rest are for special moments (faceFor)
  const fb=look.cop?(R()<.25?'donut':'cop'):!look.player&&R()<.2?'happy':'default';
- const fc=new T.Mesh(FACEG,faceMats[fb]);fc.position.set(0,1.78,.232);fc.userData.base=fb;body.add(fc);
- scene.add(g);return{g,body,legL,legR,armL,armR,face:fc}}
+ const fc=new T.Mesh(FACEG,faceMats[fb]);fc.position.set(0,.23,.232);fc.userData.base=fb;head.add(fc);
+ scene.add(g);return{g,body,torso,head,legL,legR,armL,armR,face:fc,phone}}
 /* Dead: knocked out or WASTED. Caught: a cop is arresting you / BUSTED. SCARED: running away, sent flying, knocked over.
    RICH: just got paid. Shrug: your car got stolen, or you're out of ammo / the store's empty.
    Nervous: you have 3+ stars, or someone's standing near you while you aim a gun. Sleepy: people out late at night (11 PM to 5 AM). */
@@ -481,18 +484,71 @@ function faceFor(p){const st=p.state;if(st==='out')return'dead';if(st==='down')r
  if(p===me&&starsNow()>=3)return'nervous';const base=p.m.face.userData.base;
  if(p.kind==='ped'){if(me&&me.aim&&!me.car&&Math.abs(p.x-me.x)<14&&Math.abs(p.z-me.z)<14)return'nervous';const h=dayT*24;if(h>=23||h<5)return'sleepy'}
  return base}
-function animPerson(p,dt){const m=p.m,sp=Math.hypot(p.vx,p.vz);const fm=faceMats[faceFor(p)];if(m.face.material!==fm)m.face.material=fm;
- if(p.state==='fly'){m.body.rotation.x+=p.spin*dt;m.body.rotation.z+=p.spin*.4*dt;return}
- if(p.state==='down'||p.state==='out'){m.body.rotation.x=lerp(m.body.rotation.x,-Math.PI/2,Math.min(1,dt*8));m.body.rotation.z=lerp(m.body.rotation.z,0,Math.min(1,dt*8));m.body.position.y=lerp(m.body.position.y,.22,Math.min(1,dt*8));
-  return}
- m.body.rotation.x=lerp(m.body.rotation.x,0,Math.min(1,dt*10));m.body.rotation.z=0;m.body.position.y=0;
- p.phase=(p.phase||0)+dt*(sp>.2?sp*2.6+2:0);const k=Math.min(1,sp/3)*(p.ground===false?.3:1),s=Math.sin(p.phase);
- m.legL.rotation.x=s*.9*k;m.legR.rotation.x=-s*.9*k;
- m.armL.rotation.x=-s*.8*k;
- if(p.aim){m.armR.rotation.x=-Math.PI/2+(p.aimP||0);m.armL.rotation.x=p.weapon==='smg'?-Math.PI/2.4+(p.aimP||0):m.armL.rotation.x}
- else if(p.punchT>0){m.armR.rotation.x=-Math.PI/2*(1-Math.abs(p.punchT-.15)/.15)}
- else m.armR.rotation.x=s*.8*k;
- if(p.ground===false){m.legL.rotation.x=-.5;m.legR.rotation.x=.3}}
+/* animations: walking (bob, sway, swinging arms), running (leaning in, big strides), panicking (arms in the air), jumping,
+   landing, flailing through the air, lying knocked out, getting up, punching (wind-up and jab), aiming, flinching when hit,
+   shrugging, and idle life when standing still: breathing, shifting weight, looking around (and at you when you're close),
+   checking their phone, stretching, checking the time, waving, and dancing on the beach or at night. Cops stand hands-on-belt. */
+const sm=(o,v,k,dt)=>o+(v-o)*Math.min(1,dt*k);
+const IDLES=['phone','phone','stretch','watch','wave','dance','tap'];
+function animPerson(p,dt){const m=p.m,sp=Math.hypot(p.vx,p.vz),A=p.anim||(p.anim={t:R()*9,idle:null,idleT:3+R()*8,hy:0,hp:0,hyT:0,tyaw:0,tpit:0,land:0,air:false,lastYaw:p.yaw,flinch:0,lastHp:p.hp});
+ const fm=faceMats[faceFor(p)];if(m.face.material!==fm)m.face.material=fm;
+ A.t+=dt;const t=A.t,b=m.body,to=m.torso,hd=m.head,aL=m.armL,aR=m.armR,lL=m.legL,lR=m.legR;
+ if(p.hp<A.lastHp)A.flinch=.35;A.lastHp=p.hp;A.flinch=Math.max(0,A.flinch-dt);
+ m.phone.visible=false;
+ // flying through the air: flail everything
+ if(p.state==='fly'){b.rotation.x+=p.spin*dt;b.rotation.z+=p.spin*.4*dt;const f=t*22;aL.rotation.x=Math.sin(f)*1.6-1;aR.rotation.x=Math.cos(f)*1.6-1;aL.rotation.z=-1;aR.rotation.z=1;lL.rotation.x=Math.sin(f*.8)*.9;lR.rotation.x=-Math.sin(f*.8)*.9;hd.rotation.x=Math.sin(f)*.3;return}
+ // lying down: knocked out (arms out, still) or knocked over (twitching, then pushing up)
+ if(p.state==='down'||p.state==='out'){const out=p.state==='out';b.rotation.x=sm(b.rotation.x,-Math.PI/2,8,dt);b.rotation.z=sm(b.rotation.z,0,8,dt);b.position.y=sm(b.position.y,.22,8,dt);to.rotation.set(0,0,0);
+  aL.rotation.z=sm(aL.rotation.z,out?-1.3:-.4,6,dt);aR.rotation.z=sm(aR.rotation.z,out?1.3:.4,6,dt);aL.rotation.x=sm(aL.rotation.x,out?-.2:-1.2,6,dt);aR.rotation.x=sm(aR.rotation.x,out?-.4:-1.2,6,dt);
+  lL.rotation.x=sm(lL.rotation.x,out?-.1:.2,6,dt);lR.rotation.x=sm(lR.rotation.x,out?.25:-.3,6,dt);hd.rotation.set(out?0:Math.sin(t*9)*.15,out?.5:0,0);
+  if(!out&&p.t<.5&&p.t>0){const u=1-p.t/.5;b.rotation.x=-Math.PI/2*(1-u);b.position.y=.22*(1-u)}return}
+ b.rotation.x=sm(b.rotation.x,0,10,dt);b.rotation.z=sm(b.rotation.z,0,10,dt);
+ const air=p.ground===false,run=sp>5.2,panic=p.kind==='ped'&&p.ai&&p.ai.flee>0;
+ if(A.air&&!air)A.land=.16;A.air=air;A.land=Math.max(0,A.land-dt);
+ // turning on the spot shuffles the feet
+ const dy=Math.abs(wrapA(p.yaw-A.lastYaw));A.lastYaw=p.yaw;
+ const moveK=Math.min(1,sp/3);p.phase=(p.phase||0)+dt*(sp>.2?sp*2.5+2:0)+(sp<.3?Math.min(dy,.2)*6:0);
+ const s=Math.sin(p.phase),c2=Math.cos(p.phase),k=air?0:sp>.2?moveK:Math.min(1,dy*20)*.4;
+ let tl=0,tz=0,ty=0,bob=0,aLx,aRx,aLz=-.05,aRz=.05,hx=0,hyw=0;
+ // legs and the body's bounce
+ lL.rotation.x=s*(run?1.05:.75)*k;lR.rotation.x=-s*(run?1.05:.75)*k;bob=Math.abs(c2)*(run?.08:.045)*k;
+ tl=(run?.28:.07)*moveK;tz=s*.05*k;ty=-s*.1*k;
+ aLx=-s*(run?1.25:.7)*k;aRx=s*(run?1.25:.7)*k;if(run){aLz=-.18;aRz=.18}
+ hx=Math.sin(p.phase*2)*.035*k;
+ if(panic){const f=t*16;aLx=-2.8+Math.sin(f)*.35;aRx=-2.8+Math.cos(f)*.35;aLz=-.35;aRz=.35;tl=.12;hyw=Math.sin(t*7)*.4}
+ if(air){aLx=-.5;aRx=-.5;aLz=-.9;aRz=.9;lL.rotation.x=-.6;lR.rotation.x=.35;tl=.05}
+ // standing still: idle life
+ const idle=sp<.3&&!air&&!p.aim&&!(p.punchT>0)&&!panic;
+ if(idle){const br=Math.sin(t*2.3);bob=br*.006;tz=Math.sin(t*.6)*.025;aLx=br*.04;aRx=-br*.04;aLz=-.07-br*.02;aRz=.07+br*.02;
+  if(p.kind==='cop'&&!p.aim){aLz=-.45;aRz=.45;aLx=-.15;aRx=-.15}
+  // look around, or at you when you're close
+  A.hyT-=dt;if(A.hyT<=0){A.hyT=1.5+R()*3.5;A.tyaw=(R()-.5)*1.4;A.tpit=(R()-.5)*.3}
+  let ly=A.tyaw,lp=A.tpit;if(me&&p!==me&&me.hp>0){const dx=me.x-p.x,dz=me.z-p.z,d=Math.hypot(dx,dz);if(d<7){ly=clamp(wrapA(Math.atan2(dx,dz)-p.yaw),-1.2,1.2);lp=0}}
+  hyw=ly;hx=lp;
+  // little things people do while waiting
+  if(p.kind==='ped'){A.idleT-=dt;if(!A.idle&&A.idleT<=0){A.idle=pick(IDLES);A.idleD=A.idle==='phone'?4+R()*5:A.idle==='dance'?5+R()*4:2+R()*1.5;const h=dayT*24;if(A.idle==='dance'&&!(h>=21||h<4||p.x>CITY-20))A.idle='phone'}
+   if(p.ai&&p.ai.wave&&!A.idle){A.idle='wave';A.idleD=99}
+   if(A.idle){A.idleD-=dt;const I=A.idle;
+    if(I==='phone'){aLx=-1.95;aLz=.38;hx=.32;hyw=.15;m.phone.visible=true}
+    else if(I==='stretch'){aLx=-3;aRx=-3;aLz=-.25;aRz=.25;tl=-.12;hx=-.25}
+    else if(I==='watch'){aLx=-1.35;aLz=.95;hx=.35;hyw=.35}
+    else if(I==='wave'){aRx=-2.7;aRz=.25+Math.sin(t*10)*.35;hyw=0}
+    else if(I==='tap'){lR.rotation.x=-Math.max(0,Math.sin(t*12))*.25}
+    else if(I==='dance'){const f=t*7.5;bob=Math.abs(Math.sin(f))*.09;tz=Math.sin(f)*.12;ty=Math.sin(f*.5)*.35;aLx=-1.6+Math.sin(f)*.9;aRx=-1.6-Math.sin(f)*.9;aLz=-.3;aRz=.3;lL.rotation.x=Math.sin(f)*.3;lR.rotation.x=-Math.sin(f)*.3;hx=Math.sin(f)*.15}
+    if(A.idleD<=0){A.idle=null;A.idleT=6+R()*12}}}
+  if(p.shrugT>now){aLx=-.5;aRx=-.5;aLz=-.75;aRz=.75;hx=-.1;hyw=Math.sin(t*3)*.15;bob=.03}}
+ else if(A.idle&&sp>.5){A.idle=null;A.idleT=4+R()*8}
+ // aiming, punching
+ if(p.aim){aRx=-Math.PI/2+(p.aimP||0);aRz=-.05;if(p.weapon==='smg'){aLx=-Math.PI/2.3+(p.aimP||0);aLz=.55}ty=-.15;hx=-(p.aimP||0)*.6;hyw=0}
+ else if(p.punchT>0){const u=1-p.punchT/.3;if(u<.35){aRx=.55;ty=-.3;aLx=-1.1;aLz=.3}else{aRx=-1.65;ty=.35;aLx=-.9;tl=.12}}
+ // flinch when hit, squash on landing
+ if(A.flinch>0){tl-=A.flinch*.8;hx-=A.flinch*.9}
+ const sq=A.land>0?Math.sin(A.land/.16*Math.PI)*.07:0;
+ b.position.y=sm(b.position.y,bob-sq,18,dt);
+ to.rotation.x=sm(to.rotation.x,tl,10,dt);to.rotation.z=sm(to.rotation.z,tz,10,dt);to.rotation.y=sm(to.rotation.y,ty,12,dt);
+ hd.rotation.y=sm(hd.rotation.y,hyw,6,dt);hd.rotation.x=sm(hd.rotation.x,hx,8,dt);
+ const ak=p.punchT>0?30:14;aL.rotation.x=sm(aL.rotation.x,aLx,ak,dt);aR.rotation.x=sm(aR.rotation.x,aRx,ak,dt);aL.rotation.z=sm(aL.rotation.z,aLz,10,dt);aR.rotation.z=sm(aR.rotation.z,aRz,10,dt);
+}
 
 // gun in the hand (one shared mesh per person, shown when they hold one)
 const GUNG={pistol:[.09,.16,.34],smg:[.1,.2,.6]};
@@ -885,7 +941,7 @@ function pedAI(p,dt){const a=p.ai;
  if(p.state==='out'){p.t-=dt;if(p.t<=0)removePerson(p);return}
  if(p.state==='fly')return;
  if(p.kind==='cop'&&copEngaged(p)){copFoot(p,dt);return}
- if(a.wave&&!(a.flee>0)){p.vx*=.8;p.vz*=.8;return}
+ if((a.wave||a.stay)&&!(a.flee>0)){p.vx*=.8;p.vz*=.8;return}
  let sp=1.35,tx,tz;
  if(a.flee>0){a.flee-=dt;const dx=p.x-a.fx,dz=p.z-a.fz,d=Math.hypot(dx,dz)+.01;tx=p.x+dx/d*5;tz=p.z+dz/d*5;sp=5.4}
  else{if(a.tx==null)pedTarget(p);tx=a.tx;tz=a.tz;
@@ -1055,7 +1111,7 @@ function jobTaxi(){return{name:'TAXI',fares:0,earned:0,stage:'pick',time:60,pass
  update(dt){const c=me.car;if(!c||c.type!=='taxi')return endJob(this.fares>0,'You left the taxi',0,`Shift over: $${this.earned}`);
   this.time-=dt;if(this.time<=0)return this.fares>0?endJob(true,'',0,`Too slow! Shift over: $${this.earned}`):endJob(false,'Too slow, the customer walked off');
   const sp=Math.abs(carSpeed(c));
-  if(this.stage==='pick'){if(this.pass&&this.pass.hp>0){const p=this.pass;p.vx*=.5;p.vz*=.5;p.yaw=Math.atan2(me.x-p.x,me.z-p.z);p.m.armR.rotation.x=-2.6+Math.sin(now*8)*.3}
+  if(this.stage==='pick'){if(this.pass&&this.pass.hp>0){const p=this.pass;p.vx*=.5;p.vz*=.5;p.yaw=Math.atan2(me.x-p.x,me.z-p.z)}
    if(!this.pass||this.pass.hp<=0)return endJob(this.fares>0,'You ran over your customer',0,`Shift over: $${this.earned}`);
    if(distMe(this.pass.x,this.pass.z)<7&&sp<3){removePerson(this.pass);this.pass=null;const d=sidewalkSpot(150,420);this.dest=d;const dd=distMe(...d);this.fare=Math.round(30+dd*.3);this.time=dd/8+22;this.stage='drop';target(d[0],d[1],4);sfx('door');toast('"Take me there, fast!"')}}
   else if(distMe(...this.dest)<7&&sp<3){const tip=Math.round(this.time*1.5);money+=this.fare+tip;this.earned+=this.fare+tip;this.fares++;sfx('cash');addFeed(`Fare paid: $${this.fare} + $${tip} tip`);hudDirty=true;this.newFare()}
