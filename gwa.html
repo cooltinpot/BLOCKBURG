@@ -141,7 +141,7 @@ input{font:700 18px system-ui,sans-serif;padding:12px;border-radius:12px;border:
 .ypq{width:100%;box-sizing:border-box;border:0;border-radius:16px;padding:8px 12px;background:#272727;color:#fff;font:600 12px system-ui;margin-bottom:6px;outline:none}
 .ypclear{border:0;background:none;color:#7dd8ff;font:700 11px system-ui;margin:-2px 0 6px;padding:0}
 .ypcard{display:block;width:100%;border:0;background:none;color:#fff;text-align:left;padding:0;margin:0 0 12px}
-.ypth{position:relative}.ypth img{width:100%;aspect-ratio:16/9;border-radius:10px;display:block;object-fit:cover}.ypth span{position:absolute;right:5px;bottom:5px;background:#000c;color:#fff;font:700 10px system-ui;padding:1px 4px;border-radius:4px}
+.ypth{position:relative}.ypth img{width:100%;aspect-ratio:16/9;border-radius:10px;display:block;object-fit:cover}.ypth span{position:absolute;right:5px;bottom:5px;background:#000c;color:#fff;font:700 10px system-ui;padding:1px 4px;border-radius:4px}.ypth span.live{background:#e00}.ypred{font-style:normal;color:#ff5a5a;font-weight:800}
 .ypinfo,.ypch,.ypcom{display:flex;gap:7px;margin-top:6px;align-items:flex-start}.ypav{width:26px;height:26px;border-radius:50%;flex:none}
 .ypinfo b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:700 12px/1.25 system-ui}.ypinfo small,.ypch small,.ypmeta{display:block;color:#aaa;font:500 10.5px system-ui;margin-top:2px}
 .ypplayer{position:relative;margin:0 -12px}.ypplayer canvas{width:100%;display:block;background:#000}.ypbar{height:3px;background:#444}.ypbar i{display:block;height:100%;width:0;background:#ff2a2a}
@@ -742,6 +742,7 @@ function animPerson(p,dt){personality(p);const m=p.m,sp=Math.hypot(p.vx,p.vz),A=
  else if(A.idle&&sp>.5){A.idle=null;A.idleT=4+R()*8}
  // holding the phone (or taking a selfie)
  if(p===me&&ph.open&&!p.aim&&!me.car){if(ph.selfie&&ph.screen==='camera'){aLx=-2.1;aLz=-.25;hx=0;hyw=0;m.phone.visible=true;if(sp<.3)tz=.06}else{aLx=-1.55;aLz=.45;hx=.35;hyw=.12;m.phone.visible=true}}
+ if(p.streaming&&!p.car&&p.state==='walk'&&!(p.ai&&p.ai.flee>0)){aLx=-2.1;aLz=-.25;m.phone.visible=true}
  // aiming, punching
  if(p.aim){aRx=-Math.PI/2+(p.aimP||0);aRz=-.05;if(p.weapon==='smg'){aLx=-Math.PI/2.3+(p.aimP||0);aLz=.55}ty=-.15;hx=-(p.aimP||0)*.6;hyw=0}
  else if(p.punchT>0){const u=1-p.punchT/.3;if(u<.35){aRx=.55;ty=-.3;aLx=-1.1;aLz=.3}else{aRx=-1.65;ty=.35;aLx=-.9;tl=.12}}
@@ -1329,7 +1330,7 @@ function spawnPeds(){const h=hourNow();
 function spawner(dt){spawnT-=dt;if(spawnT>0)return;spawnT=.35;
  const h=hourNow(),busy=h<5?.35:h<7||h>=22?.6:1,maxCars=Math.round((gfx?26:15)*(h<5?.5:1)),maxPeds=Math.round((gfx?60:32)*busy);
  for(const c of [...cars]){if(c.remote||c===me.car||c===me.lastCar||c.job)continue;const d=Math.hypot(c.x-me.x,c.z-me.z);if(d>320||d>200&&unseen(c.x,c.z)||(c.dead&&c.burn<=0&&d>70&&unseen(c.x,c.z)))removeCar(c)}
- for(const p of [...people]){if(p===me||p.remote||p.car||p.job)continue;const d=Math.hypot(p.x-me.x,p.z-me.z);if(d>260||d>140&&unseen(p.x,p.z))removePerson(p)}
+ for(const p of [...people]){if(p===me||p.remote||p.car||p.job||p.streaming)continue;const d=Math.hypot(p.x-me.x,p.z-me.z);if(d>260||d>140&&unseen(p.x,p.z))removePerson(p)}
  let nc=0;for(const c of cars)if(!c.remote&&!(c.ai&&c.ai.chase)&&!c.job)nc++;if(nc<maxCars)spawnTraffic();
  let np=0;for(const p of people)if(!p.car&&(p.kind==='ped'||p.kind==='cop'))np++;if(np<maxPeds)spawnPeds();
  else if(np>maxPeds+1&&R()<.3){const c=people.filter(q=>q.kind==='ped'&&!q.car&&q.ai&&q.ai.role&&!q.ai.goIn&&q.state==='walk'&&!q.job);if(c.length)goInside(pick(c))}}
@@ -1604,7 +1605,7 @@ function stepCars(dt){for(const c of [...cars]){if(c.remote)continue;try{c.crash
    if(c.burn<=0){c.burn=-1;explode(c.x,c.y+.6,c.z,c.driver===me?me:null);recolorCar(c,0x1c1a18);if(c.driver&&c.driver!==me){const d=c.driver;d.car=null;c.driver=null;d.x=c.x+2;d.z=c.z;d.m.g.visible=true;fling(d,(R()-.5)*8,6,(R()-.5)*8,200,null)}}}}
   catch(e){oops(e);if(c!==me.car)removeCar(c)}}
  const near=cars.filter(c=>Math.abs(c.x-me.x)<90&&Math.abs(c.z-me.z)<90);for(let i=0;i<near.length;i++)for(let j=i+1;j<near.length;j++)carCar(near[i],near[j])}
-function stepPeople(dt){for(const p of [...people]){if(p===me||p.remote)continue;if(p.car){p.x=p.car.x;p.z=p.car.z;continue}try{pedAI(p,dt);personPhys(p,dt);p.animAcc=(p.animAcc||0)+dt;const far=Math.abs(p.x-cam.position.x)+Math.abs(p.z-cam.position.z)>80;if(!far||(frameN+p.id)%3===0){animPerson(p,p.animAcc);p.animAcc=0}p.punchT=Math.max(0,p.punchT-dt)}catch(e){oops(e);removePerson(p)}}
+function stepPeople(dt){for(const p of [...people]){if(p===me||p.remote)continue;if(p.car){p.x=p.car.x;p.z=p.car.z;continue}try{pedAI(p,dt);personPhys(p,dt);p.animAcc=(p.animAcc||0)+dt;const far=!p.streaming&&Math.abs(p.x-cam.position.x)+Math.abs(p.z-cam.position.z)>80;if(!far||(frameN+p.id)%3===0){animPerson(p,p.animAcc);p.animAcc=0}p.punchT=Math.max(0,p.punchT-dt)}catch(e){oops(e);removePerson(p)}}
  if(!me.car&&!me.sit){personPhys(me,dt)}animPerson(me,dt);
  for(let i=cash.length-1;i>=0;i--){const c=cash[i];c.m.rotation.y+=dt*3;c.t-=dt;if(distMe(c.x,c.z)<1.6&&!me.car||c.t<=0){if(c.t>0){money+=c.amt;sfx('cash');addFeed(`+$${c.amt}`);hudDirty=true}scene.remove(c.m);cash.splice(i,1)}}}
 function sounds(dt){if(!AC)return;const c=me.car;
@@ -2094,7 +2095,7 @@ const BLEETS=[['DarnellLeo','who keeps doing the worm downtown lmao'],['TiffanyV
  ['KevWalks','did THE WALK today. life changing.'],['ChadGains','pushups at 6am. who else'],['RosaR','I heard if you dial 1-999-BIGHEAD something weird happens 👀'],['TrevorT','my cousin dialed 1-999-LOWGRAV and floated away??'],
  ['LeonadaNews','Reminder: robbing the 24/8 is NOT a career'],['YukiTravels','The Walker statue is even bigger in person!!'],['JaydenJ','someone just T-posed at me on the beach'],['LeonadaPD','Drive safe. We are watching. 👀'],['ShawnaS','who dials 1-999-PARTY at 3am. WHO.']];
 for(const b of BLEETS.slice(0,6))bleet(...b);
-function phoneUpdate(dt){if(ph.open)ypTick(dt);$('#phClock').textContent=clockStr();if(ph.open&&(me.hp<=0||build))phoneToggle(false);
+function phoneUpdate(dt){if(ph.open)ypTick(dt);liveIdle();$('#phClock').textContent=clockStr();if(ph.open&&(me.hp<=0||build))phoneToggle(false);
  ph.nextText-=dt;if(ph.nextText<=0&&playing){ph.nextText=70+R()*90;notify(...pick(TEXTS))}
  if(R()<dt/25)bleet(...pick(BLEETS));
  if(ph.pizzaT>0){ph.pizzaT-=dt;if(ph.pizzaT<=0){me.hp=Math.min(100,me.hp+50);hudDirty=true;notify('Pizza This','Your pizza was delivered! +50 health 🍕');sfx('cash')}}}
@@ -2152,7 +2153,7 @@ const YP_FACE_RX=['scared','nervous','caught','happy','shrug','rich','dead','def
 const YP_BG=[['#ff3b30','#ffcc00'],['#00c2ff','#7a3aff'],['#34c759','#00785a'],['#ff5aa0','#ffb000'],['#111','#ff3b30'],['#5a2aff','#ff3bd0'],['#ff7a00','#ff2a2a'],['#2a2a40','#00e0ff']];
 const ypHexSkin=n=>'#'+n.toString(16).padStart(6,'0');
 function ypCreator(cs){const r=ypRng(cs*7919+13),p3=ypPick(YP_P3,r);const name=(cs===0?'LeonadaNews':ypPick(YP_P1,r)+ypPick(YP_P2,r)+p3);
- return{id:cs,name,skin:ypHexSkin(ypPick(SKINS,r)),face:ypPick(['default','default','happy','rich','shrug','cop','sleepy'],r),subs:Math.floor(Math.pow(10,1+r()*6.8)),voice:150+r()*200,shirt:ypHexSkin(ypPick(SHIRTS,r)),hair:r()<.8}}
+ const look=randLook(r);return{id:cs,name,look,skin:ypHexSkin(look.skin),face:ypPick(['default','default','happy','rich','shrug','cop','sleepy'],r),subs:Math.floor(Math.pow(10,1+r()*6.8)),voice:150+r()*200,shirt:ypHexSkin(look.shirt),hair:r()<.8}}
 function ypFmt(n){return n<1000?String(n|0):n<1e6?(n/1e3).toFixed(n<1e4?1:0).replace('.0','')+'K':n<1e9?(n/1e6).toFixed(n<1e7?1:0).replace('.0','')+'M':(n/1e9).toFixed(1).replace('.0','')+'B'}
 function ypVideo(seed,topic){const r=ypRng(seed);const gi=ypPick(YP_GAMES,r);let G=gi[0],style=gi[1];if(topic){G=topic;style=ypPick(['blocks','obby','city','cart','sky','space','horror','war'],ypRng(ypHash(topic)))}
  const t=ypPick(topic?YP_TG:YP_T,r),cs=ypInt(1,5000,r),C=ypCreator(t[1]==='news'?0:cs);
@@ -2190,7 +2191,7 @@ function ypGuy(x,cx,gy,s,v,t,jump){const y=gy-jump;x.fillStyle=v.C.shirt;x.fillR
 function ypText(x,txt,cx,cy,size,fill,rot){x.save();x.translate(cx,cy);x.rotate(rot||0);x.font=`900 ${size}px Impact,'Arial Black',system-ui`;x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';
  let s=size;while(x.measureText(txt).width>x.canvas.width*.92&&s>8){s-=1;x.font=`900 ${s}px Impact,'Arial Black',system-ui`}x.lineWidth=Math.max(3,s*.22);x.strokeStyle='#000';x.strokeText(txt,0,0);x.fillStyle=fill;x.fillText(txt,0,0);x.restore()}
 const ypThumbCache=new Map();
-function ypThumb(v){if(ypThumbCache.has(v.seed+v.G))return ypThumbCache.get(v.seed+v.G);const c=document.createElement('canvas');c.width=192;c.height=108;const x=c.getContext('2d'),w=192,h=108,r=ypRng(v.seed^0x5a5a);
+function ypThumb(v){if(ypThumbCache.has(v.seed+v.G))return ypThumbCache.get(v.seed+v.G);if(v.live){const u=liveThumb(v);if(u){ypThumbCache.set(v.seed+v.G,u);return u}}const c=document.createElement('canvas');c.width=192;c.height=108;const x=c.getContext('2d'),w=192,h=108,r=ypRng(v.seed^0x5a5a);
  if(v.kind==='game'||v.kind==='react'||v.style==='horror'){ypScene(x,w,h,r()*10,v.style,v.seed)}else{const g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,v.bg[0]);g.addColorStop(1,v.bg[1]);x.fillStyle=g;x.fillRect(0,0,w,h);
   x.fillStyle='#ffffff22';for(let i=0;i<8;i++){x.save();x.translate(w/2,h/2);x.rotate(i*.785+v.r2);x.fillRect(0,-6,w,12);x.restore()}}
  if(v.kind==='tier'){const tc=['#ff6b6b','#ffb86b','#ffe66b','#9aff6b','#6bc8ff'];for(let i=0;i<5;i++){x.fillStyle=tc[i];x.fillRect(4,6+i*19,18,17);x.fillStyle='#0008';x.fillRect(23,6+i*19,90,17)}}
@@ -2207,7 +2208,7 @@ const ypAvCache=new Map();
 function ypAvatar(C){if(ypAvCache.has(C.id))return ypAvCache.get(C.id);const c=document.createElement('canvas');c.width=c.height=48;const x=c.getContext('2d');x.fillStyle=C.shirt;x.fillRect(0,0,48,48);ypHead(x,24,26,34,C.skin,C.face,C.hair,0);
  const u=c.toDataURL();ypAvCache.set(C.id,u);if(ypAvCache.size>200)ypAvCache.delete(ypAvCache.keys().next().value);return u}
 // ---- the playing video ----
-function ypFrame(x,w,h,v,t){const K=v.kind;x.clearRect(0,0,w,h);
+function ypFrame(x,w,h,v,t){const K=v.kind;x.clearRect(0,0,w,h);if(K==='live'){liveFrame(x,w,h,v,t,LIVE.dt||0);return}
  if(K==='game'){ypScene(x,w,h,t,v.style,v.seed);const gy=h*.72,s=h*.13,jp=Math.max(0,Math.sin(t*3.2))*h*.22;ypGuy(x,w*.3,gy,s,v,t,jp);
   x.fillStyle='#0007';x.fillRect(4,4,74,16);x.fillStyle='#fff';x.font='800 10px system-ui';x.textAlign='left';x.fillText('SCORE '+Math.floor(t*137+v.seed%900),8,15);
   if(Math.floor(t*1.3)%4===1)ypText(x,ypPick(['WOW','NO WAY','!!!','COMBO x'+(1+Math.floor(t)%9),'EPIC'],ypRng(Math.floor(t*1.3)+v.seed)),w*.66,h*.3,h*.13,'#ffe14a',Math.sin(t*5)*.15)}
@@ -2222,8 +2223,7 @@ function ypFrame(x,w,h,v,t){const K=v.kind;x.clearRect(0,0,w,h);
   x.fillStyle='#ffffff22';for(let i=0;i<10;i++){x.save();x.translate(w/2,h/2);x.rotate(i*.628+t*.4);x.fillRect(0,-h*.05,w,h*.1);x.restore()}
   const idx=10-Math.floor(t/3)%10,ph0=(t%3)/3,r=ypRng(v.seed+idx);ypText(x,'#'+idx,w*.3,h*.45,h*(.35+Math.min(.1,ph0)*1.5),'#ffe14a',Math.sin(t*2)*.1);
   x.font=`${h*.3}px system-ui`;x.textAlign='center';x.fillText(ypPick(['🍕','🚗','🧦','🐸','🦆','🌮','🧀','🦈','🥒','🍔','💩','🐊','🚽','🍌','🗿','🔥'],r),w*.68,h*.55);ypText(x,ypPick(YP_NOUN,r).toUpperCase(),w*.68,h*.8,h*.1,'#fff',0)}
- else if(K==='vlog'){ypScene(x,w,h,t*.15,'city',v.seed);x.fillStyle='#0003';x.fillRect(0,0,w,h);const s=Math.min(w,h)*.42;
-  x.fillStyle=v.C.shirt;x.fillRect(w/2-s*.65,h*.62+Math.sin(t*4)*2,s*1.3,h);ypHead(x,w/2+Math.sin(t*1.3)*6,h*.42+Math.sin(t*4)*3,s,v.C.skin,Math.floor(t/2.4)%3===2?'happy':v.C.face,v.C.hair,Math.sin(t*2.1)*.08)}
+ else if(K==='vlog'){vlogFrame(x,w,h,v,t,LIVE.dt||0)}
  else if(K==='asmr'){x.fillStyle='#0b0b12';x.fillRect(0,0,w,h);x.save();x.translate(w/2,h/2);x.rotate(t*.4);const s=Math.min(w,h)*.3;x.fillStyle=v.bg[0];x.fillRect(-s/2,-s/2,s,s);x.fillStyle='#ffffff33';x.fillRect(-s/2,-s/2,s,s*.3);x.restore();
   const r=ypRng(Math.floor(t*1.5)+v.seed);x.fillStyle='#ffffffaa';x.font=`italic 700 ${h*.08}px system-ui`;x.textAlign='center';x.fillText(ypPick(['*tap*','*tap tap*','*crinkle*','*scratch*','*whisper*'],r),w*(.2+r()*.6),h*(.15+r()*.7))}
  else if(K==='news'){x.fillStyle='#1a3a8a';x.fillRect(0,0,w,h);ypScene(x,w*.0+w,h,0,'city',v.seed);x.fillStyle='#1a3a8acc';x.fillRect(0,0,w,h);
@@ -2240,30 +2240,32 @@ function ypCaption(x,w,h,v,t,bottom){const li=Math.floor(t/3)%v.lines.length,lin
 ph.yp={feed:[],q:'',scroll:0,cur:null,t:0,lastN:0,lastL:-1,subs:{},liked:{},disliked:{},shorts:[],si:0,watched:0};
 const ypSeed=()=>(Math.random()*4294967296)>>>0;
 function ypMake(){return ypVideo(ypSeed(),ph.yp.q||null)}
-function ypMore(n=8){const yp=ph.yp,list=$('#ypList');const add=[];for(let i=0;i<n;i++){const v=ypMake();yp.feed.push(v);add.push(v)}if(list)list.insertAdjacentHTML('beforeend',add.map(ypCard).join(''))}
-function ypCard(v){return`<button class="ypcard" data-yp="${v.seed}"><div class="ypth"><img src="${ypThumb(v)}"><span>${v.dur}</span></div><div class="ypinfo"><img class="ypav" src="${ypAvatar(v.C)}"><div><b>${esc(v.title)}</b><small>${esc(v.C.name)} · ${ypFmt(v.views)} views · ${v.age}</small></div></div></button>`}
+function ypMix(first){return!ph.yp.q&&(first||R()<.14)&&liveVideo()||ypMake()}
+function ypMore(n=8){const yp=ph.yp,list=$('#ypList');const add=[];for(let i=0;i<n;i++){const v=ypMix(yp.feed.length===1);yp.feed.push(v);add.push(v)}if(list)list.insertAdjacentHTML('beforeend',add.map(ypCard).join(''))}
+function ypCard(v){return`<button class="ypcard" data-yp="${v.seed}"><div class="ypth"><img src="${ypThumb(v)}"><span class="${v.live?'live':''}">${v.live?'● LIVE':v.dur}</span></div><div class="ypinfo"><img class="ypav" src="${ypAvatar(v.C)}"><div><b>${esc(v.title)}</b><small>${esc(v.C.name)} · ${v.live?`<em class="ypred">${ypFmt(v.viewers)} watching</em>`:`${ypFmt(v.views)} views · ${v.age}`}</small></div></div></button>`}
 function ypFind(seed){const yp=ph.yp;return yp.feed.find(v=>v.seed===seed)||(yp.cur&&yp.cur.up||[]).find(v=>v.seed===seed)||yp.shorts.find(v=>v.seed===seed)}
-function ypWatch(v){const yp=ph.yp;yp.cur=v;yp.t=0;yp.lastN=0;yp.lastL=-1;v.up=v.up||Array.from({length:4},ypMake);yp.watched++;if(ph.screen==='ypw')phRender();else phGo('ypw')}
+function ypWatch(v){const yp=ph.yp;yp.cur=v;yp.t=0;yp.lastN=0;yp.lastL=-1;v.up=v.up||Array.from({length:4},ypMake);liveReset();yp.watched++;if(ph.screen==='ypw')phRender();else phGo('ypw')}
 function ypScreen(){const yp=ph.yp;
  if(ph.screen==='youpoopz'){return`<div class="yphead"><span class="yplogo"><i>💩</i>YouPoopz</span><button class="ypsh" data-go="shorts">⚡ Shorts</button></div>
   <input id="ypQ" class="ypq" placeholder="🔍 Search anything..." value="${esc(yp.q)}" autocomplete="off">${yp.q?`<button class="ypclear" data-ypclear="1">✕ clear search "${esc(yp.q)}"</button>`:''}<div id="ypList">${yp.feed.map(ypCard).join('')}</div><p class="tip">Scroll for more · literally never runs out</p>`}
  if(ph.screen==='ypw'){const v=yp.cur,sub=yp.subs[v.C.id],lk=yp.liked[v.seed],dl=yp.disliked[v.seed];
   return`<div class="ypplayer"><canvas id="ypc" width="432" height="244"></canvas><div class="ypbar"><i id="ypBar"></i></div><small id="ypTime" class="yptime"></small></div>
-  <b class="yptitle">${esc(v.title)}</b><small class="ypmeta">${ypFmt(v.views+(lk?1:0))} views · ${v.age}${v.title.includes(v.G)?'':' · '+esc(v.G)}</small>
+  <b class="yptitle">${esc(v.title)}</b><small class="ypmeta">${v.live?`<em class="ypred">🔴 ${ypFmt(v.viewers)} watching now</em> · ${v.age}`:`${ypFmt(v.views+(lk?1:0))} views · ${v.age}`}${v.title.includes(v.G)?'':' · '+esc(v.G)}</small>
   <div class="ypch"><img class="ypav" src="${ypAvatar(v.C)}"><div><b>${esc(v.C.name)}</b><small>${ypFmt(v.C.subs+(sub?1:0))} subscribers</small></div><button class="ypsub ${sub?'on':''}" data-ypsub="1">${sub?'Subscribed':'Subscribe'}</button></div>
   <div class="ypacts"><button class="${lk?'on':''}" data-yplike="1">👍 ${ypFmt(v.likes+(lk?1:0))}</button><button class="${dl?'on':''}" data-ypdis="1">👎</button><button data-ypshare="1">↗ Share</button></div>
   <p class="ypsec">Comments · ${ypFmt(Math.floor(v.views/40)+v.coms.length)}</p>${v.coms.map(c=>`<div class="ypcom"><img class="ypav" src="${ypAvatar(c.who)}"><div><b>@${esc(c.who.name)}</b><span>${esc(c.text)}</span><small>👍 ${ypFmt(c.likes)}</small></div></div>`).join('')}
   <p class="ypsec">Up next</p>${v.up.map(ypCard).join('')}`}
- if(ph.screen==='shorts'){if(!yp.shorts.length){for(let i=0;i<3;i++)yp.shorts.push(ypMake());yp.si=0}const v=yp.shorts[yp.si];yp.cur=v;const lk=yp.liked[v.seed];
+ if(ph.screen==='shorts'){if(!yp.shorts.length){for(let i=0;i<3;i++)yp.shorts.push(ypMix(i===1));yp.si=0}const v=yp.shorts[yp.si];yp.cur=v;const lk=yp.liked[v.seed];
   return`<canvas id="ypc" width="480" height="808"></canvas><div class="ypsov"><div class="ypside"><button class="${lk?'on':''}" data-yplike="1">👍<small>${ypFmt(v.likes+(lk?1:0))}</small></button><button data-ypcom="1">💬<small>${ypFmt(Math.floor(v.views/40))}</small></button><button data-ypnext="1">⏬<small>next</small></button></div>
-  <div class="ypsinfo"><b><img class="ypav" src="${ypAvatar(v.C)}">@${esc(v.C.name)} <button class="ypsub ${yp.subs[v.C.id]?'on':''}" data-ypsub="1">${yp.subs[v.C.id]?'✓':'Subscribe'}</button></b><span>${esc(v.title)} #shorts #${esc(v.G.replace(/\W/g,''))}</span></div></div><div class="ypswipe">scroll / swipe ↕</div>`}
+  <div class="ypsinfo"><b><img class="ypav" src="${ypAvatar(v.C)}">@${esc(v.C.name)} <button class="ypsub ${yp.subs[v.C.id]?'on':''}" data-ypsub="1">${yp.subs[v.C.id]?'✓':'Subscribe'}</button></b><span>${esc(v.title)} #shorts #${esc(v.G.replace(/\W/g,''))}</span></div></div>${v.live?'':'<div class="ypswipe">scroll / swipe ↕</div>'}`}
  return''}
 function ypAfterRender(){const yp=ph.yp,el=scr();
  if(ph.screen==='youpoopz'){if(!yp.feed.length)ypMore(8);el.scrollTop=yp.scroll;const q=$('#ypQ');if(q)q.onkeydown=e=>{if(e.key==='Enter'){yp.q=q.value.trim().slice(0,40);yp.feed=[];yp.scroll=0;q.blur();phRender()}e.stopPropagation()}}
  if(ph.screen==='ypw'||ph.screen==='shorts'){yp.cv=$('#ypc');ypTick(0)}else yp.cv=null}
-function ypShort(d){const yp=ph.yp;yp.si=Math.max(0,yp.si+d);while(yp.shorts.length<=yp.si+1)yp.shorts.push(ypMake());if(yp.shorts.length>60){yp.shorts.splice(0,20);yp.si-=20}yp.t=0;yp.lastN=0;yp.lastL=-1;phRender();if(AC)tone(d>0?520:440,.04,.03,'sine')}
-function ypTick(dt){const yp=ph.yp,cv=yp.cv,v=yp.cur;if(!cv||!v||!cv.isConnected)return;yp.t+=dt;const x=cv.getContext('2d'),w=cv.width,h=cv.height;
- if(ph.screen==='shorts'){ypFrame(x,w,h,v,yp.t);ypCaption(x,w,h,v,yp.t,h*.62)}
+function ypShort(d){const yp=ph.yp;yp.si=Math.max(0,yp.si+d);while(yp.shorts.length<=yp.si+1)yp.shorts.push(ypMix());if(yp.shorts.length>60){yp.shorts.splice(0,20);yp.si-=20}yp.t=0;yp.lastN=0;yp.lastL=-1;liveReset();phRender();if(AC)tone(d>0?520:440,.04,.03,'sine')}
+function ypTick(dt){const yp=ph.yp,cv=yp.cv,v=yp.cur;if(!cv||!v||!cv.isConnected)return;yp.t+=dt;LIVE.dt=dt;const x=cv.getContext('2d'),w=cv.width,h=cv.height;
+ if(ph.screen==='shorts'){ypFrame(x,w,h,v,yp.t);if(!v.live)ypCaption(x,w,h,v,yp.t,h*.62)}
+ else if(v.live){ypFrame(x,w,h,v,yp.t);const bar=$('#ypBar');if(bar)bar.style.width='100%';const tm=$('#ypTime');if(tm)tm.textContent='🔴 LIVE · '+ypFmt(v.viewers)+' watching'}
  else{ypFrame(x,w,h,v,yp.t);ypCaption(x,w,h,v,yp.t,v.kind==='news'?h*.78:h-8);const L=18,f=Math.min(1,yp.t/L);const bar=$('#ypBar');if(bar)bar.style.width=(f*100)+'%';const tm=$('#ypTime');if(tm){const s=Math.floor(f*v.dsec);tm.textContent=`${s/60|0}:${String(s%60).padStart(2,'0')} / ${v.dur}`}
   if(yp.t>L+1.2&&v.up&&v.up[0])ypWatch(v.up[0])}}
 function ypClick(d){const yp=ph.yp;
@@ -2276,7 +2278,85 @@ function ypClick(d){const yp=ph.yp;
  if(d.ypclear){yp.q='';yp.feed=[];yp.scroll=0;phRender();return true}
  return false}
 
-if(window.GWA_TEST_HOOK)window.GWA_TEST_HOOK({ypVideo,ypThumb,ypShort,ph,phoneToggle,dialNow,snap,startCall,notify,convs,startConv,say,sayHi,bubbles,samples:()=>Object.keys(SAMPLES),camObj:()=>cam,clearLine,get inHouse(){return inHouse},get build(){return build},HS,enterHouse,enterBuild,exitBuild,selectItem,buildClick,useThing,houseMarker,setMouse(x,y){mouseNDC.set(x,y);moveGhost()},clickCell(gx,gz){const b=build,st=b.st,[w,d]=b.sel?fp(b.sel.k,b.rot):[1,1];const v=new T.Vector3(st.x0+gx+w/2,0,st.z0+gz+d/2).project(cam),r=canvas.getBoundingClientRect();buildClick({clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height})},get me(){return me},cars,people,places,W,net,startGame,startJob,endJob,get job(){return job},jobs:{pizza:jobPizza,taxi:jobTaxi,race:jobRace,walk:jobWalk},
+// ================= YouPoopz LIVE: real people streaming from the real Leonada =================
+// A second camera renders the actual 3D world into the phone's video player.
+const LIVE={cam:new T.PerspectiveCamera(70,16/9,.1,500),targets:{},cv:null,acc:1,cpos:new T.Vector3(),clook:new T.Vector3(),snap:true,p:null,actor:null,actorSeed:-1,chat:[],chatT:0,capT:0,cap:'',capN:0,checkT:0,hiT:0,mode:'selfie',modeT:0,ended:0};
+LIVE.cam.layers.enable(1);
+function liveTarget(w,h){const k=w+'x'+h;let t=LIVE.targets[k];if(!t){const rt=new T.WebGLRenderTarget(w,h);rt.texture.encoding=T.sRGBEncoding;const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');
+ t=LIVE.targets[k]={rt,buf:new Uint8Array(w*h*4),cv,cx,img:cx.createImageData(w,h)}}return t}
+function liveShoot(w,h){const T0=liveTarget(w,h);LIVE.cam.aspect=w/h;LIVE.cam.updateProjectionMatrix();const au=renderer.shadowMap.autoUpdate;renderer.shadowMap.autoUpdate=false;
+ try{renderer.setRenderTarget(T0.rt);renderer.render(scene,LIVE.cam);renderer.readRenderTargetPixels(T0.rt,0,0,w,h,T0.buf)}finally{renderer.setRenderTarget(null);renderer.shadowMap.autoUpdate=au}
+ const d=T0.img.data,row=w*4;for(let y=0;y<h;y++)d.set(T0.buf.subarray((h-1-y)*row,(h-y)*row),y*row);T0.cx.putImageData(T0.img,0,0);return T0.cv}
+const liveOk=p=>p&&people.includes(p)&&!p.car&&p.hp>0;
+function liveFindStreamer(){const c=people.filter(p=>p.kind==='ped'&&!p.remote&&!p.car&&p.hp>0&&p.state==='walk'&&!p.streaming&&!(p.ai&&p.ai.conv)&&!(p.ai&&p.ai.flee>0));
+ if(!c.length)return null;c.sort((a,b)=>Math.hypot(a.x-me.x,a.z-me.z)-Math.hypot(b.x-me.x,b.z-me.z));return c[Math.floor(R()*Math.min(c.length,12))]}
+function liveAim(p,mode,t,dt){const f0=Math.sin(p.yaw),f1=Math.cos(p.yaw),s0=Math.cos(p.yaw),s1=-Math.sin(p.yaw);let px,py,pz,lx,ly,lz;
+ if(mode==='pov'){px=p.x+f0*.35;py=p.y+1.85;pz=p.z+f1*.35;lx=p.x+f0*12;ly=p.y+1.5;lz=p.z+f1*12}
+ else{const down=p.state==='fly'||p.state==='down';let D=LIVE.port?2.3:1.9,SD=.25;const free=(d,sd)=>!solidAt(p.x+f0*d+s0*sd,p.z+f1*d+s1*sd,1.9)&&!solidAt(p.x+f0*d*.5+s0*sd*.5,p.z+f1*d*.5+s1*sd*.5,1.9);
+ found:for(const d of[D,D*.8,D*.6,D*.45])for(const sd of[LIVE.sd??.25,.25,-.25,0,.6,-.6]){if(free(d,sd)){D=d;SD=sd;break found}}LIVE.sd=SD;
+ px=p.x+f0*D+s0*SD;py=p.y+(down?1.2:1.9)+Math.sin(t*7)*.025;pz=p.z+f1*D+s1*SD;lx=p.x;ly=p.y+(down?.4:LIVE.port?1.4:1.62);lz=p.z}
+ const k=LIVE.snap?1:1-Math.exp(-dt*7);LIVE.cpos.lerp(tmpV.set(px,py,pz),k);LIVE.clook.lerp(tmpV.set(lx,ly,lz),k);LIVE.snap=false;LIVE.cam.position.copy(LIVE.cpos);LIVE.cam.lookAt(LIVE.clook)}
+const LIVE_TITLES=['🔴 LIVE: just walking around {area} (chill stream)','🔴 LIVE: IRL stream in Leonada!! say hi','🔴 LIVE: day {n} of touching grass','🔴 LIVE: exploring {area} with chat','🔴 LIVE: looking for the 5 star guy 👀','🔴 LIVE: walking until I find a pizza','🔴 LIVE: Leonada IRL · come hang out'];
+const LIVE_LINES=['what\'s up chat!!','we\'re just walking around {area} today','chat should I go left or right?','look how nice Leonada is today','thanks for the follow {who}!','don\'t forget to like the stream','I think someone is following me...','okay where should we go next','this is the best city ever','hi to everyone in chat!','we hit {v} viewers!! LET\'S GO','I love walking','is that a cop car? chat be quiet','{who} said go to the beach, maybe later'];
+const LIVE_CHAT=['W stream','hi from Ohio','first','is this GTA 6??','where are you going','go to the beach!!','say hi to chat','LMAOOO','chat is this real','🔥🔥🔥','pog','go left','go right','can you do a backflip','bro is just walking 💀','Leonada looks so nice today','who else came from YouPoopz','I love this streamer','10/10 walking','💩💩💩','👋👋👋','is that Downtown?','buy a house!!','the sky is so pretty','hi mom','sub to me pls','what\'s your favorite color','walk faster','this is so relaxing'];
+const CHAT_COLS=['#ff7ab6','#7dd8ff','#7dff9a','#ffd36b','#c49aff','#ff9a5a'];
+function liveVideo(){const p=liveFindStreamer();if(!p)return null;const seed=ypSeed(),r=ypRng(seed),C=ypCreator(ypInt(1,5000,r));
+ C.skin=ypHexSkin(p.look.skin);C.shirt=ypHexSkin(p.look.shirt);p.name=C.name;p.voice=C.voice;const area=areaName(p.x,p.z).replace(/^[^\w]+/,'');
+ const v={seed,live:true,kind:'live',style:'city',G:'Grand Walk Auto',C,streamer:p,area,title:ypPick(LIVE_TITLES,r).replace('{area}',area).replace('{n}',ypInt(2,400,r)),viewers:ypInt(40,30000,r),views:0,likes:ypInt(10,4000,r),
+  age:'Started '+ypInt(2,90,r)+' minutes ago',dur:'LIVE',dsec:0,thumb:'LIVE',emoji:'🔴',face:'default',bg:['#ff2a2a','#000'],r2:r(),lines:[],coms:[]};
+ v.views=v.viewers;for(let i=0;i<5;i++)v.coms.push({who:ypCreator(ypInt(1,5000,r)),text:ypPick(LIVE_CHAT,r),likes:ypInt(0,90,r)});return v}
+function liveThumb(v){const p=v.streamer;if(!liveOk(p))return null;LIVE.port=false;LIVE.snap=true;liveAim(p,'selfie',0,1);const src=liveShoot(192,108);
+ const c=document.createElement('canvas');c.width=192;c.height=108;const x=c.getContext('2d');x.drawImage(src,0,0);
+ x.fillStyle='#e00';x.fillRect(6,6,40,16);x.fillStyle='#fff';x.font='900 11px system-ui';x.textAlign='left';x.fillText('● LIVE',9,18);ypText(x,'IRL STREAM',96,88,18,'#fff',0);return c.toDataURL('image/jpeg',.8)}
+// ---- the vlogger: a real 3D person standing somewhere in Leonada (only the video camera can see them) ----
+function vlogActor(v){if(LIVE.actorSeed===v.seed&&LIVE.actor)return LIVE.actor;vlogDrop();const m=makePerson(v.C.look);m.g.traverse(o=>o.layers.set(1));
+ if(!v.spot){let best=null;for(let k=0;k<8;k++){const s=sidewalkSpot(20,700);for(let a=0;a<8;a++){const yaw=a*.785+R()*.3,cx=s[0]+Math.sin(yaw)*2.3,cz=s[1]+Math.cos(yaw)*2.3;if(!solidAt(cx,cz,1)&&!solidAt(s[0]+Math.sin(yaw)*1.2,s[1]+Math.cos(yaw)*1.2,1)){best=[s[0],s[1],yaw];break}}if(best)break}v.spot=best||[me.x+30,me.z,0]}
+ const [x,z,yaw]=v.spot;m.g.position.set(x,groundY(x,z),z);m.g.rotation.y=yaw;m.face.material=faceMats[v.C.face]||faceMats.default;LIVE.actor=m;LIVE.actorSeed=v.seed;return m}
+function vlogDrop(){if(LIVE.actor){scene.remove(LIVE.actor.g);LIVE.actor=null;LIVE.actorSeed=-1}}
+function vlogFrame(x,w,h,v,t,dt){const m=vlogActor(v),[sx,sz,yaw]=v.spot,gy=m.g.position.y;
+ // talking with their hands
+ m.head.rotation.y=Math.sin(t*1.3)*.18;m.head.rotation.x=Math.sin(t*4.2)*.05-.05;m.body.position.y=Math.abs(Math.sin(t*2.1))*.015;m.torso.rotation.z=Math.sin(t*1.1)*.04;
+ m.armL.rotation.x=-.5+Math.sin(t*3.1)*.45;m.armL.rotation.z=.15+Math.sin(t*2.3)*.1;m.armR.rotation.x=-.35+Math.sin(t*2.6+1)*.4;m.armR.rotation.z=-.15-Math.sin(t*1.9)*.1;
+ if(v.title.match(/Mukbang|Cooking/)){m.armR.rotation.x=-1.6+Math.abs(Math.sin(t*3))*.6}
+ const fk=Math.floor(t/2.4)%3===2?'happy':v.C.face;if(m.face.material!==faceMats[fk])m.face.material=faceMats[fk];
+ const f0=Math.sin(yaw),f1=Math.cos(yaw),port=h>w;LIVE.cam.position.set(sx+f0*(port?2.6:2.05),gy+1.72+Math.sin(t*.7)*.03,sz+f1*(port?2.6:2.05));LIVE.cam.lookAt(sx,gy+(port?1.35:1.55),sz);
+ LIVE.acc+=dt;if(LIVE.acc>=1/12||!LIVE.cv){LIVE.acc=0;LIVE.cv=liveShoot(port?216:288,port?364:162)}x.drawImage(LIVE.cv,0,0,w,h)}
+// ---- a live stream frame ----
+function liveFrame(x,w,h,v,t,dt){const port=h>w;LIVE.port=port;let p=v.streamer;
+ if(!v.ended&&!liveOk(p)){if(t<1.5){const q=liveFindStreamer();if(q){p=v.streamer=q;q.name=v.C.name;q.voice=v.C.voice;LIVE.snap=true}}if(!liveOk(p)){v.ended=t}}
+ if(LIVE.p!==p&&!v.ended){if(LIVE.p)LIVE.p.streaming=null;LIVE.p=p;p.streaming=v;LIVE.snap=true}
+ if(!v.ended){LIVE.modeT-=dt;if(LIVE.modeT<=0){LIVE.mode=LIVE.mode==='selfie'&&R()<.35?'pov':'selfie';LIVE.modeT=LIVE.mode==='pov'?4:9+R()*6;LIVE.snap=true}
+  liveAim(p,LIVE.mode,t,dt);LIVE.acc+=dt;if(LIVE.acc>=1/12||!LIVE.cv){LIVE.acc=0;LIVE.cv=liveShoot(port?216:288,port?364:162)}}
+ if(LIVE.cv)x.drawImage(LIVE.cv,0,0,w,h);else{x.fillStyle='#000';x.fillRect(0,0,w,h)}
+ const S=w/240;
+ // what chat thinks
+ LIVE.chatT-=dt;if(LIVE.chatT<=0&&!v.ended){LIVE.chatT=.5+R()*1.4;liveChat(pick(LIVE_CHAT))}
+ LIVE.checkT-=dt;if(LIVE.checkT<=0&&!v.ended){LIVE.checkT=.8;v.viewers=Math.max(5,Math.round(v.viewers*(1+(R()-.46)*.04)));
+  if(p.state==='fly'||p.state==='down'||p.ai&&p.ai.flee>0){if(!v.hurt){v.hurt=1;liveSay(p,pick(['AAAAAA','WHAT WAS THAT','chat I\'m scared','NOT AGAIN']));for(const s of ['NOOOO','F','bro got launched 💀','CALL 911','😱😱😱','clip that!!'])liveChat(s);v.viewers=Math.round(v.viewers*1.4)}}else v.hurt=0;
+  tmpV.set(me.x,me.y+1.3,me.z).project(LIVE.cam);const seen=me.hp>0&&tmpV.z<1&&Math.abs(tmpV.x)<.9&&Math.abs(tmpV.y)<.9&&Math.hypot(me.x-p.x,me.z-p.z)<22;
+  if(seen&&now-LIVE.hiT>12){LIVE.hiT=now;const nm=me.name||'Player';for(const s of ['WHO IS THAT 👀','someone is behind you!!',`it's ${nm}!!`,`hi ${nm} 👋`,W.stars>=2?'that\'s the guy the cops are chasing!!':'say hi to them!!'])liveChat(s);liveSay(p,pick(['oh hi! chat say hi!','um... hello?','chat, look who it is!','are you following me??']))}}
+ // the streamer talks
+ LIVE.capT-=dt;if(LIVE.capT<=0&&!v.ended){const ln=pick(LIVE_LINES).replace('{area}',areaName(p.x,p.z).replace(/^[^\w]+/,'')).replace('{who}',ypCreator(1+Math.floor(R()*5000)).name).replace('{v}',ypFmt(v.viewers));liveSay(p,ln)}
+ if(LIVE.cap){const n=Math.min(LIVE.cap.length,Math.floor((LIVE.capAge+=dt)*22));if(n>LIVE.capN){if(n%2===0&&/[a-z0-9]/i.test(LIVE.cap[n-1]))blip({voice:v.C.voice},LIVE.cap[n-1],.65);LIVE.capN=n}
+  const s=LIVE.cap.slice(0,n),fs=Math.max(10,13*S);x.font=`800 ${fs}px system-ui`;x.textAlign='center';const tw=Math.min(w-10,x.measureText(s).width+10),by=port?h*.62:h-8;
+  if(n){x.fillStyle='#000b';x.fillRect(w/2-tw/2,by-fs*1.3,tw,fs*1.5);x.fillStyle='#fff';x.fillText(s,w/2,by-fs*.15,w-14)}}
+ // chat on the left
+ const cf=Math.max(8.5,10*S);x.font=`700 ${cf}px system-ui`;x.textAlign='left';let cy=port?h*.5:h*.55;const shown=LIVE.chat.slice(-(port?6:4));
+ for(let i=shown.length-1;i>=0;i--){const c=shown[i];x.globalAlpha=Math.min(1,(c.life-=dt*.0)+1);x.fillStyle='#0008';const tw=Math.min(w*.62,x.measureText(c.who+': '+c.text).width+8);x.fillRect(4,cy-cf,tw,cf*1.35);
+  x.fillStyle=c.col;x.fillText(c.who+':',8,cy,w*.6);const nw=x.measureText(c.who+': ').width;x.fillStyle='#fff';x.fillText(c.text,8+nw,cy,Math.max(10,w*.6-nw));cy-=cf*1.55}
+ x.globalAlpha=1;
+ // LIVE badge
+ x.fillStyle=v.ended?'#555':'#e00';x.fillRect(6,6,44*S,17*S);x.fillStyle='#fff';x.font=`900 ${11*S}px system-ui`;x.textAlign='left';x.fillText(v.ended?'ENDED':'● LIVE',9*S,18.5*S);
+ x.fillStyle='#0008';x.fillRect(8+46*S,6,62*S,17*S);x.fillStyle='#fff';x.font=`700 ${10*S}px system-ui`;x.fillText('👁 '+ypFmt(v.viewers),11+46*S,18.5*S);
+ if(LIVE.mode==='pov'&&!v.ended){x.font=`700 ${9*S}px system-ui`;x.textAlign='right';x.fillStyle='#fffc';x.fillText('📷 back camera',w-6,18*S)}
+ if(v.ended){x.fillStyle='#000a';x.fillRect(0,0,w,h);ypText(x,'Stream ended 😢',w/2,h/2,22*S,'#fff',0);if(t-v.ended>3.2&&ph.screen==='ypw'&&v.up&&v.up[0])ypWatch(v.up[0]);else if(t-v.ended>3.2&&ph.screen==='shorts'&&!v.skipped){v.skipped=1;ypShort(1)}}}
+function liveChat(text){LIVE.chat.push({who:ypCreator(1+Math.floor(R()*5000)).name,text,col:pick(CHAT_COLS),life:1});if(LIVE.chat.length>20)LIVE.chat.shift()}
+function liveSay(p,text){LIVE.cap=text;LIVE.capN=0;LIVE.capAge=0;LIVE.capT=Math.max(3.2,text.length*.07+1.6);if(p&&Math.hypot(p.x-me.x,p.z-me.z)<45)say(p,text,'quiet')}
+function liveReset(){LIVE.snap=true;LIVE.hiT=-99;LIVE.cv=null;LIVE.acc=1;LIVE.chat=[];LIVE.cap='';LIVE.capT=.6;LIVE.chatT=.3;LIVE.mode='selfie';LIVE.modeT=8}
+function liveRelease(){if(LIVE.p){LIVE.p.streaming=null;LIVE.p=null}}
+function liveIdle(){const v=ph.yp.cur,watching=ph.open&&(ph.screen==='ypw'||ph.screen==='shorts')&&v;if(!watching||!v.live)liveRelease();if(!watching||v.kind!=='vlog')vlogDrop()}
+
+if(window.GWA_TEST_HOOK)window.GWA_TEST_HOOK({LIVE,liveVideo,ypVideo,ypThumb,ypShort,ph,phoneToggle,dialNow,snap,startCall,notify,convs,startConv,say,sayHi,bubbles,samples:()=>Object.keys(SAMPLES),camObj:()=>cam,clearLine,get inHouse(){return inHouse},get build(){return build},HS,enterHouse,enterBuild,exitBuild,selectItem,buildClick,useThing,houseMarker,setMouse(x,y){mouseNDC.set(x,y);moveGhost()},clickCell(gx,gz){const b=build,st=b.st,[w,d]=b.sel?fp(b.sel.k,b.rot):[1,1];const v=new T.Vector3(st.x0+gx+w/2,0,st.z0+gz+d/2).project(cam),r=canvas.getBoundingClientRect();buildClick({clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height})},get me(){return me},cars,people,places,W,net,startGame,startJob,endJob,get job(){return job},jobs:{pizza:jobPizza,taxi:jobTaxi,race:jobRace,walk:jobWalk},
  get money(){return money},set money(v){money=v},toggleCar,setStars(n){W.stars=n;W.lx=me.x;W.lz=me.z},teleport(x,z){if(me.car){me.car.x=x;me.car.z=z}else{me.x=x;me.z=z}},
  cam:()=>({yaw:camYaw,pitch:camPitch}),aimPoint(d){const v=camDir();return[cam.position.x+v[0]*d,cam.position.y+v[1]*d,cam.position.z+v[2]*d]},setCam(y,p){camYaw=y;camPitch=p;lastLook=now+5},keys,get heli(){return heli},setDay(t){dayT=t},explode,openShop,get stars(){return starsNow()},spawnCar,spawnPed,setLook(p,l){scene.remove(p.m.g);p.look=l;p.m=makePerson(l);p.anim=null},lotAt,setGfx(g){gfx=g;applyGfx()}});
 </script>
