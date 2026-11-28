@@ -139,7 +139,7 @@ input{font:700 18px system-ui,sans-serif;padding:12px;border-radius:12px;border:
 .yphead{display:flex;align-items:center;justify-content:space-between;margin:2px 0 6px}.yplogo{font:900 17px system-ui;letter-spacing:-.03em;display:flex;align-items:center;gap:4px}
 .yplogo i{font-style:normal;background:#8a4a1a;border-radius:7px;padding:1px 5px;font-size:13px}.ypsh{border:0;border-radius:14px;background:#ff2a6a;color:#fff;font:800 11px system-ui;padding:5px 9px}
 .ypq{width:100%;box-sizing:border-box;border:0;border-radius:16px;padding:8px 12px;background:#272727;color:#fff;font:600 12px system-ui;margin-bottom:6px;outline:none}
-.ypchip{display:block;width:100%;border:0;border-radius:12px;background:linear-gradient(90deg,#ff7a00,#ff2a6a);color:#fff;font:700 11.5px system-ui;padding:7px 10px;margin:0 0 8px;text-align:left}.ypclear{border:0;background:none;color:#7dd8ff;font:700 11px system-ui;margin:-2px 0 6px;padding:0}
+.ypchips{display:flex;gap:5px;margin:0 0 8px;overflow-x:auto}.ypchips button{flex:none;border:0;border-radius:9px;background:#272727;color:#fff;font:700 11px system-ui;padding:6px 9px}.ypchips button.on{background:#fff;color:#000}.ypchip{display:block;width:100%;border:0;border-radius:12px;background:linear-gradient(90deg,#ff7a00,#ff2a6a);color:#fff;font:700 11.5px system-ui;padding:7px 10px;margin:0 0 8px;text-align:left}.ypclear{border:0;background:none;color:#7dd8ff;font:700 11px system-ui;margin:-2px 0 6px;padding:0}
 .ypcard{display:block;width:100%;border:0;background:none;color:#fff;text-align:left;padding:0;margin:0 0 12px}
 .ypth{position:relative}.ypth img{width:100%;aspect-ratio:16/9;border-radius:10px;display:block;object-fit:cover}.ypth span{position:absolute;right:5px;bottom:5px;background:#000c;color:#fff;font:700 10px system-ui;padding:1px 4px;border-radius:4px}.ypth span.live{background:#e00}.ypred{font-style:normal;color:#ff5a5a;font-weight:800}
 .ypinfo,.ypch,.ypcom{display:flex;gap:7px;margin-top:6px;align-items:flex-start}.ypav{width:26px;height:26px;border-radius:50%;flex:none;object-fit:cover;background:#555}.ypav.f{object-fit:contain;padding:2px;box-sizing:border-box}
@@ -2191,7 +2191,7 @@ function ypGuy(x,cx,gy,s,v,t,jump){const y=gy-jump;x.fillStyle=v.C.shirt;x.fillR
 function ypText(x,txt,cx,cy,size,fill,rot){x.save();x.translate(cx,cy);x.rotate(rot||0);x.font=`900 ${size}px Impact,'Arial Black',system-ui`;x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';
  let s=size;while(x.measureText(txt).width>x.canvas.width*.92&&s>8){s-=1;x.font=`900 ${s}px Impact,'Arial Black',system-ui`}x.lineWidth=Math.max(3,s*.22);x.strokeStyle='#000';x.strokeText(txt,0,0);x.fillStyle=fill;x.fillText(txt,0,0);x.restore()}
 const ypThumbCache=new Map();
-function ypThumb(v){if(ypThumbCache.has(v.seed+v.G))return ypThumbCache.get(v.seed+v.G);if(v.live){const u=liveThumb(v);if(u){ypThumbCache.set(v.seed+v.G,u);return u}}const c=document.createElement('canvas');c.width=192;c.height=108;const x=c.getContext('2d'),w=192,h=108,r=ypRng(v.seed^0x5a5a);
+function ypThumb(v){if(ypThumbCache.has(v.seed+v.G))return ypThumbCache.get(v.seed+v.G);if(v.kind==='play3d'){let u;try{u=play3dThumb(v)}catch(e){oops(e)}if(u){ypThumbCache.set(v.seed+v.G,u);return u}}if(v.live){const u=liveThumb(v);if(u){ypThumbCache.set(v.seed+v.G,u);return u}}const c=document.createElement('canvas');c.width=192;c.height=108;const x=c.getContext('2d'),w=192,h=108,r=ypRng(v.seed^0x5a5a);
  if(v.G==='BLOCKBURG'&&(v.kind==='game'||v.kind==='react'||v.kind==='tier')&&bbDraw(x,w,h,v.seed,r()*6)){x.fillStyle='#0002';x.fillRect(0,0,w,h)}else if(v.kind==='game'||v.kind==='react'||v.style==='horror'){ypScene(x,w,h,r()*10,v.style,v.seed)}else{const g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,v.bg[0]);g.addColorStop(1,v.bg[1]);x.fillStyle=g;x.fillRect(0,0,w,h);
   x.fillStyle='#ffffff22';for(let i=0;i<8;i++){x.save();x.translate(w/2,h/2);x.rotate(i*.785+v.r2);x.fillRect(0,-6,w,12);x.restore()}}
  if(v.kind==='tier'){const tc=['#ff6b6b','#ffb86b','#ffe66b','#9aff6b','#6bc8ff'];for(let i=0;i<5;i++){x.fillStyle=tc[i];x.fillRect(4,6+i*19,18,17);x.fillStyle='#0008';x.fillRect(23,6+i*19,90,17)}}
@@ -2225,7 +2225,7 @@ const ypAvCache=new Map();
 function ypAvatar(C){if(ypAvCache.has(C.id))return ypAvCache.get(C.id);const c=document.createElement('canvas');c.width=c.height=48;const x=c.getContext('2d');x.fillStyle=C.shirt;x.fillRect(0,0,48,48);studioDraw(x,null,C.look,C.face,'head','pose',0,1,3,46,46);
  const u=c.toDataURL();ypAvCache.set(C.id,u);if(ypAvCache.size>200)ypAvCache.delete(ypAvCache.keys().next().value);return u}
 // ---- the playing video ----
-function ypFrame(x,w,h,v,t){const K=v.kind;x.clearRect(0,0,w,h);if(K==='live'){liveFrame(x,w,h,v,t,LIVE.dt||0);return}
+function ypFrame(x,w,h,v,t){const K=v.kind;x.clearRect(0,0,w,h);if(K==='play3d'){play3dFrame(x,w,h,v,t,LIVE.dt||0);return}if(K==='live'){liveFrame(x,w,h,v,t,LIVE.dt||0);return}
  if(K==='game'){if(!(v.G==='BLOCKBURG'&&bbDraw(x,w,h,v.seed,t)))ypScene(x,w,h,t,v.style,v.seed);const gy=h*.72,s=h*.13,jp=Math.max(0,Math.sin(t*3.2))*h*.22;studioFull(x,'g',v.C.look,jp>h*.06?'scared':v.C.face,jp>h*.06?'jump':'run',t,w*.3,gy-jp,s*2.2,Math.PI/2);
   x.fillStyle='#0007';x.fillRect(4,4,74,16);x.fillStyle='#fff';x.font='800 10px system-ui';x.textAlign='left';x.fillText('SCORE '+Math.floor(t*137+v.seed%900),8,15);
   if(Math.floor(t*1.3)%4===1)ypText(x,ypPick(['WOW','NO WAY','!!!','COMBO x'+(1+Math.floor(t)%9),'EPIC'],ypRng(Math.floor(t*1.3)+v.seed)),w*.66,h*.3,h*.13,'#ffe14a',Math.sin(t*5)*.15)}
@@ -2254,17 +2254,17 @@ function ypCaption(x,w,h,v,t,bottom){const li=Math.floor(t/3)%v.lines.length,lin
  x.fillStyle='#000b';x.fillRect(w/2-tw/2,bottom-fs*1.3,tw,fs*1.5);x.fillStyle='#fff';x.fillText(s,w/2,bottom-fs*.15,w-14);
  const yp=ph.yp;if(n!==yp.lastN||li!==yp.lastL){if(n>yp.lastN&&li===yp.lastL&&n%2===0&&/[a-z0-9]/i.test(line[n-1]))blip({voice:v.C.voice},line[n-1],.7);yp.lastN=n;yp.lastL=li}}
 // ---- state, feed, screens ----
-ph.yp={feed:[],q:'',scroll:0,cur:null,t:0,lastN:0,lastL:-1,subs:{},liked:{},disliked:{},shorts:[],si:0,watched:0};
+ph.yp={cat:'',feed:[],q:'',scroll:0,cur:null,t:0,lastN:0,lastL:-1,subs:{},liked:{},disliked:{},shorts:[],si:0,watched:0};
 const ypSeed=()=>(Math.random()*4294967296)>>>0;
-function ypMake(){return ypVideo(ypSeed(),ph.yp.q||null)}
-function ypMix(first){return!ph.yp.q&&(first||R()<.14)&&liveVideo()||ypMake()}
+function ypMake(){const c=ph.yp.cat;if(c)return ypPlay3d(ypSeed(),c==='horror'?'horror':c==='explore'?'explore':null);return ypVideo(ypSeed(),ph.yp.q||null)}
+function ypMix(first){const yp=ph.yp;if(yp.cat)return ypMake();if(!yp.q&&(first||R()<.14)){const l=liveVideo();if(l)return l}if(!yp.q&&R()<.12)return ypPlay3d(ypSeed());return ypMake()}
 function ypMore(n=8){const yp=ph.yp,list=$('#ypList');const add=[];for(let i=0;i<n;i++){const v=ypMix(yp.feed.length===1);yp.feed.push(v);add.push(v)}if(list)list.insertAdjacentHTML('beforeend',add.map(ypCard).join(''))}
 function ypCard(v){return`<button class="ypcard" data-yp="${v.seed}"><div class="ypth"><img src="${ypThumb(v)}"><span class="${v.live?'live':''}">${v.live?'● LIVE':v.dur}</span></div><div class="ypinfo">${ypAvImg(v.C)}<div><b>${esc(v.title)}</b><small>${esc(v.C.name)} · ${v.live?`<em class="ypred">${ypFmt(v.viewers)} watching</em>`:`${ypFmt(v.views)} views · ${v.age}`}</small></div></div></button>`}
 function ypFind(seed){const yp=ph.yp;return yp.feed.find(v=>v.seed===seed)||(yp.cur&&yp.cur.up||[]).find(v=>v.seed===seed)||yp.shorts.find(v=>v.seed===seed)}
-function ypWatch(v){const yp=ph.yp;yp.cur=v;yp.t=0;yp.lastN=0;yp.lastL=-1;v.up=v.up||Array.from({length:4},ypMake);liveReset();yp.watched++;if(ph.screen==='ypw')phRender();else phGo('ypw')}
+function ypWatch(v){const yp=ph.yp;yp.cur=v;yp.t=0;yp.lastN=0;yp.lastL=-1;v.up=v.up||Array.from({length:4},ypMake);liveReset();G3.st=null;yp.watched++;if(ph.screen==='ypw')phRender();else phGo('ypw')}
 function ypScreen(){const yp=ph.yp;
  if(ph.screen==='youpoopz'){return`<div class="yphead"><span class="yplogo"><i>💩</i>YouPoopz</span><button class="ypsh" data-go="shorts">⚡ Shorts</button></div>
-  <input id="ypQ" class="ypq" placeholder="🔍 Search anything..." value="${esc(yp.q)}" autocomplete="off">${yp.q?"":`<button class="ypchip" data-ypq="BLOCKBURG">🔥 Trending: <b>#BLOCKBURG</b> · 4.2B videos</button>`}${yp.q?`<button class="ypclear" data-ypclear="1">✕ clear search "${esc(yp.q)}"</button>`:''}<div id="ypList">${yp.feed.map(ypCard).join('')}</div><p class="tip">Scroll for more · literally never runs out</p>`}
+  <input id="ypQ" class="ypq" placeholder="🔍 Search anything..." value="${esc(yp.q)}" autocomplete="off"><div class="ypchips">${[["","All"],["gaming","🎮 Gaming"],["horror","😱 Horror"],["explore","🌴 Explore"]].map(([c,n])=>`<button data-ypcat="${c}" class="${(yp.cat||"")===c&&!yp.q?"on":""}">${n}</button>`).join("")}</div>${yp.q||yp.cat?"":`<button class="ypchip" data-ypq="BLOCKBURG">🔥 Trending: <b>#BLOCKBURG</b> · 4.2B videos</button>`}${yp.q?`<button class="ypclear" data-ypclear="1">✕ clear search "${esc(yp.q)}"</button>`:''}<div id="ypList">${yp.feed.map(ypCard).join('')}</div><p class="tip">Scroll for more · literally never runs out</p>`}
  if(ph.screen==='ypw'){const v=yp.cur,sub=yp.subs[v.C.id],lk=yp.liked[v.seed],dl=yp.disliked[v.seed];
   return`<div class="ypplayer"><canvas id="ypc" width="432" height="244"></canvas><div class="ypbar"><i id="ypBar"></i></div><small id="ypTime" class="yptime"></small></div>
   <b class="yptitle">${esc(v.title)}</b><small class="ypmeta">${v.live?`<em class="ypred">🔴 ${ypFmt(v.viewers)} watching now</em> · ${v.age}`:`${ypFmt(v.views+(lk?1:0))} views · ${v.age}`}${v.title.includes(v.G)?'':' · '+esc(v.G)}</small>
@@ -2279,9 +2279,10 @@ function ypScreen(){const yp=ph.yp;
 function ypAfterRender(){const yp=ph.yp,el=scr();
  if(ph.screen==='youpoopz'){if(!yp.feed.length)ypMore(8);el.scrollTop=yp.scroll;const q=$('#ypQ');if(q)q.onkeydown=e=>{if(e.key==='Enter'){yp.q=q.value.trim().slice(0,40);yp.feed=[];yp.scroll=0;q.blur();phRender()}e.stopPropagation()}}
  if(ph.screen==='ypw'||ph.screen==='shorts'){yp.cv=$('#ypc');ypTick(0)}else yp.cv=null}
-function ypShort(d){const yp=ph.yp;yp.si=Math.max(0,yp.si+d);while(yp.shorts.length<=yp.si+1)yp.shorts.push(ypMix());if(yp.shorts.length>60){yp.shorts.splice(0,20);yp.si-=20}yp.t=0;yp.lastN=0;yp.lastL=-1;liveReset();phRender();if(AC)tone(d>0?520:440,.04,.03,'sine')}
+function ypShort(d){const yp=ph.yp;yp.si=Math.max(0,yp.si+d);while(yp.shorts.length<=yp.si+1)yp.shorts.push(ypMix());if(yp.shorts.length>60){yp.shorts.splice(0,20);yp.si-=20}yp.t=0;yp.lastN=0;yp.lastL=-1;liveReset();G3.st=null;phRender();if(AC)tone(d>0?520:440,.04,.03,'sine')}
 function ypTick(dt){const yp=ph.yp,cv=yp.cv,v=yp.cur;if(!cv||!v||!cv.isConnected)return;yp.t+=dt;LIVE.dt=dt;const x=cv.getContext('2d'),w=cv.width,h=cv.height;
- if(ph.screen==='shorts'){ypFrame(x,w,h,v,yp.t);if(!v.live)ypCaption(x,w,h,v,yp.t,h*.62)}
+ if(ph.screen==='shorts'){ypFrame(x,w,h,v,yp.t);if(!v.live&&v.kind!=='play3d')ypCaption(x,w,h,v,yp.t,h*.62);if(v.kind==='play3d'&&G3.st&&G3.st.done&&G3.st.t-G3.st.done>2.8&&!v.skipped){v.skipped=1;ypShort(1)}}
+ else if(v.kind==='play3d'){ypFrame(x,w,h,v,yp.t);const st=G3.st;if(!st)return;const f=Math.min(1,st.done?1:st.stepsDone/Math.max(1,st.total));const bar=$('#ypBar');if(bar)bar.style.width=(f*100)+'%';const tm=$('#ypTime');if(tm){const s2=Math.floor(f*v.dsec);tm.textContent=`${s2/60|0}:${String(s2%60).padStart(2,'0')} / ${v.dur}`}if(st.done&&st.t-st.done>2.8&&v.up&&v.up[0])ypWatch(v.up[0])}
  else if(v.live){ypFrame(x,w,h,v,yp.t);const bar=$('#ypBar');if(bar)bar.style.width='100%';const tm=$('#ypTime');if(tm)tm.textContent='🔴 LIVE · '+ypFmt(v.viewers)+' watching'}
  else{ypFrame(x,w,h,v,yp.t);ypCaption(x,w,h,v,yp.t,v.kind==='news'?h*.78:h-8);const L=18,f=Math.min(1,yp.t/L);const bar=$('#ypBar');if(bar)bar.style.width=(f*100)+'%';const tm=$('#ypTime');if(tm){const s=Math.floor(f*v.dsec);tm.textContent=`${s/60|0}:${String(s%60).padStart(2,'0')} / ${v.dur}`}
   if(yp.t>L+1.2&&v.up&&v.up[0])ypWatch(v.up[0])}}
@@ -2292,7 +2293,8 @@ function ypClick(d){const yp=ph.yp;
  if(d.ypdis){yp.disliked[yp.cur.seed]=!yp.disliked[yp.cur.seed];yp.liked[yp.cur.seed]=false;phRender();return true}
  if(d.ypshare){bleet(me.name||myName(),'check this out: "'+yp.cur.title+'" 💩▶');toast('Shared to Bleeter!');return true}
  if(d.ypnext){ypShort(1);return true}if(d.ypcom){toast('💬 '+yp.cur.coms[0].text);return true}
- if(d.ypq){yp.q=d.ypq;yp.feed=[];yp.scroll=0;phRender();return true}
+ if('ypcat' in d){yp.cat=d.ypcat;yp.q='';yp.feed=[];yp.scroll=0;phRender();return true}
+ if(d.ypq){yp.cat='';yp.q=d.ypq;yp.feed=[];yp.scroll=0;phRender();return true}
  if(d.ypclear){yp.q='';yp.feed=[];yp.scroll=0;phRender();return true}
  return false}
 
@@ -2388,6 +2390,7 @@ function studioActor(look){const key=JSON.stringify(look);let a=STUDIO.actors.ge
  a=makePerson(look);a.g.traverse(o=>o.layers.set(1));a.g.position.set(0,STUDIO.y,0);a.g.visible=false;STUDIO.actors.set(key,a);
  if(STUDIO.actors.size>10){const [k0,a0]=STUDIO.actors.entries().next().value;scene.remove(a0.g);STUDIO.actors.delete(k0)}return a}
 const POSES={
+ walk(m,t){const s=Math.sin(t*8);m.legL.rotation.x=s*.6;m.legR.rotation.x=-s*.6;m.armL.rotation.x=-s*.5;m.armR.rotation.x=s*.5},
  talk(m,t){m.head.rotation.y=Math.sin(t*1.3)*.2;m.head.rotation.x=Math.sin(t*4.1)*.06;m.armL.rotation.x=-.45+Math.sin(t*3)*.4;m.armL.rotation.z=.12;m.armR.rotation.x=-.3+Math.sin(t*2.5+1)*.35;m.armR.rotation.z=-.12;m.torso.rotation.z=Math.sin(t*1.1)*.04},
  react(m,t){POSES.talk(m,t);const k=Math.floor(t/1.7)%4;if(k===1){m.armL.rotation.x=m.armR.rotation.x=-2.6;m.armL.rotation.z=.4;m.armR.rotation.z=-.4}else if(k===3){m.head.rotation.z=.25;m.armR.rotation.x=-1.9}},
  run(m,t){const s=Math.sin(t*12);m.legL.rotation.x=s*.85;m.legR.rotation.x=-s*.85;m.armL.rotation.x=-s*.9;m.armR.rotation.x=s*.9;m.body.position.y=Math.abs(Math.cos(t*12))*.06;m.torso.rotation.x=.12},
@@ -2469,7 +2472,170 @@ const LIVE_SCRIPT=[['what\'s up chat! we\'re in {area} right now~area','okay cha
  ['should I go talk to the {K}?','the {K} is kinda {A2} ngl','chat, rate the {K} out of 10'],
  ['okay forget the {K}, let\'s keep walking','{who} says the {K} is following us','thanks for the follow {who}!','we hit {v} viewers!! LET\'S GO']];
 
-if(window.GWA_TEST_HOOK)window.GWA_TEST_HOOK({STUDIO,ypScript,LIVE,liveVideo,ypVideo,ypThumb,ypShort,ph,phoneToggle,dialNow,snap,startCall,notify,convs,startConv,say,sayHi,bubbles,samples:()=>Object.keys(SAMPLES),camObj:()=>cam,clearLine,get inHouse(){return inHouse},get build(){return build},HS,enterHouse,enterBuild,exitBuild,selectItem,buildClick,useThing,houseMarker,setMouse(x,y){mouseNDC.set(x,y);moveGhost()},clickCell(gx,gz){const b=build,st=b.st,[w,d]=b.sel?fp(b.sel.k,b.rot):[1,1];const v=new T.Vector3(st.x0+gx+w/2,0,st.z0+gz+d/2).project(cam),r=canvas.getBoundingClientRect();buildClick({clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height})},get me(){return me},cars,people,places,W,net,startGame,startJob,endJob,get job(){return job},jobs:{pizza:jobPizza,taxi:jobTaxi,race:jobRace,walk:jobWalk},
+// ================= YouPoopz Gaming: tiny 3D games under the map =================
+// A horror house and an explorer island live down by the green screen studio. The YouTuber's own
+// 3D body walks around inside them, following the video's script, and gets interrupted by jumpscares.
+const G3={ready:false,cam:new T.PerspectiveCamera(66,16/9,.05,120),sets:{},st:null,cpos:new T.Vector3(),clook:new T.Vector3(),acc:1,cv:null};
+G3.cam.layers.enable(1);
+const G3MAT=new T.MeshBasicMaterial({vertexColors:true,fog:false});
+function g3Geo(key,list){const g=boxesGeo('g3:'+key,list);if(!g.userData.shaded){g.userData.shaded=1;const n=g.attributes.normal.array,c=g.attributes.color.array;
+ for(let i=0;i<n.length;i+=3){const f=n[i+1]>.5?1:n[i+1]<-.5?.45:Math.abs(n[i])>.5?.74:.62;c[i]*=f;c[i+1]*=f;c[i+2]*=f}g.attributes.color.needsUpdate=true}return g}
+function g3Mesh(parent,key,list,mat=G3MAT){const m=new T.Mesh(g3Geo(key,list),mat);m.layers.set(1);parent.add(m);return m}
+function g3Init(){if(G3.ready)return;G3.ready=true;studioInit();
+ const L=new T.PointLight(0xffffff,.9,26);L.layers.set(1);scene.add(L);G3.light=L;
+ // ---------- the horror house ----------
+ const H=new T.Group();H.position.set(80,STUDIO.y,0);scene.add(H);const wl=0x5a6a56,wd=0x4a3626,dk=0x141414;
+ const walls=[[16,.2,28,0,-.1,0,wd],[16,.2,28,0,3.1,0,0x1a1a1a],[.2,3.2,28,-8,1.5,0,wl],[.2,3.2,28,8,1.5,0,wl],[16,3.2,.2,0,1.5,-14,wl],[16,3.2,.2,0,1.5,14,wl],
+  [.2,3.2,6,-1.6,1.5,-11,wl],[.2,3.2,9,-1.6,1.5,-1.5,wl],[.2,3.2,9,-1.6,1.5,9.5,wl],[.2,3.2,10,1.6,1.5,-9,wl],[.2,3.2,9,1.6,1.5,2.5,wl],[.2,3.2,5,1.6,1.5,11.5,wl],
+  [6.4,3.2,.2,-4.8,1.5,-1,wl],[6.4,3.2,.2,4.8,1.5,4.5,wl],
+  [1.4,2.4,.12,0,1.2,-13.85,0x5a3020],[.9,.3,.05,0,2.7,-13.85,0xff2020],
+  [1.6,.9,1,-5,.45,4,0x4a3020],[1.6,2.4,1.2,6.6,1.2,-3,0x2a1a12],[.05,2.2,1,6,1.2,-3,0x1a1008],[2,.5,2.6,5.2,.25,9,0x7a1a1a],[2,.2,.6,5.2,.6,10,0xe8e0d0],
+  [1.4,1,.8,-5,.5,-9,0x6a6a6a],[2.6,.9,.8,-4.6,.45,-12.8,0x5a4a3a],
+  [1,.7,.05,-1.5,1.7,8,0x3a2a1a],[.8,.5,.06,-1.48,1.7,8,0x5a1a1a],[1,.7,.05,1.5,1.8,-7,0x3a2a1a],[.8,.5,.06,1.48,1.8,-7,0x1a1a3a]];
+ for(let z=-10;z<=10;z+=5)walls.push([.4,.1,.4,0,3,z,0xffe8a0]);
+ g3Mesh(H,'house',walls);
+ const key=new T.Mesh(new T.BoxGeometry(.25,.06,.12),new T.MeshBasicMaterial({color:0xffd34a,fog:false}));key.layers.set(1);H.add(key);
+ // the monster: tall, dark, glowing eyes
+ const M=new T.Group();g3Mesh(M,'mon',[[.9,2.1,.5,0,1.25,0,0x0c0c0e],[.75,.75,.6,0,2.65,0,0x0c0c0e],[.22,1.9,.22,-.6,1.4,.1,0x0c0c0e],[.22,1.9,.22,.6,1.4,.1,0x0c0c0e],[.3,.25,.3,-.25,.2,0,0x0c0c0e],[.3,.25,.3,.25,.2,0,0x0c0c0e]]);
+ const eye=new T.MeshBasicMaterial({color:0xff2a2a,fog:false});for(const sx of[-.17,.17]){const e=new T.Mesh(new T.BoxGeometry(.14,.09,.02),eye);e.position.set(sx,2.72,.31);e.layers.set(1);M.add(e)}
+ const mouth=new T.Mesh(new T.BoxGeometry(.42,.07,.02),new T.MeshBasicMaterial({color:0xe8e8e8,fog:false}));mouth.position.set(0,2.47,.31);mouth.layers.set(1);M.add(mouth);
+ M.visible=false;H.add(M);
+ G3.sets.horror={g:H,key,mon:M,poi:{start:[0,10.5,[]],hall:[0,0,[]],key:[-4.2,4.6,[[0,4],[-2.6,4]]],kitchen:[-4.6,-7.6,[[0,-7],[-2.6,-7]]],bed:[3.6,8,[[0,8],[2.6,8]]],closet:[5.5,-3,[[0,-3],[2.6,-3]]],exit:[0,-12.8,[]]}};
+ // ---------- the explorer island ----------
+ const E=new T.Group();E.position.set(-80,STUDIO.y,0);scene.add(E);
+ const sky=new T.Mesh(new T.BoxGeometry(110,70,110),new T.MeshBasicMaterial({color:0x8fd4ff,side:T.BackSide,fog:false}));sky.position.y=20;sky.layers.set(1);E.add(sky);
+ const isl=[[110,.1,110,0,-.6,0,0x2a7ac0],[34,.6,34,0,-.3,0,0xe8d8a0],[30,1,30,0,-.5,0,0x5ab04a],[10,2,8,7,.5,-7,0x5ab04a],[4,1,4,6,2,-7,0x5ab04a],[2.2,1.8,.4,7,.9,-2.9,0x101010],
+  [3,7,3,9,3.5,9,0x8a8a92],[3.6,.6,3.6,9,7.2,9,0x6a6a72],[.6,.6,.6,7.6,7.8,7.6,0x6a6a72],[.6,.6,.6,10.4,7.8,10.4,0x6a6a72],[.6,.6,.6,7.6,7.8,10.4,0x6a6a72],[.6,.6,.6,10.4,7.8,7.6,0x6a6a72],[1,2,.1,9,1,7.45,0x3a2a1a],
+  [1,.7,.7,-8,.35,-6,0x8a5a2a],[1.05,.12,.75,-8,.55,-6,0xe8c040],[.15,.2,.05,-8,.45,-5.62,0xe8c040],
+  [1.6,.25,.25,-7,.12,7,0x6a4020],[.25,.25,1.6,-7,.12,7,0x6a4020],[.5,.6,.5,-7,.45,7,0xff8a20],[.3,.9,.3,-7,.6,7,0xffd040],
+  [.7,2.2,.7,0,1.1,-11,0x40e8ff],[.5,1.4,.5,.6,.7,-10.6,0x80f0ff],[.4,1,.4,-.5,.5,-11.3,0x40c8ff],
+  [4,3,4,-11,1.5,1,0xe0c8a0],[4.6,.6,4.6,-11,3.3,1,0xb03a2a],[3.4,.6,3.4,-11,3.9,1,0xb03a2a],[1,1.8,.1,-9,.9,1,0x5a3a20]];
+ for(const [tx,tz] of [[-3,-4],[4,3],[-12,-9],[12,-12],[-13,10],[3,12],[13,1],[-4,12],[11,-4],[-6,-12]]){isl.push([.5,2.6,.5,tx,1.3,tz,0x7a5030],[2.4,2.2,2.4,tx,3.4,tz,0x3a9a3a])}
+ g3Mesh(E,'island',isl);
+ const pig=new T.Group();g3Mesh(pig,'pig',[[1,.6,.6,0,.55,0,0xff9ac0],[.5,.5,.5,.6,.75,0,0xff9ac0],[.12,.15,.25,.86,.7,0,0xff6a9a],[.15,.3,.15,-.35,.15,-.2,0xff9ac0],[.15,.3,.15,.35,.15,-.2,0xff9ac0],[.15,.3,.15,-.35,.15,.2,0xff9ac0],[.15,.3,.15,.35,.15,.2,0xff9ac0],[.06,.06,.02,.78,.85,-.12,0x111111],[.06,.06,.02,.78,.85,.12,0x111111]]);
+ pig.visible=false;E.add(pig);
+ G3.sets.explore={g:E,mon:pig,poi:{start:[0,10,[]],center:[0,0,[]],chest:[-7.2,-5.3,[]],tower:[8.4,6.8,[]],cave:[7,-2.2,[]],campfire:[-6,6.2,[]],crystal:[0,-9.8,[]],house:[-8.6,1,[]]}}}
+// ---------- scripts ----------
+const HORROR_GAMES=['Five Nights at Freddo\'s','Granny But Nice','Doors But Bad','SCRATED','Tipping Point','Cheese Escape','The Basement 3','Don\'t Open The Closet'];
+const EXPLORE_GAMES=['MINECRAP','BLOCKBURG','Grow a Garten','Island Explorer 64','Untitled Sandbox Gam','Leonada Adventures','Polytopiaa'];
+const G3L={
+ hIntro:['it\'s 3 AM and I\'m playing {G}...','okay chat, {G}. lights off. let\'s do this','they say {G} is the scariest game ever. let\'s see'],
+ hGoal:['I have to find the key and get out of here','okay the goal: find the key, open the exit door'],
+ hGo:{kitchen:['let\'s check the kitchen first','maybe the key is in the kitchen'],bed:['the bedroom... I don\'t like the bedroom','okay, checking the bedroom'],key:['let\'s check the room with the table','maybe it\'s in that room on the left'],closet:['what about the closet room?','the closet room. great. love that']},
+ hNot:['not here...','nothing. great.','it\'s not here, where IS it'],hFound:['THE KEY! I got it!','found the key!! let\'s get out of here'],
+ hExit:['okay, now to the exit door','exit door, here I come','almost out, just gotta reach the door'],hFree:['IT OPENS!! I\'m free!!','I ESCAPED! GG'],
+ hScream:['AAAAAAAAA!!','WHAT IS THAT?!','NONONONONO'],hFlee:['RUN RUN RUN','hiding in the closet, hiding in the closet','I\'m not looking back'],
+ hHide:['is it gone?? chat is it gone?','I think it left...','my heart is beating so fast'],hResume:['okay... back to the {goal}. carefully.','fine. the {goal}. slowly this time.'],
+ hQuit:['NOPE. I\'m going straight to the exit','I don\'t care about anything, EXIT'],hOutro:['never playing {G} again. bye','that was SO scary. like if I survived'],
+ eIntro:['today we\'re exploring {G}!','welcome back to {G}, let\'s explore','new island in {G}, let\'s see what\'s here'],
+ eGo:{chest:['let\'s check out that chest over there','I see a chest! going for it'],tower:['that tower looks so cool, let\'s go','I wonder what\'s at the tower'],cave:['there\'s a cave over there... let\'s be brave','okay, I\'m going to the cave'],campfire:['let\'s go sit by the campfire','I see smoke, a campfire!'],crystal:['wait, is that a crystal?!','the shiny thing! going there'],house:['someone lives in that little house?','let\'s visit the tiny house']},
+ eAt:{chest:['found {a A} {N} in the chest!','the chest had {n} gold coins!!','the chest was EMPTY. scam'],tower:['this tower is SO tall','who even built this tower?','I want to live in this tower'],cave:['it\'s so dark in there...','I hear water dripping in the cave','nope, the cave is too dark'],campfire:['ahh, so warm','roasting a marshmallow','campfire break, chat'],crystal:['SHINY!! it\'s so pretty','the crystal is humming...','I\'m rich!! wait, can I take it?'],house:['nobody\'s home','this house is tiny lol','I\'m moving in, actually']},
+ eSurp:['wait— a PIG?!','hold on, is that a pig?','AH— oh, it\'s just a pig'],ePig:['hi pig!! I\'m naming you {pig}','{pig} is my best friend now','okay bye {pig}, I have stuff to do'],
+ eResume:['okay where was I... oh right, the {goal}','back to the {goal}!'],eOutro:['what an adventure! see you next time','this island is the best. bye!','like if you want part 2!']};
+const PIG_NAMES=['Bacon','Sir Oinks','Gerald','Pork Chop','Mr Snout','Kevin'];
+function g3Fill(s,v){return s.replace(/\{a (\w+)\}/g,(m,k)=>{const w=v[k];return(/^[aeiou]/i.test(w)?'an ':'a ')+w}).replace(/\{(\w+)\}/g,(m,k)=>v[k]??m)}
+function ypPlay3d(seed,forceMode){const r=ypRng(seed),mode=forceMode||(r()<.55?'horror':'explore'),G=ypPick(mode==='horror'?HORROR_GAMES:EXPLORE_GAMES,r),C=ypCreator(ypInt(1,5000,r));
+ const vars={G,C:C.name,A:ypPick(YP_ADJ,r).toLowerCase(),N:ypPick(YP_NOUN,r),n:ypInt(3,99,r),pig:ypPick(PIG_NAMES,r)},f=s=>g3Fill(s,vars),P=a=>f(ypPick(a,r));
+ const steps=[];let title,thumb,scares=[];
+ if(mode==='horror'){const rooms=['kitchen','bed','closet','key'],keyRoom=ypPick(rooms,r),wrong=rooms.filter(x=>x!==keyRoom);const tries=[ypPick(wrong,r)];if(r()<.5)tries.push(ypPick(wrong.filter(x=>x!==tries[0]),r));
+  steps.push({say:P(G3L.hIntro)},{say:P(G3L.hGoal)});for(const t of tries)steps.push({say:P(G3L.hGo[t]),go:t,at:P(G3L.hNot),goal:'key'});
+  steps.push({say:P(G3L.hGo[keyRoom]),go:keyRoom,at:P(G3L.hFound),goal:'key',getKey:1},{say:P(G3L.hExit),go:'exit',at:P(G3L.hFree),goal:'exit door',exit:1},{say:P(G3L.hOutro)});
+  const walks=steps.map((s,i)=>s.go?i:-1).filter(i=>i>=0);scares.push(ypPick(walks,r));if(r()<.45){const b=ypPick(walks,r);if(b!==scares[0])scares.push(b)}
+  title=f(ypPick(['{C} plays {G} (I SCREAMED)','{G} full playthrough 😱','DON\'T play {G} alone','I tried to escape {G}','{G} but the monster is REAL'],r));thumb=ypPick(['IT\'S BEHIND ME','RUN!!','DON\'T LOOK','I SCREAMED'],r);
+  return g3Video(seed,r,{mode,G,C,steps,scares,keyRoom,title,thumb,vars})}
+ const pois=['chest','tower','cave','campfire','crystal','house'];for(let i=pois.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[pois[i],pois[j]]=[pois[j],pois[i]]}
+ steps.push({say:P(G3L.eIntro)});for(const p of pois.slice(0,ypInt(3,4,r))){vars.N=ypPick(YP_NOUN,r);vars.A=ypPick(YP_ADJ,r).toLowerCase();steps.push({say:P(G3L.eGo[p]),go:p,at:P(G3L.eAt[p]),goal:p==='campfire'?'campfire':p})}
+ steps.push({say:P(G3L.eOutro)});const walks=steps.map((s,i)=>s.go?i:-1).filter(i=>i>=0);if(r()<.6)scares.push(ypPick(walks,r));
+ title=f(ypPick(['Exploring {G} for the first time','{G} but I explore EVERYTHING','I found a secret island in {G}','{G} adventure part {n}','chill {G} exploring 🌴'],r));thumb=ypPick(['SECRET ISLAND','I FOUND IT','SO PRETTY','PART '+vars.n],r);
+ return g3Video(seed,r,{mode,G,C,steps,scares,title,thumb,vars})}
+function g3Video(seed,r,o){const views=Math.floor(Math.pow(10,2+r()*6.6))*(o.G==='BLOCKBURG'?12:1),ageN=ypInt(1,11,r),ageU=ypPick(['hours','days','weeks','months'],r),dsec=ypInt(300,2400,r);
+ const lines=o.steps.map(s=>s.say);const coms=[];const cp=o.mode==='horror'?['I jumped SO hard at the monster 💀','the scream at {n}:{nn} 😂','{C} is so brave (not)','I watched this with the lights on','the monster was kinda cute ngl','who else paused at the jumpscare']:['{pig} deserves his own channel','this island is so pretty','the {N} part 😂','chill video, love it','part 2 when?','I want to live in that tower'];
+ const cv={...o.vars,nn:String(ypInt(0,59,r)).padStart(2,'0')};for(let i=0;i<ypInt(4,6,r);i++)coms.push({who:ypCreator(ypInt(1,5000,r)),text:g3Fill(ypPick(cp,r),cv),likes:Math.floor(Math.pow(10,r()*4))});
+ return{seed,kind:'play3d',...o,style:o.mode==='horror'?'horror':'blocks',views,likes:Math.floor(views*(.02+r()*.06)),age:ageN+' '+ageU+' ago',dur:`${dsec/60|0}:${String(dsec%60).padStart(2,'0')}`,dsec,
+  face:o.mode==='horror'?'scared':'happy',bg:o.mode==='horror'?['#200','#000']:['#3ac6ff','#7dff9a'],emoji:o.mode==='horror'?'😱':'🌴',lines,coms,r2:r(),flip:r()<.5}}
+// ---------- the engine ----------
+function g3Start(v){g3Init();const S=G3.sets[v.mode],p0=S.poi.start;const st={v,S,x:p0[0],z:p0[1],yaw:Math.PI,cur:'start',queue:v.steps.map((s,i)=>({...s,idx:i,scareable:true})),act:null,cap:'',capN:0,capAge:0,path:[],t:0,
+  scareI:0,mon:null,monT:0,shake:0,flash:0,keyHeld:false,done:0,face:v.mode==='horror'?'nervous':'happy',pose:'talk',stepsDone:0,total:v.steps.length,hold:0,goal:'key'};
+ S.mon.visible=false;if(v.mode==='horror'){const k={key:[-5,.95,4],kitchen:[-5,1.05,-9],bed:[5.2,.56,8.6],closet:[5.9,.05,-2.4]}[v.keyRoom];S.key.visible=true;S.key.position.set(k[0],k[1],k[2])}
+ G3.st=st;G3.snap=true;G3.cv=null;return st}
+function g3Say(st,text){st.cap=text;st.capN=0;st.capAge=0}
+function g3Route(S,from,to){const a=S.poi[from]||S.poi.hall||S.poi.center,b=S.poi[to];const pts=[...a[2]].reverse();if(S.poi.center)pts.push([0,0]);for(const q of b[2])pts.push(q);pts.push([b[0],b[1]]);return pts.map(q=>[q[0],q[1]])}
+function g3Next(st){const a=st.queue.shift();st.act=a||null;if(!a){st.done=st.done||st.t;st.cap='';return}a.t=0;a.arrived=!a.go;if(a.say)g3Say(st,a.say);if(a.goal)st.goal=a.goal;
+ st.path=a.go?g3Route(st.S,st.cur,a.go):[];if(a.go)st.target=a.go;if(a.pose)st.pose=a.pose;if(a.face)st.face=a.face}
+function g3Scare(st){const v=st.v,a=st.act,S=st.S;a.scared=true;st.scareI++;const r=ypRng(v.seed+st.scareI*77),pk=x=>ypPick(x,r);
+ st.cap=st.cap.slice(0,Math.max(1,st.capN))+'—';st.capN=st.cap.length;st.capAge=99;
+ const f0=Math.sin(st.yaw),f1=Math.cos(st.yaw);
+ if(v.mode==='horror'){st.mon={x:st.x+f0*2.3,z:st.z+f1*2.3};S.mon.visible=true;st.monT=0;st.shake=1;st.flash=1;sfx3Scare();
+  const hide=st.target==='closet'||st.cur==='closet'?'start':'closet',quit=st.scareI>=2;
+  const resume={...a,say:g3Fill(pk(G3L.hResume),{goal:st.goal}),scareable:false,scared:true};
+  const imp=[{say:pk(G3L.hScream),hold:1.4,face:'scared',pose:'jump'},{say:pk(G3L.hFlee),go:hide,run:1,face:'scared'},{say:pk(G3L.hHide),hold:.5,face:'nervous',pose:'talk'}];
+  if(quit){imp.push({say:pk(G3L.hQuit),go:'exit',run:1,at:pk(G3L.hFree),exit:1,face:'scared'});st.queue=st.queue.filter(s=>!s.go&&!s.getKey&&!s.exit);st.queue=[...imp,...st.queue.filter(s=>s.say&&!s.go)]}
+  else st.queue=[...imp,resume,...st.queue]}
+ else{st.mon={x:st.x+f0*2.6,z:st.z+f1*2.6};S.mon.visible=true;st.monT=0;
+  const resume={...a,say:g3Fill(pk(G3L.eResume),{goal:st.goal}),scareable:false,scared:true};
+  st.queue=[{say:pk(G3L.eSurp),hold:1,face:'scared',pose:'jump'},{say:g3Fill(pk(G3L.ePig),v.vars),hold:.6,face:'happy',pose:'talk'},{say:g3Fill(pk(G3L.ePig),v.vars),hold:.4,face:'happy',pose:'talk'},resume,...st.queue]}
+ st.act=null;st.path=[];st.stepsDone=Math.max(0,st.stepsDone-1)}
+function sfx3Scare(){if(!AC)return;const t=AC.currentTime;tone(220,.7,.22,'sawtooth',t,70);tone(330,.5,.15,'square',t+.02,90);noise(t,.6,1400,.7,.5)}
+function g3Update(st,dt){st.t+=dt;const S=st.S;
+ if(st.cap){const n=Math.min(st.cap.length,Math.floor((st.capAge+=dt)*24));if(n>st.capN){if(n%2===0&&/[a-z0-9]/i.test(st.cap[n-1]))blip({voice:st.v.C.voice,angry:st.face==='scared'},st.cap[n-1],.7);st.capN=n}}
+ if(!st.act&&!st.done)g3Next(st);const a=st.act;if(!a)return;a.t+=dt;
+ // walking
+ let moving=false;if(st.path.length){const q=st.path[0],dx=q[0]-st.x,dz=q[1]-st.z,d=Math.hypot(dx,dz),sp=(a.run?4.6:st.v.mode==='horror'?2.4:3.1)*dt;
+  if(d<=sp){st.x=q[0];st.z=q[1];st.path.shift()}else{st.x+=dx/d*sp;st.z+=dz/d*sp}
+  const ty=Math.atan2(dx,dz);let dy=ty-st.yaw;while(dy>Math.PI)dy-=6.283;while(dy<-Math.PI)dy+=6.283;st.yaw+=dy*Math.min(1,dt*8);moving=true;
+  if(!st.path.length){st.cur=st.target;a.arrived=true;if(a.at){g3Say(st,a.at);a.atT=a.t}
+   if(a.getKey&&S.key){S.key.visible=false;st.keyHeld=true;st.face='happy'}if(a.exit)st.face='happy'}}
+ st.pose=a.pose&&!moving?a.pose:moving?(a.run?'run':'walk'):'talk';if(a.face)st.face=a.face;else if(!moving)st.face=st.v.mode==='horror'&&!st.keyHeld?'nervous':'happy';
+ // say something while walking a long way
+ if(moving&&!a.run&&st.capN>=st.cap.length&&st.capAge-st.cap.length/24>2.4){const r=ypRng(st.v.seed+Math.floor(st.t*3));g3Say(st,ypPick(st.v.mode==='horror'?['it\'s so quiet...','did the floor just creak?','I don\'t like this hallway','chat, stay with me','why are the lights flickering','okay. breathe. breathe.']:['la la la','this island is so pretty','chat look at the trees','walking... walking...','the water looks so nice','I love this game'],r))}
+ // jumpscare / surprise mid-sentence
+ if(a.scareable&&!a.scared&&moving&&st.v.scares.includes(a.idx)&&st.capN>=st.cap.length*.45&&st.path.length){g3Scare(st);return}
+ // monster
+ if(st.mon){st.monT+=dt;const M=S.mon,dx=st.x-st.mon.x,dz=st.z-st.mon.z,d=Math.hypot(dx,dz);
+  if(st.v.mode==='horror'){if(st.monT>1.3&&d>1){st.mon.x+=dx/d*2.6*dt;st.mon.z+=dz/d*2.6*dt}if(st.monT>3.6){M.visible=false;st.mon=null}}
+  else{if(st.monT>.8&&d>1.6){st.mon.x+=dx/d*1.6*dt;st.mon.z+=dz/d*1.6*dt}if(st.monT>5){M.visible=false;st.mon=null}}
+  if(st.mon){M.position.set(st.mon.x,0,st.mon.z);M.rotation.y=Math.atan2(dx,dz)+(st.v.mode==='horror'?0:-Math.PI/2)}}
+ st.shake=Math.max(0,st.shake-dt*1.6);st.flash=Math.max(0,st.flash-dt*2.5);
+ // next step when talking is done and we're there
+ const talkDone=st.capN>=st.cap.length;if(a.arrived&&talkDone&&a.t>(a.hold||0)){a.wait=(a.wait||0)+dt;if(a.wait>.9){st.stepsDone++;st.act=null}}}
+function g3Shoot(st,w,h,t){const S=st.S,v=st.v,a=studioActor(v.C.look);for(const b of STUDIO.actors.values())b.g.visible=false;a.g.visible=true;
+ for(const k of ['head','torso','armL','armR','legL','legR'])a[k].rotation.set(0,0,0);a.body.position.y=0;a.phone.visible=false;
+ if(st.pose==='walk'){const s=Math.sin(t*8);a.legL.rotation.x=s*.6;a.legR.rotation.x=-s*.6;a.armL.rotation.x=-s*.5;a.armR.rotation.x=s*.5;a.body.position.y=Math.abs(Math.cos(t*8))*.03}else(POSES[st.pose]||POSES.talk)(a,t);
+ if(st.keyHeld&&v.mode==='horror'){a.armR.rotation.x=Math.min(a.armR.rotation.x,-.9)}
+ a.face.material=faceMats[st.face]||faceMats.default;const ox=S.g.position.x,oy=S.g.position.y,oz=S.g.position.z;a.g.position.set(ox+st.x,oy,oz+st.z);a.g.rotation.set(0,st.yaw,0);
+ const f0=Math.sin(st.yaw),f1=Math.cos(st.yaw),hor=v.mode==='horror',port=h>w;let px,py,pz,lx,ly,lz;
+ if(st.mon&&hor&&st.monT<1.5){const mx=st.mon.x-st.x,mz=st.mon.z-st.z,md=Math.hypot(mx,mz)||1;px=ox+st.x+mx/md*.35;py=oy+1.85;pz=oz+st.z+mz/md*.35;lx=ox+st.mon.x;ly=oy+2.55;lz=oz+st.mon.z}
+ else{const D=(hor?2.4:3.6)*(port?1.25:1);px=ox+st.x-f0*D;py=oy+(hor?1.75:2.3);pz=oz+st.z-f1*D;lx=ox+st.x+f0*2;ly=oy+(hor?1.3:1.1);lz=oz+st.z+f1*2;if(hor){px=ox+Math.max(-7.6,Math.min(7.6,px-ox));pz=oz+Math.max(-13.6,Math.min(13.6,pz-oz))}}
+ const k=G3.snap?1:1-Math.exp(-(G3.dt||.016)*6);G3.cpos.lerp(tmpV.set(px,py,pz),k);G3.clook.lerp(tmpV.set(lx,ly,lz),k);G3.snap=false;
+ const sh=st.shake*.12;G3.cam.position.copy(G3.cpos).add(tmpV.set((R()-.5)*sh,(R()-.5)*sh,(R()-.5)*sh));G3.cam.lookAt(G3.clook);
+ G3.light.position.set(G3.cam.position.x,G3.cam.position.y+.6,G3.cam.position.z);G3.light.intensity=hor?.55+(R()<.04?-.4:0):1;
+ const T0=liveTarget(w,h);G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();const au=renderer.shadowMap.autoUpdate;renderer.shadowMap.autoUpdate=false;
+ try{renderer.setRenderTarget(T0.rt);renderer.render(scene,G3.cam);renderer.readRenderTargetPixels(T0.rt,0,0,w,h,T0.buf)}finally{renderer.setRenderTarget(null);renderer.shadowMap.autoUpdate=au;a.g.visible=false;a.g.position.set(0,STUDIO.y,0)}
+ const d=T0.img.data,row=w*4;for(let y=0;y<h;y++)d.set(T0.buf.subarray((h-1-y)*row,(h-y)*row),y*row);T0.cx.putImageData(T0.img,0,0);return T0.cv}
+function play3dFrame(x,w,h,v,t,dt){let st=G3.st;if(!st||st.v!==v)st=g3Start(v);G3.dt=dt;g3Update(st,dt);const port=h>w,hor=v.mode==='horror',S=w/240;
+ G3.acc+=dt;if(G3.acc>=1/14||!G3.cv){G3.acc=0;const c=g3Shoot(st,port?216:288,port?364:162,t);if(!G3.cv){G3.cv=document.createElement('canvas')}G3.cv.width=c.width;G3.cv.height=c.height;G3.cv.getContext('2d').drawImage(c,0,0)}
+ x.drawImage(G3.cv,0,0,w,h);
+ if(hor){const g=x.createRadialGradient(w/2,h*.48,h*.2,w/2,h*.5,Math.max(w,h)*.7);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${.78+(R()<.03?.18:0)})`);x.fillStyle=g;x.fillRect(0,0,w,h);
+  if(st.flash>0){x.fillStyle=`rgba(255,30,30,${st.flash*.5})`;x.fillRect(0,0,w,h)}
+  x.fillStyle='#fffc';x.font=`700 ${9*S}px system-ui`;x.textAlign='left';x.fillText('🔋 '+Math.max(5,97-Math.floor(t*2))+'%',8,16*S);x.fillText(st.keyHeld?'🔑 Objective: reach the exit':'Objective: find the key',8,28*S)}
+ else{x.fillStyle='#0007';x.fillRect(6,6,118*S,15*S);x.fillStyle='#fff';x.font=`700 ${9*S}px system-ui`;x.textAlign='left';x.fillText('🧭 Quest: explore the '+(st.goal||'island'),10,16.5*S)}
+ // facecam of the YouTuber in the corner, from the green screen studio
+ const fw=port?w*.34:w*.25,fh=fw*.85;x.fillStyle='#000a';x.fillRect(w-fw-6,6,fw,fh);studioDraw(x,'g3fc',v.C.look,st.face==='nervous'?'nervous':st.face,'bust',st.face==='scared'?'react':'talk',t,w-fw-6,6,fw,fh);
+ x.strokeStyle=hor?'#ff3b30':'#7dff9a';x.lineWidth=2;x.strokeRect(w-fw-6,6,fw,fh);
+ // caption
+ if(st.cap&&st.capN){const s=st.cap.slice(0,st.capN),fs=Math.max(10,13*S);x.font=`800 ${fs}px system-ui`;x.textAlign='center';const tw=Math.min(w-10,x.measureText(s).width+10),by=port?h*.62:h-8;
+  x.fillStyle=st.face==='scared'?'#a00d':'#000b';x.fillRect(w/2-tw/2,by-fs*1.3,tw,fs*1.5);x.fillStyle='#fff';x.fillText(s,w/2,by-fs*.15,w-14)}
+ if(st.done&&t-st.done>.3){x.fillStyle='#000a';x.fillRect(0,0,w,h);ypText(x,hor?(st.keyHeld||st.scareI>=2?'YOU ESCAPED':'THE END'):'THANKS FOR WATCHING',w/2,h*.45,20*S,hor?'#ff4a4a':'#7dff9a',0)}}
+function play3dThumb(v){g3Init();const st=g3Start(v),S=st.S,r=ypRng(v.seed^0x77);const pois=Object.keys(S.poi).filter(k=>k!=='start'&&k!=='hall'&&k!=='center'),p=S.poi[ypPick(pois,r)];
+ st.x=p[0]*.7;st.z=p[1]*.7+1;st.yaw=r()*6.28;st.face=v.face;st.pose=v.mode==='horror'?'jump':'talk';if(v.mode==='horror'){st.mon={x:st.x+Math.sin(st.yaw)*2,z:st.z+Math.cos(st.yaw)*2};S.mon.visible=true;S.mon.position.set(st.mon.x,0,st.mon.z);S.mon.rotation.y=st.yaw+Math.PI;st.monT=2}
+ G3.snap=true;const src=g3Shoot(st,192,108,0);S.mon.visible=false;G3.st=null;
+ const c=document.createElement('canvas');c.width=192;c.height=108;const x=c.getContext('2d');x.drawImage(src,0,0);
+ if(v.mode==='horror'){const g=x.createRadialGradient(96,54,10,96,54,120);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.85)');x.fillStyle=g;x.fillRect(0,0,192,108)}
+ const hs=52;studioDraw(x,null,v.C.look,v.face,'head','pose',0,v.flip?8:192-hs-8,108-hs-6,hs,hs,{tilt:(r()-.5)*.4});
+ ypText(x,v.thumb,96,22,21,v.mode==='horror'?'#ff4a4a':'#ffe14a',(r()-.5)*.1);x.font='22px system-ui';x.textAlign='center';x.fillText(v.emoji,v.flip?96+50:96-50,92);
+ return c.toDataURL('image/jpeg',.8)}
+
+if(window.GWA_TEST_HOOK)window.GWA_TEST_HOOK({G3,ypPlay3d,STUDIO,ypScript,LIVE,liveVideo,ypVideo,ypThumb,ypShort,ph,phoneToggle,dialNow,snap,startCall,notify,convs,startConv,say,sayHi,bubbles,samples:()=>Object.keys(SAMPLES),camObj:()=>cam,clearLine,get inHouse(){return inHouse},get build(){return build},HS,enterHouse,enterBuild,exitBuild,selectItem,buildClick,useThing,houseMarker,setMouse(x,y){mouseNDC.set(x,y);moveGhost()},clickCell(gx,gz){const b=build,st=b.st,[w,d]=b.sel?fp(b.sel.k,b.rot):[1,1];const v=new T.Vector3(st.x0+gx+w/2,0,st.z0+gz+d/2).project(cam),r=canvas.getBoundingClientRect();buildClick({clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height})},get me(){return me},cars,people,places,W,net,startGame,startJob,endJob,get job(){return job},jobs:{pizza:jobPizza,taxi:jobTaxi,race:jobRace,walk:jobWalk},
  get money(){return money},set money(v){money=v},toggleCar,setStars(n){W.stars=n;W.lx=me.x;W.lz=me.z},teleport(x,z){if(me.car){me.car.x=x;me.car.z=z}else{me.x=x;me.z=z}},
  cam:()=>({yaw:camYaw,pitch:camPitch}),aimPoint(d){const v=camDir();return[cam.position.x+v[0]*d,cam.position.y+v[1]*d,cam.position.z+v[2]*d]},setCam(y,p){camYaw=y;camPitch=p;lastLook=now+5},keys,get heli(){return heli},setDay(t){dayT=t},explode,openShop,get stars(){return starsNow()},spawnCar,spawnPed,setLook(p,l){scene.remove(p.m.g);p.look=l;p.m=makePerson(l);p.anim=null},lotAt,setGfx(g){gfx=g;applyGfx()}});
 </script>
