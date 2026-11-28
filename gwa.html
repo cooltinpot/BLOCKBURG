@@ -144,7 +144,11 @@ input{font:700 18px system-ui,sans-serif;padding:12px;border-radius:12px;border:
 .ypth{position:relative}.ypth img{width:100%;aspect-ratio:16/9;border-radius:10px;display:block;object-fit:cover}.ypth span{position:absolute;right:5px;bottom:5px;background:#000c;color:#fff;font:700 10px system-ui;padding:1px 4px;border-radius:4px}.ypth span.live{background:#e00}.ypred{font-style:normal;color:#ff5a5a;font-weight:800}
 .ypinfo,.ypch,.ypcom{display:flex;gap:7px;margin-top:6px;align-items:flex-start}.ypav{width:26px;height:26px;border-radius:50%;flex:none;object-fit:cover;background:#555}.ypav.f{object-fit:contain;padding:2px;box-sizing:border-box}
 .ypinfo b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:700 12px/1.25 system-ui}.ypinfo small,.ypch small,.ypmeta{display:block;color:#aaa;font:500 10.5px system-ui;margin-top:2px}
-.ypplayer{position:relative;margin:0 -12px}.ypplayer canvas{width:100%;display:block;background:#000}.ypbar{height:3px;background:#444}.ypbar i{display:block;height:100%;width:0;background:#ff2a2a}
+.ypplayer{position:relative;margin:0 -12px}.ypplayer canvas{width:100%;display:block;background:#000}.yptap{position:absolute;left:0;right:0;top:0;bottom:6px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;padding:0}.yptap i{font-style:normal;font-size:30px;color:#fff;background:#0009;border-radius:50%;width:56px;height:56px;display:none;align-items:center;justify-content:center;text-shadow:none}.paused .yptap i{display:flex}.scr.shorts .yptap{bottom:0;z-index:1}.scr.shorts .ypsov{z-index:2}
+.ypctl{display:flex;gap:4px;margin:6px 0 0}.ypctl button{flex:1;border:0;border-radius:10px;background:#272727;color:#fff;font:700 11px system-ui;padding:6px 0}
+.ypclike{display:inline-block;margin-top:3px;border:0;border-radius:10px;background:#272727;color:#ccc;font:600 10px system-ui;padding:3px 8px}.ypclike.on{background:#fff;color:#000}
+.ypsheet{position:absolute;left:0;right:0;bottom:0;height:62%;background:#181818f5;border-radius:16px 16px 0 0;padding:8px 12px;overflow-y:auto;z-index:3}.yphd{display:flex;justify-content:space-between;align-items:center;font:800 13px system-ui;margin-bottom:4px}.yphd button{border:0;background:#333;color:#fff;border-radius:50%;width:28px;height:28px}
+.ypbar{height:3px;background:#444}.ypbar i{display:block;height:100%;width:0;background:#ff2a2a}
 .yptime{display:block;padding:3px 12px 0;color:#aaa;font:700 10px system-ui}
 .yptitle{display:block;font:800 13.5px/1.25 system-ui;margin-top:8px}.ypch{align-items:center;margin:9px 0}.ypch b{font:800 12px system-ui}
 .ypsub{margin-left:auto;border:0;border-radius:16px;background:#fff;color:#000;font:800 11px system-ui;padding:6px 11px}.ypsub.on{background:#333;color:#ccc}
@@ -2020,7 +2024,7 @@ function phGo(s,data){ph.stack.push(ph.screen);ph.screen=s;if(data!==undefined)p
 function phBack(){if(ph.screen==='camera'){ph.selfie=false;$('#phone').classList.remove('cam')}if(ph.stack.length){ph.screen=ph.stack.pop();phRender()}else phoneToggle(false)}
 const scr=()=>$('#phScreen');
 function phApp(ico,name,s,badge){return`<button class="app" data-go="${s}"><i>${ico}</i>${badge?`<b>${badge}</b>`:''}<span>${name}</span></button>`}
-function phRender(){const el=scr();$('#phone').classList.toggle('cam',ph.screen==='camera');$('#phWall').style.background=WALLS2[ph.wall];el.className='scr '+ph.screen;let h='';
+function phRender(){const el=scr();const keep=el.dataset.s===ph.screen?el.scrollTop:0;$('#phone').classList.toggle('cam',ph.screen==='camera');$('#phWall').style.background=WALLS2[ph.wall];el.className='scr '+ph.screen+(ph.screen==='shorts'&&ph.yp&&ph.yp.paused?' paused':'');let h='';
  if(ph.screen==='home'){h=`<div class="apps">${phApp('💩','YouPoopz','youpoopz')}${phApp('📞','Phone','contacts')}${phApp('💬','Messages','texts',ph.unread||'')}${phApp('📷','Camera','camera')}${phApp('🖼️','Gallery','gallery')}${phApp('🐦','Bleeter','bleeter')}${phApp('🚗','Motors','motors')}${phApp('🔢','Dialer','dialer')}${phApp('⛅','Weather','weather')}${phApp('⚙️','Settings','settings')}</div>`}
  else if(ph.screen==='contacts'){h=`<h3>Contacts</h3>`+CONTACTS.map(c=>`<button class="row" data-call="${c.id}"><i>${c.ico}</i>${esc(c.name)}<small>call</small></button>`).join('')}
  else if(ph.screen==='call'){const c=ph.call;h=`<div class="callscr"><i>${c.c.ico}</i><h3>${esc(c.c.name)}</h3><p>${c.state}</p><div class="callog">${c.log.map(l=>`<div class="${l[0]}">${esc(l[1])}</div>`).join('')}</div>${c.opts?`<div class="opts">${c.opts.map((o,i)=>`<button data-opt="${i}">${esc(o[0])}</button>`).join('')}</div>`:''}<button class="hang" data-hang="1">📵</button></div>`}
@@ -2033,7 +2037,7 @@ function phRender(){const el=scr();$('#phone').classList.toggle('cam',ph.screen=
  else if(ph.screen==='weather'){const hh=Math.floor(dayT*24),day=hh>=6&&hh<20;h=`<div class="wx"><i>${day?'☀️':'🌙'}</i><h2>${day?'31°':'24°'}</h2><p>Leonada · ${day?'Sunny and hot':'Clear night'}</p><p class="tip">Tomorrow: also sunny. It is always sunny.</p></div>`}
  else if(ph.screen==='settings'){h=`<h3>Settings</h3><p>Wallpaper</p><div class="walls">${WALLS2.map((w,i)=>`<button data-wall="${i}" style="background:${w}" class="${i===ph.wall?'on':''}"></button>`).join('')}</div><button class="row" data-ring="1">Ringtone<small>${ph.ring?'ON':'OFF'}</small></button><button class="row" data-radio="1">WALK FM in cars<small>${radioOn?'ON':'OFF'}</small></button>`}
  if(ph.screen==='youpoopz'||ph.screen==='ypw'||ph.screen==='shorts')h=ypScreen();
- el.innerHTML=h;ypAfterRender();$('#phBack').classList.toggle('hide',ph.screen==='home')}
+ el.innerHTML=h;el.scrollTop=keep;el.dataset.s=ph.screen;ypAfterRender();$('#phBack').classList.toggle('hide',ph.screen==='home')}
 $('#phScreen').addEventListener('click',e=>{const b=e.target.closest('button,a');if(!b)return;const d=b.dataset;initAudio();if(ypClick(d))return;
  if(d.go){if(d.go==='camera'){$('#phone').classList.add('cam')}phGo(d.go)}
  else if(d.call)startCall(d.call);else if(d.opt!=null)ph.call.opts[+d.opt][1]();else if(d.hang)endCall();
@@ -2053,6 +2057,8 @@ function phoneKey(e){if(!ph.open)return false;const k=e.key;
  if(e.code==='Backspace'){if(ph.screen==='dialer'&&ph.dial){ph.dial=ph.dial.slice(0,-1);phRender()}else phBack();return true}
  if(ph.screen==='dialer'){if(e.code==='Enter'){dialNow();return true}if(/^[0-9*#]$/.test(k)){ph.dial+=k;dtmf(k);phRender();return true}if(/^[a-z]$/i.test(k)){ph.dial+=T9[k.toLowerCase()];dtmf(String(T9[k.toLowerCase()]));phRender();return true}if(e.code==='KeyP'){phoneToggle(false);return true}return false}
  if(ph.screen==='camera'&&(e.code==='Space'||e.code==='Enter')){snap();return true}
+ if(ph.screen==='ypw'){if(e.code==='KeyK'||e.code==='Space'){ypPause(!ph.yp.paused);return true}if(e.code==='KeyJ'){ypSeek(-10);return true}if(e.code==='KeyL'){ypSeek(10);return true}if(e.code==='KeyM'){ypClick({ypmute:1});return true}}
+ if(ph.screen==='shorts'&&e.code==='KeyK'){ypPause(!ph.yp.paused);return true}
  if(ph.screen==='shorts'&&/^(ArrowDown|ArrowUp|Space|KeyS|KeyW)$/.test(e.code)){ypShort(/Down|Space|KeyS/.test(e.code)?1:-1);return true}
  return false}
 // ---- calls: ringing, then a little conversation with options ----
@@ -2252,35 +2258,40 @@ function ypFrame(x,w,h,v,t){const K=v.kind;x.clearRect(0,0,w,h);if(K==='play3d')
 function ypCaption(x,w,h,v,t,bottom){const li=Math.floor(t/3)%v.lines.length,line=v.lines[li],n=Math.min(line.length,Math.floor((t%3)*24));if(!n)return;
  const s=line.slice(0,n),fs=Math.max(10,h*.07);x.font=`800 ${fs}px system-ui`;x.textAlign='center';const tw=Math.min(w-10,x.measureText(s).width+10);
  x.fillStyle='#000b';x.fillRect(w/2-tw/2,bottom-fs*1.3,tw,fs*1.5);x.fillStyle='#fff';x.fillText(s,w/2,bottom-fs*.15,w-14);
- const yp=ph.yp;if(n!==yp.lastN||li!==yp.lastL){if(n>yp.lastN&&li===yp.lastL&&n%2===0&&/[a-z0-9]/i.test(line[n-1]))blip({voice:v.C.voice},line[n-1],.7);yp.lastN=n;yp.lastL=li}}
+ const yp=ph.yp;if(n!==yp.lastN||li!==yp.lastL){if(n>yp.lastN&&li===yp.lastL&&n%2===0&&/[a-z0-9]/i.test(line[n-1]))ph.yp.muted||blip({voice:v.C.voice},line[n-1],.7);yp.lastN=n;yp.lastL=li}}
 // ---- state, feed, screens ----
-ph.yp={cat:'',feed:[],q:'',scroll:0,cur:null,t:0,lastN:0,lastL:-1,subs:{},liked:{},disliked:{},shorts:[],si:0,watched:0};
+ph.yp={paused:false,muted:false,sheet:false,clikes:{},cat:'',feed:[],q:'',scroll:0,cur:null,t:0,lastN:0,lastL:-1,subs:{},liked:{},disliked:{},shorts:[],si:0,watched:0};
 const ypSeed=()=>(Math.random()*4294967296)>>>0;
 function ypMake(){const c=ph.yp.cat;if(c)return ypPlay3d(ypSeed(),c==='horror'?'horror':c==='explore'?'explore':null);return ypVideo(ypSeed(),ph.yp.q||null)}
 function ypMix(first){const yp=ph.yp;if(yp.cat)return ypMake();if(!yp.q&&(first||R()<.14)){const l=liveVideo();if(l)return l}if(!yp.q&&R()<.12)return ypPlay3d(ypSeed());return ypMake()}
 function ypMore(n=8){const yp=ph.yp,list=$('#ypList');const add=[];for(let i=0;i<n;i++){const v=ypMix(yp.feed.length===1);yp.feed.push(v);add.push(v)}if(list)list.insertAdjacentHTML('beforeend',add.map(ypCard).join(''))}
 function ypCard(v){return`<button class="ypcard" data-yp="${v.seed}"><div class="ypth"><img src="${ypThumb(v)}"><span class="${v.live?'live':''}">${v.live?'● LIVE':v.dur}</span></div><div class="ypinfo">${ypAvImg(v.C)}<div><b>${esc(v.title)}</b><small>${esc(v.C.name)} · ${v.live?`<em class="ypred">${ypFmt(v.viewers)} watching</em>`:`${ypFmt(v.views)} views · ${v.age}`}</small></div></div></button>`}
 function ypFind(seed){const yp=ph.yp;return yp.feed.find(v=>v.seed===seed)||(yp.cur&&yp.cur.up||[]).find(v=>v.seed===seed)||yp.shorts.find(v=>v.seed===seed)}
-function ypWatch(v){const yp=ph.yp;yp.cur=v;yp.t=0;yp.lastN=0;yp.lastL=-1;v.up=v.up||Array.from({length:4},ypMake);liveReset();G3.st=null;yp.watched++;if(ph.screen==='ypw')phRender();else phGo('ypw')}
+function ypWatch(v){const yp=ph.yp;yp.cur=v;yp.t=0;yp.lastN=0;yp.lastL=-1;v.up=v.up||Array.from({length:4},ypMake);liveReset();G3.st=null;yp.paused=false;scr().dataset.s='';yp.watched++;if(ph.screen==='ypw')phRender();else phGo('ypw')}
 function ypScreen(){const yp=ph.yp;
  if(ph.screen==='youpoopz'){return`<div class="yphead"><span class="yplogo"><i>💩</i>YouPoopz</span><button class="ypsh" data-go="shorts">⚡ Shorts</button></div>
   <input id="ypQ" class="ypq" placeholder="🔍 Search anything..." value="${esc(yp.q)}" autocomplete="off"><div class="ypchips">${[["","All"],["gaming","🎮 Gaming"],["horror","😱 Horror"],["explore","🌴 Explore"]].map(([c,n])=>`<button data-ypcat="${c}" class="${(yp.cat||"")===c&&!yp.q?"on":""}">${n}</button>`).join("")}</div>${yp.q||yp.cat?"":`<button class="ypchip" data-ypq="BLOCKBURG">🔥 Trending: <b>#BLOCKBURG</b> · 4.2B videos</button>`}${yp.q?`<button class="ypclear" data-ypclear="1">✕ clear search "${esc(yp.q)}"</button>`:''}<div id="ypList">${yp.feed.map(ypCard).join('')}</div><p class="tip">Scroll for more · literally never runs out</p>`}
  if(ph.screen==='ypw'){const v=yp.cur,sub=yp.subs[v.C.id],lk=yp.liked[v.seed],dl=yp.disliked[v.seed];
-  return`<div class="ypplayer"><canvas id="ypc" width="432" height="244"></canvas><div class="ypbar"><i id="ypBar"></i></div><small id="ypTime" class="yptime"></small></div>
+  return`<div class="ypplayer ${yp.paused?'paused':''}"><canvas id="ypc" width="432" height="244"></canvas><button class="yptap" data-yptap="1"><i>▶</i></button><div class="ypbar"><i id="ypBar"></i></div><small id="ypTime" class="yptime"></small></div>
+  <div class="ypctl"><button data-yptap="1" class="ypplay">${yp.paused?'▶ Play':'⏸ Pause'}</button><button data-ypseek="-10">⏪ 10</button><button data-ypseek="10">10 ⏩</button><button data-ypmute="1" class="ypmute">${yp.muted?'🔇':'🔊'}</button><button data-ypnextv="1">⏭</button></div>
   <b class="yptitle">${esc(v.title)}</b><small class="ypmeta">${v.live?`<em class="ypred">🔴 ${ypFmt(v.viewers)} watching now</em> · ${v.age}`:`${ypFmt(v.views+(lk?1:0))} views · ${v.age}`}${v.title.includes(v.G)?'':' · '+esc(v.G)}</small>
   <div class="ypch">${ypAvImg(v.C)}<div><b>${esc(v.C.name)}</b><small>${ypFmt(v.C.subs+(sub?1:0))} subscribers</small></div><button class="ypsub ${sub?'on':''}" data-ypsub="1">${sub?'Subscribed':'Subscribe'}</button></div>
   <div class="ypacts"><button class="${lk?'on':''}" data-yplike="1">👍 ${ypFmt(v.likes+(lk?1:0))}</button><button class="${dl?'on':''}" data-ypdis="1">👎</button><button data-ypshare="1">↗ Share</button></div>
-  <p class="ypsec">Comments · ${ypFmt(Math.floor(v.views/40)+v.coms.length)}</p>${v.coms.map(c=>`<div class="ypcom">${ypAvImg(c.who)}<div><b>@${esc(c.who.name)}</b><span>${esc(c.text)}</span><small>👍 ${ypFmt(c.likes)}</small></div></div>`).join('')}
+  <p class="ypsec">Comments · ${ypFmt(Math.floor(v.views/40)+v.coms.length)}</p>${v.coms.map((c,i)=>`<div class="ypcom">${ypAvImg(c.who)}<div><b>@${esc(c.who.name)}</b><span>${esc(c.text)}</span><button class="ypclike ${yp.clikes[v.seed+':'+i]?'on':''}" data-ypclike="${i}">👍 ${ypFmt(c.likes+(yp.clikes[v.seed+':'+i]?1:0))}</button></div></div>`).join('')}
   <p class="ypsec">Up next</p>${v.up.map(ypCard).join('')}`}
  if(ph.screen==='shorts'){if(!yp.shorts.length){for(let i=0;i<3;i++)yp.shorts.push(ypMix(i===1));yp.si=0}const v=yp.shorts[yp.si];yp.cur=v;const lk=yp.liked[v.seed];
-  return`<canvas id="ypc" width="480" height="808"></canvas><div class="ypsov"><div class="ypside"><button class="${lk?'on':''}" data-yplike="1">👍<small>${ypFmt(v.likes+(lk?1:0))}</small></button><button data-ypcom="1">💬<small>${ypFmt(Math.floor(v.views/40))}</small></button><button data-ypnext="1">⏬<small>next</small></button></div>
-  <div class="ypsinfo"><b>${ypAvImg(v.C)}@${esc(v.C.name)} <button class="ypsub ${yp.subs[v.C.id]?'on':''}" data-ypsub="1">${yp.subs[v.C.id]?'✓':'Subscribe'}</button></b><span>${esc(v.title)} #shorts #${esc(v.G.replace(/\W/g,''))}</span></div></div>${v.live?'':'<div class="ypswipe">scroll / swipe ↕</div>'}`}
+  return`<canvas id="ypc" width="480" height="808"></canvas><button class="yptap" data-yptap="1"><i>▶</i></button><div class="ypsov"><div class="ypside"><button class="${lk?'on':''}" data-yplike="1">👍<small>${ypFmt(v.likes+(lk?1:0))}</small></button><button data-ypcom="1">💬<small>${ypFmt(Math.floor(v.views/40)+v.coms.length)}</small></button><button data-ypshare="1">↗<small>share</small></button><button data-ypmute="1" class="ypmute">${yp.muted?'🔇':'🔊'}</button><button data-ypnext="1">⏬<small>next</small></button></div>
+  <div class="ypsinfo"><b>${ypAvImg(v.C)}@${esc(v.C.name)} <button class="ypsub ${yp.subs[v.C.id]?'on':''}" data-ypsub="1">${yp.subs[v.C.id]?'✓':'Subscribe'}</button></b><span>${esc(v.title)} #shorts #${esc(v.G.replace(/\W/g,''))}</span></div></div>${v.live?'':'<div class="ypswipe">scroll / swipe ↕</div>'}${yp.sheet?`<div class="ypsheet"><div class="yphd"><b>Comments</b><button data-ypsheet="0">✕</button></div>${v.coms.map((c,i)=>`<div class="ypcom">${ypAvImg(c.who)}<div><b>@${esc(c.who.name)}</b><span>${esc(c.text)}</span><button class="ypclike ${yp.clikes[v.seed+':'+i]?'on':''}" data-ypclike="${i}">👍 ${ypFmt(c.likes+(yp.clikes[v.seed+':'+i]?1:0))}</button></div></div>`).join('')}</div>`:''}`}
  return''}
 function ypAfterRender(){const yp=ph.yp,el=scr();
  if(ph.screen==='youpoopz'){if(!yp.feed.length)ypMore(8);el.scrollTop=yp.scroll;const q=$('#ypQ');if(q)q.onkeydown=e=>{if(e.key==='Enter'){yp.q=q.value.trim().slice(0,40);yp.feed=[];yp.scroll=0;q.blur();phRender()}e.stopPropagation()}}
  if(ph.screen==='ypw'||ph.screen==='shorts'){yp.cv=$('#ypc');ypTick(0)}else yp.cv=null}
-function ypShort(d){const yp=ph.yp;yp.si=Math.max(0,yp.si+d);while(yp.shorts.length<=yp.si+1)yp.shorts.push(ypMix());if(yp.shorts.length>60){yp.shorts.splice(0,20);yp.si-=20}yp.t=0;yp.lastN=0;yp.lastL=-1;liveReset();G3.st=null;phRender();if(AC)tone(d>0?520:440,.04,.03,'sine')}
-function ypTick(dt){const yp=ph.yp,cv=yp.cv,v=yp.cur;if(!cv||!v||!cv.isConnected)return;yp.t+=dt;LIVE.dt=dt;const x=cv.getContext('2d'),w=cv.width,h=cv.height;
+function ypShort(d){const yp=ph.yp;yp.si=Math.max(0,yp.si+d);while(yp.shorts.length<=yp.si+1)yp.shorts.push(ypMix());if(yp.shorts.length>60){yp.shorts.splice(0,20);yp.si-=20}yp.t=0;yp.lastN=0;yp.lastL=-1;liveReset();G3.st=null;yp.paused=false;yp.sheet=false;phRender();if(AC)tone(d>0?520:440,.04,.03,'sine')}
+function ypPause(on){const yp=ph.yp;yp.paused=on;document.querySelectorAll('.ypplayer,.scr.shorts').forEach(e=>e.classList.toggle('paused',on));const b=$('.ypplay');if(b)b.textContent=on?'▶ Play':'⏸ Pause';if(AC)tone(on?440:660,.04,.03,'sine')}
+function ypSeek(d){const yp=ph.yp,v=yp.cur;if(!v)return;if(v.live){toast('🔴 It\'s live, you can\'t skip!');return}
+ if(v.kind==='play3d'){if(d<0){G3.st=null;yp.t=0;toast('⏪ Back to the start')}else{const st=G3.st;if(st){const m=yp.muted;yp.muted=true;for(let i=0;i<200&&!st.done;i++){g3Update(st,.05);yp.t+=.05}yp.muted=m;toast('⏩ +10 seconds')}}}
+ else{yp.t=Math.max(0,Math.min(17.5,yp.t+d*.6));yp.lastN=0;toast(d<0?'⏪ -10 seconds':'⏩ +10 seconds')}if(yp.paused)ypTick(0)}
+function ypTick(dt){const yp=ph.yp,cv=yp.cv,v=yp.cur;if(!cv||!v||!cv.isConnected)return;if(yp.paused){if(dt===0){yp.paused=false;ypTick(0);yp.paused=true}return}yp.t+=dt;LIVE.dt=dt;const x=cv.getContext('2d'),w=cv.width,h=cv.height;
  if(ph.screen==='shorts'){ypFrame(x,w,h,v,yp.t);if(!v.live&&v.kind!=='play3d')ypCaption(x,w,h,v,yp.t,h*.62);if(v.kind==='play3d'&&G3.st&&G3.st.done&&G3.st.t-G3.st.done>2.8&&!v.skipped){v.skipped=1;ypShort(1)}}
  else if(v.kind==='play3d'){ypFrame(x,w,h,v,yp.t);const st=G3.st;if(!st)return;const f=Math.min(1,st.done?1:st.stepsDone/Math.max(1,st.total));const bar=$('#ypBar');if(bar)bar.style.width=(f*100)+'%';const tm=$('#ypTime');if(tm){const s2=Math.floor(f*v.dsec);tm.textContent=`${s2/60|0}:${String(s2%60).padStart(2,'0')} / ${v.dur}`}if(st.done&&st.t-st.done>2.8&&v.up&&v.up[0])ypWatch(v.up[0])}
  else if(v.live){ypFrame(x,w,h,v,yp.t);const bar=$('#ypBar');if(bar)bar.style.width='100%';const tm=$('#ypTime');if(tm)tm.textContent='🔴 LIVE · '+ypFmt(v.viewers)+' watching'}
@@ -2292,7 +2303,10 @@ function ypClick(d){const yp=ph.yp;
  if(d.yplike){yp.liked[yp.cur.seed]=!yp.liked[yp.cur.seed];yp.disliked[yp.cur.seed]=false;if(AC)tone(880,.05,.04,'sine');phRender();return true}
  if(d.ypdis){yp.disliked[yp.cur.seed]=!yp.disliked[yp.cur.seed];yp.liked[yp.cur.seed]=false;phRender();return true}
  if(d.ypshare){bleet(me.name||myName(),'check this out: "'+yp.cur.title+'" 💩▶');toast('Shared to Bleeter!');return true}
- if(d.ypnext){ypShort(1);return true}if(d.ypcom){toast('💬 '+yp.cur.coms[0].text);return true}
+ if(d.ypnext){ypShort(1);return true}if(d.ypcom){yp.sheet=true;phRender();return true}if(d.ypsheet){yp.sheet=false;phRender();return true}
+ if(d.yptap){ypPause(!yp.paused);return true}if(d.ypmute){yp.muted=!yp.muted;document.querySelectorAll('.ypmute').forEach(b=>{b.textContent=yp.muted?'🔇':'🔊'});return true}
+ if(d.ypnextv){const v=yp.cur;if(v&&v.up&&v.up[0])ypWatch(v.up[0]);return true}if(d.ypseek){ypSeek(+d.ypseek);return true}
+ if(d.ypclike!=null){const k=yp.cur.seed+':'+d.ypclike;yp.clikes[k]=!yp.clikes[k];const c=yp.cur.coms[+d.ypclike];document.querySelectorAll(`[data-ypclike="${d.ypclike}"]`).forEach(b=>{b.classList.toggle('on',yp.clikes[k]);b.textContent='👍 '+ypFmt(c.likes+(yp.clikes[k]?1:0))});return true}
  if('ypcat' in d){yp.cat=d.ypcat;yp.q='';yp.feed=[];yp.scroll=0;phRender();return true}
  if(d.ypq){yp.cat='';yp.q=d.ypq;yp.feed=[];yp.scroll=0;phRender();return true}
  if(d.ypclear){yp.q='';yp.feed=[];yp.scroll=0;phRender();return true}
@@ -2357,7 +2371,7 @@ function liveFrame(x,w,h,v,t,dt){const port=h>w;LIVE.port=port;let p=v.streamer;
   if(seen&&now-LIVE.hiT>12){LIVE.hiT=now;const nm=me.name||'Player';for(const s of ['WHO IS THAT 👀','someone is behind you!!',`it's ${nm}!!`,`hi ${nm} 👋`,W.stars>=2?'that\'s the guy the cops are chasing!!':'say hi to them!!'])liveChat(s);liveSay(p,pick(['oh hi! chat say hi!','um... hello?','chat, look who it is!','are you following me??']))}}
  // the streamer talks
  LIVE.capT-=dt;if(LIVE.capT<=0&&!v.ended){liveSay(p,liveLine(p,v))}
- if(LIVE.cap){const n=Math.min(LIVE.cap.length,Math.floor((LIVE.capAge+=dt)*22));if(n>LIVE.capN){if(n%2===0&&/[a-z0-9]/i.test(LIVE.cap[n-1]))blip({voice:v.C.voice},LIVE.cap[n-1],.65);LIVE.capN=n}
+ if(LIVE.cap){const n=Math.min(LIVE.cap.length,Math.floor((LIVE.capAge+=dt)*22));if(n>LIVE.capN){if(n%2===0&&/[a-z0-9]/i.test(LIVE.cap[n-1]))ph.yp.muted||blip({voice:v.C.voice},LIVE.cap[n-1],.65);LIVE.capN=n}
   const s=LIVE.cap.slice(0,n),fs=Math.max(10,13*S);x.font=`800 ${fs}px system-ui`;x.textAlign='center';const tw=Math.min(w-10,x.measureText(s).width+10),by=port?h*.62:h-8;
   if(n){x.fillStyle='#000b';x.fillRect(w/2-tw/2,by-fs*1.3,tw,fs*1.5);x.fillStyle='#fff';x.fillText(s,w/2,by-fs*.15,w-14)}}
  // chat on the left
@@ -2575,9 +2589,9 @@ function g3Scare(st){const v=st.v,a=st.act,S=st.S;a.scared=true;st.scareI++;cons
   const resume={...a,say:g3Fill(pk(G3L.eResume),{goal:st.goal}),scareable:false,scared:true};
   st.queue=[{say:pk(G3L.eSurp),hold:1,face:'scared',pose:'jump'},{say:g3Fill(pk(G3L.ePig),v.vars),hold:.6,face:'happy',pose:'talk'},{say:g3Fill(pk(G3L.ePig),v.vars),hold:.4,face:'happy',pose:'talk'},resume,...st.queue]}
  st.act=null;st.path=[];st.stepsDone=Math.max(0,st.stepsDone-1)}
-function sfx3Scare(){if(!AC)return;const t=AC.currentTime;tone(220,.7,.22,'sawtooth',t,70);tone(330,.5,.15,'square',t+.02,90);noise(t,.6,1400,.7,.5)}
+function sfx3Scare(){if(!AC||ph.yp.muted)return;const t=AC.currentTime;tone(220,.7,.22,'sawtooth',t,70);tone(330,.5,.15,'square',t+.02,90);noise(t,.6,1400,.7,.5)}
 function g3Update(st,dt){st.t+=dt;const S=st.S;
- if(st.cap){const n=Math.min(st.cap.length,Math.floor((st.capAge+=dt)*24));if(n>st.capN){if(n%2===0&&/[a-z0-9]/i.test(st.cap[n-1]))blip({voice:st.v.C.voice,angry:st.face==='scared'},st.cap[n-1],.7);st.capN=n}}
+ if(st.cap){const n=Math.min(st.cap.length,Math.floor((st.capAge+=dt)*24));if(n>st.capN){if(n%2===0&&/[a-z0-9]/i.test(st.cap[n-1]))ph.yp.muted||blip({voice:st.v.C.voice,angry:st.face==='scared'},st.cap[n-1],.7);st.capN=n}}
  if(!st.act&&!st.done)g3Next(st);const a=st.act;if(!a)return;a.t+=dt;
  // walking
  let moving=false;if(st.path.length){const q=st.path[0],dx=q[0]-st.x,dz=q[1]-st.z,d=Math.hypot(dx,dz),sp=(a.run?4.6:st.v.mode==='horror'?2.4:3.1)*dt;
