@@ -139,7 +139,7 @@ input{font:700 18px system-ui,sans-serif;padding:12px;border-radius:12px;border:
 .yphead{display:flex;align-items:center;justify-content:space-between;margin:2px 0 6px}.yplogo{font:900 17px system-ui;letter-spacing:-.03em;display:flex;align-items:center;gap:4px}
 .yplogo i{font-style:normal;background:#8a4a1a;border-radius:7px;padding:1px 5px;font-size:13px}.ypsh{border:0;border-radius:14px;background:#ff2a6a;color:#fff;font:800 11px system-ui;padding:5px 9px}
 .ypq{width:100%;box-sizing:border-box;border:0;border-radius:16px;padding:8px 12px;background:#272727;color:#fff;font:600 12px system-ui;margin-bottom:6px;outline:none}
-.ypclear{border:0;background:none;color:#7dd8ff;font:700 11px system-ui;margin:-2px 0 6px;padding:0}
+.ypchip{display:block;width:100%;border:0;border-radius:12px;background:linear-gradient(90deg,#ff7a00,#ff2a6a);color:#fff;font:700 11.5px system-ui;padding:7px 10px;margin:0 0 8px;text-align:left}.ypclear{border:0;background:none;color:#7dd8ff;font:700 11px system-ui;margin:-2px 0 6px;padding:0}
 .ypcard{display:block;width:100%;border:0;background:none;color:#fff;text-align:left;padding:0;margin:0 0 12px}
 .ypth{position:relative}.ypth img{width:100%;aspect-ratio:16/9;border-radius:10px;display:block;object-fit:cover}.ypth span{position:absolute;right:5px;bottom:5px;background:#000c;color:#fff;font:700 10px system-ui;padding:1px 4px;border-radius:4px}.ypth span.live{background:#e00}.ypred{font-style:normal;color:#ff5a5a;font-weight:800}
 .ypinfo,.ypch,.ypcom{display:flex;gap:7px;margin-top:6px;align-items:flex-start}.ypav{width:26px;height:26px;border-radius:50%;flex:none;object-fit:cover;background:#555}.ypav.f{object-fit:contain;padding:2px;box-sizing:border-box}
@@ -1887,7 +1887,7 @@ const NAMES=['Darnell','Brittany','Chad','Gloria','Kev','Tiff','Big Mike','Rosa'
 const LINES={
  open:['Have you tried the new Pizza This?','My car got stolen AGAIN.','Did you see that police chase?','I heard the Walker statue is solid gold.','Leonada traffic is the worst.',
   "I'm thinking about buying a house in Palm Grove.",'The beach was packed today!','Somebody keeps doing the worm downtown.','Taxi drivers here are WILD.','I saw a guy T-posing on the beach.',
-  'My cousin works at Leo Cabs.','Who keeps robbing the 24/8?','I love this city.',"It's sooo hot today.",'Have you played BLOCKBURG?','MINECRAP is way better.',
+  'My cousin works at Leo Cabs.','Who keeps robbing the 24/8?','I love this city.',"It's sooo hot today.",'Have you played BLOCKBURG?','MINECRAP is way better.','Did you see the new BLOCKBURG update?!','I spent all night building my BLOCKBURG house.','I finally got the epical face in BLOCKBURG!','My little brother is obsessed with BLOCKBURG.','BLOCKBURG was down for 5 minutes and I almost cried.','Is Guest 31 real? I swear I saw him in BLOCKBURG.','My BLOCKBURG avatar dresses better than me.',
   'I got a new jacket!','Did you hear that explosion?','My boss yelled at me again.','I found a dollar on the ground!','I saw a helicopter chasing a car!',"What's for dinner?",
   'This sidewalk is my favorite.','I just learned the floss.','Pineapple on pizza: yes or no?','The mansion by the park is SO fancy.','I want a pink sports car.',"Why is everyone walking so fast?"],
  reply:['No way!','For real?','Haha, yeah.','Ugh, same.',"That's crazy!",'Wait, what?','I KNOW, right?','Bro...','LOL','Hmm, maybe.',"You're kidding.",'Tell me about it.','Facts.','Nooo!','Classic Leonada.','Wow.'],
@@ -2087,11 +2087,11 @@ const clockStr=()=>{const hh=Math.floor(dayT*24),mm=Math.floor(dayT*1440)%60;ret
 function notify(from,text){ph.texts.push({from,text,time:clockStr()});if(ph.texts.length>40)ph.texts.shift();if(!(ph.open&&ph.screen==='texts'))ph.unread++;
  const n=$('#phNote');n.innerHTML=`<b>💬 ${esc(from)}</b>${esc(text)}`;n.classList.add('show');clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('show'),4200);
  if(AC&&ph.ring){tone(1318,.09,.07,'sine');tone(1760,.12,.07,'sine',AC.currentTime+.1)}if(ph.open)phRender()}
-const TEXTS=[['Mom','Did you eat today? 🍝'],['Mom','Your aunt says hi'],['Unknown','CONGRATS!! You won a FREE yacht!! Reply YES'],['Leo Cabs','Drivers wanted! Grab a taxi and press T 🚕'],['Pizza This','Pizza Rush pays BIG today 🍕'],
+const TEXTS=[['Mom','Stop playing BLOCKBURG and come eat 🍝'],['Darnell','yo get on BLOCKBURG rn'],['BLOCKBURG','New update! Come see what\'s new 🏠🔨'],['Mom','Did you eat today? 🍝'],['Mom','Your aunt says hi'],['Unknown','CONGRATS!! You won a FREE yacht!! Reply YES'],['Leo Cabs','Drivers wanted! Grab a taxi and press T 🚕'],['Pizza This','Pizza Rush pays BIG today 🍕'],
  ['The Walker Fan Club','The Walker sees all. Do The Walk.'],['Leonada Motors','SALE: sports cars delivered to your door! Check the Motors app'],['Unknown','u up?'],['Wrench Bros.','Car broken? Call us. We fix anything (mostly).'],['Mom','Why is there a police helicopter over your street??'],
  ['Bleeter','You have 3 new followers!'],['Unknown','I know what you did at the 24/8...'],['Gun Shack','New stock in! Armor 2-for-1 (not really)']];
 function bleet(who,text){ph.bleets.push({who,text});if(ph.bleets.length>60)ph.bleets.shift();if(ph.open&&ph.screen==='bleeter')phRender()}
-const BLEETS=[['DarnellLeo','who keeps doing the worm downtown lmao'],['TiffanyVibes','beach day ☀️🌴 #Leonada'],['BigMikeEats','Pizza This > everything'],['GloriaG','traffic on Ocean Driveway is CRAZY'],
+const BLEETS=[['BLOCKBURGofficial','new update just dropped!! 🏠🔨'],['TiffanyVibes','me after 6 hours of BLOCKBURG 😵'],['KevWalks','BLOCKBURG > sleep'],['LeonadaNews','BLOCKBURG named most played game in Leonada for the 9th year in a row'],['BigMikeEats','built a pizza place in BLOCKBURG. it\'s better than Pizza This. sorry'],['GloriaG','who else is on BLOCKBURG tonight 👀'],['DarnellLeo','who keeps doing the worm downtown lmao'],['TiffanyVibes','beach day ☀️🌴 #Leonada'],['BigMikeEats','Pizza This > everything'],['GloriaG','traffic on Ocean Driveway is CRAZY'],
  ['KevWalks','did THE WALK today. life changing.'],['ChadGains','pushups at 6am. who else'],['RosaR','I heard if you dial 1-999-BIGHEAD something weird happens 👀'],['TrevorT','my cousin dialed 1-999-LOWGRAV and floated away??'],
  ['LeonadaNews','Reminder: robbing the 24/8 is NOT a career'],['YukiTravels','The Walker statue is even bigger in person!!'],['JaydenJ','someone just T-posed at me on the beach'],['LeonadaPD','Drive safe. We are watching. 👀'],['ShawnaS','who dials 1-999-PARTY at 3am. WHO.']];
 for(const b of BLEETS.slice(0,6))bleet(...b);
@@ -2116,7 +2116,7 @@ const YP_GAMES=[
  ['Granny But Nice','horror'],['Bed Wars But The Bed Is Lava','obby'],['Taco Tycoon','city'],['Ultra Plane Simulator','sky'],['Untitled Sandbox Gam','blocks'],['Polytopiaa','blocks'],['Bowling 2: The Revenge','cart']];
 const YP_NOUN=['block','car','cop','pizza','sock','toilet','banana','goose','noob','grandma','door','brick','frog','chair','taco','gator','cheese','shark','pickle','duck','toaster','burger','skeleton','penguin','sandwich','cactus','helicopter','trash can','potato','dinosaur'];
 const YP_ADJ=['CURSED','SECRET','GOLDEN','tiny','HUGE','illegal','haunted','free','rare','legendary','sus','broken','crispy','forbidden','EVIL','giant','invisible','spicy','sleepy','angry'];
-const YP_VERB=['jump','walk','talk','blink','look left','use the floor','stop screaming','press W','turn around','touch grass','eat','sit down','go outside','use my hands','breathe'];
+const YP_VERB=['jump','walk','talk','blink','look left','use the floor','scream','press W','turn around','touch grass','eat','sit down','go outside','use my hands','breathe'];
 const YP_FOOD=['tacos','pizzas','burgers','donuts','pickles','chicken nuggets','spicy noodles','cheese wheels','hot dogs','pancakes'];
 const YP_REL=['grandma','little brother','dad','mom','dog','teacher','cat','uncle','best friend','goldfish'];
 const YP_MAT=['lava','LEGO','ice','glue','jelly','pizza','water','bouncy','slime','TNT'];
@@ -2124,7 +2124,7 @@ const YP_PLACE=['the dollar store','Leonada Motors','the 24/8','Ocean Driveway',
 // [title template, kind, thumbnail words]
 const YP_T=[
  ['I played {G} for {n} hours straight','game','{n} HOURS?!'],['{G} but every {N} is a {N2}','game','WAIT WHAT'],['{G} speedrun in {time} (WORLD RECORD??)','game','WORLD RECORD'],
- ['Top {n} {A} moments in {G}','top','TOP {n}'],['I beat {G} without {V}ing','game','IMPOSSIBLE'],['{C2} RAGES at {G} 😡','react','RAGE!!'],['{G} but I can only {V}','game','NO WAY'],
+ ['Top {n} {A} moments in {G}','top','TOP {n}'],['I beat {G} without {Ving}','game','IMPOSSIBLE'],['{C2} RAGES at {G} 😡','react','RAGE!!'],['{G} but I can only {V}','game','NO WAY'],
  ['We found a {A} {N} in {G}!!','game','{A}!!'],['Rating every {N} in {G}','tier','TIER LIST'],['DON\'T play {G} at 3 AM 😱','horror','3 AM 😱'],['{G} 100% walkthrough part {n}','game','PART {n}'],
  ['Reacting to {C2}\'s {G} video','react','REACTING'],['I spent ${money} on {G}','game','${money}'],['{G} if it was made by my {R}','game','BAD GAME'],['How to get a {A} {N} in {G} (EASY)','game','EASY!'],
  ['My {R} tried {G} for the first time','react','FIRST TIME'],['{N} ASMR ({n} hours)','asmr','*tap tap*'],['Mukbang: eating {n} {F} while playing {G}','vlog','{n} {F}'],['{G} but the floor is {M}','game','FLOOR = {M}'],
@@ -2155,14 +2155,14 @@ const ypHexSkin=n=>'#'+n.toString(16).padStart(6,'0');
 function ypCreator(cs){const r=ypRng(cs*7919+13),p3=ypPick(YP_P3,r);const name=(cs===0?'LeonadaNews':ypPick(YP_P1,r)+ypPick(YP_P2,r)+p3);
  const look=randLook(r);return{id:cs,name,look,skin:ypHexSkin(look.skin),face:ypPick(['default','default','happy','rich','shrug','cop','sleepy'],r),subs:Math.floor(Math.pow(10,1+r()*6.8)),voice:150+r()*200,shirt:ypHexSkin(look.shirt),hair:r()<.8}}
 function ypFmt(n){return n<1000?String(n|0):n<1e6?(n/1e3).toFixed(n<1e4?1:0).replace('.0','')+'K':n<1e9?(n/1e6).toFixed(n<1e7?1:0).replace('.0','')+'M':(n/1e9).toFixed(1).replace('.0','')+'B'}
-function ypVideo(seed,topic){const r=ypRng(seed);const gi=ypPick(YP_GAMES,r);let G=gi[0],style=gi[1];if(topic){G=topic;style=ypPick(['blocks','obby','city','cart','sky','space','horror','war'],ypRng(ypHash(topic)))}
- const t=ypPick(topic?YP_TG:YP_T,r),cs=ypInt(1,5000,r),C=ypCreator(t[1]==='news'?0:cs);
- const vars={G,G2:ypPick(YP_GAMES,r)[0],N:ypPick(YP_NOUN,r),N2:ypPick(YP_NOUN,r),A:ypPick(YP_ADJ,r),V:ypPick(YP_VERB,r),F:ypPick(YP_FOOD,r),R:ypPick(YP_REL,r),M:ypPick(YP_MAT,r),P:ypPick(YP_PLACE,r),
+function ypVideo(seed,topic){const r=ypRng(seed);const bbT=!!topic&&topic.toUpperCase()==='BLOCKBURG',gi=r()<.35||bbT?YP_GAMES[0]:ypPick(YP_GAMES,r);let G=gi[0],style=gi[1];if(bbT)topic=null;if(topic){G=topic;style=ypPick(['blocks','obby','city','cart','sky','space','horror','war'],ypRng(ypHash(topic)))}
+ const t=ypPick(topic||bbT?YP_TG:YP_T,r),cs=ypInt(1,5000,r),C=ypCreator(t[1]==='news'?0:cs);
+ const vars={G,G2:ypPick(YP_GAMES,r)[0],N:ypPick(YP_NOUN,r),N2:ypPick(YP_NOUN,r),A:ypPick(YP_ADJ,r),V:ypPick(YP_VERB,r),get Ving(){const w=this.V.split(' '),f=w[0];w[0]=f==='sit'?'sitting':/[^e]e$/.test(f)?f.slice(0,-1)+'ing':f+'ing';return w.join(' ')},F:ypPick(YP_FOOD,r),R:ypPick(YP_REL,r),M:ypPick(YP_MAT,r),P:ypPick(YP_PLACE,r),
   n:ypPick([2,3,5,7,10,12,24,50,69,100,365,1000],r),nn:String(ypInt(0,59,r)).padStart(2,'0'),iq:ypPick([0,1,200,999,9000,'-5'],r),money:ypPick(['10','100','1,000','10,000','1,000,000'],r),
   time:ypInt(1,9,r)+':'+String(ypInt(0,59,r)).padStart(2,'0'),C:C.name,A2:ypPick(YP_ADJ,r),P2:ypPick(YP_PLACE,r),C2:ypCreator(ypInt(1,5000,r)).name,C3:ypCreator(ypInt(1,5000,r)).name};
  const fill=s=>s.replace(/\{(\w+)\}/g,(m,k)=>vars[k]??m).replace(/\b([aA]) ([AEIOUaeiou])/g,'$1n $2');
  const kind=t[1]==='horror'?'game':t[1];if(t[1]==='horror')style='horror';
- const views=Math.floor(Math.pow(10,r()*(.35+r()*.65)*9.1)),ageN=ypInt(1,11,r),ageU=ypPick(['minutes','hours','days','weeks','months','years'],r);
+ let views=Math.floor(Math.pow(10,r()*(.35+r()*.65)*9.1)),ageN=ypInt(1,11,r),ageU=ypPick(['minutes','hours','days','weeks','months','years'],r);if(G==='BLOCKBURG')views=Math.min(3.9e9,views*12+5000);
  const dsec=kind==='asmr'?ypInt(3600,36000,r):ypInt(15,2400,r);
  const title0=fill(t[0]),thumb0=fill(t[2]).toUpperCase(),V0={...vars};vars.T=title0.replace(/[^\w\s'?!.,:$()-]/g,'').trim();vars.anchor=ypPick(['Chad Newsly','Brenda Breaking','Kevin Headlines','Tammy Tonight'],r);const lines=ypScript(t[1]==='horror'?'horror':kind,vars,r).map(l=>l.replace(/\b([aA]) ([AEIOUaeiou])/g,'$1n $2'));
  const coms=[];const nc=ypInt(4,7,r);for(let i=0;i<nc;i++){vars.L=ypPick(lines,r);coms.push({who:ypCreator(ypInt(1,5000,r)),text:fill(ypPick(YP_COM,r)),likes:Math.floor(Math.pow(10,r()*4))})}
@@ -2192,7 +2192,7 @@ function ypText(x,txt,cx,cy,size,fill,rot){x.save();x.translate(cx,cy);x.rotate(
  let s=size;while(x.measureText(txt).width>x.canvas.width*.92&&s>8){s-=1;x.font=`900 ${s}px Impact,'Arial Black',system-ui`}x.lineWidth=Math.max(3,s*.22);x.strokeStyle='#000';x.strokeText(txt,0,0);x.fillStyle=fill;x.fillText(txt,0,0);x.restore()}
 const ypThumbCache=new Map();
 function ypThumb(v){if(ypThumbCache.has(v.seed+v.G))return ypThumbCache.get(v.seed+v.G);if(v.live){const u=liveThumb(v);if(u){ypThumbCache.set(v.seed+v.G,u);return u}}const c=document.createElement('canvas');c.width=192;c.height=108;const x=c.getContext('2d'),w=192,h=108,r=ypRng(v.seed^0x5a5a);
- if(v.kind==='game'||v.kind==='react'||v.style==='horror'){ypScene(x,w,h,r()*10,v.style,v.seed)}else{const g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,v.bg[0]);g.addColorStop(1,v.bg[1]);x.fillStyle=g;x.fillRect(0,0,w,h);
+ if(v.G==='BLOCKBURG'&&(v.kind==='game'||v.kind==='react'||v.kind==='tier')&&bbDraw(x,w,h,v.seed,r()*6)){x.fillStyle='#0002';x.fillRect(0,0,w,h)}else if(v.kind==='game'||v.kind==='react'||v.style==='horror'){ypScene(x,w,h,r()*10,v.style,v.seed)}else{const g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,v.bg[0]);g.addColorStop(1,v.bg[1]);x.fillStyle=g;x.fillRect(0,0,w,h);
   x.fillStyle='#ffffff22';for(let i=0;i<8;i++){x.save();x.translate(w/2,h/2);x.rotate(i*.785+v.r2);x.fillRect(0,-6,w,12);x.restore()}}
  if(v.kind==='tier'){const tc=['#ff6b6b','#ffb86b','#ffe66b','#9aff6b','#6bc8ff'];for(let i=0;i<5;i++){x.fillStyle=tc[i];x.fillRect(4,6+i*19,18,17);x.fillStyle='#0008';x.fillRect(23,6+i*19,90,17)}}
  if(v.kind==='news'){x.fillStyle='#c0141c';x.fillRect(0,h-24,w,24);x.fillStyle='#fff';x.font='900 11px system-ui';x.fillText('LEONADA NEWS 24/8',6,h-9)}
@@ -2215,15 +2215,21 @@ function ypAvImg(C){const r=ypRng(C.id*31+7),k=r();
  if(k<.3)return`<img class="ypav" src="${ypDefault()}">`;
  if(k<.68)return`<img class="ypav f" style="background:${ypPick(YP_PFP_BG,r)}" src="${ypPick(YP_PFP_FACE,r)}">`;
  return`<img class="ypav" src="${ypPick(YP_PFP_PIC,r)}">`}
+// BLOCKBURG is the game everyone in Leonada plays. Its videos use real BLOCKBURG screenshots.
+const BB_SHOTS=['loading-street.jpg','loading-house.jpg','loading-hey.jpg','loading-guest31.jpg','boot.jpg','loading-build.png','cover.png'],bbImgs=[];
+function bbDraw(x,w,h,k,t){if(location.protocol==='file:')return false;const i=k%BB_SHOTS.length;let im=bbImgs[i];if(!im){im=bbImgs[i]=new Image();im.src=BB_SHOTS[i]}if(!im.complete||!im.naturalWidth)return false;
+ const sc=Math.max(w/im.naturalWidth,h/im.naturalHeight)*1.18,dw=im.naturalWidth*sc,dh=im.naturalHeight*sc,px=(dw-w)*(.5+.5*Math.sin(t*.25+k)),py=(dh-h)*(.5+.5*Math.cos(t*.2+k));
+ x.drawImage(im,-px,-py,dw,dh);return true}
+for(let i=0;i<BB_SHOTS.length;i++)setTimeout(()=>bbDraw(document.createElement('canvas').getContext('2d'),1,1,i,0),4000+i*300);
 const ypAvCache=new Map();
 function ypAvatar(C){if(ypAvCache.has(C.id))return ypAvCache.get(C.id);const c=document.createElement('canvas');c.width=c.height=48;const x=c.getContext('2d');x.fillStyle=C.shirt;x.fillRect(0,0,48,48);studioDraw(x,null,C.look,C.face,'head','pose',0,1,3,46,46);
  const u=c.toDataURL();ypAvCache.set(C.id,u);if(ypAvCache.size>200)ypAvCache.delete(ypAvCache.keys().next().value);return u}
 // ---- the playing video ----
 function ypFrame(x,w,h,v,t){const K=v.kind;x.clearRect(0,0,w,h);if(K==='live'){liveFrame(x,w,h,v,t,LIVE.dt||0);return}
- if(K==='game'){ypScene(x,w,h,t,v.style,v.seed);const gy=h*.72,s=h*.13,jp=Math.max(0,Math.sin(t*3.2))*h*.22;studioFull(x,'g',v.C.look,jp>h*.06?'scared':v.C.face,jp>h*.06?'jump':'run',t,w*.3,gy-jp,s*2.2,Math.PI/2);
+ if(K==='game'){if(!(v.G==='BLOCKBURG'&&bbDraw(x,w,h,v.seed,t)))ypScene(x,w,h,t,v.style,v.seed);const gy=h*.72,s=h*.13,jp=Math.max(0,Math.sin(t*3.2))*h*.22;studioFull(x,'g',v.C.look,jp>h*.06?'scared':v.C.face,jp>h*.06?'jump':'run',t,w*.3,gy-jp,s*2.2,Math.PI/2);
   x.fillStyle='#0007';x.fillRect(4,4,74,16);x.fillStyle='#fff';x.font='800 10px system-ui';x.textAlign='left';x.fillText('SCORE '+Math.floor(t*137+v.seed%900),8,15);
   if(Math.floor(t*1.3)%4===1)ypText(x,ypPick(['WOW','NO WAY','!!!','COMBO x'+(1+Math.floor(t)%9),'EPIC'],ypRng(Math.floor(t*1.3)+v.seed)),w*.66,h*.3,h*.13,'#ffe14a',Math.sin(t*5)*.15)}
- else if(K==='react'){ypScene(x,w,h,t,v.style,v.seed);{const jp=Math.max(0,Math.sin(t*3))*h*.2,G2=ypCreator(v.seed%5000+1);studioFull(x,'r1',G2.look,jp>h*.05?'scared':G2.face,jp>h*.05?'jump':'run',t,w*.35,h*.72-jp,h*.27,Math.PI/2)}
+ else if(K==='react'){if(!(v.G==='BLOCKBURG'&&bbDraw(x,w,h,v.seed,t)))ypScene(x,w,h,t,v.style,v.seed);{const jp=Math.max(0,Math.sin(t*3))*h*.2,G2=ypCreator(v.seed%5000+1);studioFull(x,'r1',G2.look,jp>h*.05?'scared':G2.face,jp>h*.05?'jump':'run',t,w*.35,h*.72-jp,h*.27,Math.PI/2)}
   const fw=w*.34,fh=h*.4;x.fillStyle='#222';x.fillRect(w-fw-6,h-fh-6,fw,fh);x.strokeStyle='#ff3b30';x.lineWidth=2;x.strokeRect(w-fw-6,h-fh-6,fw,fh);
   studioDraw(x,'r2',v.C.look,YP_FACE_RX[Math.floor(t/1.7+v.seed)%YP_FACE_RX.length],'bust','react',t,w-fw-6,h-fh-6,fw,fh)}
  else if(K==='tier'){const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#2a2a3a');g.addColorStop(1,'#14141c');x.fillStyle=g;x.fillRect(0,0,w,h);const tc=['#ff6b6b','#ffb86b','#ffe66b','#9aff6b','#6bc8ff'],rh=(h-10)/5;
@@ -2258,7 +2264,7 @@ function ypFind(seed){const yp=ph.yp;return yp.feed.find(v=>v.seed===seed)||(yp.
 function ypWatch(v){const yp=ph.yp;yp.cur=v;yp.t=0;yp.lastN=0;yp.lastL=-1;v.up=v.up||Array.from({length:4},ypMake);liveReset();yp.watched++;if(ph.screen==='ypw')phRender();else phGo('ypw')}
 function ypScreen(){const yp=ph.yp;
  if(ph.screen==='youpoopz'){return`<div class="yphead"><span class="yplogo"><i>💩</i>YouPoopz</span><button class="ypsh" data-go="shorts">⚡ Shorts</button></div>
-  <input id="ypQ" class="ypq" placeholder="🔍 Search anything..." value="${esc(yp.q)}" autocomplete="off">${yp.q?`<button class="ypclear" data-ypclear="1">✕ clear search "${esc(yp.q)}"</button>`:''}<div id="ypList">${yp.feed.map(ypCard).join('')}</div><p class="tip">Scroll for more · literally never runs out</p>`}
+  <input id="ypQ" class="ypq" placeholder="🔍 Search anything..." value="${esc(yp.q)}" autocomplete="off">${yp.q?"":`<button class="ypchip" data-ypq="BLOCKBURG">🔥 Trending: <b>#BLOCKBURG</b> · 4.2B videos</button>`}${yp.q?`<button class="ypclear" data-ypclear="1">✕ clear search "${esc(yp.q)}"</button>`:''}<div id="ypList">${yp.feed.map(ypCard).join('')}</div><p class="tip">Scroll for more · literally never runs out</p>`}
  if(ph.screen==='ypw'){const v=yp.cur,sub=yp.subs[v.C.id],lk=yp.liked[v.seed],dl=yp.disliked[v.seed];
   return`<div class="ypplayer"><canvas id="ypc" width="432" height="244"></canvas><div class="ypbar"><i id="ypBar"></i></div><small id="ypTime" class="yptime"></small></div>
   <b class="yptitle">${esc(v.title)}</b><small class="ypmeta">${v.live?`<em class="ypred">🔴 ${ypFmt(v.viewers)} watching now</em> · ${v.age}`:`${ypFmt(v.views+(lk?1:0))} views · ${v.age}`}${v.title.includes(v.G)?'':' · '+esc(v.G)}</small>
@@ -2286,6 +2292,7 @@ function ypClick(d){const yp=ph.yp;
  if(d.ypdis){yp.disliked[yp.cur.seed]=!yp.disliked[yp.cur.seed];yp.liked[yp.cur.seed]=false;phRender();return true}
  if(d.ypshare){bleet(me.name||myName(),'check this out: "'+yp.cur.title+'" 💩▶');toast('Shared to Bleeter!');return true}
  if(d.ypnext){ypShort(1);return true}if(d.ypcom){toast('💬 '+yp.cur.coms[0].text);return true}
+ if(d.ypq){yp.q=d.ypq;yp.feed=[];yp.scroll=0;phRender();return true}
  if(d.ypclear){yp.q='';yp.feed=[];yp.scroll=0;phRender();return true}
  return false}
 
@@ -2409,7 +2416,7 @@ function studioFull(x,slot,look,face,pose,t,cx,feetY,figH,yaw){const ih=figH/.75
 const YP_SCRIPT={
  game:{order:['intro','setup','event','reaction','event','outro'],
   intro:['hey guys, today we\'re playing {G}~G','welcome back! it\'s {G} time~G','okay chat... {G}. let\'s GO~G','today I\'m trying something crazy in {G}~G'],
-  setup:['so in {K} you have to find the {N}~N','{K} just added {a A} {N}~N','my goal today: get the {N} without {V}ing~N','everyone says the {N} in {K} is impossible~N','apparently there\'s {a A} {N} hidden in {K}~N'],
+  setup:['so in {K} you have to find the {N}~N','{K} just added {a A} {N}~N','my goal today: get the {N} without {Ving}~N','everyone says the {N} in {K} is impossible~N','apparently there\'s {a A} {N} hidden in {K}~N'],
   event:['wait... is the {K} moving?!','there it is! the {K}!!','oh no, {a N2} is guarding the {K}~N2','okay I\'m going for the {K}','why is the {K} so FAST','I hear the {K} somewhere close'],
   reaction:['NO WAY, the {K} got me 💀','I almost had the {K}!!','chat did you see that {K}?','the {K} is actually so {A2}','okay the {K} is my enemy now','I hate the {K} so much lol'],
   outro:['GG! the {K} didn\'t stand a chance','that\'s it for today, the {K} won this time','like if you hate the {K} too','next video: {G} but the {K} is {M}']},
