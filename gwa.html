@@ -984,7 +984,7 @@ function blockedAhead(c,ignoreCars){const fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),
 
 /* ================= PEDESTRIANS ================= */
 function lotCorner(L,i){return[i===0||i===3?L.x0+1.5:L.x1-1.5,i<2?L.z0+1.5:L.z1-1.5]}
-function pedTarget(p){const a=p.ai;const c=lotCorner(a.L,a.ci);a.tx=c[0]+(R()-.5)*.8;a.tz=c[1]+(R()-.5)*.8}
+function pedTarget(p){const a=p.ai;if(!a.L){a.L=nearestLot(p.x,p.z);a.ci=Math.floor(R()*4);a.dir=a.dir||1}if(a.ci==null)a.ci=0;if(!a.dir)a.dir=1;const c=lotCorner(a.L,a.ci);a.tx=c[0]+(R()-.5)*.8;a.tz=c[1]+(R()-.5)*.8}
 function pedAI(p,dt){const a=p.ai;
  if(p.state==='down'){p.t-=dt;if(p.t<=0){p.state='walk';if(p.kind==='ped'&&!(p.shrugT>now)){a.flee=6;a.fx=a.fx??me.x;a.fz=a.fz??me.z}}return}
  if(p.shrugT>now&&!(a.flee>0)){p.vx*=.85;p.vz*=.85;if(me)p.yaw+=wrapA(Math.atan2(me.x-p.x,me.z-p.z)-p.yaw)*Math.min(1,dt*5);return}
@@ -1364,12 +1364,13 @@ function carHitsPeople(){for(const c of cars){const sp=Math.hypot(c.vx,c.vz);if(
   if(p.remote){if(c===me.car&&!(p.runCD>now)){p.runCD=now+.8;netTo(p.remote,{t:'run',vx:c.vx*1.1,vy:3+sp*.18,vz:c.vz*1.1,d:sp*2.8})}continue}
   const by=c.driver===me?me:null;fling(p,c.vx*1.1+(lx>0?1:-1)*fz*2,3+sp*.18,c.vz*1.1-(lx>0?1:-1)*fx*2,sp*2.8,by);c.vx*=.93;c.vz*=.93;sfx('thud',near01(p));
   if(c.ai&&!c.ai.cop&&c.driver&&c.driver.kind==='ped'&&p===me)c.ai.mad=3}}}
-function stepCars(dt){for(const c of cars){if(c.remote)continue;c.crashT=Math.max(0,c.crashT-dt);
+function stepCars(dt){for(const c of [...cars]){if(c.remote)continue;try{c.crashT=Math.max(0,c.crashT-dt);
   if(c===me.car)playerDrive(dt);else if(c.ai&&c.ai.race)aiRacer(c,dt);else if(c.ai&&c.ai.cop)aiCop(c,dt);else if(c.ai&&!c.ai.parked&&c.driver)aiTraffic(c,dt);else carPhys(c,0,0,true,dt);
   if(c.dead&&c.burn>0){c.burn-=dt;if(R()<dt*20)puff(c.x+(R()-.5),c.y+1.2,c.z+(R()-.5),{vy:3,life:.6,s0:.6,s1:1.6,a:.9,add:true,color:pick([0xff8a2a,0xffc04a])});if(R()<dt*8)puff(c.x,c.y+1.8,c.z,{vy:3,life:2,s0:1,s1:3.5,a:.5,color:0x222222});
    if(c.burn<=0){c.burn=-1;explode(c.x,c.y+.6,c.z,c.driver===me?me:null);recolorCar(c,0x1c1a18);if(c.driver&&c.driver!==me){const d=c.driver;d.car=null;c.driver=null;d.x=c.x+2;d.z=c.z;d.m.g.visible=true;fling(d,(R()-.5)*8,6,(R()-.5)*8,200,null)}}}}
+  catch(e){oops(e);if(c!==me.car)removeCar(c)}}
  const near=cars.filter(c=>Math.abs(c.x-me.x)<90&&Math.abs(c.z-me.z)<90);for(let i=0;i<near.length;i++)for(let j=i+1;j<near.length;j++)carCar(near[i],near[j])}
-function stepPeople(dt){for(const p of [...people]){if(p===me||p.remote)continue;if(p.car){p.x=p.car.x;p.z=p.car.z;continue}pedAI(p,dt);personPhys(p,dt);animPerson(p,dt);p.punchT=Math.max(0,p.punchT-dt)}
+function stepPeople(dt){for(const p of [...people]){if(p===me||p.remote)continue;if(p.car){p.x=p.car.x;p.z=p.car.z;continue}try{pedAI(p,dt);personPhys(p,dt);animPerson(p,dt);p.punchT=Math.max(0,p.punchT-dt)}catch(e){oops(e);removePerson(p)}}
  if(!me.car){personPhys(me,dt)}animPerson(me,dt);
  for(let i=cash.length-1;i>=0;i--){const c=cash[i];c.m.rotation.y+=dt*3;c.t-=dt;if(distMe(c.x,c.z)<1.6&&!me.car||c.t<=0){if(c.t>0){money+=c.amt;sfx('cash');addFeed(`+$${c.amt}`);hudDirty=true}scene.remove(c.m);cash.splice(i,1)}}}
 function sounds(dt){if(!AC)return;const c=me.car;
@@ -1397,8 +1398,10 @@ function resize(){const pr=Math.min(devicePixelRatio||1,gfx?1.5:1);renderer.setP
 addEventListener('resize',resize);
 function applyGfx(){renderer.shadowMap.enabled=!!gfx;sun.castShadow=!!gfx;scene.fog.far=gfx?620:380;cam.far=gfx?1600:700;cam.updateProjectionMatrix();resize();
  for(const b of document.querySelectorAll('[data-g]'))b.classList.toggle('on',+b.dataset.g===gfx);plainMat.needsUpdate=wallMat.needsUpdate=true;for(const m of matCache.values())m.needsUpdate=true}
+// if anything ever goes wrong in a frame, note it and keep the game running instead of freezing
+let oopsN=0;function oops(e){if(oopsN++<5)console.error('GWA hiccup:',e)}
 function frame(t){requestAnimationFrame(frame);const dt=Math.min(.05,(t-lastT)/1000||0);lastT=t;
- if(playing&&(!paused||net.room))update(dt);else if(!playing){menuCam(dt)}
+ if(playing&&(!paused||net.room)){try{update(dt)}catch(e){oops(e)}}else if(!playing){menuCam(dt)}
  renderer.render(scene,cam)}
 let menuA=0;function menuCam(dt){menuA+=dt*.05;const cx=CITY/2,cz=CITY/2;cam.position.set(cx+Math.cos(menuA)*240,120,cz+Math.sin(menuA)*240);cam.lookAt(cx,20,cz);sky.position.copy(cam.position);if(!me)updateSkyMenu()}
 function updateSkyMenu(){const fake={x:CITY/2,z:CITY/2};const m0=me;me=fake;me.car=null;updateSky(0);me=m0}
