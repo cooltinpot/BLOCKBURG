@@ -446,35 +446,40 @@ const LAYERS=['none','jacket','hoodie','vest','flannel','puffer'],LAYER_COLS=[0x
 const shade=(h,k)=>{const c=new T.Color(h);c.multiplyScalar(k);return c.getHex()};
 function makePerson(look){const g=new T.Group(),body=new T.Group();g.add(body);
  const skin=look.skin==null?pick(SKINS):look.skin,sh=look.shirt,pa=look.pants,ly=look.cop?'none':LAYERS[look.layer|0]||'none',lc=look.layerCol??0x2a2a2e,dk=shade(lc,.72);
+ /* sizes so nothing pokes through anything else: each layer sits fully outside the t-shirt (front, back, sides and top),
+    the arms move out to make room for thick layers, the chain sits on the outside layer, and the backpack sits on the back of it */
+ const W2={none:.37,jacket:.38,flannel:.385,vest:.385,hoodie:.4,puffer:.435}[ly],SL={none:.125,jacket:.15,hoodie:.15,flannel:.15,vest:.125,puffer:.175}[ly];
+ const FZ={none:.2,jacket:.23,flannel:.235,vest:.245,hoodie:.25,puffer:.265}[ly],BZ={none:.2,jacket:.245,flannel:.25,vest:.255,hoodie:.23,puffer:.265}[ly],AX=W2+SL+.005;
  const legL=new T.Group(),legR=new T.Group(),armL=new T.Group(),armR=new T.Group(),torso=new T.Group(),head=new T.Group();
- torso.position.y=.82;head.position.y=.73;legL.position.set(-.17,.82,0);legR.position.set(.17,.82,0);armL.position.set(-.49,.68,0);armR.position.set(.49,.68,0);
+ torso.position.y=.82;head.position.y=.73;legL.position.set(-.17,.82,0);legR.position.set(.17,.82,0);armL.position.set(-AX,.68,0);armR.position.set(AX,.68,0);
  body.add(legL,legR,torso);torso.add(armL,armR,head);
  const legG=boxesGeo('leg'+pa,[[.3,.74,.32,0,-.37,0,pa],[.32,.12,.42,0,-.76,.04,0x1e1e22]]);
- // arms: t-shirt sleeve + bare forearm, then the layer's sleeve on top (rolled up for a flannel, none for a vest)
- const A=[[.25,.46,.27,0,-.2,0,look.cop?sh:sh],[.23,.3,.25,0,-.57,0,look.cop?sh:skin]];if(look.cop)A.push([.22,.1,.24,0,-.68,0,skin]);
- if(ly==='jacket'||ly==='hoodie')A.push([.29,.66,.31,0,-.31,0,lc],[.3,.06,.32,0,-.62,0,dk]);
- else if(ly==='puffer')A.push([.34,.66,.36,0,-.31,0,lc],[.35,.04,.37,0,-.15,0,dk],[.35,.04,.37,0,-.4,0,dk]);
- else if(ly==='flannel')A.push([.29,.48,.31,0,-.21,0,lc],[.3,.05,.32,0,-.43,0,dk]);
+ // arms: t-shirt sleeve + bare forearm, then the layer's sleeve on top, starting above the t-shirt sleeve so it never pokes out
+ const A=[[.25,.46,.27,0,-.2,0,sh],[.23,.3,.25,0,-.57,0,look.cop?sh:skin]];if(look.cop)A.push([.22,.1,.24,0,-.68,0,skin]);
+ if(ly==='jacket'||ly==='hoodie')A.push([.29,.7,.31,0,-.3,0,lc],[.3,.06,.32,0,-.62,0,dk]);
+ else if(ly==='puffer')A.push([.35,.7,.37,0,-.3,0,lc],[.36,.04,.38,0,-.15,0,dk],[.36,.04,.38,0,-.4,0,dk]);
+ else if(ly==='flannel')A.push([.29,.5,.31,0,-.2,0,lc],[.3,.05,.32,0,-.43,0,dk]);
  const armG=boxesGeo('arm'+[sh,skin,ly,lc,!!look.cop].join('_'),A);
  gm(legL,legG);gm(legR,legG);gm(armL,armG);gm(armR,armG);
- const B=[[.74,.72,.4,0,1.18,0,sh],[.18,.08,.18,0,1.56,0,skin]],HB=[[.46,.46,.46,0,1.78,0,skin]];
- if(look.hair!=null)HB.push([.48,.13,.48,0,2.03,-.01,look.hair]);
- if(look.chain)B.push([.32,.04,.02,0,1.47,.205,0xffd33a],[.06,.08,.02,0,1.41,.207,0xffd33a]);
+ const B=[[.74,.72,.4,0,1.18,0,sh],[.18,.08,.18,0,1.56,0,skin]],HB=[[.46,.46,.46,0,1.81,0,skin]];
+ // hair: a top piece that sits just behind the face, and a back piece behind the head
+ if(look.hair!=null)HB.push([.5,.12,.49,0,2.09,-.02,look.hair],[.5,.26,.06,0,1.9,-.26,look.hair]);
  if(ly==='jacket'||ly==='flannel'){// open front: two panels and a back, the t-shirt shows down the middle
-  B.push([.32,.75,.46,-.22,1.18,0,lc],[.32,.75,.46,.22,1.18,0,lc],[.76,.75,.06,0,1.18,-.215,lc],[.14,.12,.06,-.14,1.53,.215,dk],[.14,.12,.06,.14,1.53,.215,dk]);
-  if(ly==='flannel')for(const y of[.96,1.16,1.36])B.push([.33,.05,.47,-.22,y,0,dk],[.33,.05,.47,.22,y,0,dk],[.77,.05,.07,0,y,-.215,dk])}
- else if(ly==='vest')B.push([.33,.66,.48,-.215,1.21,0,lc],[.33,.66,.48,.215,1.21,0,lc],[.78,.66,.07,0,1.21,-.22,lc],[.34,.04,.49,-.215,1.05,0,dk],[.34,.04,.49,.215,1.05,0,dk],[.34,.04,.49,-.215,1.3,0,dk],[.34,.04,.49,.215,1.3,0,dk]);
- else if(ly==='hoodie')B.push([.8,.76,.46,0,1.18,0,lc],[.44,.18,.03,0,1.0,.235,dk],[.5,.24,.16,0,1.6,-.27,lc],[.03,.17,.02,-.08,1.42,.235,0xf2f2f2],[.03,.17,.02,.08,1.42,.235,0xf2f2f2]);
- else if(ly==='puffer'){B.push([.86,.78,.52,0,1.18,0,lc],[.5,.13,.34,0,1.59,0,lc]);for(const y of[1.0,1.18,1.36])B.push([.87,.04,.53,0,y,0,dk])}
- if(look.pack)B.push([.5,.52,.18,0,1.2,-.32,look.pack],[.4,.14,.04,0,1.08,-.42,shade(look.pack,.75)]);
- if(look.cop){HB.push([.5,.12,.52,0,2.05,0,0x101830],[.5,.04,.2,0,2.0,.3,0x101830]);B.push([.12,.12,.03,-.2,1.36,.21,0xffd33a],[.76,.08,.42,0,.86,0,0x111111])}
- if(look.player)B.push([.76,.12,.42,0,.86,0,0xffd33a]);
+  B.push([.32,.75,.46,-.22,1.18,0,lc],[.32,.75,.46,.22,1.18,0,lc],[.76,.74,.03,0,1.175,-.23,lc],[.14,.1,.04,-.14,1.52,.225,dk],[.14,.1,.04,.14,1.52,.225,dk]);
+  if(ly==='flannel')for(const y of[.96,1.16,1.36])B.push([.33,.05,.47,-.22,y,0,dk],[.33,.05,.47,.22,y,0,dk],[.77,.05,.04,0,y,-.232,dk])}
+ else if(ly==='vest')B.push([.33,.68,.48,-.215,1.215,0,lc],[.33,.68,.48,.215,1.215,0,lc],[.76,.68,.05,0,1.215,-.23,lc],[.34,.04,.49,-.215,1.05,0,dk],[.34,.04,.49,.215,1.05,0,dk],[.34,.04,.49,-.215,1.3,0,dk],[.34,.04,.49,.215,1.3,0,dk]);
+ else if(ly==='hoodie')B.push([.8,.76,.46,0,1.18,0,lc],[.44,.18,.03,0,1.0,.235,dk],[.5,.2,.16,0,1.45,-.31,lc],[.03,.17,.02,-.08,1.42,.24,0xf2f2f2],[.03,.17,.02,.08,1.42,.24,0xf2f2f2]);
+ else if(ly==='puffer'){B.push([.86,.78,.52,0,1.18,0,lc],[.6,.02,.4,0,1.575,0,dk]);for(const y of[1.0,1.18,1.36])B.push([.87,.04,.53,0,y,0,dk])}
+ if(look.chain)B.push([.3,.04,.02,0,1.47,FZ+.012,0xffd33a],[.06,.08,.02,0,1.41,FZ+.014,0xffd33a]);
+ if(look.pack)B.push([.5,.42,.18,0,1.11,-(BZ+.092),look.pack],[.4,.12,.04,0,1.0,-(BZ+.2),shade(look.pack,.75)]);
+ if(look.cop){HB.push([.5,.12,.52,0,2.08,0,0x101830],[.5,.04,.2,0,2.03,.3,0x101830]);B.push([.12,.12,.03,-.2,1.36,.21,0xffd33a],[.76,.08,.42,0,.86,0,0x111111])}
+ if(look.player)B.push([W2*2+.02,.12,BZ+FZ+.02,0,.86,(FZ-BZ)/2,0xffd33a]);
  gm(torso,boxesGeo('body'+[sh,skin,ly,lc,look.chain|0,look.pack|0,!!look.cop,!!look.player].join('_'),B)).position.y=-.82;
  gm(head,boxesGeo('head'+[skin,look.hair,!!look.cop].join('_'),HB)).position.y=-1.55;
  const phone=new T.Mesh(boxesGeo('phone',[[.09,.16,.03,0,0,0,0x15151a],[.075,.13,.01,0,0,.016,0x4a8aff]]),personMat);phone.position.set(0,-.68,.1);phone.rotation.x=-.3;phone.visible=false;armL.add(phone);
  // everyone wears Default; 1 in 5 people walking around wear Happy; cops get the officer faces. The rest are for special moments (faceFor)
  const fb=look.cop?(R()<.25?'donut':'cop'):!look.player&&R()<.2?'happy':'default';
- const fc=new T.Mesh(FACEG,faceMats[fb]);fc.position.set(0,.23,.232);fc.userData.base=fb;head.add(fc);
+ const fc=new T.Mesh(FACEG,faceMats[fb]);fc.position.set(0,.26,.232);fc.userData.base=fb;head.add(fc);
  scene.add(g);return{g,body,torso,head,legL,legR,armL,armR,face:fc,phone}}
 /* Dead: knocked out or WASTED. Caught: a cop is arresting you / BUSTED. SCARED: running away, sent flying, knocked over.
    RICH: just got paid. Shrug: your car got stolen, or you're out of ammo / the store's empty.
@@ -1433,7 +1438,7 @@ setInterval(()=>{if(playing)save()},15000);addEventListener('pagehide',save);
 applyGfx();countOnline();requestAnimationFrame(frame);
 if(window.GWA_TEST_HOOK)window.GWA_TEST_HOOK({get me(){return me},cars,people,places,W,net,startGame,startJob,endJob,get job(){return job},jobs:{pizza:jobPizza,taxi:jobTaxi,race:jobRace,walk:jobWalk},
  get money(){return money},set money(v){money=v},toggleCar,setStars(n){W.stars=n;W.lx=me.x;W.lz=me.z},teleport(x,z){if(me.car){me.car.x=x;me.car.z=z}else{me.x=x;me.z=z}},
- cam:()=>({yaw:camYaw,pitch:camPitch}),aimPoint(d){const v=camDir();return[cam.position.x+v[0]*d,cam.position.y+v[1]*d,cam.position.z+v[2]*d]},setCam(y,p){camYaw=y;camPitch=p;lastLook=now+5},keys,get heli(){return heli},setDay(t){dayT=t},explode,openShop,get stars(){return starsNow()},spawnCar,spawnPed,lotAt,setGfx(g){gfx=g;applyGfx()}});
+ cam:()=>({yaw:camYaw,pitch:camPitch}),aimPoint(d){const v=camDir();return[cam.position.x+v[0]*d,cam.position.y+v[1]*d,cam.position.z+v[2]*d]},setCam(y,p){camYaw=y;camPitch=p;lastLook=now+5},keys,get heli(){return heli},setDay(t){dayT=t},explode,openShop,get stars(){return starsNow()},spawnCar,spawnPed,setLook(p,l){scene.remove(p.m.g);p.look=l;p.m=makePerson(l);p.anim=null},lotAt,setGfx(g){gfx=g;applyGfx()}});
 </script>
 </body>
 </html>
