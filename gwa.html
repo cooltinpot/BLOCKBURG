@@ -77,7 +77,11 @@ input{font:700 18px system-ui,sans-serif;padding:12px;border-radius:12px;border:
 #netTag{position:absolute;left:16px;top:12px;font:800 13px system-ui,sans-serif;background:#0008;border-radius:9px;padding:6px 10px}
 #netTag b{color:#ffe29a;letter-spacing:.12em}
 #tags{position:absolute;inset:0;overflow:hidden}
-#tags div{position:absolute;transform:translate(-50%,-100%);font:800 12px system-ui,sans-serif;background:#0009;border-radius:6px;padding:1px 6px;white-space:nowrap}
+#tags .bub{position:absolute;transform:translate(-50%,-100%);background:#fffdf3;color:#4a3420;font:800 13px/1.25 'Trebuchet MS',system-ui,sans-serif;padding:7px 11px 7px;border-radius:16px;max-width:200px;width:max-content;text-align:center;border:2.5px solid #eadbb8;box-shadow:0 3px 0 #0002;white-space:normal;transform-origin:50% 100%}
+#tags .bub:after{content:'';position:absolute;left:50%;bottom:-9px;margin-left:-8px;border:8px solid transparent;border-top-color:#fffdf3;border-bottom:0}
+#tags .bub .nm{position:absolute;left:10px;top:-11px;background:#ffb36b;color:#2a0b33;font-size:10px;padding:1px 7px;border-radius:8px;white-space:nowrap}
+#tags .bub.angry{background:#ffe2dc;border-color:#ff8a7a}#tags .bub.angry:after{border-top-color:#ffe2dc}
+#tags div:not(.bub){position:absolute;transform:translate(-50%,-100%);font:800 12px system-ui,sans-serif;background:#0009;border-radius:6px;padding:1px 6px;white-space:nowrap}
 #letter{position:fixed;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:11;opacity:0;transition:opacity .5s;
  background:linear-gradient(180deg,#000 0 11%,transparent 11% 89%,#000 89%)}
 #letter.show{opacity:1}
@@ -636,7 +640,7 @@ function animPerson(p,dt){personality(p);const m=p.m,sp=Math.hypot(p.vx,p.vz),A=
   let ly=A.tyaw,lp=A.tpit;if(me&&p!==me&&me.hp>0){const dx=me.x-p.x,dz=me.z-p.z,d=Math.hypot(dx,dz);if(d<7){ly=clamp(wrapA(Math.atan2(dx,dz)-p.yaw),-1.2,1.2);lp=0}}
   hyw=ly;hx=lp;
   // little things people do while waiting
-  if(p.kind==='ped'){A.idleT-=dt;if(!A.idle&&A.idleT<=0){A.idle=R()<.75?pick(p.favs):pick(IDLES);A.idleD=['phone','dance','floss','guitar','crossed','hips','map','worm','headbang','pushups'].includes(A.idle)?4+R()*5:2+R()*2;const h=dayT*24;if(A.idle==='dance'&&!(h>=21||h<4||p.x>CITY-20))A.idle='floss'}
+  if(p.kind==='ped'&&!(p.ai&&p.ai.conv)){A.idleT-=dt;if(!A.idle&&A.idleT<=0){A.idle=R()<.75?pick(p.favs):pick(IDLES);A.idleD=['phone','dance','floss','guitar','crossed','hips','map','worm','headbang','pushups'].includes(A.idle)?4+R()*5:2+R()*2;const h=dayT*24;if(A.idle==='dance'&&!(h>=21||h<4||p.x>CITY-20))A.idle='floss'}
    if(p.ai&&p.ai.wave&&!A.idle){A.idle='wave';A.idleD=99}
    if(A.idle){A.idleD-=dt;const I=A.idle;
     if(I==='phone'){aLx=-1.95;aLz=.38;hx=.32;hyw=.15;m.phone.visible=true}
@@ -665,7 +669,13 @@ function animPerson(p,dt){personality(p);const m=p.m,sp=Math.hypot(p.vx,p.vz),A=
     else if(I==='photo'){aLx=aRx=-1.5;aLz=.35;aRz=-.35;hx=-.05;m.phone.visible=true}
     else if(I==='sing'){aRx=-2.2+Math.sin(t*2)*.2;aRz=.6;aLx=-1.5;aLz=-.8;hx=-.3;bob=Math.abs(Math.sin(t*3))*.03}
     if(A.idleD<=0){A.idle=null;A.idleT=6+R()*12}}}
-  if(p.shrugT>now){aLx=-.5;aRx=-.5;aLz=-.75;aRz=.75;hx=-.1;hyw=Math.sin(t*3)*.15;bob=.03}}
+  if(p.shrugT>now){aLx=-.5;aRx=-.5;aLz=-.75;aRz=.75;hx=-.1;hyw=Math.sin(t*3)*.15;bob=.03}
+  // talking with their hands, nodding along, and doing things together
+  if(p.talkT>now){const f=t*7,ang=p.bub&&p.bub.angry;aRx=(ang?-1.2:-.5)+Math.sin(f)*(ang?.7:.35);aRz=.2;aLx=(ang?-1:-.2)+Math.sin(f*.7)*(ang?.5:.2);hx=Math.sin(t*9)*.06;tz=Math.sin(t*3)*.04;if(ang)tl=.15}
+  else if(p.nodT>now){hx=Math.max(0,Math.sin(t*5))*.2;hyw=0}
+  const ac=p.act;if(ac==='catch'){if(p.throwT>now){aRx=-2.7;aRz=.1}else{aRx=aLx=-1;aLz=.35;aRz=-.35}}
+  else if(ac==='selfie'){if(p.ai&&p.ai.conv&&p.ai.conv.m[0]===p){aRx=-2.2;aRz=-.3;m.phone.visible=true;hx=-.15}else{aRx=-2.6;aRz=.4;bob=.02}}
+  else if(ac==='dance'){const f=t*7.5;bob=Math.abs(Math.sin(f))*.09;tz=Math.sin(f)*.12;ty=Math.sin(f*.5)*.35;aLx=-1.6+Math.sin(f)*.9;aRx=-1.6-Math.sin(f)*.9;aLz=-.3;aRz=.3;lL.rotation.x=Math.sin(f)*.3;lR.rotation.x=-Math.sin(f)*.3}}
  else if(A.idle&&sp>.5){A.idle=null;A.idleT=4+R()*8}
  // aiming, punching
  if(p.aim){aRx=-Math.PI/2+(p.aimP||0);aRz=-.05;if(p.weapon==='smg'){aLx=-Math.PI/2.3+(p.aimP||0);aLz=.55}ty=-.15;hx=-(p.aimP||0)*.6;hyw=0}
@@ -922,6 +932,7 @@ addEventListener('keydown',e=>{if(document.activeElement&&document.activeElement
  if(build){if(buildKey(e))e.preventDefault();return}
  if(e.code==='KeyB'&&inHouse){enterBuild();return}
  if(e.code==='KeyE'&&inHouse){useThing();return}
+ if(e.code==='KeyE'){sayHi();return}
  if(e.code==='KeyF')toggleCar();
  else if(e.code==='KeyQ'||e.code==='Tab'){e.preventDefault();cycleWeapon(1)}
  else if(e.code==='Digit1'||e.code==='Digit2'||e.code==='Digit3'){const w=WORDER[+e.code.slice(5)-1];if(me.guns.includes(w))setWeapon(w)}
@@ -953,7 +964,7 @@ function tbtn(id,down,up){const el=$(id);el.addEventListener('touchstart',e=>{e.
  el.addEventListener('touchend',e=>{e.preventDefault();el.classList.remove('on');up&&up()},{passive:false})}
 tbtn('#tFire',()=>touchBtn.fire=true,()=>touchBtn.fire=false);tbtn('#tJump',()=>touchBtn.jump=true,()=>touchBtn.jump=false);
 tbtn('#tAct',()=>{touchBtn.run=!touchBtn.run;$('#tAct').style.background=touchBtn.run?'#ffb36b88':''});
-tbtn('#tCar',()=>{if(!paused)toggleCar()});tbtn('#tUse',()=>{if(inHouse&&!paused)useThing()});tbtn('#tBuild',()=>{if(build)exitBuild();else if(inHouse&&!paused)enterBuild()});tbtn('#tWpn',()=>cycleWeapon(1));tbtn('#tMap',()=>toggleMap());tbtn('#tPause',()=>setPause(!paused));
+tbtn('#tCar',()=>{if(!paused)toggleCar()});tbtn('#tUse',()=>{if(paused)return;if(inHouse)useThing();else sayHi()});tbtn('#tBuild',()=>{if(build)exitBuild();else if(inHouse&&!paused)enterBuild()});tbtn('#tWpn',()=>cycleWeapon(1));tbtn('#tMap',()=>toggleMap());tbtn('#tPause',()=>setPause(!paused));
 const K=c=>!!keys[c];
 const inFwd=()=>clamp((K('KeyW')?1:0)-(K('KeyS')?1:0)-stick.y,-1,1),inSide=()=>clamp((K('KeyD')?1:0)-(K('KeyA')?1:0)+stick.x,-1,1);
 const firing=()=>mouseDown||K('KeyJ')||touchBtn.fire;
@@ -1083,6 +1094,7 @@ function pedAI(p,dt){const a=p.ai;
  if(p.state==='out'){p.t-=dt;if(p.t<=0)removePerson(p);return}
  if(p.state==='fly')return;
  if(p.kind==='cop'&&copEngaged(p)){copFoot(p,dt);return}
+ if(a.conv&&!(a.flee>0)){convAI(p,dt);return}
  if((a.wave||a.stay)&&!(a.flee>0)){p.vx*=.8;p.vz*=.8;if(a.stayT!=null){a.stayT-=dt;if(a.stayT<=0){a.stayT=null;afterStay(p)}}return}
  let sp=1.35*(WALK_SPEED[p.style]||1),tx,tz;
  if(a.flee>0){a.flee-=dt;const dx=p.x-a.fx,dz=p.z-a.fz,d=Math.hypot(dx,dz)+.01;tx=p.x+dx/d*5;tz=p.z+dz/d*5;sp=5.4}
@@ -1244,9 +1256,11 @@ function spawnPeds(){const h=hourNow();
   if(p.kind==='cop'){pedTarget(p);return}
   giveRole(p,role);if(L==='beach'||out){p.ai.direct=L==='beach';if(out){p.ai.ci=Math.floor(R()*4);pedTarget(p)}}else{p.ai.ci=Math.floor(R()*4);pedTarget(p)}
   if(L==='beach'){arrive(p)}
+  // friends: some people come out in a little group, already chatting
+  if(p.kind==='ped'&&L!=='beach'&&R()<.35){const ms=[p],n=R()<.3?2:1;for(let i=0;i<n;i++){const q=spawnPed('ped',p.x+(R()-.5)*2,p.z+(R()-.5)*2);if(q){giveRole(q,p.ai.role);q.ai.dest=p.ai.dest;ms.push(q)}}if(ms.length>1)startConv(ms,'talk')}
   return}}
 function spawner(dt){spawnT-=dt;if(spawnT>0)return;spawnT=.35;
- const h=hourNow(),busy=h<5?.35:h<7||h>=22?.6:1,maxCars=Math.round((gfx?26:15)*(h<5?.5:1)),maxPeds=Math.round((gfx?34:18)*busy);
+ const h=hourNow(),busy=h<5?.35:h<7||h>=22?.6:1,maxCars=Math.round((gfx?26:15)*(h<5?.5:1)),maxPeds=Math.round((gfx?60:32)*busy);
  for(const c of [...cars]){if(c.remote||c===me.car||c===me.lastCar||c.job)continue;const d=Math.hypot(c.x-me.x,c.z-me.z);if(d>320||d>200&&unseen(c.x,c.z)||(c.dead&&c.burn<=0&&d>70&&unseen(c.x,c.z)))removeCar(c)}
  for(const p of [...people]){if(p===me||p.remote||p.car||p.job)continue;const d=Math.hypot(p.x-me.x,p.z-me.z);if(d>260||d>140&&unseen(p.x,p.z))removePerson(p)}
  let nc=0;for(const c of cars)if(!c.remote&&!(c.ai&&c.ai.chase)&&!c.job)nc++;if(nc<maxCars)spawnTraffic();
@@ -1475,7 +1489,7 @@ function enterRoom(room){net.room=room;
  room.onMessage('p',m=>{const r=net.players.get(m.id);if(r)r.s=m.s});
  room.onMessage('join',m=>{addRemote(m.id,m.name,null,m.look);addChat(`${m.name} joined`,1)});
  room.onMessage('leave',m=>{removeRemote(m.id);if(m.name)addChat(`${m.name} left`,1)});
- room.onMessage('chat',m=>addChat(`${m.name}: ${m.text}`));
+ room.onMessage('chat',m=>{addChat(`${m.name}: ${m.text}`);const r=net.players.get(m.id);if(r)say(r.p,String(m.text).slice(0,80));else if(m.id===net.me)say(me,String(m.text).slice(0,80))});
  room.onMessage('m',({from,m})=>{const r=net.players.get(from),who={name:r?r.name:'Someone'};if(!m)return;
   if(m.t==='hit'&&typeof m.d==='number')hurtMe(clamp(m.d,0,60),who);
   else if(m.t==='run'&&!me.car)fling(me,clamp(m.vx,-40,40),clamp(m.vy,0,15),clamp(m.vz,-40,40),clamp(m.d,0,80),who);
@@ -1523,7 +1537,7 @@ function stepCars(dt){for(const c of [...cars]){if(c.remote)continue;try{c.crash
    if(c.burn<=0){c.burn=-1;explode(c.x,c.y+.6,c.z,c.driver===me?me:null);recolorCar(c,0x1c1a18);if(c.driver&&c.driver!==me){const d=c.driver;d.car=null;c.driver=null;d.x=c.x+2;d.z=c.z;d.m.g.visible=true;fling(d,(R()-.5)*8,6,(R()-.5)*8,200,null)}}}}
   catch(e){oops(e);if(c!==me.car)removeCar(c)}}
  const near=cars.filter(c=>Math.abs(c.x-me.x)<90&&Math.abs(c.z-me.z)<90);for(let i=0;i<near.length;i++)for(let j=i+1;j<near.length;j++)carCar(near[i],near[j])}
-function stepPeople(dt){for(const p of [...people]){if(p===me||p.remote)continue;if(p.car){p.x=p.car.x;p.z=p.car.z;continue}try{pedAI(p,dt);personPhys(p,dt);animPerson(p,dt);p.punchT=Math.max(0,p.punchT-dt)}catch(e){oops(e);removePerson(p)}}
+function stepPeople(dt){for(const p of [...people]){if(p===me||p.remote)continue;if(p.car){p.x=p.car.x;p.z=p.car.z;continue}try{pedAI(p,dt);personPhys(p,dt);p.animAcc=(p.animAcc||0)+dt;const far=Math.abs(p.x-cam.position.x)+Math.abs(p.z-cam.position.z)>80;if(!far||(frameN+p.id)%3===0){animPerson(p,p.animAcc);p.animAcc=0}p.punchT=Math.max(0,p.punchT-dt)}catch(e){oops(e);removePerson(p)}}
  if(!me.car&&!me.sit){personPhys(me,dt)}animPerson(me,dt);
  for(let i=cash.length-1;i>=0;i--){const c=cash[i];c.m.rotation.y+=dt*3;c.t-=dt;if(distMe(c.x,c.z)<1.6&&!me.car||c.t<=0){if(c.t>0){money+=c.amt;sfx('cash');addFeed(`+$${c.amt}`);hudDirty=true}scene.remove(c.m);cash.splice(i,1)}}}
 function sounds(dt){if(!AC)return;const c=me.car;
@@ -1533,7 +1547,8 @@ function sounds(dt){if(!AC)return;const c=me.car;
  const sv=sd<110?.05*(1-sd/110):0;sirG.gain.setTargetAtTime(sv,AC.currentTime,.1);sirO.frequency.setTargetAtTime(950+380*Math.sin(now*3.4),AC.currentTime,.03);
  radioTick()}
 let lastMoney=null;
-function update(dt){now+=dt;if(lastMoney!==null&&money>lastMoney+.5)me.richT=now+2.5;lastMoney=money;
+let frameN=0;
+function update(dt){now+=dt;frameN++;stepConvs(dt);stepBubbles(dt);if(lastMoney!==null&&money>lastMoney+.5)me.richT=now+2.5;lastMoney=money;
  updateSky(dt);
  houseUpdate(dt);
  if(!me.car&&me.hp>0&&!respawning&&!build)playerFoot(dt);
@@ -1750,7 +1765,7 @@ function houseUpdate(dt){if(inHouse)cutaway(inHouse,dt);
   if(me.sit){me.x=me.sit.x;me.z=me.sit.z;me.vx=me.vz=0;me.yaw=me.sit.yaw;if(inFwd()||inSide())standUp()}
   const u=nearUse();if(!build&&(u||me.sit))hint(me.sit?'<kbd>E</kbd> stand up':`<kbd>E</kbd> ${USEWORD[FURN[u.k].use]}`,.3);else if(!build&&!u)hint('<kbd>B</kbd> decorate · walk out the door to leave',.3);
   $('#tUse').classList.toggle('hide',!(u||me.sit)&&!build);$('#tBuild').classList.toggle('hide',false)}
- else{roomLight.intensity=0;$('#tUse')?.classList.add('hide');$('#tBuild')?.classList.add('hide')}}
+ else{roomLight.intensity=0;const np=!me.car&&me.hp>0&&nearPed();$('#tUse')?.classList.toggle('hide',!np);$('#tBuild')?.classList.add('hide');if(np&&hintT<=0&&!job)hint('<kbd>E</kbd> say hi',.3)}}
 
 /* ---- decorating: a grid, a catalogue, and a ghost of the item that follows your mouse or finger ---- */
 const ray=new T.Raycaster(),mouseNDC=new T.Vector2();let buildCat='Living';
@@ -1796,7 +1811,118 @@ let tapStart=null;canvas.addEventListener('pointerdown',e=>{if(build&&e.pointerT
 canvas.addEventListener('pointerup',e=>{if(build&&e.pointerType!=='mouse'&&tapStart&&Math.hypot(e.clientX-tapStart[0],e.clientY-tapStart[1])<12&&performance.now()-tapStart[2]<500)buildClick(e);tapStart=null});
 canvas.addEventListener('wheel',e=>{if(build){build.dist=clamp(build.dist+e.deltaY*.02,6,40)}},{passive:true});
 
-if(window.GWA_TEST_HOOK)window.GWA_TEST_HOOK({samples:()=>Object.keys(SAMPLES),camObj:()=>cam,clearLine,get inHouse(){return inHouse},get build(){return build},HS,enterHouse,enterBuild,exitBuild,selectItem,buildClick,useThing,houseMarker,setMouse(x,y){mouseNDC.set(x,y);moveGhost()},clickCell(gx,gz){const b=build,st=b.st,[w,d]=b.sel?fp(b.sel.k,b.rot):[1,1];const v=new T.Vector3(st.x0+gx+w/2,0,st.z0+gz+d/2).project(cam),r=canvas.getBoundingClientRect();buildClick({clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height})},get me(){return me},cars,people,places,W,net,startGame,startJob,endJob,get job(){return job},jobs:{pizza:jobPizza,taxi:jobTaxi,race:jobRace,walk:jobWalk},
+
+/* ================= CONVERSATIONS ================= */
+// people stop to chat, argue, play catch, take selfies and dance together. When they talk, a speech box pops over their
+// head, the words type out, and you hear Animal Crossing style babble (each person has their own voice pitch).
+const NAMES=['Darnell','Brittany','Chad','Gloria','Kev','Tiff','Big Mike','Rosa','Jayden','Linda','Hector','Shawna','Trevor','Mo','Priya','Dwayne','Becky','Luis','Nana','Tony','Keisha','Gus','Marisol','Todd','Yuki','Carl','Bree','Omar','Stacy','Rico','Deb','Vinny','Zoe','Earl','Lupe','Brad'];
+const LINES={
+ open:['Have you tried the new Pizza This?','My car got stolen AGAIN.','Did you see that police chase?','I heard the Walker statue is solid gold.','Leonada traffic is the worst.',
+  "I'm thinking about buying a house in Palm Grove.",'The beach was packed today!','Somebody keeps doing the worm downtown.','Taxi drivers here are WILD.','I saw a guy T-posing on the beach.',
+  'My cousin works at Leo Cabs.','Who keeps robbing the 24/8?','I love this city.',"It's sooo hot today.",'Have you played BLOCKBURG?','MINECRAP is way better.',
+  'I got a new jacket!','Did you hear that explosion?','My boss yelled at me again.','I found a dollar on the ground!','I saw a helicopter chasing a car!',"What's for dinner?",
+  'This sidewalk is my favorite.','I just learned the floss.','Pineapple on pizza: yes or no?','The mansion by the park is SO fancy.','I want a pink sports car.',"Why is everyone walking so fast?"],
+ reply:['No way!','For real?','Haha, yeah.','Ugh, same.',"That's crazy!",'Wait, what?','I KNOW, right?','Bro...','LOL','Hmm, maybe.',"You're kidding.",'Tell me about it.','Facts.','Nooo!','Classic Leonada.','Wow.'],
+ more:['And then he just drove off!','I swear it happened.','Anyway, how are YOU?','You have to see it.',"Don't tell anyone.",'It was SO funny.','I almost cried.','We should go sometime!','True, true.','I need a vacation.'],
+ bye:['Anyway, see ya!','Gotta go!','Catch you later!','Bye bye!','Later!','Peace!'],
+ role:{commuter:["Ugh, I'm gonna be late for work.",'My boss is gonna kill me.','Another day, another dollar.','Coffee. I need coffee.'],
+  jogger:['Just did 5 laps of the park!','Leg day tomorrow.','Feel the burn!','Running is my passion.'],
+  beach:["Surf's up!",'I forgot my sunscreen...','Best tan ever.','The water is perfect today!'],
+  shopper:['They ran out of hot dogs at the 24/8!','I spent way too much money today.','Look at this deal I got!'],
+  tourist:['Is THAT the Walker statue?!','Can you take our picture?','Leonada is so pretty!','Where is the beach?'],
+  nightowl:['This party is LIT!',"Where's the afterparty?","I'm not even tired.",'One more song!'],wanderer:[]},
+ night:['Why are we still awake?',"It's so late...",'I should be in bed.','The city looks cool at night.'],
+ player:["Don't look now, but someone's staring at us.","Isn't that the person from the news?",'Nice shirt, stranger!','Who is THAT?'],
+ wanted:['Did you see the cops chasing someone?','I heard sirens all day!','Stay inside, there is a criminal around!'],
+ argue:['That was MY parking spot!','You owe me $20!','You ate my pizza!','You stepped on my shoe!','You took my taxi!'],
+ argueBack:['No I did NOT!','Prove it!','Whatever!','Says who?!','Get lost!'],
+ argueEnd:['Ugh, forget it!','Hmph!',"I'm leaving!"],
+ greet:['Oh, hi!','Hey there!','Welcome to Leonada!','Nice day, huh?','Do I know you?',"Can't talk, busy!",'Hiii!','Sup.','Love the outfit!','Howdy!'],
+ greetWanted:['AAAH! Stay away!',"Please don't hurt me!",'Somebody call the cops!'],
+ greetCop:['Move along, citizen.','Keep your nose clean.','Stay out of trouble.'],greetDonut:['Donuts? Where?!','Mmm... sprinkles...'],
+ busy:["Excuse me, we're talking.",'Hold on, buddy.','One sec!'],
+ catch:['Nice catch!','Go long!','Heads up!','Woo!'],selfie:['Say cheese!','Hold on, my hair!','Posting this!'],dance:["Let's gooo!",'Watch this move!','Dance battle!'],
+};
+const lineFor=(k)=>pick(LINES[k]);
+// ---- speech boxes over heads, typed out letter by letter ----
+const bubbles=[];
+function say(p,text,kind){if(!p||!p.m)return 0;if(p.bub)p.bub.el.remove();const el=document.createElement('div');el.className='bub'+(kind==='angry'?' angry':'');
+ const nm=p===me?'You':p.name||(p.name=pick(NAMES));el.innerHTML=`<span class="nm">${esc(nm)}</span><span class="tx"></span>`;$('#tags').appendChild(el);
+ const b={p,el,tx:el.querySelector('.tx'),text,shown:0,t:0,life:Math.max(2.4,text.length*.075+1.6),voice:p.voice||(p.voice=170+R()*260),angry:kind==='angry',quiet:kind==='quiet'};p.bub=b;bubbles.push(b);
+ if(p.m)p.talkT=now+b.life-1;return b.life}
+function blip(b,ch,vol){if(!AC||vol<=.01)return;const t=AC.currentTime,c=ch.toLowerCase().charCodeAt(0),f=b.voice*(1+((c%9)-4)*.035)*(b.angry?1.15:1)*(.96+R()*.08);
+ const o=AC.createOscillator(),g=AC.createGain(),f2=AC.createBiquadFilter();o.type='triangle';o.frequency.setValueAtTime(f*1.1,t);o.frequency.exponentialRampToValueAtTime(f*.9,t+.05);
+ f2.type='lowpass';f2.frequency.value=2200;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.07*vol,t+.006);g.gain.exponentialRampToValueAtTime(.001,t+.06);o.connect(f2).connect(g).connect(master);o.start(t);o.stop(t+.07)}
+function stepBubbles(dt){for(let i=bubbles.length-1;i>=0;i--){const b=bubbles[i],p=b.p;b.t+=dt;
+  if(!p.m||people.indexOf(p)<0&&p!==me||b.t>b.life||p.state==='out'||p.state==='fly'){b.el.remove();if(p.bub===b)p.bub=null;bubbles.splice(i,1);continue}
+  const want=Math.min(b.text.length,Math.floor(b.t*24));const d=Math.hypot(p.x-cam.position.x,p.z-cam.position.z);
+  while(b.shown<want){const ch=b.text[b.shown++];if(/[a-z0-9]/i.test(ch)&&b.shown%2===0&&!b.quiet)blip(b,ch,Math.max(0,1-d/28))}
+  b.tx.textContent=b.text.slice(0,b.shown);
+  const car=p.car;tmpV.set(car?car.x:p.x,(car?car.y+2.4:p.y+2.55),car?car.z:p.z).project(cam);const on=tmpV.z<1&&Math.abs(tmpV.x)<1.05&&Math.abs(tmpV.y)<1.1&&d<45&&!(p===me&&me.car&&false);
+  b.el.style.display=on?'':'none';b.on=on;if(on){const sc=clamp(1.25-d/40,.55,1.1);b.sx=(tmpV.x+1)/2*innerWidth;b.sy=(1-tmpV.y)/2*innerHeight;b.sc=sc;b.d=d;
+   b.el.style.transform=`translate(-50%,-100%) scale(${sc.toFixed(2)})`;b.el.style.opacity=b.t>b.life-.35?Math.max(0,(b.life-b.t)/.35):1}}
+ // stack speech boxes that would cover each other (closest person keeps their spot, the others move up)
+ const vis=bubbles.filter(b=>b.on).sort((a,c)=>a.d-c.d),placed=[];
+ for(const b of vis){const w=(b.el.offsetWidth||120)*b.sc,h=(b.el.offsetHeight||34)*b.sc+8;let y=b.sy;
+  for(let k=0;k<6;k++){const hit=placed.find(q=>Math.abs(q.x-b.sx)<(q.w+w)/2&&y>q.y-q.h&&y-h<q.y);if(!hit)break;y=hit.y-hit.h}
+  placed.push({x:b.sx,y,w,h});b.el.style.left=b.sx+'px';b.el.style.top=y+'px'}}
+// ---- conversations and activities ----
+const convs=[];let convT=0;
+const ballGeo=new T.SphereGeometry(.12,10,8),ballMat=new T.MeshLambertMaterial({color:LC(0xff5a3a)});
+function freeForChat(p){const a=p.ai;return p.kind==='ped'&&!p.car&&!p.job&&p.state==='walk'&&a&&!a.conv&&!a.goIn&&!(a.flee>0)&&!a.wave&&!(p.shrugT>now)&&!((a.convCD||0)>now)&&!p.remote}
+function startConv(ms,type){const cx=ms.reduce((s,p)=>s+p.x,0)/ms.length,cz=ms.reduce((s,p)=>s+p.z,0)/ms.length;
+ const L=lotAt(cx,cz);if(!L&&!(cx>BEACH0))return null;
+ const c={m:ms,type,cx,cz,t:0,state:'gather',turn:0,next:0,lines:[],dur:type==='talk'?0:9+R()*8,ball:null};
+ const n=ms.length,r=type==='catch'?2.6:n===2?.75:.95,a0=R()*6.28;
+ ms.forEach((p,i)=>{const a=a0+i/n*Math.PI*2;let sx=cx+Math.cos(a)*r,sz=cz+Math.sin(a)*r;const res=pushOut(sx,sz,.4,0);p.ai.conv=c;p.ai.convSpot=[res.x,res.z];p.ai.stayT=null;if(p.anim)p.anim.idle=null});
+ // the script: who says what, in turn
+ const h=hourNow(),near=Math.hypot(me.x-cx,me.z-cz)<22;
+ if(type==='talk'){const k=3+Math.floor(R()*4);let first;const r0=pick(ms).ai.role;
+  first=near&&R()<.35?lineFor(W.stars>0?'wanted':'player'):(h>=22||h<5)&&R()<.4?lineFor('night'):r0&&LINES.role[r0]&&LINES.role[r0].length&&R()<.5?pick(LINES.role[r0]):lineFor('open');
+  c.lines.push([0,first]);for(let i=1;i<k;i++)c.lines.push([i%n,i%2?lineFor('reply'):R()<.5?lineFor('more'):lineFor('open')]);c.lines.push([(k)%n,lineFor('bye')])}
+ else if(type==='argue'){c.lines.push([0,lineFor('argue'),'angry'],[1,lineFor('argueBack'),'angry'],[0,lineFor('argueBack'),'angry'],[1,lineFor('argueEnd'),'angry'])}
+ else if(type==='catch')c.lines.push([0,lineFor('catch')],[1,lineFor('catch')]);
+ else if(type==='selfie')c.lines.push([0,lineFor('selfie')],[1,lineFor('reply')]);
+ else if(type==='dance')c.lines.push([0,lineFor('dance')],[1,lineFor('dance')]);
+ convs.push(c);return c}
+function endConv(c){const i=convs.indexOf(c);if(i>=0)convs.splice(i,1);if(c.ball){scene.remove(c.ball);c.ball=null}
+ for(const p of c.m){if(!p.ai||p.ai.conv!==c)continue;p.ai.conv=null;p.ai.convCD=now+35+R()*40;p.act=null;
+  if(p.ai.dest){p.ai.direct=false;if(!p.ai.L)p.ai.L=nearestLot(p.x,p.z);pedTarget(p)}else pedTarget(p)}}
+function convAI(p,dt){const a=p.ai,c=a.conv,sp=a.convSpot;const dx=sp[0]-p.x,dz=sp[1]-p.z,d=Math.hypot(dx,dz);
+ if(d>.25&&c.state==='gather'){const s=1.4,k=Math.min(1,dt*6);p.vx+=(dx/d*s-p.vx)*k;p.vz+=(dz/d*s-p.vz)*k;if(Math.hypot(p.vx,p.vz)>.3)p.yaw+=wrapA(Math.atan2(p.vx,p.vz)-p.yaw)*Math.min(1,dt*8);return}
+ p.vx*=.7;p.vz*=.7;let tx=c.cx,tz=c.cz;if(c.type==='catch'||c.m.length===2){const o=c.m.find(q=>q!==p);if(o){tx=o.x;tz=o.z}}
+ if(c.type==='selfie'&&c.m[0]===p){const o=c.m[1];if(o){tx=p.x+(p.x-o.x);tz=p.z+(p.z-o.z)}}
+ p.yaw+=wrapA(Math.atan2(tx-p.x,tz-p.z)-p.yaw)*Math.min(1,dt*5)}
+function stepConvs(dt){
+ convT-=dt;if(convT<=0){convT=.8;// look for people bumping into each other
+  const free=people.filter(p=>freeForChat(p)&&Math.abs(p.x-me.x)<110&&Math.abs(p.z-me.z)<110);
+  for(const p of free){if(p.ai.conv||R()>.35)continue;const pals=free.filter(q=>q!==p&&!q.ai.conv&&Math.hypot(q.x-p.x,q.z-p.z)<7).slice(0,R()<.3?2:1);if(!pals.length)continue;
+   const h=hourNow(),ms=[p,...pals],two=ms.length===2,x=R();
+   const type=two&&x<.1?'argue':two&&x<.2?'catch':two&&x<.28?'selfie':(h>=20||h<3||p.x>CITY-20)&&x<.4?'dance':'talk';startConv(ms,type);break}}
+ for(const c of [...convs]){c.t+=dt;
+  if(c.m.some(p=>people.indexOf(p)<0||p.state!=='walk'||p.ai.conv!==c||p.ai.flee>0||p.car)){for(const p of c.m)if(p.ai&&p.ai.conv===c&&p.state==='walk'&&!(p.ai.flee>0)&&R()<.5&&people.indexOf(p)>=0)say(p,pick(['Whoa!','Huh?!','Hey!']),'quiet');endConv(c);continue}
+  if(c.state==='gather'){if(c.m.every(p=>Math.hypot(p.ai.convSpot[0]-p.x,p.ai.convSpot[1]-p.z)<.45)||c.t>8){c.state='go';c.t=0;c.next=.3}continue}
+  // activities
+  if(c.type!=='talk'&&c.type!=='argue'){for(const p of c.m)p.act=c.type;
+   if(c.type==='catch'){if(!c.ball){c.ball=new T.Mesh(ballGeo,ballMat);c.ball.castShadow=true;scene.add(c.ball);c.bt=0;c.from=0}
+    c.bt+=dt/1.1;if(c.bt>=1){c.bt=0;c.from=1-c.from;c.m[1-c.from].throwT=now+.35}const A=c.m[c.from],B=c.m[1-c.from];
+    if(A&&B){const u=c.bt,hx=lerp(A.x,B.x,u),hz=lerp(A.z,B.z,u);c.ball.position.set(hx,1.5+Math.sin(u*Math.PI)*2.2,hz)}}
+   if(c.type==='selfie'&&c.t>3&&!c.flash){c.flash=1;flashL.position.set(c.cx,2,c.cz);flashL.intensity=4;flashT=.1;sfx('click')}
+   if(c.t>c.dur){endConv(c);continue}}
+  // whose turn is it to talk
+  c.next-=dt;if(c.next<=0&&c.turn<c.lines.length){const[i,txt,kind]=c.lines[c.turn++];const sp=c.m[i%c.m.length];c.next=say(sp,txt,kind)-.6;
+   for(const q of c.m)if(q!==sp)q.nodT=now+c.next}
+  else if(c.turn>=c.lines.length&&c.next<=0&&(c.type==='talk'||c.type==='argue')){if(c.type==='argue'){for(const p of c.m)p.ai.convCD=now+60}endConv(c)}}}
+// you can say hi to people (E). They answer... or run if you're wanted.
+function nearPed(){let best=null,bd=2.6;for(const p of people){if(p===me||p.car||p.state!=='walk'||p.remote)continue;const d=Math.hypot(p.x-me.x,p.z-me.z);if(d<bd){bd=d;best=p}}return best}
+function sayHi(){if(me.car||inHouse)return;const p=nearPed();if(!p)return;say(me,pick(['Hey!','Hi there!','Sup!','Hello!','Yo!']));
+ setTimeout(()=>{if(people.indexOf(p)<0)return;p.yaw=Math.atan2(me.x-p.x,me.z-p.z);
+  if(p.kind==='cop')say(p,p.m.face.userData.base==='donut'?lineFor('greetDonut'):lineFor('greetCop'));
+  else if(W.stars>0||me.aim){say(p,lineFor('greetWanted'),'angry');p.ai.flee=8;p.ai.fx=me.x;p.ai.fz=me.z}
+  else if(p.ai.conv)say(p,lineFor('busy'));
+  else{say(p,lineFor('greet'));p.shrugT=0;p.ai.stay=1;p.ai.stayT=2.5}},700)}
+
+if(window.GWA_TEST_HOOK)window.GWA_TEST_HOOK({convs,startConv,say,sayHi,bubbles,samples:()=>Object.keys(SAMPLES),camObj:()=>cam,clearLine,get inHouse(){return inHouse},get build(){return build},HS,enterHouse,enterBuild,exitBuild,selectItem,buildClick,useThing,houseMarker,setMouse(x,y){mouseNDC.set(x,y);moveGhost()},clickCell(gx,gz){const b=build,st=b.st,[w,d]=b.sel?fp(b.sel.k,b.rot):[1,1];const v=new T.Vector3(st.x0+gx+w/2,0,st.z0+gz+d/2).project(cam),r=canvas.getBoundingClientRect();buildClick({clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height})},get me(){return me},cars,people,places,W,net,startGame,startJob,endJob,get job(){return job},jobs:{pizza:jobPizza,taxi:jobTaxi,race:jobRace,walk:jobWalk},
  get money(){return money},set money(v){money=v},toggleCar,setStars(n){W.stars=n;W.lx=me.x;W.lz=me.z},teleport(x,z){if(me.car){me.car.x=x;me.car.z=z}else{me.x=x;me.z=z}},
  cam:()=>({yaw:camYaw,pitch:camPitch}),aimPoint(d){const v=camDir();return[cam.position.x+v[0]*d,cam.position.y+v[1]*d,cam.position.z+v[2]*d]},setCam(y,p){camYaw=y;camPitch=p;lastLook=now+5},keys,get heli(){return heli},setDay(t){dayT=t},explode,openShop,get stars(){return starsNow()},spawnCar,spawnPed,setLook(p,l){scene.remove(p.m.g);p.look=l;p.m=makePerson(l);p.anim=null},lotAt,setGfx(g){gfx=g;applyGfx()}});
 </script>
